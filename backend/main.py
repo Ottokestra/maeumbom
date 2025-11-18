@@ -62,60 +62,38 @@ def get_stt_engine():
 
 @app.websocket("/stt/stream")
 async def stt_websocket(websocket: WebSocket):
-    """
-    STT WebSocket 엔드포인트
-    실시간 오디오 스트리밍을 받아 텍스트로 변환
-    """
     await websocket.accept()
     
     try:
         engine = get_stt_engine()
-        
-        # 클라이언트에게 준비 완료 메시지 전송
         await websocket.send_json({"status": "ready", "message": "STT 엔진 준비 완료"})
         
-        # Silero VAD는 16000Hz에서 512 샘플씩 처리
-        vad_chunk_size = 512
-        
         while True:
-            # 오디오 데이터 수신 (바이너리 또는 JSON)
             data = await websocket.receive()
             
             if "bytes" in data:
-                # 바이너리 오디오 데이터
                 audio_bytes = data["bytes"]
-                
-                # numpy 배열로 변환
                 audio_chunk = np.frombuffer(audio_bytes, dtype=np.float32)
                 
-                # 큰 청크를 512 샘플씩 나눠서 VAD 처리
-                for i in range(0, len(audio_chunk), vad_chunk_size):
-                    sub_chunk = audio_chunk[i:i+vad_chunk_size]
+                # 512 샘플이 맞는지 확인 (선택적)
+                if len(audio_chunk) != 512:
+                    continue
+                
+                # 바로 VAD 처리 (for 루프 불필요!)
+                is_speech_end, speech_audio, is_short_pause = engine.vad.process_chunk(audio_chunk)
+                
+                if is_speech_end and speech_audio is not None:
+                    transcript, quality = engine.whisper.transcribe(speech_audio, callback=None)
                     
-                    # 512 샘플이 안 되면 패딩 (또는 스킵)
-                    if len(sub_chunk) < vad_chunk_size:
-                        # 남은 샘플이 부족하면 0으로 패딩
-                        sub_chunk = np.pad(sub_chunk, (0, vad_chunk_size - len(sub_chunk)), mode='constant')
+                    if transcript and quality in ["success", "medium"]:
+                        await websocket.send_json({
+                            "text": transcript,
+                            "quality": quality
+                        })
                     
-                    # VAD 처리
-                    is_speech_end, speech_audio, is_short_pause = engine.vad.process_chunk(sub_chunk)
-                    
-                    if is_speech_end and speech_audio is not None:
-                        # 음성 인식 실행
-                        transcript, quality = engine.whisper.transcribe(speech_audio, callback=None)
-                        
-                        # 결과 전송
-                        if transcript and quality in ["success", "medium"]:
-                            await websocket.send_json({
-                                "text": transcript,
-                                "quality": quality
-                            })
-                        
-                        # VAD 리셋
-                        engine.vad.reset()
+                    engine.vad.reset()
             
             elif "text" in data:
-                # 텍스트 명령어 (예: reset)
                 command = data["text"]
                 if command == "reset":
                     engine.vad.reset()
@@ -129,7 +107,6 @@ async def stt_websocket(websocket: WebSocket):
         traceback.print_exc()
         await websocket.send_json({"error": str(e)})
         await websocket.close()
-
 
 @app.get("/")
 async def root():
