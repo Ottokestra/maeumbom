@@ -21,3 +21,16 @@ python-dotenv>=1.0.0
 # OpenAI API
 openai>=1.0.0
 
+# Core dependencies
+pyyaml==6.0.1
+
+# Audio processing
+pyaudio==0.2.14
+
+# Silero VAD
+torchaudio>=2.0.0
+packaging>=21.0
+
+# Faster-Whisper
+faster-whisper>=1.0.0
+

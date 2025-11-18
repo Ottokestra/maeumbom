@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>STT WebSocket 테스트</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 30px;
+        }
+        button {
+            padding: 12px 24px;
+            font-size: 16px;
+            margin: 10px 5px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        #connectBtn {
+            background-color: #4CAF50;
+            color: white;
+        }
+        #connectBtn:hover {
+            background-color: #45a049;
+        }
+        #disconnectBtn {
+            background-color: #f44336;
+            color: white;
+        }
+        #disconnectBtn:hover {
+            background-color: #da190b;
+        }
+        #startBtn {
+            background-color: #2196F3;
+            color: white;
+        }
+        #startBtn:hover {
+            background-color: #0b7dda;
+        }
+        #stopBtn {
+            background-color: #ff9800;
+            color: white;
+        }
+        #stopBtn:hover {
+            background-color: #e68900;
+        }
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        #status {
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        .status-disconnected {
+            background-color: #ffebee;
+            color: #c62828;
+        }
+        .status-connected {
+            background-color: #e8f5e9;
+            color: #2e7d32;
+        }
+        .status-recording {
+            background-color: #fff3e0;
+            color: #e65100;
+        }
+        #result {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f9f9f9;
+            border-left: 4px solid #2196F3;
+            min-height: 100px;
+            border-radius: 5px;
+        }
+        #logs {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #263238;
+            color: #aed581;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+            border-radius: 5px;
+        }
+        .log-entry {
+            margin: 5px 0;
+        }
+        .log-info {
+            color: #81d4fa;
+        }
+        .log-success {
+            color: #aed581;
+        }
+        .log-error {
+            color: #ef5350;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎤 STT WebSocket 테스트 클라이언트</h1>
+        
+        <div>
+            <button id="connectBtn" onclick="connect()">연결</button>
+            <button id="disconnectBtn" onclick="disconnect()" disabled>연결 해제</button>
+            <button id="startBtn" onclick="startRecording()" disabled>녹음 시작</button>
+            <button id="stopBtn" onclick="stopRecording()" disabled>녹음 중지</button>
+        </div>
+        
+        <div id="status" class="status-disconnected">
+            상태: 연결 안 됨
+        </div>
+        
+        <div>
+            <h3>인식된 텍스트:</h3>
+            <div id="result">여기에 인식된 텍스트가 표시됩니다...</div>
+        </div>
+        
+        <div>
+            <h3>로그:</h3>
+            <div id="logs"></div>
+        </div>
+    </div>
+
+    <script>
+        let ws = null;
+        let audioContext = null;
+        let mediaStream = null;
+        let processor = null;
+        
+        function addLog(message, type = 'info') {
+            const logs = document.getElementById('logs');
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = document.createElement('div');
+            logEntry.className = `log-entry log-${type}`;
+            logEntry.textContent = `[${timestamp}] ${message}`;
+            logs.appendChild(logEntry);
+            logs.scrollTop = logs.scrollHeight;
+        }
+        
+        function updateStatus(status, className) {
+            const statusDiv = document.getElementById('status');
+            statusDiv.textContent = `상태: ${status}`;
+            statusDiv.className = className;
+        }
+        
+        function connect() {
+            try {
+                addLog('WebSocket 연결 시도 중...', 'info');
+                ws = new WebSocket('ws://localhost:8000/stt/stream');
+                
+                ws.onopen = () => {
+                    addLog('WebSocket 연결 성공!', 'success');
+                    updateStatus('연결됨', 'status-connected');
+                    document.getElementById('connectBtn').disabled = true;
+                    document.getElementById('disconnectBtn').disabled = false;
+                    document.getElementById('startBtn').disabled = false;
+                };
+                
+                ws.onmessage = (event) => {
+                    const data = JSON.parse(event.data);
+                    addLog(`서버 응답: ${JSON.stringify(data)}`, 'info');
+                    
+                    if (data.text) {
+                        const resultDiv = document.getElementById('result');
+                        resultDiv.innerHTML += `<div><strong>[${data.quality}]</strong> ${data.text}</div>`;
+                        addLog(`인식 결과: ${data.text} (품질: ${data.quality})`, 'success');
+                    } else if (data.status) {
+                        addLog(`상태: ${data.message}`, 'info');
+                    } else if (data.error) {
+                        addLog(`오류: ${data.error}`, 'error');
+                    }
+                };
+                
+                ws.onerror = (error) => {
+                    addLog('WebSocket 오류 발생', 'error');
+                    console.error('WebSocket error:', error);
+                };
+                
+                ws.onclose = () => {
+                    addLog('WebSocket 연결 종료', 'info');
+                    updateStatus('연결 안 됨', 'status-disconnected');
+                    document.getElementById('connectBtn').disabled = false;
+                    document.getElementById('disconnectBtn').disabled = true;
+                    document.getElementById('startBtn').disabled = true;
+                    document.getElementById('stopBtn').disabled = true;
+                };
+            } catch (error) {
+                addLog(`연결 오류: ${error.message}`, 'error');
+            }
+        }
+        
+        function disconnect() {
+            if (ws) {
+                ws.close();
+                ws = null;
+            }
+        }
+        
+        async function startRecording() {
+            try {
+                addLog('마이크 접근 요청 중...', 'info');
+                
+                // 마이크 접근 권한 요청
+                mediaStream = await navigator.mediaDevices.getUserMedia({ 
+                    audio: {
+                        channelCount: 1,
+                        sampleRate: 16000
+                    } 
+                });
+                
+                addLog('마이크 접근 허용됨', 'success');
+                
+                // AudioContext 생성
+                audioContext = new (window.AudioContext || window.webkitAudioContext)({
+                    sampleRate: 16000
+                });
+                
+                const source = audioContext.createMediaStreamSource(mediaStream);
+                processor = audioContext.createScriptProcessor(4096, 1, 1);
+                
+                processor.onaudioprocess = (e) => {
+                    if (ws && ws.readyState === WebSocket.OPEN) {
+                        const inputData = e.inputBuffer.getChannelData(0);
+                        const float32Array = new Float32Array(inputData);
+                        ws.send(float32Array.buffer);
+                    }
+                };
+                
+                source.connect(processor);
+                processor.connect(audioContext.destination);
+                
+                addLog('녹음 시작됨', 'success');
+                updateStatus('녹음 중', 'status-recording');
+                document.getElementById('startBtn').disabled = true;
+                document.getElementById('stopBtn').disabled = false;
+                
+            } catch (error) {
+                addLog(`마이크 오류: ${error.message}`, 'error');
+                alert('마이크 접근 권한이 필요합니다.');
+            }
+        }
+        
+        function stopRecording() {
+            if (processor) {
+                processor.disconnect();
+                processor = null;
+            }
+            
+            if (audioContext) {
+                audioContext.close();
+                audioContext = null;
+            }
+            
+            if (mediaStream) {
+                mediaStream.getTracks().forEach(track => track.stop());
+                mediaStream = null;
+            }
+            
+            addLog('녹음 중지됨', 'info');
+            updateStatus('연결됨', 'status-connected');
+            document.getElementById('startBtn').disabled = false;
+            document.getElementById('stopBtn').disabled = true;
+        }
+        
+        // 페이지 종료 시 정리
+        window.addEventListener('beforeunload', () => {
+            stopRecording();
+            disconnect();
+        });
+    </script>
+</body>
+</html>
+

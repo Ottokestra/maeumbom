@@ -1,0 +1,48 @@
+# 마음봄 프로토타입 2 - Silero VAD + Whisper.cpp + Ollama 설정
+
+# 오디오 설정
+audio:
+  sample_rate: 16000
+  channels: 1
+  chunk_size: 512
+  
+# VAD (Voice Activity Detection) 설정
+vad:
+  model: "silero_vad"
+  threshold: 0.65  # 0.5 → 0.65 (문지기 강화: 확실한 음성만 통과)
+  min_speech_duration_ms: 300  # 250 → 300 (짧은 소음 필터링)
+  max_speech_duration_s: 30
+  min_silence_duration_ms: 2000  # 말 끝내고 2초 쉬면 전송 (발화 종료)
+  short_silence_duration_ms: 300  # 문장 구분용 짧은 침묵 (0.3초) - 텍스트 확정용
+  speech_pad_ms: 300
+  
+# Whisper 설정 (그대로 유지)
+whisper:
+  model_path: "models/ggml-base.bin"
+  model_size: "base"
+  language: "ko"  # 한국어 고정
+  n_threads: 4
+  
+# LLM 설정
+llm:
+  # 프로바이더 선택: "ollama" 또는 "openai"
+  provider: "ollama"  # "ollama" = 로컬 Ollama, "openai" = GPT-4o mini
+  
+  # 공통 설정
+  temperature: 0.7
+  max_tokens: 500
+  system_prompt: |
+    너는 사용자에게 따뜻하게 응대하는 AI 친구 '봄'이야.
+    말투는 자연스러운 구어체로, 공감과 질문을 통해 대화를 이어가.
+    STT 오타가 있어도 문맥을 파악해 자연스럽게 정리해서 응답해줘.
+  
+  # Ollama 설정 (provider: "ollama"일 때 사용)
+  ollama:
+    base_url: "http://localhost:11434/v1"
+    api_key: "ollama"
+    model: "llama3.2:latest"
+  
+  # OpenAI 설정 (provider: "openai"일 때 사용)
+  openai:
+    model: "gpt-4o-mini"
+    # API 키는 .env 파일의 OPENAI_API_KEY에서 자동으로 로드됩니다
