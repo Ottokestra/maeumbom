@@ -179,10 +179,17 @@
                     const data = JSON.parse(event.data);
                     addLog(`서버 응답: ${JSON.stringify(data)}`, 'info');
                     
-                    if (data.text) {
+                    if (data.hasOwnProperty('quality')) {
+                        // STT 결과 (text가 있든 없든)
                         const resultDiv = document.getElementById('result');
-                        resultDiv.innerHTML += `<div><strong>[${data.quality}]</strong> ${data.text}</div>`;
-                        addLog(`인식 결과: ${data.text} (품질: ${data.quality})`, 'success');
+                        if (data.text) {
+                            resultDiv.innerHTML += `<div><strong>[${data.quality}]</strong> ${data.text}</div>`;
+                            addLog(`인식 결과: ${data.text} (품질: ${data.quality})`, 'success');
+                        } else {
+                            // text가 null인 경우 (품질 낮음)
+                            resultDiv.innerHTML += `<div style="color: #999;"><strong>[${data.quality}]</strong> (인식 실패 - 품질 낮음)</div>`;
+                            addLog(`인식 실패 (품질: ${data.quality})`, 'error');
+                        }
                     } else if (data.status) {
                         addLog(`상태: ${data.message}`, 'info');
                     } else if (data.error) {

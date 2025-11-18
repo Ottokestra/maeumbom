@@ -24,17 +24,17 @@ whisper:
   n_threads: 4
   
 # LLM 설정
-llm:
-  # 프로바이더 선택: "ollama" 또는 "openai"
-  provider: "ollama"  # "ollama" = 로컬 Ollama, "openai" = GPT-4o mini
+# llm:
+#   # 프로바이더 선택: "ollama" 또는 "openai"
+#   provider: "ollama"  # "ollama" = 로컬 Ollama, "openai" = GPT-4o mini
   
-  # 공통 설정
-  temperature: 0.7
-  max_tokens: 500
-  system_prompt: |
-    너는 사용자에게 따뜻하게 응대하는 AI 친구 '봄'이야.
-    말투는 자연스러운 구어체로, 공감과 질문을 통해 대화를 이어가.
-    STT 오타가 있어도 문맥을 파악해 자연스럽게 정리해서 응답해줘.
+#   # 공통 설정
+#   temperature: 0.7
+#   max_tokens: 500
+#   system_prompt: |
+#     너는 사용자에게 따뜻하게 응대하는 AI 친구 '봄'이야.
+#     말투는 자연스러운 구어체로, 공감과 질문을 통해 대화를 이어가.
+#     STT 오타가 있어도 문맥을 파악해 자연스럽게 정리해서 응답해줘.
   
   # Ollama 설정 (provider: "ollama"일 때 사용)
   ollama:

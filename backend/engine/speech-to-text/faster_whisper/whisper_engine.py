@@ -106,19 +106,25 @@ class WhisperSTT:
             # Faster-Whisper로 실시간 세그먼트 스트리밍 (환각 방지 최적화)
             segments, info = self.model.transcribe(
                 audio,
-                language="ko",  # 한국어 고정
-                beam_size=1,  # 실시간 처리를 위해 greedy decoding
+                language="ko",
+                beam_size=1,
                 
-                # ⭐ 환각 및 반복 방지 핵심 옵션
-                condition_on_previous_text=False,  # 이전 문맥 참조 끄기 (반복 방지)
-                initial_prompt=initial_prompt if initial_prompt else None,  # 문맥 유지
-                temperature=0.0,  # 창의적 해석 금지
-                compression_ratio_threshold=2.0,  # 더 엄격하게
-                no_speech_threshold=0.6,  # 말소리 아니면 버리기
-                repetition_penalty=1.2,  # 반복 페널티 적용
+                # [중요] 짧은 단어 인식을 위해 필터링 해제 또는 완화
+                log_prob_threshold=None,  # ⭐ 기본값(-1.0) 대신 None으로 설정하여 확신도가 낮아도 반환하게 함
+                # 또는 log_prob_threshold=-3.0, (너무 이상한 잡음이 섞인다면 -3.0 정도로 설정)
+
+                condition_on_previous_text=False,
+                initial_prompt=initial_prompt if initial_prompt else None,
+                temperature=0.0,
                 
-                vad_filter=False,  # VAD는 이미 적용됨
-                word_timestamps=False  # 단어별 타임스탬프 불필요
+                # [수정] 너무 엄격하면 짧은 텍스트가 걸러질 수 있음
+                compression_ratio_threshold=2.4,  # ⭐ 2.0 -> 2.4로 완화
+                
+                no_speech_threshold=0.6,
+                repetition_penalty=1.2,
+                
+                vad_filter=False, # 외부 VAD 사용 중이므로 유지
+                word_timestamps=False
             )
             
             # 세그먼트별로 실시간 처리 + 품질 검사
@@ -158,16 +164,22 @@ class WhisperSTT:
             
             avg_quality = total_logprob / segment_count if segment_count > 0 else -999
             
+            # 디버그 로그 (품질 판단 과정 확인용)
+            print(f"[품질 판단] 텍스트: '{final_text}' | logprob: {avg_quality:.3f}")
+            
             # 품질 판단 (logprob 기반)
             # faster-whisper의 avg_logprob 범위: 보통 -1.0 ~ 0.0
             if avg_quality > -0.5:
                 # 확신 매우 높음 - 정상
+                print(f"[품질 판단] → success")
                 return final_text, "success"
             elif avg_quality > -1.0:
                 # 확신 중간 - 사용 가능
+                print(f"[품질 판단] → medium")
                 return final_text, "medium"
             else:
                 # 확신 낮음 - 소음 가능성
+                print(f"[품질 판단] → low_quality")
                 return final_text, "low_quality"
                 
         except Exception as e:
