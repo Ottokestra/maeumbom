@@ -78,9 +78,16 @@ function App() {
               <EmotionResult result={result} />
             </div>
             
-            <div className="card">
-              <EmotionChart emotions={result.emotions} />
-            </div>
+            {/* 새로운 형식일 때는 raw_distribution 사용 */}
+            {result.raw_distribution ? (
+              <div className="card">
+                <EmotionChart rawDistribution={result.raw_distribution} />
+              </div>
+            ) : (
+              <div className="card">
+                <EmotionChart emotions={result.top_emotions || result.emotions} />
+              </div>
+            )}
             
             {result.similar_contexts && result.similar_contexts.length > 0 && (
               <div className="card contexts-section">

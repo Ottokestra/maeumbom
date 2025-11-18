@@ -33,6 +33,13 @@ config_module = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(config_module)
 TOP_K_RESULTS = config_module.TOP_K_RESULTS
 
+# utils import
+utils_path = src_path / "utils.py"
+spec = importlib.util.spec_from_file_location("utils", utils_path)
+utils_module = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(utils_module)
+convert_va_to_ui_labels = utils_module.convert_va_to_ui_labels
+
 
 class RAGPipeline:
     """RAG pipeline combining retrieval and emotion analysis"""
@@ -73,23 +80,17 @@ class RAGPipeline:
                     "similarity": 1 - distance  # Convert distance to similarity
                 })
         
-        # Step 3: Analyze emotion with context
-        analysis_result = self.emotion_analyzer.analyze(
+        # Step 3: Analyze emotion with context (17개 감정 군집 기반)
+        # LLM은 raw_distribution만 생성하고, 나머지는 백엔드에서 계산
+        analysis_result = self.emotion_analyzer.analyze_emotion(
             text=text,
             context_texts=similar_contexts
         )
         
-        # Step 4: Combine results
-        result = {
-            "input": text,
-            "emotions": analysis_result['emotions'],
-            "primary_emotion": analysis_result['primary_emotion'],
-            "primary_percentage": analysis_result.get('primary_percentage', 0),
-            "primary_intensity": analysis_result.get('primary_percentage', 0),  # For compatibility
-            "similar_contexts": similar_contexts[:3]  # Return top 3 contexts
-        }
-        
-        return result
+        # Step 4: Return 17 emotion clusters analysis result
+        # analyze_emotion이 이미 완전한 형식으로 반환하므로 그대로 사용
+        # similar_contexts는 내부적으로만 사용하고 최종 응답에는 포함하지 않음
+        return analysis_result
     
     def initialize_vector_store(self, data_path: str = "data/raw/sample_emotions.json") -> Dict[str, Any]:
         """

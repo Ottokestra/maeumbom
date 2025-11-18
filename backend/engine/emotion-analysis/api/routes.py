@@ -22,6 +22,7 @@ emotion_models = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(emotion_models)
 AnalyzeRequest = emotion_models.AnalyzeRequest
 AnalyzeResponse = emotion_models.AnalyzeResponse
+AnalyzeResponse17 = emotion_models.AnalyzeResponse17
 HealthResponse = emotion_models.HealthResponse
 InitResponse = emotion_models.InitResponse
 ErrorResponse = emotion_models.ErrorResponse
@@ -36,21 +37,21 @@ get_rag_pipeline = rag_pipeline_module.get_rag_pipeline
 router = APIRouter()
 
 
-@router.post("/analyze", response_model=AnalyzeResponse)
+@router.post("/analyze", response_model=AnalyzeResponse17)
 async def analyze_emotion(request: AnalyzeRequest):
     """
-    Analyze emotion in the provided text
+    Analyze emotion in the provided text using 17 emotion clusters
     
     Args:
         request: AnalyzeRequest with text to analyze
         
     Returns:
-        AnalyzeResponse with emotion analysis results
+        AnalyzeResponse17 with 17 emotion clusters analysis results
     """
     try:
         pipeline = get_rag_pipeline()
         result = pipeline.analyze_emotion(request.text)
-        return AnalyzeResponse(**result)
+        return AnalyzeResponse17(**result)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Analysis failed: {str(e)}")
 
