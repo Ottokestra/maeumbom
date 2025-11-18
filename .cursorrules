@@ -1,0 +1,8 @@
+# General Rules
+- Do NOT create new files unless explicitly requested. Always modify existing files.
+- Be concise. Do not offer explanations unless asked. Just show the code.
+- When editing, show only the necessary changes, not the entire file content if possible.
+
+# Python/Project Specific
+- Use existing libraries. Do not suggest new pip installs unless necessary.
+- Follow existing project structure. Do not create 'utils' or 'helpers' folders arbitrarily.

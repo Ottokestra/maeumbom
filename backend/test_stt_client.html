@@ -235,7 +235,7 @@
                 });
                 
                 const source = audioContext.createMediaStreamSource(mediaStream);
-                processor = audioContext.createScriptProcessor(4096, 1, 1);
+                processor = audioContext.createScriptProcessor(512, 1, 1);
                 
                 processor.onaudioprocess = (e) => {
                     if (ws && ws.readyState === WebSocket.OPEN) {
