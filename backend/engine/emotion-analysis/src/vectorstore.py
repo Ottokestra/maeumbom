@@ -23,6 +23,7 @@ spec.loader.exec_module(config_module)
 VECTORDB_PATH = config_module.VECTORDB_PATH
 COLLECTION_NAME = config_module.COLLECTION_NAME
 TOP_K_RESULTS = config_module.TOP_K_RESULTS
+EMOTION_CODES_17 = config_module.EMOTION_CODES_17
 
 # embeddings import
 embeddings_path = src_path / "embeddings.py"
@@ -69,6 +70,9 @@ class VectorStore:
         
         print(f"Vector store initialized at: {self.persist_directory}")
         print(f"Collection '{COLLECTION_NAME}' ready with {self.collection.count()} items")
+        
+        # 자동 초기화 체크
+        self._auto_initialize_if_needed()
     
     def add_documents(
         self,
@@ -202,6 +206,77 @@ class VectorStore:
         print("Emotion distribution:")
         for emotion, count in sorted(distribution.items()):
             print(f"  {emotion}: {count}")
+    
+    def _get_emotion_codes_in_store(self) -> set:
+        """
+        벡터 스토어에 저장된 감정 코드들을 가져옴
+        
+        Returns:
+            감정 코드 집합
+        """
+        if self.collection.count() == 0:
+            return set()
+        
+        # 샘플 데이터 가져오기 (최대 100개)
+        sample_results = self.collection.get(limit=min(100, self.collection.count()))
+        if not sample_results or not sample_results.get('metadatas'):
+            return set()
+        
+        emotion_codes = set()
+        for metadata in sample_results['metadatas']:
+            if 'emotion' in metadata:
+                emotion_codes.add(metadata['emotion'])
+        
+        return emotion_codes
+    
+    def _needs_reinitialization(self) -> bool:
+        """
+        벡터 스토어 재초기화가 필요한지 확인
+        
+        Returns:
+            True if reinitialization needed, False otherwise
+        """
+        count = self.collection.count()
+        
+        # 비어있으면 초기화 필요
+        if count == 0:
+            return True
+        
+        # 감정 코드 확인
+        emotion_codes = self._get_emotion_codes_in_store()
+        
+        if not emotion_codes:
+            # 감정 코드를 가져올 수 없으면 재초기화 필요
+            return True
+        
+        # 17개 감정 코드 집합
+        valid_emotion_codes = set(EMOTION_CODES_17)
+        
+        # 벡터 스토어의 감정 코드가 모두 17개 감정에 포함되는지 확인
+        invalid_codes = emotion_codes - valid_emotion_codes
+        if invalid_codes:
+            # 17개 감정에 없는 감정 코드가 있으면 재초기화 필요
+            # (기존 10개 감정 데이터가 남아있을 수 있음)
+            return True
+        
+        return False
+    
+    def _auto_initialize_if_needed(self) -> None:
+        """
+        벡터 스토어가 비어있거나 기존 데이터를 사용 중이면 자동으로 초기화
+        """
+        if self._needs_reinitialization():
+            print("\n" + "=" * 50)
+            print("벡터 스토어 자동 초기화 시작...")
+            print("=" * 50)
+            try:
+                self.initialize_from_data()
+                print("✅ 벡터 스토어 자동 초기화 완료!")
+                print("=" * 50 + "\n")
+            except Exception as e:
+                print(f"⚠️ 벡터 스토어 자동 초기화 실패: {str(e)}")
+                print("수동으로 /api/init 엔드포인트를 호출하여 초기화하세요.")
+                print("=" * 50 + "\n")
     
     def get_count(self) -> int:
         """

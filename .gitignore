@@ -1,2 +1,9 @@
 .idea/
 .cursorrules
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+# Thumbnails
+._*
