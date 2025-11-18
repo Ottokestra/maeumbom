@@ -26,32 +26,32 @@
   },
   {
     "text": "마음이 편안하고 안정적이에요",
-    "emotion": "calmness",
+    "emotion": "relief",
     "intensity": 4
   },
   {
     "text": "요즘 마음의 평화를 찾은 것 같아요",
-    "emotion": "calmness",
+    "emotion": "relief",
     "intensity": 4
   },
   {
     "text": "걱정이 줄어들고 차분해졌어요",
-    "emotion": "calmness",
+    "emotion": "relief",
     "intensity": 3
   },
   {
     "text": "명상을 하고 나니 마음이 고요해요",
-    "emotion": "calmness",
+    "emotion": "relief",
     "intensity": 5
   },
   {
     "text": "오늘은 특별히 평온한 하루였어요",
-    "emotion": "calmness",
+    "emotion": "relief",
     "intensity": 4
   },
   {
     "text": "요즘 너무 우울하고 기운이 없어요",
-    "emotion": "sadness",
+    "emotion": "depression",
     "intensity": 4
   },
   {
@@ -66,12 +66,12 @@
   },
   {
     "text": "모든 게 의미 없게 느껴져요",
-    "emotion": "sadness",
+    "emotion": "depression",
     "intensity": 5
   },
   {
     "text": "가끔 우울한 기분이 들어요",
-    "emotion": "sadness",
+    "emotion": "depression",
     "intensity": 3
   },
   {
@@ -101,77 +101,77 @@
   },
   {
     "text": "밤에 잠을 못 자서 너무 불안해요",
-    "emotion": "anxiety",
+    "emotion": "fear",
     "intensity": 4
   },
   {
     "text": "건강이 걱정되어서 불안해요",
-    "emotion": "anxiety",
+    "emotion": "fear",
     "intensity": 5
   },
   {
     "text": "앞으로 어떻게 될지 두려워요",
-    "emotion": "anxiety",
+    "emotion": "fear",
     "intensity": 4
   },
   {
     "text": "심장이 두근거리고 불안해요",
-    "emotion": "anxiety",
+    "emotion": "fear",
     "intensity": 5
   },
   {
     "text": "막연한 불안감이 들어요",
-    "emotion": "anxiety",
+    "emotion": "fear",
     "intensity": 3
   },
   {
     "text": "아무도 저를 이해해주지 않는 것 같아요",
-    "emotion": "loneliness",
+    "emotion": "sadness",
     "intensity": 4
   },
   {
     "text": "혼자라는 생각에 외로워요",
-    "emotion": "loneliness",
+    "emotion": "sadness",
     "intensity": 5
   },
   {
     "text": "친구들과 멀어진 것 같아서 쓸쓸해요",
-    "emotion": "loneliness",
+    "emotion": "sadness",
     "intensity": 4
   },
   {
     "text": "가족들도 저를 이해 못 하는 것 같아요",
-    "emotion": "loneliness",
+    "emotion": "sadness",
     "intensity": 4
   },
   {
     "text": "가끔 외로움을 느껴요",
-    "emotion": "loneliness",
+    "emotion": "sadness",
     "intensity": 3
   },
   {
     "text": "아침에 일어나기가 너무 힘들어요",
-    "emotion": "fatigue",
+    "emotion": "depression",
     "intensity": 4
   },
   {
     "text": "온몸이 무겁고 아무것도 하기 싫어요",
-    "emotion": "fatigue",
+    "emotion": "depression",
     "intensity": 5
   },
   {
     "text": "항상 피곤하고 기력이 없어요",
-    "emotion": "fatigue",
+    "emotion": "depression",
     "intensity": 5
   },
   {
     "text": "조금만 움직여도 너무 지쳐요",
-    "emotion": "fatigue",
+    "emotion": "depression",
     "intensity": 4
   },
   {
     "text": "요즘 쉽게 피곤해져요",
-    "emotion": "fatigue",
+    "emotion": "depression",
     "intensity": 3
   },
   {
@@ -226,27 +226,27 @@
   },
   {
     "text": "아무것도 제대로 되는 게 없어요",
-    "emotion": "frustration",
+    "emotion": "discontent",
     "intensity": 4
   },
   {
     "text": "노력해도 나아지지 않아서 답답해요",
-    "emotion": "frustration",
+    "emotion": "discontent",
     "intensity": 5
   },
   {
     "text": "제 몸을 제가 컨트롤할 수 없어서 좌절감이 들어요",
-    "emotion": "frustration",
+    "emotion": "discontent",
     "intensity": 5
   },
   {
     "text": "이 상황을 벗어날 수 없을 것 같아요",
-    "emotion": "frustration",
+    "emotion": "discontent",
     "intensity": 4
   },
   {
     "text": "뭘 해도 안 되는 것 같아서 답답해요",
-    "emotion": "frustration",
+    "emotion": "discontent",
     "intensity": 4
   },
   {
@@ -256,7 +256,7 @@
   },
   {
     "text": "산책을 하니 마음이 편해졌어요",
-    "emotion": "calmness",
+    "emotion": "relief",
     "intensity": 3
   },
   {
@@ -271,17 +271,17 @@
   },
   {
     "text": "밤만 되면 걱정이 많아져요",
-    "emotion": "anxiety",
+    "emotion": "fear",
     "intensity": 3
   },
   {
     "text": "누군가와 이야기하고 싶어요",
-    "emotion": "loneliness",
+    "emotion": "sadness",
     "intensity": 3
   },
   {
     "text": "낮잠을 자도 피곤해요",
-    "emotion": "fatigue",
+    "emotion": "depression",
     "intensity": 3
   },
   {
@@ -296,7 +296,7 @@
   },
   {
     "text": "이 상황이 답답하고 힘들어요",
-    "emotion": "frustration",
+    "emotion": "discontent",
     "intensity": 3
   },
   {
@@ -306,7 +306,7 @@
   },
   {
     "text": "따뜻한 차를 마시니 마음이 편안해요",
-    "emotion": "calmness",
+    "emotion": "relief",
     "intensity": 3
   },
   {
@@ -321,17 +321,17 @@
   },
   {
     "text": "병원 가는 게 두려워요",
-    "emotion": "anxiety",
+    "emotion": "fear",
     "intensity": 4
   },
   {
     "text": "친구들이 저를 피하는 것 같아요",
-    "emotion": "loneliness",
+    "emotion": "sadness",
     "intensity": 4
   },
   {
     "text": "집안일이 너무 힘들어요",
-    "emotion": "fatigue",
+    "emotion": "depression",
     "intensity": 4
   },
   {
@@ -346,7 +346,7 @@
   },
   {
     "text": "치료를 받아도 나아지지 않아서 좌절돼요",
-    "emotion": "frustration",
+    "emotion": "discontent",
     "intensity": 4
   },
   {
@@ -356,7 +356,7 @@
   },
   {
     "text": "요가를 하고 나니 마음이 차분해요",
-    "emotion": "calmness",
+    "emotion": "relief",
     "intensity": 4
   },
   {
@@ -371,17 +371,17 @@
   },
   {
     "text": "갱년기 증상이 걱정돼요",
-    "emotion": "anxiety",
+    "emotion": "fear",
     "intensity": 4
   },
   {
     "text": "주변에 의지할 사람이 없어요",
-    "emotion": "loneliness",
+    "emotion": "sadness",
     "intensity": 4
   },
   {
     "text": "매일 피곤하고 무기력해요",
-    "emotion": "fatigue",
+    "emotion": "depression",
     "intensity": 4
   },
   {
@@ -396,7 +396,7 @@
   },
   {
     "text": "통제할 수 없는 제 몸이 답답해요",
-    "emotion": "frustration",
+    "emotion": "discontent",
     "intensity": 5
   },
   {
@@ -406,17 +406,17 @@
   },
   {
     "text": "자연 속에 있으니 평화로워요",
-    "emotion": "calmness",
+    "emotion": "relief",
     "intensity": 5
   },
   {
     "text": "외로움이 밀려와요",
-    "emotion": "loneliness",
+    "emotion": "sadness",
     "intensity": 4
   },
   {
     "text": "모든 게 귀찮고 힘들어요",
-    "emotion": "fatigue",
+    "emotion": "depression",
     "intensity": 5
   },
   {
@@ -431,7 +431,7 @@
   },
   {
     "text": "아무리 해도 안 되니 포기하고 싶어요",
-    "emotion": "frustration",
+    "emotion": "discontent",
     "intensity": 5
   },
   {
@@ -441,12 +441,12 @@
   },
   {
     "text": "깊은 숨을 쉬니 안정이 돼요",
-    "emotion": "calmness",
+    "emotion": "relief",
     "intensity": 3
   },
   {
     "text": "무기력하고 우울해요",
-    "emotion": "sadness",
+    "emotion": "depression",
     "intensity": 4
   },
   {
@@ -456,17 +456,17 @@
   },
   {
     "text": "미래가 불안해요",
-    "emotion": "anxiety",
+    "emotion": "fear",
     "intensity": 4
   },
   {
     "text": "아무도 제 마음을 몰라줘요",
-    "emotion": "loneliness",
+    "emotion": "sadness",
     "intensity": 5
   },
   {
     "text": "침대에서 일어나기 싫어요",
-    "emotion": "fatigue",
+    "emotion": "depression",
     "intensity": 4
   },
   {
@@ -481,7 +481,7 @@
   },
   {
     "text": "희망이 보이지 않아요",
-    "emotion": "frustration",
+    "emotion": "discontent",
     "intensity": 5
   },
   {
@@ -587,112 +587,112 @@
   {
     "text": "이렇게 조용한 날이 너무 좋아.",
     "intensity": 5,
-    "emotion": "calmness"
+    "emotion": "relief"
   },
   {
     "text": "이제는 다들 알아서 잘 해주니까 편해.",
     "intensity": 4,
-    "emotion": "calmness"
+    "emotion": "relief"
   },
   {
     "text": "혼자 있는 시간이 정말 소중해.",
     "intensity": 5,
-    "emotion": "calmness"
+    "emotion": "relief"
   },
   {
     "text": "아무 생각 없이 차 한 잔 마시는 게 이렇게 행복할 줄 몰랐어.",
     "intensity": 4,
-    "emotion": "calmness"
+    "emotion": "relief"
   },
   {
     "text": "가끔은 이렇게 느긋하게 쉬는 것도 필요해.",
     "intensity": 3,
-    "emotion": "calmness"
+    "emotion": "relief"
   },
   {
     "text": "음악 들으면서 가만히 있는 게 정말 평화로워.",
     "intensity": 4,
-    "emotion": "calmness"
+    "emotion": "relief"
   },
   {
     "text": "마음이 편해지니까 이렇게 하루가 더 길게 느껴져.",
     "intensity": 5,
-    "emotion": "calmness"
+    "emotion": "relief"
   },
   {
     "text": "요즘은 작은 행복을 더 잘 느끼게 되는 것 같아.",
     "intensity": 4,
-    "emotion": "calmness"
+    "emotion": "relief"
   },
   {
     "text": "그냥 이렇게 앉아있는 것만으로도 충분해.",
     "intensity": 3,
-    "emotion": "calmness"
+    "emotion": "relief"
   },
   {
     "text": "이렇게 맑은 날씨에 산책하면 기분 좋아져.",
     "intensity": 4,
-    "emotion": "calmness"
+    "emotion": "relief"
   },
   {
     "text": "주말에 아무 계획 없이 쉬는 게 정말 좋더라.",
     "intensity": 5,
-    "emotion": "calmness"
+    "emotion": "relief"
   },
   {
     "text": "불필요한 스트레스가 줄어드는 느낌이야.",
     "intensity": 3,
-    "emotion": "calmness"
+    "emotion": "relief"
   },
   {
     "text": "어떤 일에 대해서도 크게 신경 쓰지 않게 됐어.",
     "intensity": 4,
-    "emotion": "calmness"
+    "emotion": "relief"
   },
   {
     "text": "가끔은 그냥 아무것도 안 하고 싶어.",
     "intensity": 2,
-    "emotion": "calmness"
+    "emotion": "relief"
   },
   {
     "text": "이젠 나 자신을 더 사랑하게 된 것 같아.",
     "intensity": 5,
-    "emotion": "calmness"
+    "emotion": "relief"
   },
   {
     "text": "식사 후에 차 한 잔이 이렇게 좋을 수가!",
     "intensity": 4,
-    "emotion": "calmness"
+    "emotion": "relief"
   },
   {
     "text": "이제는 내 감정이 더 솔직해진 것 같아.",
     "intensity": 3,
-    "emotion": "calmness"
+    "emotion": "relief"
   },
   {
     "text": "주변의 작은 것들에 감사하게 돼.",
     "intensity": 4,
-    "emotion": "calmness"
+    "emotion": "relief"
   },
   {
     "text": "소소한 일상 속에서 행복을 찾는 게 좋더라.",
     "intensity": 5,
-    "emotion": "calmness"
+    "emotion": "relief"
   },
   {
     "text": "내 마음이 이렇게 한결 편해진 것 같아.",
     "intensity": 4,
-    "emotion": "calmness"
+    "emotion": "relief"
   },
   {
     "text": "이제는 나 자신에게 더 집중할 시간이 생겼어.",
     "intensity": 3,
-    "emotion": "calmness"
+    "emotion": "relief"
   },
   {
     "text": "요즘 왜 이렇게 우울하지? 아무 이유 없이 눈물이 나.",
     "intensity": 4,
-    "emotion": "sadness"
+    "emotion": "depression"
   },
   {
     "text": "친구들이랑 연락도 잘 안 되니까 점점 외로워져.",
@@ -732,7 +732,7 @@
   {
     "text": "무기력한 하루하루가 반복되니까 정말 힘들어.",
     "intensity": 4,
-    "emotion": "sadness"
+    "emotion": "depression"
   },
   {
     "text": "예전처럼 행복한 순간이 없어서 그리워.",
@@ -742,7 +742,7 @@
   {
     "text": "가끔은 그냥 아무것도 하고 싶지 않아.",
     "intensity": 2,
-    "emotion": "sadness"
+    "emotion": "depression"
   },
   {
     "text": "누군가 나를 이해해줄 사람이 그리워.",
@@ -902,312 +902,312 @@
   {
     "text": "요즘 몸이 너무 이상해, 뭔가 큰일 날 것 같아.",
     "intensity": 5,
-    "emotion": "anxiety"
+    "emotion": "fear"
   },
   {
     "text": "갑자기 열이 나거나 해서 불안해.",
     "intensity": 4,
-    "emotion": "anxiety"
+    "emotion": "fear"
   },
   {
     "text": "이런 기분이 계속되면 어떻게 해야 할지 모르겠어.",
     "intensity": 4,
-    "emotion": "anxiety"
+    "emotion": "fear"
   },
   {
     "text": "내가 다 잃어버린 것 같아, 정말 두려워.",
     "intensity": 5,
-    "emotion": "anxiety"
+    "emotion": "fear"
   },
   {
     "text": "가족들이 내 기분을 이해해주지 않으면 어쩌지?",
     "intensity": 3,
-    "emotion": "anxiety"
+    "emotion": "fear"
   },
   {
     "text": "다른 사람들은 괜찮아 보이는데, 나만 힘든 것 같아.",
     "intensity": 3,
-    "emotion": "anxiety"
+    "emotion": "fear"
   },
   {
     "text": "이 나이에 새로운 일에 도전하는 게 맞나 싶어.",
     "intensity": 4,
-    "emotion": "anxiety"
+    "emotion": "fear"
   },
   {
     "text": "주변에서 갱년기 얘기 들으면 불안해져.",
     "intensity": 2,
-    "emotion": "anxiety"
+    "emotion": "fear"
   },
   {
     "text": "내가 이렇게 힘든 거 누구도 모를까 봐 걱정돼.",
     "intensity": 3,
-    "emotion": "anxiety"
+    "emotion": "fear"
   },
   {
     "text": "친구들한테 말해도 잘 이해해줄까?",
     "intensity": 2,
-    "emotion": "anxiety"
+    "emotion": "fear"
   },
   {
     "text": "이제부터 더 아프면 어쩌지, 그 생각만 해도 무서워.",
     "intensity": 5,
-    "emotion": "anxiety"
+    "emotion": "fear"
   },
   {
     "text": "내가 건강을 잃으면 가족이 힘들까 봐 걱정이야.",
     "intensity": 4,
-    "emotion": "anxiety"
+    "emotion": "fear"
   },
   {
     "text": "어떻게 나 스스로를 잘 관리할 수 있을지 모르겠어.",
     "intensity": 3,
-    "emotion": "anxiety"
+    "emotion": "fear"
   },
   {
     "text": "무기력한 내 모습이 너무 싫어.",
     "intensity": 4,
-    "emotion": "anxiety"
+    "emotion": "fear"
   },
   {
     "text": "아무것도 하기 싫은 기분이 드는 게 너무 불안해.",
     "intensity": 4,
-    "emotion": "anxiety"
+    "emotion": "fear"
   },
   {
     "text": "여기서 더 나빠지면 어떻게 하지?",
     "intensity": 5,
-    "emotion": "anxiety"
+    "emotion": "fear"
   },
   {
     "text": "이런 기분이 계속되면 나중에 어떻게 될지 걱정이야.",
     "intensity": 4,
-    "emotion": "anxiety"
+    "emotion": "fear"
   },
   {
     "text": "사람들 앞에서 웃는 게 힘들어져서 걱정이야.",
     "intensity": 3,
-    "emotion": "anxiety"
+    "emotion": "fear"
   },
   {
     "text": "가끔 나도 모르게 우울해질까 봐 두려워.",
     "intensity": 3,
-    "emotion": "anxiety"
+    "emotion": "fear"
   },
   {
     "text": "이제는 나를 위한 시간이 더 필요할 것 같아, 하지만 그게 맞는 건지 불안해.",
     "intensity": 4,
-    "emotion": "anxiety"
+    "emotion": "fear"
   },
   {
     "text": "요즘 친구들도 다 바빠서 정말 외로워.",
     "intensity": 4,
-    "emotion": "loneliness"
+    "emotion": "sadness"
   },
   {
     "text": "가끔은 예전처럼 누군가와 수다 떨고 싶어.",
     "intensity": 3,
-    "emotion": "loneliness"
+    "emotion": "sadness"
   },
   {
     "text": "혼자 집에 있으면 너무 적적해.",
     "intensity": 5,
-    "emotion": "loneliness"
+    "emotion": "sadness"
   },
   {
     "text": "예전에는 모임도 자주 했었는데, 이제는 모두 사라진 것 같아.",
     "intensity": 4,
-    "emotion": "loneliness"
+    "emotion": "sadness"
   },
   {
     "text": "친구들 그리워. 예전처럼 만나서 웃었던 시간이 그립다.",
     "intensity": 5,
-    "emotion": "loneliness"
+    "emotion": "sadness"
   },
   {
     "text": "가족들은 곁에 있지만, 뭔가 허전해.",
     "intensity": 3,
-    "emotion": "loneliness"
+    "emotion": "sadness"
   },
   {
     "text": "누군가와 마음을 나누고 싶어도 쉽지가 않아.",
     "intensity": 4,
-    "emotion": "loneliness"
+    "emotion": "sadness"
   },
   {
     "text": "가끔 혼자 있는 시간이 너무 길어.",
     "intensity": 2,
-    "emotion": "loneliness"
+    "emotion": "sadness"
   },
   {
     "text": "예전처럼 길게 통화할 친구가 없어서 아쉬워.",
     "intensity": 3,
-    "emotion": "loneliness"
+    "emotion": "sadness"
   },
   {
     "text": "오랜만에 외출했는데도 혼자라 마음이 쓸쓸해.",
     "intensity": 4,
-    "emotion": "loneliness"
+    "emotion": "sadness"
   },
   {
     "text": "그냥 누군가 내 이야기를 들어줬으면 좋겠어.",
     "intensity": 5,
-    "emotion": "loneliness"
+    "emotion": "sadness"
   },
   {
     "text": "혼자 있는 게 이렇게 외로운 줄 몰랐어.",
     "intensity": 4,
-    "emotion": "loneliness"
+    "emotion": "sadness"
   },
   {
     "text": "문득 예전에 즐겁게 놀던 날들이 떠올라.",
     "intensity": 3,
-    "emotion": "loneliness"
+    "emotion": "sadness"
   },
   {
     "text": "가끔은 그리운 마음이 너무 커져.",
     "intensity": 5,
-    "emotion": "loneliness"
+    "emotion": "sadness"
   },
   {
     "text": "이런 기분이 드는 게 나뿐인가 싶기도 해.",
     "intensity": 3,
-    "emotion": "loneliness"
+    "emotion": "sadness"
   },
   {
     "text": "소소한 일상도 함께 나눌 사람이 그립다.",
     "intensity": 4,
-    "emotion": "loneliness"
+    "emotion": "sadness"
   },
   {
     "text": "혼자서 TV 보면서도 외로움이 밀려와.",
     "intensity": 2,
-    "emotion": "loneliness"
+    "emotion": "sadness"
   },
   {
     "text": "가족들한테도 말 못하는 외로움이 있어.",
     "intensity": 4,
-    "emotion": "loneliness"
+    "emotion": "sadness"
   },
   {
     "text": "주변이 다 변화하니 나만 고립된 기분이야.",
     "intensity": 5,
-    "emotion": "loneliness"
+    "emotion": "sadness"
   },
   {
     "text": "가끔은 너무 외로워서 눈물이 날 것 같아.",
     "intensity": 5,
-    "emotion": "loneliness"
+    "emotion": "sadness"
   },
   {
     "text": "그리운 사람들한테 연락해볼까 고민 중이야.",
     "intensity": 3,
-    "emotion": "loneliness"
+    "emotion": "sadness"
   },
   {
     "text": "오늘 하루 너무 힘들었어, 아무것도 하기 싫어.",
     "intensity": 5,
-    "emotion": "fatigue"
+    "emotion": "depression"
   },
   {
     "text": "요즘 자꾸 피곤해, 기운이 하나도 안 나.",
     "intensity": 4,
-    "emotion": "fatigue"
+    "emotion": "depression"
   },
   {
     "text": "아침에 일어나기가 점점 힘들어져.",
     "intensity": 4,
-    "emotion": "fatigue"
+    "emotion": "depression"
   },
   {
     "text": "이런 피로감이 도대체 언제까지 계속될까?",
     "intensity": 3,
-    "emotion": "fatigue"
+    "emotion": "depression"
   },
   {
     "text": "집안일이 너무 귀찮고 무기력해.",
     "intensity": 3,
-    "emotion": "fatigue"
+    "emotion": "depression"
   },
   {
     "text": "좀 쉬어야 할 것 같은데, 계속 피곤해.",
     "intensity": 4,
-    "emotion": "fatigue"
+    "emotion": "depression"
   },
   {
     "text": "하루 종일 아무것도 안 하고 누워 있고 싶어.",
     "intensity": 5,
-    "emotion": "fatigue"
+    "emotion": "depression"
   },
   {
     "text": "요즘은 식사하는 것도 귀찮아.",
     "intensity": 3,
-    "emotion": "fatigue"
+    "emotion": "depression"
   },
   {
     "text": "조금만 움직여도 땀이 나고 힘들어.",
     "intensity": 4,
-    "emotion": "fatigue"
+    "emotion": "depression"
   },
   {
     "text": "일할 때마다 힘이 빠지는 느낌이야.",
     "intensity": 4,
-    "emotion": "fatigue"
+    "emotion": "depression"
   },
   {
     "text": "기운이 없어, 그냥 누워있고 싶어.",
     "intensity": 5,
-    "emotion": "fatigue"
+    "emotion": "depression"
   },
   {
     "text": "아무리 자도 피로가 안 풀리는 것 같아.",
     "intensity": 5,
-    "emotion": "fatigue"
+    "emotion": "depression"
   },
   {
     "text": "사람들 만나는 것도 점점 싫어지네.",
     "intensity": 3,
-    "emotion": "fatigue"
+    "emotion": "depression"
   },
   {
     "text": "요즘은 친구들 만나는 것도 힘들어.",
     "intensity": 3,
-    "emotion": "fatigue"
+    "emotion": "depression"
   },
   {
     "text": "나만 이렇게 피곤한 건 아니겠지?",
     "intensity": 2,
-    "emotion": "fatigue"
+    "emotion": "depression"
   },
   {
     "text": "어쩐지 요즘에 에너지가 바닥인 것 같아.",
     "intensity": 4,
-    "emotion": "fatigue"
+    "emotion": "depression"
   },
   {
     "text": "몸이 무겁고 내 몸 아닌 것 같아.",
     "intensity": 5,
-    "emotion": "fatigue"
+    "emotion": "depression"
   },
   {
     "text": "일하고 나면 한숨만 나와.",
     "intensity": 4,
-    "emotion": "fatigue"
+    "emotion": "depression"
   },
   {
     "text": "이젠 출근하는 것도 힘이 드네.",
     "intensity": 4,
-    "emotion": "fatigue"
+    "emotion": "depression"
   },
   {
     "text": "단순한 일도 너무 힘들게 느껴져.",
     "intensity": 3,
-    "emotion": "fatigue"
+    "emotion": "depression"
   },
   {
     "text": "오늘은 그냥 아무것도 안 하고 싶어.",
     "intensity": 5,
-    "emotion": "fatigue"
+    "emotion": "depression"
   },
   {
     "text": "요즘 들어서 왜 이렇게 감정이 쉽게 흔들리지? 혼란스러워.",
@@ -1422,107 +1422,107 @@
   {
     "text": "이런 기분 진짜 싫다, 왜 이렇게 무기력하지?",
     "intensity": 4,
-    "emotion": "frustration"
+    "emotion": "discontent"
   },
   {
     "text": "요즘 힘이 하나도 안 나, 그냥 다 포기하고 싶어.",
     "intensity": 5,
-    "emotion": "frustration"
+    "emotion": "discontent"
   },
   {
     "text": "막상 일하려고 해도 몸이 말이 아닐 때가 많아.",
     "intensity": 3,
-    "emotion": "frustration"
+    "emotion": "discontent"
   },
   {
     "text": "아무리 해도 해결이 안 되는 것 같아, 너무 답답해.",
     "intensity": 4,
-    "emotion": "frustration"
+    "emotion": "discontent"
   },
   {
     "text": "왜 이렇게 괜히 짜증이 나지? 나도 모르겠어.",
     "intensity": 3,
-    "emotion": "frustration"
+    "emotion": "discontent"
   },
   {
     "text": "가끔은 아무것도 하기 싫어, 그냥 누워있고 싶어.",
     "intensity": 5,
-    "emotion": "frustration"
+    "emotion": "discontent"
   },
   {
     "text": "이 나이에 이렇게 힘들 줄은 몰랐어, 너무 허탈해.",
     "intensity": 4,
-    "emotion": "frustration"
+    "emotion": "discontent"
   },
   {
     "text": "주변 사람들은 다 괜찮아 보이는데, 나만 왜 이럴까?",
     "intensity": 3,
-    "emotion": "frustration"
+    "emotion": "discontent"
   },
   {
     "text": "속이 답답해서 어떻게 해야 할지 모르겠어.",
     "intensity": 4,
-    "emotion": "frustration"
+    "emotion": "discontent"
   },
   {
     "text": "할 일이 많은데, 기운이 없어서 못 하겠어.",
     "intensity": 3,
-    "emotion": "frustration"
+    "emotion": "discontent"
   },
   {
     "text": "이런 기분이 계속되면 너무 힘든데, 어떻게 해야 하지?",
     "intensity": 4,
-    "emotion": "frustration"
+    "emotion": "discontent"
   },
   {
     "text": "가끔은 나 자신이 너무 싫어, 왜 이렇게 약해졌지?",
     "intensity": 5,
-    "emotion": "frustration"
+    "emotion": "discontent"
   },
   {
     "text": "뭔가를 하려 해도 자꾸 귀찮아져, 이게 정상인가?",
     "intensity": 2,
-    "emotion": "frustration"
+    "emotion": "discontent"
   },
   {
     "text": "하루하루가 너무 힘들어, 정말 지치네.",
     "intensity": 5,
-    "emotion": "frustration"
+    "emotion": "discontent"
   },
   {
     "text": "의욕이 없어져서 뭘 해야 할지 잘 모르겠어.",
     "intensity": 3,
-    "emotion": "frustration"
+    "emotion": "discontent"
   },
   {
     "text": "이런 감정이 계속될까 봐 두렵기도 해.",
     "intensity": 4,
-    "emotion": "frustration"
+    "emotion": "discontent"
   },
   {
     "text": "가끔은 아무도 이해 못 할 것 같아, 외로워.",
     "intensity": 3,
-    "emotion": "frustration"
+    "emotion": "discontent"
   },
   {
     "text": "나만 이렇게 힘든 건가? 주변은 다 괜찮은 것 같은데.",
     "intensity": 2,
-    "emotion": "frustration"
+    "emotion": "discontent"
   },
   {
     "text": "정말 내 인생이 이렇게 힘들 줄이야, 믿을 수가 없어.",
     "intensity": 5,
-    "emotion": "frustration"
+    "emotion": "discontent"
   },
   {
     "text": "무기력해서 아무것도 하고 싶지 않아, 그냥 덮어두고 싶어.",
     "intensity": 4,
-    "emotion": "frustration"
+    "emotion": "discontent"
   },
   {
     "text": "이렇게 힘들어도 아무한테도 말할 수가 없어, 답답해.",
     "intensity": 4,
-    "emotion": "frustration"
+    "emotion": "discontent"
   },
   {
     "text": "오늘따라 모든 게 순조롭게 풀려서 기분이 정말 좋아.",
@@ -1622,107 +1622,107 @@
   {
     "text": "이렇게 조용하고 평화로운 시간이 너무 좋아.",
     "intensity": 5,
-    "emotion": "calmness"
+    "emotion": "relief"
   },
   {
     "text": "명상을 하고 나니 마음이 한결 편해졌어.",
     "intensity": 4,
-    "emotion": "calmness"
+    "emotion": "relief"
   },
   {
     "text": "따뜻한 차를 마시며 여유롭게 시간을 보내니 좋아.",
     "intensity": 4,
-    "emotion": "calmness"
+    "emotion": "relief"
   },
   {
     "text": "혼자만의 시간을 가지니까 마음이 차분해져.",
     "intensity": 5,
-    "emotion": "calmness"
+    "emotion": "relief"
   },
   {
     "text": "자연 속에서 시간을 보내니 마음이 고요해져.",
     "intensity": 4,
-    "emotion": "calmness"
+    "emotion": "relief"
   },
   {
     "text": "요즘은 작은 일에도 크게 신경 쓰지 않게 됐어.",
     "intensity": 3,
-    "emotion": "calmness"
+    "emotion": "relief"
   },
   {
     "text": "마음의 여유를 갖게 되어서 좋아.",
     "intensity": 4,
-    "emotion": "calmness"
+    "emotion": "relief"
   },
   {
     "text": "이렇게 느긋하게 쉬는 시간이 필요했어.",
     "intensity": 4,
-    "emotion": "calmness"
+    "emotion": "relief"
   },
   {
     "text": "스트레스 없이 하루를 보내니 편안해.",
     "intensity": 3,
-    "emotion": "calmness"
+    "emotion": "relief"
   },
   {
     "text": "가족들과 평화롭게 시간을 보내니 좋아.",
     "intensity": 4,
-    "emotion": "calmness"
+    "emotion": "relief"
   },
   {
     "text": "요즘은 내 감정을 더 잘 이해하게 됐어.",
     "intensity": 3,
-    "emotion": "calmness"
+    "emotion": "relief"
   },
   {
     "text": "이렇게 조용한 날이 너무 소중해.",
     "intensity": 5,
-    "emotion": "calmness"
+    "emotion": "relief"
   },
   {
     "text": "마음의 평화를 찾은 것 같아서 좋아.",
     "intensity": 4,
-    "emotion": "calmness"
+    "emotion": "relief"
   },
   {
     "text": "불필요한 걱정을 덜어내니까 편해졌어.",
     "intensity": 3,
-    "emotion": "calmness"
+    "emotion": "relief"
   },
   {
     "text": "이렇게 여유롭게 하루를 보내는 게 좋아.",
     "intensity": 4,
-    "emotion": "calmness"
+    "emotion": "relief"
   },
   {
     "text": "주변의 작은 것들에 감사하게 돼.",
     "intensity": 4,
-    "emotion": "calmness"
+    "emotion": "relief"
   },
   {
     "text": "마음이 한결 가벼워진 느낌이야.",
     "intensity": 3,
-    "emotion": "calmness"
+    "emotion": "relief"
   },
   {
     "text": "이렇게 차분한 기분이 드는 게 좋아.",
     "intensity": 4,
-    "emotion": "calmness"
+    "emotion": "relief"
   },
   {
     "text": "요즘은 내 자신을 더 사랑하게 됐어.",
     "intensity": 5,
-    "emotion": "calmness"
+    "emotion": "relief"
   },
   {
     "text": "평화로운 하루가 계속되면 좋겠어.",
     "intensity": 4,
-    "emotion": "calmness"
+    "emotion": "relief"
   },
   {
     "text": "요즘 자꾸 우울한 기분이 들어서 힘들어.",
     "intensity": 4,
-    "emotion": "sadness"
+    "emotion": "depression"
   },
   {
     "text": "아무 이유 없이 눈물이 나려고 해.",
@@ -1737,7 +1737,7 @@
   {
     "text": "모든 게 의미 없게 느껴져서 슬퍼.",
     "intensity": 5,
-    "emotion": "sadness"
+    "emotion": "depression"
   },
   {
     "text": "가족들과의 거리가 멀어진 것 같아서 슬퍼.",
@@ -1762,7 +1762,7 @@
   {
     "text": "무기력한 하루하루가 반복되니까 힘들어.",
     "intensity": 4,
-    "emotion": "sadness"
+    "emotion": "depression"
   },
   {
     "text": "누군가 나를 이해해줄 사람이 그리워.",
@@ -1772,7 +1772,7 @@
   {
     "text": "가끔은 그냥 아무것도 하고 싶지 않아.",
     "intensity": 2,
-    "emotion": "sadness"
+    "emotion": "depression"
   },
   {
     "text": "이런 감정이 언제까지 계속될까 걱정돼.",
@@ -1917,287 +1917,287 @@
   {
     "text": "요즘 몸이 너무 이상해, 뭔가 큰일 날 것 같아.",
     "intensity": 5,
-    "emotion": "anxiety"
+    "emotion": "fear"
   },
   {
     "text": "갑자기 열이 나거나 해서 불안해.",
     "intensity": 4,
-    "emotion": "anxiety"
+    "emotion": "fear"
   },
   {
     "text": "이런 기분이 계속되면 어떻게 해야 할지 모르겠어.",
     "intensity": 4,
-    "emotion": "anxiety"
+    "emotion": "fear"
   },
   {
     "text": "내가 다 잃어버린 것 같아, 정말 두려워.",
     "intensity": 5,
-    "emotion": "anxiety"
+    "emotion": "fear"
   },
   {
     "text": "가족들이 내 기분을 이해해주지 않으면 어쩌지?",
     "intensity": 3,
-    "emotion": "anxiety"
+    "emotion": "fear"
   },
   {
     "text": "다른 사람들은 괜찮아 보이는데 나만 힘든 것 같아.",
     "intensity": 3,
-    "emotion": "anxiety"
+    "emotion": "fear"
   },
   {
     "text": "이 나이에 새로운 일에 도전하는 게 맞나 싶어.",
     "intensity": 4,
-    "emotion": "anxiety"
+    "emotion": "fear"
   },
   {
     "text": "주변에서 갱년기 얘기 들으면 불안해져.",
     "intensity": 2,
-    "emotion": "anxiety"
+    "emotion": "fear"
   },
   {
     "text": "내가 이렇게 힘든 거 누구도 모를까 봐 걱정돼.",
     "intensity": 3,
-    "emotion": "anxiety"
+    "emotion": "fear"
   },
   {
     "text": "친구들한테 말해도 잘 이해해줄까?",
     "intensity": 2,
-    "emotion": "anxiety"
+    "emotion": "fear"
   },
   {
     "text": "이제부터 더 아프면 어쩌지, 그 생각만 해도 무서워.",
     "intensity": 5,
-    "emotion": "anxiety"
+    "emotion": "fear"
   },
   {
     "text": "내가 건강을 잃으면 가족이 힘들까 봐 걱정이야.",
     "intensity": 4,
-    "emotion": "anxiety"
+    "emotion": "fear"
   },
   {
     "text": "어떻게 나 스스로를 잘 관리할 수 있을지 모르겠어.",
     "intensity": 3,
-    "emotion": "anxiety"
+    "emotion": "fear"
   },
   {
     "text": "무기력한 내 모습이 너무 싫어.",
     "intensity": 4,
-    "emotion": "anxiety"
+    "emotion": "fear"
   },
   {
     "text": "아무것도 하기 싫은 기분이 드는 게 너무 불안해.",
     "intensity": 4,
-    "emotion": "anxiety"
+    "emotion": "fear"
   },
   {
     "text": "여기서 더 나빠지면 어떻게 하지?",
     "intensity": 5,
-    "emotion": "anxiety"
+    "emotion": "fear"
   },
   {
     "text": "이런 기분이 계속되면 나중에 어떻게 될지 걱정이야.",
     "intensity": 4,
-    "emotion": "anxiety"
+    "emotion": "fear"
   },
   {
     "text": "사람들 앞에서 웃는 게 힘들어져서 걱정이야.",
     "intensity": 3,
-    "emotion": "anxiety"
+    "emotion": "fear"
   },
   {
     "text": "가끔 나도 모르게 우울해질까 봐 두려워.",
     "intensity": 3,
-    "emotion": "anxiety"
+    "emotion": "fear"
   },
   {
     "text": "요즘 친구들도 다 바빠서 정말 외로워.",
     "intensity": 4,
-    "emotion": "loneliness"
+    "emotion": "sadness"
   },
   {
     "text": "가끔은 예전처럼 누군가와 수다 떨고 싶어.",
     "intensity": 3,
-    "emotion": "loneliness"
+    "emotion": "sadness"
   },
   {
     "text": "혼자 집에 있으면 너무 적적해.",
     "intensity": 5,
-    "emotion": "loneliness"
+    "emotion": "sadness"
   },
   {
     "text": "예전에는 모임도 자주 했었는데 이제는 모두 사라진 것 같아.",
     "intensity": 4,
-    "emotion": "loneliness"
+    "emotion": "sadness"
   },
   {
     "text": "친구들 그리워, 예전처럼 만나서 웃었던 시간이 그립다.",
     "intensity": 5,
-    "emotion": "loneliness"
+    "emotion": "sadness"
   },
   {
     "text": "가족들은 곁에 있지만 뭔가 허전해.",
     "intensity": 3,
-    "emotion": "loneliness"
+    "emotion": "sadness"
   },
   {
     "text": "누군가와 마음을 나누고 싶어도 쉽지가 않아.",
     "intensity": 4,
-    "emotion": "loneliness"
+    "emotion": "sadness"
   },
   {
     "text": "가끔 혼자 있는 시간이 너무 길어.",
     "intensity": 2,
-    "emotion": "loneliness"
+    "emotion": "sadness"
   },
   {
     "text": "예전처럼 길게 통화할 친구가 없어서 아쉬워.",
     "intensity": 3,
-    "emotion": "loneliness"
+    "emotion": "sadness"
   },
   {
     "text": "오랜만에 외출했는데도 혼자라 마음이 쓸쓸해.",
     "intensity": 4,
-    "emotion": "loneliness"
+    "emotion": "sadness"
   },
   {
     "text": "그냥 누군가 내 이야기를 들어줬으면 좋겠어.",
     "intensity": 5,
-    "emotion": "loneliness"
+    "emotion": "sadness"
   },
   {
     "text": "혼자 있는 게 이렇게 외로운 줄 몰랐어.",
     "intensity": 4,
-    "emotion": "loneliness"
+    "emotion": "sadness"
   },
   {
     "text": "문득 예전에 즐겁게 놀던 날들이 떠올라.",
     "intensity": 3,
-    "emotion": "loneliness"
+    "emotion": "sadness"
   },
   {
     "text": "가끔은 그리운 마음이 너무 커져.",
     "intensity": 5,
-    "emotion": "loneliness"
+    "emotion": "sadness"
   },
   {
     "text": "이런 기분이 드는 게 나뿐인가 싶기도 해.",
     "intensity": 3,
-    "emotion": "loneliness"
+    "emotion": "sadness"
   },
   {
     "text": "소소한 일상도 함께 나눌 사람이 그립다.",
     "intensity": 4,
-    "emotion": "loneliness"
+    "emotion": "sadness"
   },
   {
     "text": "혼자서 TV 보면서도 외로움이 밀려와.",
     "intensity": 2,
-    "emotion": "loneliness"
+    "emotion": "sadness"
   },
   {
     "text": "가족들한테도 말 못하는 외로움이 있어.",
     "intensity": 4,
-    "emotion": "loneliness"
+    "emotion": "sadness"
   },
   {
     "text": "주변이 다 변화하니 나만 고립된 기분이야.",
     "intensity": 5,
-    "emotion": "loneliness"
+    "emotion": "sadness"
   },
   {
     "text": "오늘 하루 너무 힘들었어, 아무것도 하기 싫어.",
     "intensity": 5,
-    "emotion": "fatigue"
+    "emotion": "depression"
   },
   {
     "text": "요즘 자꾸 피곤해, 기운이 하나도 안 나.",
     "intensity": 4,
-    "emotion": "fatigue"
+    "emotion": "depression"
   },
   {
     "text": "아침에 일어나기가 점점 힘들어져.",
     "intensity": 4,
-    "emotion": "fatigue"
+    "emotion": "depression"
   },
   {
     "text": "이런 피로감이 도대체 언제까지 계속될까?",
     "intensity": 3,
-    "emotion": "fatigue"
+    "emotion": "depression"
   },
   {
     "text": "집안일이 너무 귀찮고 무기력해.",
     "intensity": 3,
-    "emotion": "fatigue"
+    "emotion": "depression"
   },
   {
     "text": "좀 쉬어야 할 것 같은데 계속 피곤해.",
     "intensity": 4,
-    "emotion": "fatigue"
+    "emotion": "depression"
   },
   {
     "text": "하루 종일 아무것도 안 하고 누워 있고 싶어.",
     "intensity": 5,
-    "emotion": "fatigue"
+    "emotion": "depression"
   },
   {
     "text": "요즘은 식사하는 것도 귀찮아.",
     "intensity": 3,
-    "emotion": "fatigue"
+    "emotion": "depression"
   },
   {
     "text": "조금만 움직여도 땀이 나고 힘들어.",
     "intensity": 4,
-    "emotion": "fatigue"
+    "emotion": "depression"
   },
   {
     "text": "일할 때마다 힘이 빠지는 느낌이야.",
     "intensity": 4,
-    "emotion": "fatigue"
+    "emotion": "depression"
   },
   {
     "text": "기운이 없어, 그냥 누워있고 싶어.",
     "intensity": 5,
-    "emotion": "fatigue"
+    "emotion": "depression"
   },
   {
     "text": "아무리 자도 피로가 안 풀리는 것 같아.",
     "intensity": 5,
-    "emotion": "fatigue"
+    "emotion": "depression"
   },
   {
     "text": "사람들 만나는 것도 점점 싫어지네.",
     "intensity": 3,
-    "emotion": "fatigue"
+    "emotion": "depression"
   },
   {
     "text": "요즘은 친구들 만나는 것도 힘들어.",
     "intensity": 3,
-    "emotion": "fatigue"
+    "emotion": "depression"
   },
   {
     "text": "나만 이렇게 피곤한 건 아니겠지?",
     "intensity": 2,
-    "emotion": "fatigue"
+    "emotion": "depression"
   },
   {
     "text": "어쩐지 요즘에 에너지가 바닥인 것 같아.",
     "intensity": 4,
-    "emotion": "fatigue"
+    "emotion": "depression"
   },
   {
     "text": "몸이 무겁고 내 몸 아닌 것 같아.",
     "intensity": 5,
-    "emotion": "fatigue"
+    "emotion": "depression"
   },
   {
     "text": "일하고 나면 한숨만 나와.",
     "intensity": 4,
-    "emotion": "fatigue"
+    "emotion": "depression"
   },
   {
     "text": "이젠 출근하는 것도 힘이 드네.",
     "intensity": 4,
-    "emotion": "fatigue"
+    "emotion": "depression"
   },
   {
     "text": "요즘 들어서 왜 이렇게 감정이 쉽게 흔들리지? 혼란스러워.",
@@ -2372,86 +2372,86 @@
   {
     "text": "이런 기분 진짜 싫다, 왜 이렇게 무기력하지?",
     "intensity": 4,
-    "emotion": "frustration"
+    "emotion": "discontent"
   },
   {
     "text": "요즘 힘이 하나도 안 나, 그냥 다 포기하고 싶어.",
     "intensity": 5,
-    "emotion": "frustration"
+    "emotion": "discontent"
   },
   {
     "text": "막상 일하려고 해도 몸이 말이 아닐 때가 많아.",
     "intensity": 3,
-    "emotion": "frustration"
+    "emotion": "discontent"
   },
   {
     "text": "아무리 해도 해결이 안 되는 것 같아, 너무 답답해.",
     "intensity": 4,
-    "emotion": "frustration"
+    "emotion": "discontent"
   },
   {
     "text": "왜 이렇게 괜히 짜증이 나지? 나도 모르겠어.",
     "intensity": 3,
-    "emotion": "frustration"
+    "emotion": "discontent"
   },
   {
     "text": "가끔은 아무것도 하기 싫어, 그냥 누워있고 싶어.",
     "intensity": 5,
-    "emotion": "frustration"
+    "emotion": "discontent"
   },
   {
     "text": "이 나이에 이렇게 힘들 줄은 몰랐어, 너무 허탈해.",
     "intensity": 4,
-    "emotion": "frustration"
+    "emotion": "discontent"
   },
   {
     "text": "주변 사람들은 다 괜찮아 보이는데 나만 왜 이럴까?",
     "intensity": 3,
-    "emotion": "frustration"
+    "emotion": "discontent"
   },
   {
     "text": "속이 답답해서 어떻게 해야 할지 모르겠어.",
     "intensity": 4,
-    "emotion": "frustration"
+    "emotion": "discontent"
   },
   {
     "text": "할 일이 많은데 기운이 없어서 못 하겠어.",
     "intensity": 3,
-    "emotion": "frustration"
+    "emotion": "discontent"
   },
   {
     "text": "이런 기분이 계속되면 너무 힘든데 어떻게 해야 하지?",
     "intensity": 4,
-    "emotion": "frustration"
+    "emotion": "discontent"
   },
   {
     "text": "가끔은 나 자신이 너무 싫어, 왜 이렇게 약해졌지?",
     "intensity": 5,
-    "emotion": "frustration"
+    "emotion": "discontent"
   },
   {
     "text": "뭔가를 하려 해도 자꾸 귀찮아져, 이게 정상인가?",
     "intensity": 2,
-    "emotion": "frustration"
+    "emotion": "discontent"
   },
   {
     "text": "하루하루가 너무 힘들어, 정말 지치네.",
     "intensity": 5,
-    "emotion": "frustration"
+    "emotion": "discontent"
   },
   {
     "text": "의욕이 없어져서 뭘 해야 할지 잘 모르겠어.",
     "intensity": 3,
-    "emotion": "frustration"
+    "emotion": "discontent"
   },
   {
     "text": "이런 감정이 계속될까 봐 두렵기도 해.",
     "intensity": 4,
-    "emotion": "frustration"
+    "emotion": "discontent"
   },
   {
     "text": "가끔은 아무도 이해 못 할 것 같아, 외로워.",
     "intensity": 3,
-    "emotion": "frustration"
+    "emotion": "discontent"
   }
 ]

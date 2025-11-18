@@ -19,7 +19,8 @@ config_path = src_path / "config.py"
 spec = importlib.util.spec_from_file_location("config", config_path)
 config_module = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(config_module)
-EMOTIONS = config_module.EMOTIONS
+# 17개 감정 코드 사용
+EMOTIONS = config_module.EMOTION_CODES_17
 
 
 class EmotionDataLoader:

@@ -48,6 +48,7 @@ class RAGPipeline:
         """Initialize RAG pipeline"""
         self.vector_store = get_vector_store()
         self.emotion_analyzer = get_emotion_analyzer()
+        # VectorStore 초기화 시 자동으로 데이터 로드 체크가 수행됨
         print("RAG pipeline initialized")
     
     def analyze_emotion(self, text: str) -> Dict[str, Any]:
@@ -60,6 +61,14 @@ class RAGPipeline:
         Returns:
             Dictionary with analysis results
         """
+        # Step 0: 벡터 스토어가 비어있으면 자동 초기화 (안전장치)
+        if self.vector_store.get_count() == 0:
+            print("⚠️ 벡터 스토어가 비어있어 자동 초기화를 시도합니다...")
+            try:
+                self.vector_store.initialize_from_data()
+            except Exception as e:
+                print(f"⚠️ 자동 초기화 실패: {str(e)}")
+        
         # Step 1: Retrieve similar contexts from vector store
         search_results = self.vector_store.search(
             query_text=text,
