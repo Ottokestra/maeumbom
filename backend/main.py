@@ -85,11 +85,12 @@ async def stt_websocket(websocket: WebSocket):
                 if is_speech_end and speech_audio is not None:
                     transcript, quality = engine.whisper.transcribe(speech_audio, callback=None)
                     
-                    if transcript and quality in ["success", "medium"]:
-                        await websocket.send_json({
-                            "text": transcript,
-                            "quality": quality
-                        })
+                    # 모든 품질에 대해 결과 전송 (quality가 안좋으면 text는 null)
+                    response = {
+                        "text": transcript if quality in ["success", "medium"] else None,
+                        "quality": quality
+                    }
+                    await websocket.send_json(response)
                     
                     engine.vad.reset()
             
