@@ -24,6 +24,8 @@ wheels/
 *.egg
 
 # Backend
+**/venv/
+**/.venv/
 backend/.env
 backend/venv/
 backend/.venv/
@@ -75,9 +77,27 @@ tmp/
 !backend/.env.example
 !frontend/.env.example
 
+# Windows reserved device name (ghost file)
+NUL
+backend/NUL
+
 # macOS
 .DS_Store
 .AppleDouble
 .LSOverride
 # Thumbnails
 ._*
+
+# ===== emotion-analysis local vector DB =====
+engine/emotion-analysis/vectordb/
+
+# ===== local test DB & outputs =====
+test_db/
+outputs/
+
+# ===== TTS engine external repo & outputs =====
+engine/text-to-speech/MeloTTS/
+engine/text-to-speech/outputs/
+
+# ===== local debug script =====
+reproduce_error.py
