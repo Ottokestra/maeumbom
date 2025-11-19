@@ -1,13 +1,24 @@
 """
 마음봄 - LangChain Agent v1.0
 
-STT → 감정 분석 → GPT-4o 응답 생성의 전체 플로우를 orchestration하는 Agent
+STT → 감정 분석 → GPT-4o-mini 응답 생성의 전체 플로우를 orchestration하는 Agent
 """
 import os
 import sys
+import logging
 from pathlib import Path
 from typing import Any, Optional
 from datetime import datetime
+
+# 로깅 설정
+logger = logging.getLogger(__name__)
+ENABLE_DEBUG_LOGS = os.getenv("LANGCHAIN_DEBUG", "false").lower() == "true"
+
+if ENABLE_DEBUG_LOGS:
+    logging.basicConfig(
+        level=logging.DEBUG,
+        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    )
 
 # 프로젝트 루트 경로 설정
 project_root = Path(__file__).parent.parent.parent
@@ -18,11 +29,6 @@ from dotenv import load_dotenv
 env_path = project_root / ".env"
 if env_path.exists():
     load_dotenv(dotenv_path=env_path)
-
-# LangChain imports
-from langchain_openai import ChatOpenAI
-from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.output_parsers import StrOutputParser
 
 # 어댑터 imports
 # 직접 실행 시와 모듈로 import 시 모두 작동하도록 처리
@@ -44,12 +50,22 @@ class InMemoryConversationStore:
     
     v1.0에서는 간단한 in-memory 구현만 제공.
     나중에 DB/Redis로 교체 가능하도록 인터페이스를 정의.
+    
+    메모리 누수 방지를 위해 세션 수 및 메시지 수 제한을 적용.
     """
     
-    def __init__(self):
-        """초기화"""
+    def __init__(self, max_sessions: int = 100, max_messages_per_session: int = 50):
+        """
+        초기화
+        
+        Args:
+            max_sessions: 최대 세션 수 (기본값: 100)
+            max_messages_per_session: 세션당 최대 메시지 수 (기본값: 50)
+        """
         # session_id -> list[dict] 형태로 히스토리 보관
         self._store: dict[str, list[dict]] = {}
+        self.max_sessions = max_sessions
+        self.max_messages_per_session = max_messages_per_session
         
     def add_message(self, session_id: str, role: str, content: str, metadata: Optional[dict] = None):
         """
@@ -61,9 +77,24 @@ class InMemoryConversationStore:
             content: 메시지 내용
             metadata: 추가 메타데이터 (선택)
         """
+        # 세션 수 제한 (LRU 방식: 가장 오래된 세션 제거)
+        if len(self._store) >= self.max_sessions and session_id not in self._store:
+            # 가장 오래된 메시지를 가진 세션 찾기
+            oldest_session = min(
+                self._store.items(),
+                key=lambda x: x[1][-1]['timestamp'] if x[1] else ''
+            )[0]
+            del self._store[oldest_session]
+            logger.warning(f"세션 수 제한 도달. 가장 오래된 세션 제거: {oldest_session}")
+        
         if session_id not in self._store:
             self._store[session_id] = []
-            
+        
+        # 메시지 수 제한 (FIFO: 가장 오래된 메시지 제거)
+        if len(self._store[session_id]) >= self.max_messages_per_session:
+            removed = self._store[session_id].pop(0)
+            logger.warning(f"메시지 수 제한 도달. 가장 오래된 메시지 제거 (세션: {session_id})")
+        
         message = {
             "role": role,
             "content": content,
@@ -142,77 +173,83 @@ def get_all_sessions() -> dict[str, Any]:
 # 2. Tool Router
 # ============================================================================
 
-class ToolRouter:
+def route_tools(user_text: str) -> dict[str, Any]:
     """
-    Tool 호출을 라우팅하는 클래스
+    사용자 텍스트를 분석하여 필요한 Tool 실행
     
-    v1.0에서는 emotion-analysis만 사용하지만,
-    나중에 routine_recommend, health_advisor 등을 쉽게 추가할 수 있게 설계
+    ToolRouter를 함수로 단순화 (상태가 없으므로 클래스 불필요)
+    v1.1: emotion-analysis 실행 후 routine-recommend 자동 실행 (need_routine_recommend=True일 때)
+    향후: health_advisor 등 추가 가능
+    
+    Args:
+        user_text: 사용자 입력 텍스트
+        
+    Returns:
+        Tool 실행 결과 딕셔너리
+            - emotion_result: 감정 분석 결과
+            - routine_result: 루틴 추천 결과 (있는 경우)
+            - used_tools: 사용된 도구 목록
     """
+    # 1. emotion-analysis 실행
+    emotion_result = run_emotion_analysis(user_text)
     
-    def __init__(self):
-        """초기화"""
-        pass
+    used_tools = ["emotion_analysis"]
+    routine_result = None
+    
+    # 2. routine-recommend 실행 (감정 분석 결과 기반)
+    try:
+        # service_signals에서 need_routine_recommend 확인
+        service_signals = emotion_result.get("service_signals", {})
+        need_routine = service_signals.get("need_routine_recommend", False)
         
-    def run(self, user_text: str) -> dict[str, Any]:
-        """
-        사용자 텍스트를 분석하여 필요한 Tool 실행
-        
-        v1.0: emotion-analysis 실행 후 routine-recommend 자동 실행
-        
-        Args:
-            user_text: 사용자 입력 텍스트
-            
-        Returns:
-            Tool 실행 결과
-        """
-        # 1. emotion-analysis 실행
-        emotion_result = run_emotion_analysis(user_text)
-        
-        used_tools = ["emotion_analysis"]
-        routine_result = None
-        
-        # 2. routine-recommend 실행 (감정 분석 결과 기반)
-        try:
-            # service_signals에서 need_routine_recommend 확인
-            service_signals = emotion_result.get("service_signals", {})
-            need_routine = service_signals.get("need_routine_recommend", False)
-            
-            if need_routine:
-                print("🔄 루틴 추천이 필요합니다. routine-recommend 실행 중...")
-                routine_result = run_routine_recommend(emotion_result)
-                used_tools.append("routine_recommend")
-                print(f"✅ 루틴 추천 완료: {len(routine_result)}개")
-            else:
-                print("ℹ️  루틴 추천이 필요하지 않습니다.")
-        except Exception as e:
-            print(f"⚠️  루틴 추천 중 오류 발생 (무시하고 계속): {e}")
-            # graceful degradation: 루틴 추천 실패해도 계속 진행
-        
-        return {
-            "emotion_result": emotion_result,
-            "routine_result": routine_result,
-            "used_tools": used_tools,
-        }
+        if need_routine:
+            logger.debug("🔄 루틴 추천이 필요합니다. routine-recommend 실행 중...")
+            routine_result = run_routine_recommend(emotion_result)
+            used_tools.append("routine_recommend")
+            logger.info(f"✅ 루틴 추천 완료: {len(routine_result)}개")
+        else:
+            logger.debug("ℹ️  루틴 추천이 필요하지 않습니다.")
+    except Exception as e:
+        logger.warning(f"⚠️  루틴 추천 중 오류 발생 (무시하고 계속): {e}")
+        # graceful degradation: 루틴 추천 실패해도 계속 진행
+    
+    return {
+        "emotion_result": emotion_result,
+        "routine_result": routine_result,
+        "used_tools": used_tools,
+    }
 
 
 # ============================================================================
-# 3. LLM 호출 (GPT-4o)
+# 3. LLM 호출 (GPT-4o-mini)
 # ============================================================================
+
+# LLM 체인 캐시 (매번 재생성 방지 - 성능 최적화)
+_llm_chain_cache = None
+
 
 def create_llm_chain():
     """
     LLM 체인 생성
     
+    LangChain을 Lazy Import하여 모듈 로딩 시간 단축 및 메모리 최적화
+    
     Returns:
         LangChain의 LLM 체인
     """
+    # LangChain Lazy Import (필요 시점에만 로드)
+    from langchain_openai import ChatOpenAI
+    from langchain_core.prompts import ChatPromptTemplate
+    from langchain_core.output_parsers import StrOutputParser
+    
     # 환경변수에서 설정 가져오기
     model_name = os.getenv("OPENAI_MODEL_NAME", "gpt-4o-mini")
     api_key = os.getenv("OPENAI_API_KEY")
     
     if not api_key:
         raise ValueError("OPENAI_API_KEY 환경변수가 설정되지 않았습니다.")
+    
+    logger.debug(f"LLM 체인 생성 중... (모델: {model_name})")
     
     # ChatOpenAI 초기화
     llm = ChatOpenAI(
@@ -222,34 +259,63 @@ def create_llm_chain():
     )
     
     # System Prompt 정의
-    system_prompt = """너는 감정 케어 AI "AI 봄이"다.
+    system_prompt = """
+너는 감정 공감을 통한 케어 AI “AI 봄이"이다.
 
-**역할:**
-- 사용자의 감정 분석 결과를 참고해서, 사용자의 기분을 인정하고 공감하거나 가볍게 격려하는 한국어 답변을 준다.
-- 상담사처럼 무겁게 말하기보다는, 일상을 함께 나누는 따뜻한 친구처럼 부드럽게 이야기한다.
-- 답변은 3~5문장 정도로 한다.
+[목적]
+- 사용자의 감정을 안전하게 돌봐주고, 필요한 경우 가볍게 안내하거나 격려하는 친구 같은 역할을 한다.
+- 전문 상담사가 아니라 “따뜻한 일상 친구”처럼 말한다.
 
-**답변 스타일:**
-- 공감과 이해를 우선으로 한다.
-- 사용자의 감정을 판단하거나 비난하지 않는다.
-- 필요하면 가볍게 격려하되, 강요하지 않는다.
-- 자연스럽고 따뜻한 말투를 사용한다.
+[기본 말투 규칙]
+- 부드럽고 자연스러운 한국어 사용.
+- 공감 → 이해 → 가벼운 격려 순으로 구성.
+- 판단, 비난, 분석적 조언 금지.
+- 문장은 1~3문장으로 짧고 간결하게.
+- ‘반말’/‘존댓말’은 사용자가 쓴 말투에 맞춰 자동 조절.
+
+[감정 기반 답변 정책]
+- positive 감정: 감정을 함께 기뻐하고 따뜻하게 공감해준다.
+- neutral 감정: 상황을 자연스럽게 받아주고 부드럽게 대화 이어가기.
+- negative 감정: 감정을 인정하고 가볍게 안심시키는 톤 유지.
+- risk_level이 높은 경우:
+  - “위험하다” 등 직접적인 표현 금지
+  - 부담 없이 도움 받을 수 있다는 뉘앙스로 안내
+  - 안정적인 말투 사용
+
+[루틴 정보 활용 규칙]
+- routine_suggestion이 제공된 경우에만 자연스럽게 1문장 정도로 제안.
+- 강요하지 않고 “해볼 수도 있을 것 같아” 정도로 완만하게 제시.
+
+[음성 입력의 경우]
+- 별도 안내 없이 텍스트 입력과 동일하게 처리.
+- 음성 감정 신호(속도/톤 등)가 제공되면, 텍스트 감정과 동일한 방식으로 통합하여 응답.
+
+답변 형식:
+1) 사용자 감정 인정
+2) 감정을 받아주는 공감 표현
+3) 필요 시 가벼운 격려 또는 부드러운 제안
+4) 문장 1~3개
 """
     
     # User Prompt 템플릿
-    user_prompt_template = """사용자가 다음과 같이 말했어:
-
+    user_prompt_template = """
+사용자 입력:
 "{user_text}"
 
 감정 분석 결과:
 - 전체 감정: {sentiment_overall}
-- 주요 감정: {primary_emotion_name} (강도: {primary_emotion_intensity}/5, 신뢰도: {primary_emotion_confidence})
+- 주요 감정: {primary_emotion_name} 
+  (강도: {primary_emotion_intensity}/5, 신뢰도: {primary_emotion_confidence})
 - 추천 응답 스타일: {recommended_response_style}
+- 위험 수준: {risk_level}
 
+루틴 신호:
 {routine_info}
 
-위 정보를 참고해서, 사용자에게 따뜻하고 공감적인 답변을 해줘.
-{routine_suggestion}
+아래 규칙에 따라 자연스럽고 따뜻한 답변을 생성하라:
+- 감정 분석 결과를 가장 우선적으로 반영한다.
+- routine_suggestion이 제공된 경우에만 마지막 문장에 부드럽게 포함한다.
+- 전체 답변은 2~3문장으로 구성하여 간결하게 작성한다.
 """
     
     # ChatPromptTemplate 생성
@@ -264,6 +330,22 @@ def create_llm_chain():
     return chain
 
 
+def get_llm_chain():
+    """
+    LLM 체인을 캐시하여 재사용 (성능 최적화)
+    
+    매번 ChatOpenAI 객체를 생성하는 것은 비효율적이므로,
+    한 번 생성된 체인을 캐시하여 재사용합니다.
+    
+    Returns:
+        캐시된 LLM 체인
+    """
+    global _llm_chain_cache
+    if _llm_chain_cache is None:
+        _llm_chain_cache = create_llm_chain()
+    return _llm_chain_cache
+
+
 def generate_llm_response(user_text: str, emotion_result: EmotionResult, routine_result: list[dict] | None = None) -> str:
     """
     LLM을 호출하여 응답 생성
@@ -276,13 +358,14 @@ def generate_llm_response(user_text: str, emotion_result: EmotionResult, routine
     Returns:
         AI 봄이의 응답 텍스트
     """
-    # LLM 체인 생성
-    chain = create_llm_chain()
+    # LLM 체인 가져오기 (캐시 사용)
+    chain = get_llm_chain()
     
     # 감정 분석 결과에서 필요한 정보 추출
     primary_emotion = emotion_result.get("primary_emotion", {})
     sentiment_overall = emotion_result.get("sentiment_overall", "neutral")
     recommended_response_style = emotion_result.get("recommended_response_style", [])
+    risk_level = emotion_result.get("risk_level", "low")
     
     # 응답 스타일을 문자열로 변환
     style_str = ", ".join(recommended_response_style) if recommended_response_style else "공감적이고 따뜻한 답변"
@@ -304,6 +387,7 @@ def generate_llm_response(user_text: str, emotion_result: EmotionResult, routine
         "primary_emotion_intensity": primary_emotion.get("intensity", 3),
         "primary_emotion_confidence": primary_emotion.get("confidence", 0.7),
         "recommended_response_style": style_str,
+        "risk_level": risk_level,
         "routine_info": routine_info,
         "routine_suggestion": routine_suggestion
     })
@@ -325,7 +409,7 @@ def run_ai_bomi_from_text(
     전체 플로우:
     1. 입력 수신 및 전처리
     2. Agent Memory 조회/업데이트
-    3. Tool Router → emotion-analysis 호출
+    3. Tool Router → tool 호출(emotion-analysis, routine-recommend 등)
     4. LLM(GPT-4o) 호출, 한국어 응답 생성
     5. 결과 묶어서 반환
     
@@ -364,18 +448,18 @@ def run_ai_bomi_from_text(
     # history = conversation_store.get_history(session_id, limit=5)
     
     # 3. Tool Router 실행
-    print(f"\n🔧 Tool Router 실행 중...")
-    tool_result = ToolRouter().run(user_text)
+    logger.debug("🔧 Tool Router 실행 중...")
+    tool_result = route_tools(user_text)
     emotion_result = tool_result["emotion_result"]
     routine_result = tool_result.get("routine_result")
     used_tools = tool_result["used_tools"]
     
-    print(f"✅ 3-4 감정 분석 완료: {emotion_result['primary_emotion']['name_ko']} ({emotion_result['sentiment_overall']})")
+    logger.info(f"✅ 감정 분석 완료: {emotion_result['primary_emotion']['name_ko']} ({emotion_result['sentiment_overall']})")
     
     # 4. LLM 호출
-    print(f"\n🤖 LLM 응답 생성 중...")
+    logger.debug("🤖 LLM 응답 생성 중...")
     reply_text = generate_llm_response(user_text, emotion_result, routine_result)
-    print(f"✅ 응답 생성 완료")
+    logger.info("✅ 응답 생성 완료")
     
     # 5. Memory 업데이트
     conversation_store.add_message(
@@ -425,9 +509,9 @@ def run_ai_bomi_from_audio(
         AI 봄이의 응답 결과
     """
     # 1. STT 실행
-    print(f"\n🎤 3-3 STT 실행 중...")
+    logger.debug("🎤 STT 실행 중...")
     user_text = run_speech_to_text(audio_bytes)
-    print(f"✅ 3-3 STT 완료: {user_text}")
+    logger.info(f"✅ STT 완료: {user_text}")
     
     # 2. 텍스트 입력 함수에 위임
     result = run_ai_bomi_from_text(user_text, session_id)
