@@ -21,12 +21,9 @@ config_path = src_path / "config.py"
 spec = importlib.util.spec_from_file_location("config", config_path)
 config_module = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(config_module)
-EMOTIONS = config_module.EMOTIONS
 LLM_MODEL = config_module.LLM_MODEL
 OPENAI_API_KEY = config_module.OPENAI_API_KEY
-EMOTION_CLUSTERS = config_module.EMOTION_CLUSTERS
 VALENCE_THRESHOLD = config_module.VALENCE_THRESHOLD
-EMOTION_TO_CLUSTER_MAP = config_module.EMOTION_TO_CLUSTER_MAP
 
 # 17개 감정 군집 관련 import
 EMOTION_CLUSTERS_17 = config_module.EMOTION_CLUSTERS_17
@@ -371,69 +368,6 @@ polarity(극성)는 다음 규칙으로 정합니다:
                 nearest_cluster_label = cluster['label']
         
         return nearest_cluster_id, nearest_cluster_label
-    
-    def _convert_to_legacy_format(self, va_result: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        Convert VA + cluster result to legacy emotion percentage format (하위 호환성)
-        
-        Args:
-            va_result: VA + cluster analysis result
-            
-        Returns:
-            Legacy format with emotions dict
-        """
-        # cluster_id로부터 기존 감정 카테고리 역매핑
-        cluster_id = va_result.get('cluster_id', 1)
-        emotion_scores = {emotion: 0 for emotion in self.emotions}
-        
-        # cluster_id에 해당하는 감정 찾기
-        for emotion, mapped_cluster_id in EMOTION_TO_CLUSTER_MAP.items():
-            if mapped_cluster_id == cluster_id:
-                # valence와 arousal의 절대값 합을 기반으로 퍼센트 계산
-                valence_abs = abs(va_result.get('valence', 0))
-                arousal_abs = abs(va_result.get('arousal', 0))
-                intensity = int((valence_abs + arousal_abs) / 2 * 100)
-                intensity = max(10, min(100, intensity))  # 10~100 범위로 제한
-                emotion_scores[emotion] = intensity
-                break
-        
-        # related_clusters도 고려
-        related = va_result.get('related_clusters', [])
-        remaining = 100 - sum(emotion_scores.values())
-        
-        for i, rel_cluster in enumerate(related[:2]):  # 최대 2개만
-            rel_id = rel_cluster.get('cluster_id')
-            similarity = rel_cluster.get('similarity', 0.5)
-            
-            for emotion, mapped_cluster_id in EMOTION_TO_CLUSTER_MAP.items():
-                if mapped_cluster_id == rel_id and emotion_scores[emotion] == 0:
-                    percentage = int(remaining * similarity * (0.5 if i == 1 else 1.0))
-                    emotion_scores[emotion] = percentage
-                    remaining -= percentage
-                    break
-        
-        # 합계가 100이 되도록 정규화
-        total = sum(emotion_scores.values())
-        if total > 0:
-            emotion_scores = {k: int(v * 100 / total) for k, v in emotion_scores.items()}
-            # 반올림 오차 보정
-            diff = 100 - sum(emotion_scores.values())
-            if diff != 0:
-                max_emotion = max(emotion_scores.items(), key=lambda x: x[1])
-                emotion_scores[max_emotion[0]] += diff
-        
-        # 상위 3개만 선택
-        top_3 = dict(sorted(emotion_scores.items(), key=lambda x: x[1], reverse=True)[:3])
-        
-        # primary emotion 찾기
-        primary_emotion = max(emotion_scores.items(), key=lambda x: x[1])
-        
-        return {
-            "emotions": top_3,
-            "all_emotions": emotion_scores,
-            "primary_emotion": primary_emotion[0],
-            "primary_percentage": primary_emotion[1]
-        }
     
     def _create_user_prompt_17(self, text: str, context_texts: Optional[List[dict]] = None) -> str:
         """
@@ -974,24 +908,14 @@ polarity(극성)는 다음 규칙으로 정합니다:
         # VA + 군집 결과 파싱
         va_result = self._parse_llm_response(generated_text)
         
-        # 하위 호환성을 위한 legacy format 변환
-        legacy_result = self._convert_to_legacy_format(va_result)
-        
-        # 두 형식 모두 반환
+        # VA + 군집 형식만 반환 (레거시 형식 제거)
         result = {
-            # 새로운 VA + 군집 형식
             "valence": va_result["valence"],
             "arousal": va_result["arousal"],
             "polarity": va_result["polarity"],
             "cluster_id": va_result["cluster_id"],
             "cluster_label": va_result["cluster_label"],
-            "related_clusters": va_result["related_clusters"],
-            
-            # 하위 호환성을 위한 legacy 형식
-            "emotions": legacy_result["emotions"],
-            "all_emotions": legacy_result["all_emotions"],
-            "primary_emotion": legacy_result["primary_emotion"],
-            "primary_percentage": legacy_result["primary_percentage"]
+            "related_clusters": va_result["related_clusters"]
         }
         
         return result

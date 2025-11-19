@@ -90,6 +90,8 @@ backend/NUL
 
 # ===== emotion-analysis local vector DB =====
 engine/emotion-analysis/vectordb/
+backend/engine/routine_recommend/chroma/
+backend/engine/emotion-analysis/vectordb/
 
 # ===== local test DB & outputs =====
 test_db/

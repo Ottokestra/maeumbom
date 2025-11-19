@@ -227,4 +227,3 @@ class SileroVAD:
             버퍼 청크 개수
         """
         return len(self.speech_buffer)
-

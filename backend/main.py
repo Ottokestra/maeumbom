@@ -4,7 +4,7 @@
 import os
 import sys
 from pathlib import Path
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException, Request
 from typing import List
 from fastapi.middleware.cors import CORSMiddleware
 import json
@@ -71,9 +71,10 @@ app.add_middleware(
 )
 
 # Include emotion analysis routes
-app.include_router(emotion_router, prefix="/emotion/api", tags=["emotion"])
-# 하위 호환성을 위해 /api 경로도 지원
-app.include_router(emotion_router, prefix="/api", tags=["emotion"])
+if emotion_router is not None:
+    app.include_router(emotion_router, prefix="/emotion/api", tags=["emotion"])
+    # 하위 호환성을 위해 /api 경로도 지원
+    app.include_router(emotion_router, prefix="/api", tags=["emotion"])
 
 
 
@@ -193,8 +194,19 @@ async def stt_websocket(websocket: WebSocket):
                 # VAD 처리
                 is_speech_end, speech_audio, is_short_pause = engine.vad.process_chunk(audio_chunk)
                 
+                # 디버깅: VAD 상태 로그 (100번마다 한 번씩)
+                if hasattr(engine.vad, '_debug_counter'):
+                    engine.vad._debug_counter = getattr(engine.vad, '_debug_counter', 0) + 1
+                else:
+                    engine.vad._debug_counter = 1
+                
+                if engine.vad._debug_counter % 100 == 0:
+                    print(f"[STT DEBUG] 청크 처리: speech_end={is_speech_end}, short_pause={is_short_pause}, speech_audio_len={len(speech_audio) if speech_audio is not None else 0}")
+                
                 if is_speech_end and speech_audio is not None:
+                    print(f"[STT] 발화 종료 감지, STT 처리 시작 (오디오 길이: {len(speech_audio)} 샘플)")
                     transcript, quality = engine.whisper.transcribe(speech_audio, callback=None)
+                    print(f"[STT] STT 결과: text='{transcript}', quality={quality}")
                     
                     # 모든 품질에 대해 결과 전송 (quality가 안좋으면 text는 null)
                     response = {
@@ -210,6 +222,31 @@ async def stt_websocket(websocket: WebSocket):
                 if command == "reset":
                     engine.vad.reset()
                     await websocket.send_json({"status": "reset", "message": "VAD 리셋 완료"})
+                elif command == "force_process":
+                    # 강제로 현재 버퍼의 오디오를 처리
+                    print("[STT] 강제 인식 요청 수신")
+                    try:
+                        # VAD의 현재 버퍼를 가져와서 처리
+                        if hasattr(engine.vad, 'get_current_buffer'):
+                            buffered_audio = engine.vad.get_current_buffer()
+                            if buffered_audio is not None and len(buffered_audio) > 0:
+                                print(f"[STT] 강제 인식 처리 (오디오 길이: {len(buffered_audio)} 샘플)")
+                                transcript, quality = engine.whisper.transcribe(buffered_audio, callback=None)
+                                response = {
+                                    "text": transcript if quality in ["success", "medium"] else None,
+                                    "quality": quality
+                                }
+                                await websocket.send_json(response)
+                                engine.vad.reset()
+                            else:
+                                await websocket.send_json({"error": "처리할 오디오가 없습니다"})
+                        else:
+                            await websocket.send_json({"error": "강제 인식 기능을 사용할 수 없습니다"})
+                    except Exception as e:
+                        print(f"[STT] 강제 인식 오류: {e}")
+                        import traceback
+                        traceback.print_exc()
+                        await websocket.send_json({"error": str(e)})
                     
     except WebSocketDisconnect:
         print("STT WebSocket 연결 종료")
