@@ -807,9 +807,9 @@ polarity(극성)는 다음 규칙으로 정합니다:
                 response_format={"type": "json_object"}
             )
             generated_text = response.choices[0].message.content.strip()
-            print("\n=== OpenAI API Response (raw_distribution only) ===")
-            print(generated_text)
-            print("=" * 50)
+            # print("\n=== OpenAI API Response (raw_distribution only) ===")
+            # print(generated_text)
+            # print("=" * 50)
         except Exception as e:
             if "response_format" in str(e).lower():
                 print("JSON mode not supported, retrying without response_format...")
@@ -829,9 +829,9 @@ polarity(극성)는 다음 규칙으로 정합니다:
                     max_tokens=800
                 )
                 generated_text = response.choices[0].message.content.strip()
-                print("\n=== OpenAI API Response ===")
-                print(generated_text)
-                print("=" * 50)
+                # print("\n=== OpenAI API Response ===")
+                # print(generated_text)
+                # print("=" * 50)
             else:
                 raise e
         
@@ -897,10 +897,10 @@ polarity(극성)는 다음 규칙으로 정합니다:
         }
         
         # 최종 응답 출력 (디버깅용)
-        print("\n=== Final API Response ===")
+        print("\n=== 3-4 Emotion Analyzer - API Response ===")
         import json
         print(json.dumps(result, indent=2, ensure_ascii=False))
-        print("=" * 50)
+        # print("=" * 50)
         
         return result
     
@@ -945,9 +945,9 @@ polarity(극성)는 다음 규칙으로 정합니다:
                 response_format={"type": "json_object"}
             )
             generated_text = response.choices[0].message.content.strip()
-            print("\n=== OpenAI API Response (JSON mode) ===")
-            print(generated_text)
-            print("=" * 50)
+            # print("\n=== OpenAI API Response (JSON mode) ===")
+            # print(generated_text)
+            # print("=" * 50)
         except Exception as e:
             if "response_format" in str(e).lower():
                 print("JSON mode not supported, retrying without response_format...")
@@ -970,9 +970,9 @@ polarity(극성)는 다음 규칙으로 정합니다:
                     max_tokens=300
                 )
                 generated_text = response.choices[0].message.content.strip()
-                print("\n=== OpenAI API Response ===")
-                print(generated_text)
-                print("=" * 50)
+                # print("\n=== OpenAI API Response ===")
+                # print(generated_text)
+                # print("=" * 50)
             else:
                 raise e
         

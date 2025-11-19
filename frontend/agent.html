@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>마음봄 - LangChain Agent 테스트</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .main-card {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            margin-bottom: 20px;
+        }
+
+        .input-section {
+            margin-bottom: 20px;
+        }
+
+        .input-section label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #333;
+            font-size: 1.1rem;
+        }
+
+        .input-section textarea {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-family: inherit;
+            resize: vertical;
+            min-height: 100px;
+            transition: border-color 0.3s;
+        }
+
+        .input-section textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-secondary {
+            background: #f5f5f5;
+            color: #333;
+        }
+
+        .btn-secondary:hover {
+            background: #e0e0e0;
+        }
+
+        .pipeline-section {
+            margin-top: 30px;
+        }
+
+        .pipeline-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .tool-card {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 15px;
+            border-left: 4px solid #667eea;
+            transition: all 0.3s;
+        }
+
+        .tool-card.processing {
+            border-left-color: #ffa726;
+            animation: pulse 1.5s infinite;
+        }
+
+        .tool-card.success {
+            border-left-color: #66bb6a;
+        }
+
+        .tool-card.error {
+            border-left-color: #ef5350;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .tool-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 15px;
+        }
+
+        .tool-name {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .tool-status {
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .tool-time {
+            font-size: 0.75rem;
+            color: #999;
+            font-weight: normal;
+        }
+
+        .status-pending {
+            background: #e0e0e0;
+            color: #666;
+        }
+
+        .status-processing {
+            background: #fff3e0;
+            color: #f57c00;
+        }
+
+        .status-success {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .status-error {
+            background: #ffebee;
+            color: #c62828;
+        }
+
+        .tool-content {
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 10px;
+        }
+
+        .tool-content pre {
+            margin: 0;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            font-size: 0.9rem;
+            line-height: 1.6;
+        }
+
+        .emotion-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .emotion-item {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            border: 2px solid #e0e0e0;
+        }
+
+        .emotion-item.primary {
+            border-color: #667eea;
+            background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%);
+        }
+
+        .emotion-label {
+            font-size: 0.85rem;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .emotion-value {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .emotion-intensity {
+            display: flex;
+            gap: 5px;
+            margin-top: 8px;
+        }
+
+        .intensity-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #e0e0e0;
+        }
+
+        .intensity-dot.active {
+            background: #667eea;
+        }
+
+        .ai-response {
+            background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%);
+            border-radius: 15px;
+            padding: 20px;
+            margin-top: 15px;
+            border: 2px solid #667eea;
+        }
+
+        .ai-response-label {
+            font-size: 0.9rem;
+            color: #667eea;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .ai-response-text {
+            font-size: 1.1rem;
+            line-height: 1.8;
+            color: #333;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .icon {
+            font-size: 1.3rem;
+        }
+
+        .meta-info {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .meta-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        .meta-item strong {
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🌸 마음봄 - LangChain Agent</h1>
+            <p>STT → 감정 분석 → AI 응답 생성 파이프라인</p>
+        </div>
+
+        <div class="main-card">
+            <div class="input-section">
+                <label for="userInput">사용자 입력 (텍스트)</label>
+                <textarea 
+                    id="userInput" 
+                    placeholder="예: 오늘 하루 정말 힘들었어요. 아무것도 하기 싫고 기운이 없네요."
+                ></textarea>
+            </div>
+
+            <div class="button-group">
+                <button class="btn btn-primary" id="runBtn" onclick="runAgent()">
+                    🚀 Agent 실행
+                </button>
+                <button class="btn btn-secondary" onclick="clearResults()">
+                    🔄 초기화
+                </button>
+            </div>
+
+            <div class="pipeline-section" id="pipelineSection" style="display: none;">
+                <div class="pipeline-title">📊 실행 파이프라인</div>
+
+                <!-- STT Tool -->
+                <div class="tool-card" id="sttCard">
+                    <div class="tool-header">
+                        <div class="tool-name">
+                            <span class="icon">🎤</span>
+                            <span>1. Speech-to-Text (STT)</span>
+                        </div>
+                        <div class="tool-status status-pending" id="sttStatus">대기 중</div>
+                    </div>
+                    <div class="tool-content" id="sttContent" style="display: none;"></div>
+                </div>
+
+                <!-- Emotion Analysis Tool -->
+                <div class="tool-card" id="emotionCard">
+                    <div class="tool-header">
+                        <div class="tool-name">
+                            <span class="icon">💭</span>
+                            <span>2. Emotion Analysis</span>
+                        </div>
+                        <div class="tool-status status-pending" id="emotionStatus">대기 중</div>
+                    </div>
+                    <div class="tool-content" id="emotionContent" style="display: none;"></div>
+                </div>
+
+                <!-- LLM Response Tool -->
+                <div class="tool-card" id="llmCard">
+                    <div class="tool-header">
+                        <div class="tool-name">
+                            <span class="icon">🤖</span>
+                            <span>3. LLM Response (GPT-4o-mini)</span>
+                        </div>
+                        <div class="tool-status status-pending" id="llmStatus">대기 중</div>
+                    </div>
+                    <div class="tool-content" id="llmContent" style="display: none;"></div>
+                </div>
+
+                <!-- Future Tools Placeholder -->
+                <div class="tool-card" style="opacity: 0.5; border-left-color: #ccc;">
+                    <div class="tool-header">
+                        <div class="tool-name">
+                            <span class="icon">📅</span>
+                            <span>4. Routine Recommend (예정)</span>
+                        </div>
+                        <div class="tool-status status-pending">준비 중</div>
+                    </div>
+                </div>
+
+                <div class="tool-card" style="opacity: 0.5; border-left-color: #ccc;">
+                    <div class="tool-header">
+                        <div class="tool-name">
+                            <span class="icon">🏥</span>
+                            <span>5. Health Advisor (예정)</span>
+                        </div>
+                        <div class="tool-status status-pending">준비 중</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Agent Memory Section -->
+        <div class="main-card" id="memorySection" style="display: none;">
+            <div class="pipeline-title">💾 Agent Memory (대화 히스토리)</div>
+            
+            <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+                <button class="btn btn-primary" onclick="loadMemory()" style="flex: 0 0 auto;">
+                    🔄 메모리 새로고침
+                </button>
+            </div>
+
+            <div id="memoryContent">
+                <div style="text-align: center; padding: 40px; color: #999;">
+                    메모리를 불러오려면 "메모리 새로고침" 버튼을 클릭하세요.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentSessionId = 'web_session_' + Date.now();
+        let timers = {
+            stt: { start: 0, end: 0 },
+            emotion: { start: 0, end: 0 },
+            llm: { start: 0, end: 0 }
+        };
+
+        async function runAgent() {
+            const userInput = document.getElementById('userInput').value.trim();
+            
+            if (!userInput) {
+                alert('텍스트를 입력해주세요.');
+                return;
+            }
+
+            // UI 초기화
+            document.getElementById('pipelineSection').style.display = 'block';
+            document.getElementById('runBtn').disabled = true;
+            resetToolCards();
+
+            try {
+                // 1. STT 시뮬레이션 (텍스트 더미 입력)
+                await simulateSTT(userInput);
+
+                // 2. Agent API 호출
+                await callAgentAPI(userInput);
+
+                // 3. 메모리 자동 로드
+                await loadMemory();
+
+            } catch (error) {
+                console.error('Error:', error);
+                alert('오류가 발생했습니다: ' + error.message);
+            } finally {
+                document.getElementById('runBtn').disabled = false;
+            }
+        }
+
+        async function simulateSTT(text) {
+            timers.stt.start = performance.now();
+            updateToolStatus('stt', 'processing', '처리 중...');
+            
+            // 시뮬레이션 딜레이
+            await new Promise(resolve => setTimeout(resolve, 500));
+            
+            timers.stt.end = performance.now();
+            const duration = Math.round(timers.stt.end - timers.stt.start);
+            
+            const sttResult = {
+                input: text,
+                method: 'text_dummy',
+                note: '현재는 텍스트 더미 입력 방식 (추후 음성 입력으로 변경 예정)',
+                duration: duration
+            };
+            
+            updateToolStatus('stt', 'success', '완료', duration);
+            displaySTTResult(sttResult);
+        }
+
+        async function callAgentAPI(text) {
+            // Emotion Analysis 시작
+            timers.emotion.start = performance.now();
+            updateToolStatus('emotion', 'processing', '분석 중...');
+            
+            // LLM도 함께 시작 (API 호출에 포함되므로)
+            timers.llm.start = performance.now();
+            
+            try {
+                const apiStartTime = performance.now();
+                const response = await fetch('http://localhost:8000/api/agent/text', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        user_text: text,
+                        session_id: currentSessionId
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const result = await response.json();
+                const apiEndTime = performance.now();
+                const totalApiTime = Math.round(apiEndTime - apiStartTime);
+                
+                // Emotion Analysis 완료
+                timers.emotion.end = apiStartTime + (totalApiTime * 0.6);
+                const emotionDuration = Math.round(timers.emotion.end - timers.emotion.start);
+                updateToolStatus('emotion', 'success', '완료', emotionDuration);
+                displayEmotionResult(result.emotion_result, emotionDuration);
+
+                // LLM Response 완료
+                updateToolStatus('llm', 'processing', '생성 중...');
+                await new Promise(resolve => setTimeout(resolve, 100));
+                timers.llm.end = apiEndTime;
+                const llmDuration = Math.round(timers.llm.end - timers.llm.start);
+                updateToolStatus('llm', 'success', '완료', llmDuration);
+                displayLLMResult(result, llmDuration);
+
+            } catch (error) {
+                updateToolStatus('emotion', 'error', '오류');
+                updateToolStatus('llm', 'error', '오류');
+                throw error;
+            }
+        }
+
+        function updateToolStatus(tool, status, text, duration = null) {
+            const card = document.getElementById(`${tool}Card`);
+            const statusEl = document.getElementById(`${tool}Status`);
+            
+            // 카드 상태 업데이트
+            card.className = 'tool-card';
+            if (status === 'processing') {
+                card.classList.add('processing');
+            } else if (status === 'success') {
+                card.classList.add('success');
+            } else if (status === 'error') {
+                card.classList.add('error');
+            }
+
+            // 상태 텍스트 업데이트
+            statusEl.className = 'tool-status';
+            statusEl.classList.add(`status-${status}`);
+            
+            // 시간 정보 포함
+            if (duration !== null && status === 'success') {
+                statusEl.innerHTML = `
+                    <span>${text}</span>
+                    <span class="tool-time">(${duration}ms)</span>
+                `;
+            } else {
+                statusEl.textContent = text;
+            }
+        }
+
+        function displaySTTResult(result) {
+            const content = document.getElementById('sttContent');
+            content.style.display = 'block';
+            content.innerHTML = `
+                <div style="margin-bottom: 10px;">
+                    <strong>입력 텍스트:</strong>
+                    <div style="margin-top: 8px; padding: 10px; background: #f5f5f5; border-radius: 8px;">
+                        ${result.input}
+                    </div>
+                </div>
+                <div class="meta-info">
+                    <div class="meta-item">
+                        <span>📝</span>
+                        <span><strong>입력 방식:</strong> ${result.method}</span>
+                    </div>
+                    <div class="meta-item">
+                        <span>⏱️</span>
+                        <span><strong>처리 시간:</strong> ${result.duration}ms</span>
+                    </div>
+                </div>
+                <div style="margin-top: 10px; padding: 10px; background: #fff3e0; border-radius: 8px; font-size: 0.85rem; color: #f57c00;">
+                    ℹ️ ${result.note}
+                </div>
+            `;
+        }
+
+        function displayEmotionResult(emotion, duration) {
+            const content = document.getElementById('emotionContent');
+            content.style.display = 'block';
+            
+            const primary = emotion.primary_emotion;
+            const secondary = emotion.secondary_emotions || [];
+            
+            // 강도 표시 생성
+            const intensityDots = (intensity) => {
+                let dots = '';
+                for (let i = 1; i <= 5; i++) {
+                    dots += `<div class="intensity-dot ${i <= intensity ? 'active' : ''}"></div>`;
+                }
+                return dots;
+            };
+
+            content.innerHTML = `
+                <div class="emotion-grid">
+                    <div class="emotion-item primary">
+                        <div class="emotion-label">주요 감정</div>
+                        <div class="emotion-value">${primary.name_ko}</div>
+                        <div class="emotion-intensity">${intensityDots(primary.intensity)}</div>
+                        <div style="margin-top: 8px; font-size: 0.85rem; color: #666;">
+                            신뢰도: ${(primary.confidence * 100).toFixed(0)}%
+                        </div>
+                    </div>
+                    
+                    <div class="emotion-item">
+                        <div class="emotion-label">전체 감정</div>
+                        <div class="emotion-value" style="color: ${emotion.sentiment_overall === 'positive' ? '#66bb6a' : emotion.sentiment_overall === 'negative' ? '#ef5350' : '#ffa726'}">
+                            ${emotion.sentiment_overall === 'positive' ? '긍정적' : emotion.sentiment_overall === 'negative' ? '부정적' : '중립'}
+                        </div>
+                    </div>
+                    
+                    <div class="emotion-item">
+                        <div class="emotion-label">위험 수준</div>
+                        <div class="emotion-value" style="font-size: 1.1rem;">
+                            ${emotion.service_signals.risk_level === 'normal' ? '😊 정상' : 
+                              emotion.service_signals.risk_level === 'watch' ? '👀 관찰' :
+                              emotion.service_signals.risk_level === 'alert' ? '⚠️ 주의' : '🚨 위험'}
+                        </div>
+                    </div>
+                </div>
+
+                ${secondary.length > 0 ? `
+                <div style="margin-top: 15px;">
+                    <div style="font-weight: 600; margin-bottom: 10px; color: #666;">보조 감정</div>
+                    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                        ${secondary.map(em => `
+                            <div style="padding: 8px 15px; background: white; border-radius: 20px; border: 1px solid #e0e0e0;">
+                                ${em.name_ko} (강도: ${em.intensity})
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+                ` : ''}
+
+                <div class="meta-info">
+                    <div class="meta-item">
+                        <span>💡</span>
+                        <span><strong>추천 응답:</strong> ${emotion.recommended_response_style[0]}</span>
+                    </div>
+                    <div class="meta-item">
+                        <span>🏃</span>
+                        <span><strong>추천 루틴:</strong> ${emotion.recommended_routine_tags.join(', ')}</span>
+                    </div>
+                    <div class="meta-item">
+                        <span>⏱️</span>
+                        <span><strong>분석 시간:</strong> ${duration}ms</span>
+                    </div>
+                </div>
+            `;
+        }
+
+        function displayLLMResult(result, duration) {
+            const content = document.getElementById('llmContent');
+            content.style.display = 'block';
+            
+            // 전체 실행 시간 계산
+            const totalTime = timers.stt.end - timers.stt.start + 
+                            timers.emotion.end - timers.emotion.start + 
+                            timers.llm.end - timers.llm.start;
+            
+            content.innerHTML = `
+                <div class="ai-response">
+                    <div class="ai-response-label">🌸 AI 봄이의 응답</div>
+                    <div class="ai-response-text">${result.reply_text}</div>
+                </div>
+
+                <div class="meta-info">
+                    <div class="meta-item">
+                        <span>🤖</span>
+                        <span><strong>모델:</strong> ${result.meta.model}</span>
+                    </div>
+                    <div class="meta-item">
+                        <span>🔧</span>
+                        <span><strong>사용된 도구:</strong> ${result.meta.used_tools.join(', ')}</span>
+                    </div>
+                    <div class="meta-item">
+                        <span>⏱️</span>
+                        <span><strong>응답 생성:</strong> ${duration}ms</span>
+                    </div>
+                    <div class="meta-item">
+                        <span>⏰</span>
+                        <span><strong>전체 시간:</strong> ${Math.round(totalTime)}ms</span>
+                    </div>
+                    <div class="meta-item">
+                        <span>🆔</span>
+                        <span><strong>세션:</strong> ${result.meta.session_id}</span>
+                    </div>
+                </div>
+            `;
+        }
+
+        function resetToolCards() {
+            ['stt', 'emotion', 'llm'].forEach(tool => {
+                updateToolStatus(tool, 'pending', '대기 중', null);
+                document.getElementById(`${tool}Content`).style.display = 'none';
+                timers[tool] = { start: 0, end: 0 };
+            });
+        }
+
+        function clearResults() {
+            document.getElementById('userInput').value = '';
+            document.getElementById('pipelineSection').style.display = 'none';
+            currentSessionId = 'web_session_' + Date.now();
+        }
+
+        async function loadMemory() {
+            const memorySection = document.getElementById('memorySection');
+            const memoryContent = document.getElementById('memoryContent');
+            
+            memorySection.style.display = 'block';
+            memoryContent.innerHTML = '<div style="text-align: center; padding: 20px;">로딩 중...</div>';
+            
+            try {
+                const response = await fetch(`http://localhost:8000/api/agent/memory/${currentSessionId}`);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                displayMemory(data);
+                
+            } catch (error) {
+                console.error('Error loading memory:', error);
+                memoryContent.innerHTML = `
+                    <div style="text-align: center; padding: 20px; color: #ef5350;">
+                        ❌ 메모리를 불러오는 중 오류가 발생했습니다: ${error.message}
+                    </div>
+                `;
+            }
+        }
+
+        function displayMemory(data) {
+            const memoryContent = document.getElementById('memoryContent');
+            
+            if (data.message_count === 0) {
+                memoryContent.innerHTML = `
+                    <div style="text-align: center; padding: 40px; color: #999;">
+                        현재 세션에 저장된 대화가 없습니다.
+                    </div>
+                `;
+                return;
+            }
+            
+            let html = `
+                <div style="margin-bottom: 20px; padding: 15px; background: #f8f9fa; border-radius: 10px;">
+                    <strong>세션 ID:</strong> ${data.session_id}<br>
+                    <strong>메시지 개수:</strong> ${data.message_count}개
+                </div>
+            `;
+            
+            data.messages.forEach((msg, index) => {
+                const isUser = msg.role === 'user';
+                const bgColor = isUser ? '#e3f2fd' : '#f3e5f5';
+                const icon = isUser ? '👤' : '🤖';
+                const roleName = isUser ? '사용자' : 'AI 봄이';
+                
+                html += `
+                    <div style="margin-bottom: 15px; padding: 15px; background: ${bgColor}; border-radius: 10px; border-left: 4px solid ${isUser ? '#2196f3' : '#9c27b0'};">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                            <strong>${icon} ${roleName}</strong>
+                            <span style="color: #666; font-size: 0.85rem;">${new Date(msg.timestamp).toLocaleString('ko-KR')}</span>
+                        </div>
+                        <div style="line-height: 1.6;">${msg.content}</div>
+                        ${msg.metadata ? `
+                            <details style="margin-top: 10px;">
+                                <summary style="cursor: pointer; color: #666; font-size: 0.85rem;">📊 메타데이터 보기</summary>
+                                <pre style="margin-top: 10px; padding: 10px; background: white; border-radius: 5px; font-size: 0.8rem; overflow-x: auto;">${JSON.stringify(msg.metadata, null, 2)}</pre>
+                            </details>
+                        ` : ''}
+                    </div>
+                `;
+            });
+            
+            memoryContent.innerHTML = html;
+        }
+    </script>
+</body>
+</html>
+
