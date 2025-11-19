@@ -1,6 +1,7 @@
 """
 팀 프로젝트 메인 FastAPI 애플리케이션
 """
+import os
 import sys
 from pathlib import Path
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException
@@ -50,6 +51,80 @@ app.include_router(emotion_router, prefix="/api", tags=["emotion"])
 
 
 
+
+# LangChain Agent routes
+from fastapi import HTTPException
+from pydantic import BaseModel
+
+class AgentTextRequest(BaseModel):
+    user_text: str
+    session_id: str = None
+
+class AgentAudioRequest(BaseModel):
+    audio_bytes: bytes
+    session_id: str = None
+
+@app.post("/api/agent/text")
+async def agent_text_endpoint(request: AgentTextRequest):
+    """LangChain Agent - 텍스트 입력"""
+    try:
+        from engine.langchain_agent import run_ai_bomi_from_text
+        result = run_ai_bomi_from_text(
+            user_text=request.user_text,
+            session_id=request.session_id
+        )
+        return result
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/agent/audio")
+async def agent_audio_endpoint(request: AgentAudioRequest):
+    """LangChain Agent - 음성 입력"""
+    try:
+        from engine.langchain_agent import run_ai_bomi_from_audio
+        result = run_ai_bomi_from_audio(
+            audio_bytes=request.audio_bytes,
+            session_id=request.session_id
+        )
+        return result
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/agent/memory/{session_id}")
+async def get_agent_memory(session_id: str, limit: int = None):
+    """LangChain Agent - 특정 세션의 대화 히스토리 조회"""
+    try:
+        from engine.langchain_agent import get_conversation_store
+        store = get_conversation_store()
+        history = store.get_history(session_id, limit=limit)
+        return {
+            "session_id": session_id,
+            "message_count": len(history),
+            "messages": history
+        }
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/agent/sessions")
+async def get_all_agent_sessions():
+    """LangChain Agent - 모든 세션 정보 조회"""
+    try:
+        from engine.langchain_agent import get_all_sessions
+        sessions = get_all_sessions()
+        return {
+            "session_count": len(sessions),
+            "sessions": sessions
+        }
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
 
 # STT 엔진 초기화 (전역)
 stt_engine = None
@@ -156,8 +231,7 @@ async def root():
         "docs": "/docs",
         "modules": {
             "emotion_analysis": "/emotion/api",
-            "stt": "/stt/stream",
-            "routine_recommend": "/api/engine/routine-from-emotion"
+            "stt": "/stt/stream"
         }
     }
 
@@ -172,6 +246,8 @@ if __name__ == "__main__":
     print("  - API 문서: http://localhost:8000/docs")
     print("  - 감정 분석: http://localhost:8000/emotion/api")
     print("  - STT 스트리밍: ws://localhost:8000/stt/stream")
+    print("  - LangChain Agent: http://localhost:8000/api/agent")
+    print("  - Agent 테스트: http://localhost:8000/agent.html")
     print("\n최초 실행 시:")
     print("  1. 서버 시작 후 http://localhost:8000/docs 접속")
     print("  2. POST /emotion/api/init 엔드포인트 실행하여 벡터 DB 초기화")
