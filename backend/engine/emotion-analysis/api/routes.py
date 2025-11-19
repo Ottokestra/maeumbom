@@ -53,6 +53,9 @@ async def analyze_emotion(request: AnalyzeRequest):
         result = pipeline.analyze_emotion(request.text)
         return AnalyzeResponse17(**result)
     except Exception as e:
+        import traceback
+        traceback.print_exc()
+        print(f"Error details: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Analysis failed: {str(e)}")
 
 
