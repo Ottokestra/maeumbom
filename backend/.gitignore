@@ -90,8 +90,15 @@ backend/NUL
 
 # ===== emotion-analysis local vector DB =====
 engine/emotion-analysis/vectordb/
-backend/engine/routine_recommend/chroma/
-backend/engine/emotion-analysis/vectordb/
+engine/emotion-analysis/vectordb/
+
+# ===== routine_recommend local chroma DB =====
+engine/routine_recommend/chroma/
+engine/routine_recommend/chroma/routines/
+
+# ===== TTS engine external repo & outputs =====
+engine/text-to-speech/MeloTTS/
+engine/text-to-speech/outputs/
 
 # ===== local test DB & outputs =====
 test_db/
@@ -103,3 +110,5 @@ engine/text-to-speech/outputs/
 
 # ===== local debug script =====
 reproduce_error.py
+
+backend/engine/routine_recommend/chroma/routines/
