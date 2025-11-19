@@ -3,10 +3,13 @@
 """
 import sys
 from pathlib import Path
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException
+from typing import List
 from fastapi.middleware.cors import CORSMiddleware
 import json
 import numpy as np
+
+
 
 # 하이픈이 있는 폴더명을 import하기 위해 경로 추가
 backend_path = Path(__file__).parent
@@ -19,6 +22,10 @@ spec = importlib.util.spec_from_file_location("emotion_routes", emotion_analysis
 emotion_routes = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(emotion_routes)
 emotion_router = emotion_routes.router
+
+# routine_recommend 엔진과 모델 import
+from engine.routine_recommend.engine import RoutineRecommendFromEmotionEngine
+from engine.routine_recommend.models.schemas import EmotionAnalysisResult, RoutineRecommendationItem
 
 # Create FastAPI app
 app = FastAPI(
@@ -40,6 +47,9 @@ app.add_middleware(
 app.include_router(emotion_router, prefix="/emotion/api", tags=["emotion"])
 # 하위 호환성을 위해 /api 경로도 지원
 app.include_router(emotion_router, prefix="/api", tags=["emotion"])
+
+
+
 
 # STT 엔진 초기화 (전역)
 stt_engine = None
@@ -109,6 +119,34 @@ async def stt_websocket(websocket: WebSocket):
         await websocket.send_json({"error": str(e)})
         await websocket.close()
 
+
+@app.post(
+    "/api/engine/routine-from-emotion",
+    response_model=List[RoutineRecommendationItem],
+    tags=["routine-recommend"],
+)
+async def recommend_routine_from_emotion(emotion: EmotionAnalysisResult):
+    """
+    감정 분석 결과를 기반으로 루틴을 추천합니다.
+    
+    프로세스:
+    1. RAG를 사용하여 ChromaDB에서 관련 루틴 후보 검색
+    2. GPT-4o-mini를 사용하여 최종 추천 루틴 선택 및 설명 생성
+    
+    Args:
+        emotion: 감정 분석 결과 (EmotionAnalysisResult)
+        
+    Returns:
+        추천된 루틴 리스트 (reason, ui_message 포함)
+    """
+    try:
+        engine = RoutineRecommendFromEmotionEngine()
+        recommendations = engine.recommend(emotion)
+        return recommendations
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"루틴 추천 실패: {str(e)}")
+
+
 @app.get("/")
 async def root():
     """Root endpoint"""
@@ -118,7 +156,8 @@ async def root():
         "docs": "/docs",
         "modules": {
             "emotion_analysis": "/emotion/api",
-            "stt": "/stt/stream"
+            "stt": "/stt/stream",
+            "routine_recommend": "/api/engine/routine-from-emotion"
         }
     }
 

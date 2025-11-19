@@ -147,10 +147,6 @@ class EmotionAnalyzer:
         Args:
             model_name: Name of the OpenAI model (default: gpt-4o-mini)
         """
-        print(f"Initializing OpenAI client with model: {model_name}")
-        
-        # Initialize OpenAI client
-        self.client = OpenAI(api_key=OPENAI_API_KEY)
         self.model_name = model_name
         
         # Emotion categories (하위 호환성)
@@ -169,7 +165,17 @@ class EmotionAnalyzer:
         self.intensity_mapping = INTENSITY_MAPPING
         self.sentiment_delta_threshold = SENTIMENT_DELTA_THRESHOLD
         
-        print(f"OpenAI client initialized successfully (논문 VA + 군집 기준, 17개 감정 군집 지원)")
+        # OpenAI client (Lazy init)
+        self._client = None
+        
+        print(f"EmotionAnalyzer initialized (논문 VA + 군집 기준, 17개 감정 군집 지원)")
+
+    def _get_client(self) -> OpenAI:
+        """Get or create OpenAI client"""
+        if self._client is None:
+            print(f"Initializing OpenAI client with model: {self.model_name}")
+            self._client = OpenAI(api_key=OPENAI_API_KEY)
+        return self._client
     
     def _calculate_polarity(self, valence: float) -> str:
         """
@@ -783,7 +789,8 @@ polarity(극성)는 다음 규칙으로 정합니다:
         user_prompt = self._create_user_prompt_17(text, context_texts)
         
         try:
-            response = self.client.chat.completions.create(
+            client = self._get_client()
+            response = client.chat.completions.create(
                 model=self.model_name,
                 messages=[
                     {
