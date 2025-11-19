@@ -165,7 +165,7 @@ class VectorStore:
         
         return formatted_results
     
-    def initialize_from_data(self, data_path: str = "data/raw/sample_emotions.json") -> None:
+    def initialize_from_data(self, data_path: str = None) -> None:
         """
         Initialize vector store from emotion data file
         

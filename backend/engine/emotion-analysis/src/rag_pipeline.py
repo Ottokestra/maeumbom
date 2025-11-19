@@ -101,7 +101,7 @@ class RAGPipeline:
         # similar_contexts는 내부적으로만 사용하고 최종 응답에는 포함하지 않음
         return analysis_result
     
-    def initialize_vector_store(self, data_path: str = "data/raw/sample_emotions.json") -> Dict[str, Any]:
+    def initialize_vector_store(self, data_path: str = None) -> Dict[str, Any]:
         """
         Initialize vector store with emotion data
         
@@ -135,7 +135,7 @@ class RAGPipeline:
         """
         return {
             "vector_store_count": self.vector_store.get_count(),
-            "emotion_categories": self.emotion_analyzer.emotions,
+            "emotion_categories": self.emotion_analyzer.emotion_codes_17,  # 17개 감정 사용
             "ready": self.vector_store.get_count() > 0
         }
 

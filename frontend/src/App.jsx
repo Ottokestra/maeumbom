@@ -3,10 +3,12 @@ import EmotionInput from './components/EmotionInput'
 import EmotionResult from './components/EmotionResult'
 import EmotionChart from './components/EmotionChart'
 import RoutineList from './components/RoutineList'
+import STTTest from './components/STTTest'
+import TTSTest from './components/TTSTest'
 import './App.css'
 
 function App() {
-  const [activeTab, setActiveTab] = useState('emotion') // 'emotion' or 'routine-test'
+  const [activeTab, setActiveTab] = useState('emotion') // 'emotion', 'routine-test', or 'stt-tts-test'
   
   // 감정 분석 관련 state
   const [result, setResult] = useState(null)
@@ -160,7 +162,7 @@ function App() {
       </header>
 
       {/* 탭 전환 버튼 */}
-      <div style={{ display: 'flex', justifyContent: 'center', gap: '10px', margin: '20px 0' }}>
+      <div style={{ display: 'flex', justifyContent: 'center', gap: '10px', margin: '20px 0', flexWrap: 'wrap' }}>
         <button
           onClick={() => setActiveTab('emotion')}
           style={{
@@ -190,6 +192,21 @@ function App() {
           }}
         >
           루틴 추천 테스트
+        </button>
+        <button
+          onClick={() => setActiveTab('stt-tts-test')}
+          style={{
+            padding: '10px 20px',
+            fontSize: '16px',
+            cursor: 'pointer',
+            backgroundColor: activeTab === 'stt-tts-test' ? '#6366f1' : '#e5e7eb',
+            color: activeTab === 'stt-tts-test' ? 'white' : '#374151',
+            border: 'none',
+            borderRadius: '8px',
+            fontWeight: activeTab === 'stt-tts-test' ? 'bold' : 'normal'
+          }}
+        >
+          STT/TTS 테스트
         </button>
       </div>
 
@@ -366,6 +383,14 @@ function App() {
             </div>
           </div>
         )}
+          </>
+        )}
+
+        {/* STT/TTS 테스트 섹션 */}
+        {activeTab === 'stt-tts-test' && (
+          <>
+            <STTTest />
+            <TTSTest />
           </>
         )}
       </div>

@@ -10,32 +10,32 @@ project_root = Path(__file__).parent.parent.parent.parent  # backend/
 env_path = project_root / ".env"
 load_dotenv(dotenv_path=env_path)
 
-# Emotion categories
-EMOTIONS = [
-    "joy",        # 기쁨
-    "calmness",   # 평온
-    "sadness",    # 슬픔
-    "anger",      # 분노
-    "anxiety",    # 불안
-    "loneliness", # 외로움
-    "fatigue",    # 피로
-    "confusion",  # 혼란
-    "guilt",      # 죄책감
-    "frustration" # 좌절
-]
+# 예전 10개 감정 카테고리 (사용되지 않음 - 17개 감정 시스템으로 대체됨)
+# EMOTIONS = [
+#     "joy",        # 기쁨
+#     "calmness",   # 평온
+#     "sadness",    # 슬픔
+#     "anger",      # 분노
+#     "anxiety",    # 불안
+#     "loneliness", # 외로움
+#     "fatigue",    # 피로
+#     "confusion",  # 혼란
+#     "guilt",      # 죄책감
+#     "frustration" # 좌절
+# ]
 
-EMOTION_LABELS_KR = {
-    "joy": "기쁨",
-    "calmness": "평온",
-    "sadness": "슬픔",
-    "anger": "분노",
-    "anxiety": "불안",
-    "loneliness": "외로움",
-    "fatigue": "피로",
-    "confusion": "혼란",
-    "guilt": "죄책감",
-    "frustration": "좌절"
-}
+# EMOTION_LABELS_KR = {
+#     "joy": "기쁨",
+#     "calmness": "평온",
+#     "sadness": "슬픔",
+#     "anger": "분노",
+#     "anxiety": "불안",
+#     "loneliness": "외로움",
+#     "fatigue": "피로",
+#     "confusion": "혼란",
+#     "guilt": "죄책감",
+#     "frustration": "좌절"
+# }
 
 # Model settings
 EMBEDDING_MODEL = "jhgan/ko-sroberta-multitask"
@@ -68,106 +68,106 @@ MAX_INTENSITY = 5
 # Polarity 경계값 (valence 기준)
 VALENCE_THRESHOLD = 0.2  # ±0.2 범위는 neutral로 분류
 
-# 감정 군집 정의
-EMOTION_CLUSTERS = [
-    # 긍정 군집
-    {
-        "id": 1,
-        "label": "안심/평온",
-        "valence": 0.6,
-        "arousal": -0.4,
-        "polarity": "positive",
-        "related_emotions": ["calmness"]
-    },
-    {
-        "id": 2,
-        "label": "흥미/관심",
-        "valence": 0.7,
-        "arousal": 0.5,
-        "polarity": "positive",
-        "related_emotions": ["joy"]
-    },
-    {
-        "id": 3,
-        "label": "애틋/그리움",
-        "valence": 0.3,
-        "arousal": 0.2,
-        "polarity": "positive",
-        "related_emotions": ["loneliness"]  # 긍정적 그리움
-    },
-    
-    # 부정 군집
-    {
-        "id": 4,
-        "label": "불만",
-        "valence": -0.5,
-        "arousal": 0.3,
-        "polarity": "negative",
-        "related_emotions": ["frustration"]
-    },
-    {
-        "id": 5,
-        "label": "수치",
-        "valence": -0.6,
-        "arousal": 0.4,
-        "polarity": "negative",
-        "related_emotions": ["guilt"]
-    },
-    {
-        "id": 6,
-        "label": "슬픔/비애",
-        "valence": -0.7,
-        "arousal": -0.3,
-        "polarity": "negative",
-        "related_emotions": ["sadness"]
-    },
-    {
-        "id": 7,
-        "label": "분노",
-        "valence": -0.8,
-        "arousal": 0.8,
-        "polarity": "negative",
-        "related_emotions": ["anger"]
-    },
-    {
-        "id": 8,
-        "label": "불안/공포",
-        "valence": -0.6,
-        "arousal": 0.7,
-        "polarity": "negative",
-        "related_emotions": ["anxiety"]
-    },
-    {
-        "id": 9,
-        "label": "피로/무기력",
-        "valence": -0.4,
-        "arousal": -0.6,
-        "polarity": "negative",
-        "related_emotions": ["fatigue"]
-    },
-    {
-        "id": 10,
-        "label": "혼란",
-        "valence": -0.3,
-        "arousal": 0.5,
-        "polarity": "negative",
-        "related_emotions": ["confusion"]
-    }
-]
+# 예전 10개 감정 군집 정의 (사용되지 않음 - 17개 감정 시스템으로 대체됨)
+# EMOTION_CLUSTERS = [
+#     # 긍정 군집
+#     {
+#         "id": 1,
+#         "label": "안심/평온",
+#         "valence": 0.6,
+#         "arousal": -0.4,
+#         "polarity": "positive",
+#         "related_emotions": ["calmness"]
+#     },
+#     {
+#         "id": 2,
+#         "label": "흥미/관심",
+#         "valence": 0.7,
+#         "arousal": 0.5,
+#         "polarity": "positive",
+#         "related_emotions": ["joy"]
+#     },
+#     {
+#         "id": 3,
+#         "label": "애틋/그리움",
+#         "valence": 0.3,
+#         "arousal": 0.2,
+#         "polarity": "positive",
+#         "related_emotions": ["loneliness"]  # 긍정적 그리움
+#     },
+#     
+#     # 부정 군집
+#     {
+#         "id": 4,
+#         "label": "불만",
+#         "valence": -0.5,
+#         "arousal": 0.3,
+#         "polarity": "negative",
+#         "related_emotions": ["frustration"]
+#     },
+#     {
+#         "id": 5,
+#         "label": "수치",
+#         "valence": -0.6,
+#         "arousal": 0.4,
+#         "polarity": "negative",
+#         "related_emotions": ["guilt"]
+#     },
+#     {
+#         "id": 6,
+#         "label": "슬픔/비애",
+#         "valence": -0.7,
+#         "arousal": -0.3,
+#         "polarity": "negative",
+#         "related_emotions": ["sadness"]
+#     },
+#     {
+#         "id": 7,
+#         "label": "분노",
+#         "valence": -0.8,
+#         "arousal": 0.8,
+#         "polarity": "negative",
+#         "related_emotions": ["anger"]
+#     },
+#     {
+#         "id": 8,
+#         "label": "불안/공포",
+#         "valence": -0.6,
+#         "arousal": 0.7,
+#         "polarity": "negative",
+#         "related_emotions": ["anxiety"]
+#     },
+#     {
+#         "id": 9,
+#         "label": "피로/무기력",
+#         "valence": -0.4,
+#         "arousal": -0.6,
+#         "polarity": "negative",
+#         "related_emotions": ["fatigue"]
+#     },
+#     {
+#         "id": 10,
+#         "label": "혼란",
+#         "valence": -0.3,
+#         "arousal": 0.5,
+#         "polarity": "negative",
+#         "related_emotions": ["confusion"]
+#     }
+# ]
 
-# 기존 감정 카테고리와 군집 매핑 (하위 호환성)
-EMOTION_TO_CLUSTER_MAP = {
-    "joy": 2,
-    "calmness": 1,
-    "sadness": 6,
-    "anger": 7,
-    "anxiety": 8,
-    "loneliness": 3,  # 긍정적 그리움으로 분류
-    "fatigue": 9,
-    "confusion": 10,
-    "guilt": 5,
-    "frustration": 4
-}
+# 예전 감정 카테고리와 군집 매핑 (사용되지 않음)
+# EMOTION_TO_CLUSTER_MAP = {
+#     "joy": 2,
+#     "calmness": 1,
+#     "sadness": 6,
+#     "anger": 7,
+#     "anxiety": 8,
+#     "loneliness": 3,  # 긍정적 그리움으로 분류
+#     "fatigue": 9,
+#     "confusion": 10,
+#     "guilt": 5,
+#     "frustration": 4
+# }
 
 # 17개 감정 군집 정의 (갱년기 여성 대상 감정 분석 시스템)
 EMOTION_CLUSTERS_17 = [
