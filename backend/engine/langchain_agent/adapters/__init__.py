@@ -5,6 +5,7 @@ LangChain Agent용 어댑터 모듈
 """
 from .stt_adapter import run_speech_to_text, SpeechToTextClient, create_stt_client
 from .emotion_adapter import run_emotion_analysis, EmotionAnalysisClient, create_emotion_client, EmotionResult
+from .routine_adapter import run_routine_recommend, RoutineRecommendClient
 
 __all__ = [
     "run_speech_to_text",
@@ -14,5 +15,7 @@ __all__ = [
     "EmotionAnalysisClient",
     "create_emotion_client",
     "EmotionResult",
+    "run_routine_recommend",
+    "RoutineRecommendClient",
 ]
 
