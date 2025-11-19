@@ -135,7 +135,7 @@ class RAGPipeline:
         """
         return {
             "vector_store_count": self.vector_store.get_count(),
-            "emotion_categories": self.emotion_analyzer.emotions,
+            "emotion_categories": self.emotion_analyzer.emotion_codes_17,  # 17개 감정 사용
             "ready": self.vector_store.get_count() > 0
         }
 
