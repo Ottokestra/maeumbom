@@ -21,9 +21,12 @@ config_path = src_path / "config.py"
 spec = importlib.util.spec_from_file_location("config", config_path)
 config_module = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(config_module)
+EMOTIONS = config_module.EMOTIONS
 LLM_MODEL = config_module.LLM_MODEL
 OPENAI_API_KEY = config_module.OPENAI_API_KEY
+EMOTION_CLUSTERS = config_module.EMOTION_CLUSTERS
 VALENCE_THRESHOLD = config_module.VALENCE_THRESHOLD
+EMOTION_TO_CLUSTER_MAP = config_module.EMOTION_TO_CLUSTER_MAP
 
 # 17개 감정 군집 관련 import
 EMOTION_CLUSTERS_17 = config_module.EMOTION_CLUSTERS_17
