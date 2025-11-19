@@ -144,10 +144,6 @@ class EmotionAnalyzer:
         Args:
             model_name: Name of the OpenAI model (default: gpt-4o-mini)
         """
-        print(f"Initializing OpenAI client with model: {model_name}")
-        
-        # Initialize OpenAI client
-        self.client = OpenAI(api_key=OPENAI_API_KEY)
         self.model_name = model_name
         
         # Valence threshold
@@ -161,7 +157,17 @@ class EmotionAnalyzer:
         self.intensity_mapping = INTENSITY_MAPPING
         self.sentiment_delta_threshold = SENTIMENT_DELTA_THRESHOLD
         
-        print(f"OpenAI client initialized successfully (논문 VA + 군집 기준, 17개 감정 군집 지원)")
+        # OpenAI client (Lazy init)
+        self._client = None
+
+        print(f"EmotionAnalyzer initialized (논문 VA + 군집 기준, 17개 감정 군집 지원)")
+
+    def _get_client(self) -> OpenAI:
+        """Get or create OpenAI client"""
+        if self._client is None:
+            print(f"Initializing OpenAI client with model: {self.model_name}")
+            self._client = OpenAI(api_key=OPENAI_API_KEY)
+        return self._client
     
     def _calculate_polarity(self, valence: float) -> str:
         """
@@ -179,6 +185,252 @@ class EmotionAnalyzer:
             return "negative"
         else:
             return "neutral"
+    
+    def _create_prompt(self, text: str, context_texts: Optional[List[dict]] = None) -> str:
+        """
+        Create prompt for LLM (논문 기준)
+        
+        Args:
+            text: Input text to analyze
+            context_texts: Optional list of similar context texts
+            
+        Returns:
+            Formatted prompt string
+        """
+        # 군집 설명을 프롬프트에 포함
+        cluster_desc_lines = []
+        if self.clusters:
+            cluster_desc_lines.append("감정 군집 목록:")
+            for c in self.clusters:
+                cluster_desc_lines.append(f"- {c['id']}: {c['label']} (Valence: {c['valence']:.1f}, Arousal: {c['arousal']:.1f})")
+        
+        prompt = f"""당신은 갱년기 여성의 감정을 분석하는 전문가입니다.
+우리는 한국어 감정 구조 논문에서 제안한 이론을 사용합니다.
+
+감정은 다음과 같이 표현합니다:
+1) 정서가(Valence, V): -1.0(매우 불쾌) ~ +1.0(매우 쾌)
+2) 각성가(Arousal, A): -1.0(매우 안정/저각성) ~ +1.0(매우 각성/흥분)
+3) 감정 군집(Emotion Cluster): 논문에서 제안한 감정 군집 ID와 이름
+
+polarity(극성)는 다음 규칙으로 정합니다:
+- valence > {self.valence_threshold}  → "positive"
+- -{self.valence_threshold} <= valence <= {self.valence_threshold} → "neutral"
+- valence < -{self.valence_threshold} → "negative"
+
+분석할 텍스트:
+\"\"\"{text}\"\"\""""
+
+        if context_texts:
+            prompt += "\n\n참고용 유사 감정 표현:\n"
+            for i, ctx in enumerate(context_texts[:3], 1):
+                if isinstance(ctx, dict):
+                    prompt += f"{i}. \"{ctx.get('text', '')}\"\n"
+        
+        if cluster_desc_lines:
+            prompt += "\n\n" + "\n".join(cluster_desc_lines)
+        
+        prompt += """
+
+출력 형식:
+아래 JSON 형식으로만 출력하세요. 설명 문장, 자연어 코멘트는 절대 쓰지 마세요.
+
+{
+  "valence": float,           // -1.0 ~ +1.0
+  "arousal": float,           // -1.0 ~ +1.0
+  "polarity": "positive" | "neutral" | "negative",
+  "cluster_id": int,          // 논문 기반 감정 군집 ID (1~10)
+  "cluster_label": string,    // 해당 군집의 한국어 이름
+  "related_clusters": [
+    {{
+      "cluster_id": int,
+      "cluster_label": string,
+      "similarity": float      // 0~1, 선택사항
+    }}
+  ]
+}
+
+예시:
+입력: "요즘 너무 피곤하고 아무것도 하기 싫어요"
+출력:
+{{
+  "valence": -0.7,
+  "arousal": -0.5,
+  "polarity": "negative",
+  "cluster_id": 9,
+  "cluster_label": "피로/무기력",
+  "related_clusters": [
+    {{ "cluster_id": 9, "cluster_label": "피로/무기력", "similarity": 0.95 }},
+    {{ "cluster_id": 6, "cluster_label": "슬픔/비애", "similarity": 0.78 }}
+  ]
+}}
+
+입력: "정말 기분이 좋아요"
+출력:
+{{
+  "valence": 0.8,
+  "arousal": 0.4,
+  "polarity": "positive",
+  "cluster_id": 2,
+  "cluster_label": "흥미/관심",
+  "related_clusters": [
+    {{ "cluster_id": 2, "cluster_label": "흥미/관심", "similarity": 0.92 }},
+    {{ "cluster_id": 1, "cluster_label": "안심/평온", "similarity": 0.65 }}
+  ]
+}}
+
+이제 위 형식을 그대로 따라 JSON만 출력하세요.
+"""
+        
+        return prompt
+    
+    def _parse_llm_response(self, response: str) -> Dict[str, Any]:
+        """
+        Parse LLM response to extract valence/arousal/cluster info
+        
+        Args:
+            response: LLM generated text (JSON expected)
+            
+        Returns:
+            Dict with keys: valence, arousal, polarity, cluster_id, cluster_label, related_clusters
+        """
+        # JSON 그대로 파싱 시도
+        try:
+            data = json.loads(response)
+        except json.JSONDecodeError:
+            # 응답에 앞뒤로 잡소리가 껴 있을 수 있으니 JSON 부분만 추출 시도
+            json_pattern = r'\{[\s\S]*\}'
+            match = re.search(json_pattern, response)
+            if not match:
+                raise ValueError(f"LLM response is not valid JSON: {response}")
+            data = json.loads(match.group(0))
+        
+        # 필수 필드 기본값
+        valence = float(data.get("valence", 0.0))
+        arousal = float(data.get("arousal", 0.0))
+        polarity = data.get("polarity")
+        cluster_id = data.get("cluster_id")
+        cluster_label = data.get("cluster_label")
+        related_clusters = data.get("related_clusters", [])
+        
+        # 범위 검증
+        valence = max(-1.0, min(1.0, valence))
+        arousal = max(-1.0, min(1.0, arousal))
+        
+        # polarity 없으면 규칙대로 계산
+        if not polarity:
+            polarity = self._calculate_polarity(valence)
+        
+        # cluster_id가 없거나 유효하지 않으면 VA 값으로 가장 가까운 군집 찾기
+        if not cluster_id or cluster_id not in [c['id'] for c in self.clusters]:
+            cluster_id, cluster_label = self._find_nearest_cluster(valence, arousal)
+        
+        # cluster_label이 없으면 cluster_id로 찾기
+        if not cluster_label:
+            for c in self.clusters:
+                if c['id'] == cluster_id:
+                    cluster_label = c['label']
+                    break
+        
+        # related_clusters가 리스트가 아니면 초기화
+        if not isinstance(related_clusters, list):
+            related_clusters = []
+        
+        return {
+            "valence": valence,
+            "arousal": arousal,
+            "polarity": polarity,
+            "cluster_id": cluster_id,
+            "cluster_label": cluster_label,
+            "related_clusters": related_clusters
+        }
+    
+    def _find_nearest_cluster(self, valence: float, arousal: float) -> Tuple[int, str]:
+        """
+        Find the nearest emotion cluster based on VA values
+        
+        Args:
+            valence: Valence value
+            arousal: Arousal value
+            
+        Returns:
+            Tuple of (cluster_id, cluster_label)
+        """
+        min_distance = float('inf')
+        nearest_cluster_id = 1
+        nearest_cluster_label = "안심/평온"
+        
+        for cluster in self.clusters:
+            # 유클리드 거리 계산
+            distance = ((valence - cluster['valence'])**2 + (arousal - cluster['arousal'])**2)**0.5
+            if distance < min_distance:
+                min_distance = distance
+                nearest_cluster_id = cluster['id']
+                nearest_cluster_label = cluster['label']
+        
+        return nearest_cluster_id, nearest_cluster_label
+    
+    def _convert_to_legacy_format(self, va_result: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Convert VA + cluster result to legacy emotion percentage format (하위 호환성)
+        
+        Args:
+            va_result: VA + cluster analysis result
+            
+        Returns:
+            Legacy format with emotions dict
+        """
+        # cluster_id로부터 기존 감정 카테고리 역매핑
+        cluster_id = va_result.get('cluster_id', 1)
+        emotion_scores = {emotion: 0 for emotion in self.emotions}
+        
+        # cluster_id에 해당하는 감정 찾기
+        for emotion, mapped_cluster_id in EMOTION_TO_CLUSTER_MAP.items():
+            if mapped_cluster_id == cluster_id:
+                # valence와 arousal의 절대값 합을 기반으로 퍼센트 계산
+                valence_abs = abs(va_result.get('valence', 0))
+                arousal_abs = abs(va_result.get('arousal', 0))
+                intensity = int((valence_abs + arousal_abs) / 2 * 100)
+                intensity = max(10, min(100, intensity))  # 10~100 범위로 제한
+                emotion_scores[emotion] = intensity
+                break
+        
+        # related_clusters도 고려
+        related = va_result.get('related_clusters', [])
+        remaining = 100 - sum(emotion_scores.values())
+        
+        for i, rel_cluster in enumerate(related[:2]):  # 최대 2개만
+            rel_id = rel_cluster.get('cluster_id')
+            similarity = rel_cluster.get('similarity', 0.5)
+            
+            for emotion, mapped_cluster_id in EMOTION_TO_CLUSTER_MAP.items():
+                if mapped_cluster_id == rel_id and emotion_scores[emotion] == 0:
+                    percentage = int(remaining * similarity * (0.5 if i == 1 else 1.0))
+                    emotion_scores[emotion] = percentage
+                    remaining -= percentage
+                    break
+        
+        # 합계가 100이 되도록 정규화
+        total = sum(emotion_scores.values())
+        if total > 0:
+            emotion_scores = {k: int(v * 100 / total) for k, v in emotion_scores.items()}
+            # 반올림 오차 보정
+            diff = 100 - sum(emotion_scores.values())
+            if diff != 0:
+                max_emotion = max(emotion_scores.items(), key=lambda x: x[1])
+                emotion_scores[max_emotion[0]] += diff
+        
+        # 상위 3개만 선택
+        top_3 = dict(sorted(emotion_scores.items(), key=lambda x: x[1], reverse=True)[:3])
+        
+        # primary emotion 찾기
+        primary_emotion = max(emotion_scores.items(), key=lambda x: x[1])
+        
+        return {
+            "emotions": top_3,
+            "all_emotions": emotion_scores,
+            "primary_emotion": primary_emotion[0],
+            "primary_percentage": primary_emotion[1]
+        }
     
     def _create_user_prompt_17(self, text: str, context_texts: Optional[List[dict]] = None) -> str:
         """
@@ -529,7 +781,8 @@ class EmotionAnalyzer:
         user_prompt = self._create_user_prompt_17(text, context_texts)
         
         try:
-            response = self.client.chat.completions.create(
+            client = self._get_client()
+            response = client.chat.completions.create(
                 model=self.model_name,
                 messages=[
                     {
@@ -546,9 +799,9 @@ class EmotionAnalyzer:
                 response_format={"type": "json_object"}
             )
             generated_text = response.choices[0].message.content.strip()
-            print("\n=== OpenAI API Response (raw_distribution only) ===")
-            print(generated_text)
-            print("=" * 50)
+            # print("\n=== OpenAI API Response (raw_distribution only) ===")
+            # print(generated_text)
+            # print("=" * 50)
         except Exception as e:
             if "response_format" in str(e).lower():
                 print("JSON mode not supported, retrying without response_format...")
@@ -568,9 +821,9 @@ class EmotionAnalyzer:
                     max_tokens=800
                 )
                 generated_text = response.choices[0].message.content.strip()
-                print("\n=== OpenAI API Response ===")
-                print(generated_text)
-                print("=" * 50)
+                # print("\n=== OpenAI API Response ===")
+                # print(generated_text)
+                # print("=" * 50)
             else:
                 raise e
         
@@ -636,10 +889,10 @@ class EmotionAnalyzer:
         }
         
         # 최종 응답 출력 (디버깅용)
-        print("\n=== Final API Response ===")
+        print("\n=== 3-4 Emotion Analyzer - API Response ===")
         import json
         print(json.dumps(result, indent=2, ensure_ascii=False))
-        print("=" * 50)
+        # print("=" * 50)
         
         return result
     
@@ -649,6 +902,97 @@ class EmotionAnalyzer:
         """
         return self.analyze_emotion(text, context_texts)
     
+    def analyze(self, text: str, context_texts: Optional[List[dict]] = None) -> Dict[str, Any]:
+        """
+        Analyze emotions using OpenAI API (논문 VA + 감정 군집 기준)
+        
+        Args:
+            text: Input text to analyze
+            context_texts: Optional list of similar context texts
+            
+        Returns:
+            Dict with valence, arousal, polarity, cluster info + legacy format
+        """
+        prompt = self._create_prompt(text, context_texts)
+        
+        try:
+            response = self.client.chat.completions.create(
+                model=self.model_name,
+                messages=[
+                    {
+                        "role": "system",
+                        "content": (
+                            "당신은 한국어 감정 구조 논문을 기준으로 감정을 분석하는 전문가입니다. "
+                            "반드시 유효한 JSON 객체만 응답하세요."
+                        )
+                    },
+                    {
+                        "role": "user",
+                        "content": prompt
+                    }
+                ],
+                temperature=0.1,
+                max_tokens=300,
+                # gpt-4o-mini에서 json_object 안 되면 예외 처리에서 다시 호출
+                response_format={"type": "json_object"}
+            )
+            generated_text = response.choices[0].message.content.strip()
+            # print("\n=== OpenAI API Response (JSON mode) ===")
+            # print(generated_text)
+            # print("=" * 50)
+        except Exception as e:
+            if "response_format" in str(e).lower():
+                print("JSON mode not supported, retrying without response_format...")
+                response = self.client.chat.completions.create(
+                    model=self.model_name,
+                    messages=[
+                        {
+                            "role": "system",
+                            "content": (
+                                "당신은 한국어 감정 구조 논문을 기준으로 감정을 분석하는 전문가입니다. "
+                                "반드시 유효한 JSON 객체만 응답하세요."
+                            )
+                        },
+                        {
+                            "role": "user",
+                            "content": prompt
+                        }
+                    ],
+                    temperature=0.1,
+                    max_tokens=300
+                )
+                generated_text = response.choices[0].message.content.strip()
+                # print("\n=== OpenAI API Response ===")
+                # print(generated_text)
+                # print("=" * 50)
+            else:
+                raise e
+        
+        # VA + 군집 결과 파싱
+        va_result = self._parse_llm_response(generated_text)
+        
+        # 하위 호환성을 위한 legacy format 변환
+        legacy_result = self._convert_to_legacy_format(va_result)
+        
+        # 두 형식 모두 반환
+        result = {
+            # 새로운 VA + 군집 형식
+            "valence": va_result["valence"],
+            "arousal": va_result["arousal"],
+            "polarity": va_result["polarity"],
+            "cluster_id": va_result["cluster_id"],
+            "cluster_label": va_result["cluster_label"],
+            "related_clusters": va_result["related_clusters"],
+            
+            # 하위 호환성을 위한 legacy 형식
+            "emotions": legacy_result["emotions"],
+            "all_emotions": legacy_result["all_emotions"],
+            "primary_emotion": legacy_result["primary_emotion"],
+            "primary_percentage": legacy_result["primary_percentage"]
+        }
+        
+        return result
+
 
 # Global instance
 _emotion_analyzer = None

@@ -1,0 +1,50 @@
+{
+  "user_id": 1,
+  "time_of_day": "morning",
+  "emotion_result": {
+    "text": "아침에 눈을 뜨자 햇살이 방 안을 가득 채우고 있었고, 오랜만에 상쾌한 기분이 들어 따뜻한 커피를 한 잔 들고 여유롭게 집을 나설 수 있었다.",
+    "language": "ko",
+    "raw_distribution": [
+      {"code": "joy", "name_ko": "기쁨", "group": "positive", "score": 0.8},
+      {"code": "excitement", "name_ko": "흥분", "group": "positive", "score": 0.6},
+      {"code": "confidence", "name_ko": "자신감", "group": "positive", "score": 0.5},
+      {"code": "relief", "name_ko": "안심", "group": "positive", "score": 0.4},
+      {"code": "sadness", "name_ko": "슬픔", "group": "negative", "score": 0.0},
+      {"code": "anger", "name_ko": "분노", "group": "negative", "score": 0.0},
+      {"code": "anxiety", "name_ko": "불안", "group": "negative", "score": 0.0},
+      {"code": "fear", "name_ko": "공포", "group": "negative", "score": 0.0},
+      {"code": "boredom", "name_ko": "지루함", "group": "negative", "score": 0.0},
+      {"code": "depression", "name_ko": "우울", "group": "negative", "score": 0.0},
+      {"code": "discontent", "name_ko": "불만", "group": "negative", "score": 0.0},
+      {"code": "disgust", "name_ko": "혐오", "group": "negative", "score": 0.0},
+      {"code": "confusion", "name_ko": "혼란", "group": "negative", "score": 0.0},
+      {"code": "loneliness", "name_ko": "외로움", "group": "negative", "score": 0.0},
+      {"code": "regret", "name_ko": "후회", "group": "negative", "score": 0.0},
+      {"code": "guilt", "name_ko": "죄책감", "group": "negative", "score": 0.0},
+      {"code": "shame", "name_ko": "수치심", "group": "negative", "score": 0.0}
+    ],
+    "primary_emotion": {
+      "code": "joy",
+      "name_ko": "기쁨",
+      "group": "positive",
+      "intensity": 4,
+      "confidence": 0.85
+    },
+    "secondary_emotions": [
+      {"code": "excitement", "name_ko": "흥분", "intensity": 3},
+      {"code": "confidence", "name_ko": "자신감", "intensity": 3},
+      {"code": "relief", "name_ko": "안심", "intensity": 2}
+    ],
+    "sentiment_overall": "positive",
+    "service_signals": {
+      "need_empathy": true,
+      "need_routine_recommend": true,
+      "need_health_check": false,
+      "need_voice_analysis": false,
+      "risk_level": "normal"
+    },
+    "recommended_response_style": ["cheerful", "warm"],
+    "recommended_routine_tags": ["maintain_positive", "gratitude", "social_activity"],
+    "report_tags": ["기쁨 경향", "흥분 경향", "자신감 경향"]
+  }
+}

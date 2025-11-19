@@ -1,12 +1,16 @@
 """
 팀 프로젝트 메인 FastAPI 애플리케이션
 """
+import os
 import sys
 from pathlib import Path
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException
+from typing import List
 from fastapi.middleware.cors import CORSMiddleware
 import json
 import numpy as np
+
+
 
 # 하이픈이 있는 폴더명을 import하기 위해 경로 추가
 backend_path = Path(__file__).parent
@@ -19,6 +23,10 @@ spec = importlib.util.spec_from_file_location("emotion_routes", emotion_analysis
 emotion_routes = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(emotion_routes)
 emotion_router = emotion_routes.router
+
+# routine_recommend 엔진과 모델 import
+from engine.routine_recommend.engine import RoutineRecommendFromEmotionEngine
+from engine.routine_recommend.models.schemas import EmotionAnalysisResult, RoutineRecommendationItem
 
 # Create FastAPI app
 app = FastAPI(
@@ -40,6 +48,83 @@ app.add_middleware(
 app.include_router(emotion_router, prefix="/emotion/api", tags=["emotion"])
 # 하위 호환성을 위해 /api 경로도 지원
 app.include_router(emotion_router, prefix="/api", tags=["emotion"])
+
+
+
+
+# LangChain Agent routes
+from fastapi import HTTPException
+from pydantic import BaseModel
+
+class AgentTextRequest(BaseModel):
+    user_text: str
+    session_id: str = None
+
+class AgentAudioRequest(BaseModel):
+    audio_bytes: bytes
+    session_id: str = None
+
+@app.post("/api/agent/text")
+async def agent_text_endpoint(request: AgentTextRequest):
+    """LangChain Agent - 텍스트 입력"""
+    try:
+        from engine.langchain_agent import run_ai_bomi_from_text
+        result = run_ai_bomi_from_text(
+            user_text=request.user_text,
+            session_id=request.session_id
+        )
+        return result
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/agent/audio")
+async def agent_audio_endpoint(request: AgentAudioRequest):
+    """LangChain Agent - 음성 입력"""
+    try:
+        from engine.langchain_agent import run_ai_bomi_from_audio
+        result = run_ai_bomi_from_audio(
+            audio_bytes=request.audio_bytes,
+            session_id=request.session_id
+        )
+        return result
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/agent/memory/{session_id}")
+async def get_agent_memory(session_id: str, limit: int = None):
+    """LangChain Agent - 특정 세션의 대화 히스토리 조회"""
+    try:
+        from engine.langchain_agent import get_conversation_store
+        store = get_conversation_store()
+        history = store.get_history(session_id, limit=limit)
+        return {
+            "session_id": session_id,
+            "message_count": len(history),
+            "messages": history
+        }
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/agent/sessions")
+async def get_all_agent_sessions():
+    """LangChain Agent - 모든 세션 정보 조회"""
+    try:
+        from engine.langchain_agent import get_all_sessions
+        sessions = get_all_sessions()
+        return {
+            "session_count": len(sessions),
+            "sessions": sessions
+        }
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
 
 # STT 엔진 초기화 (전역)
 stt_engine = None
@@ -109,6 +194,34 @@ async def stt_websocket(websocket: WebSocket):
         await websocket.send_json({"error": str(e)})
         await websocket.close()
 
+
+@app.post(
+    "/api/engine/routine-from-emotion",
+    response_model=List[RoutineRecommendationItem],
+    tags=["routine-recommend"],
+)
+async def recommend_routine_from_emotion(emotion: EmotionAnalysisResult):
+    """
+    감정 분석 결과를 기반으로 루틴을 추천합니다.
+    
+    프로세스:
+    1. RAG를 사용하여 ChromaDB에서 관련 루틴 후보 검색
+    2. GPT-4o-mini를 사용하여 최종 추천 루틴 선택 및 설명 생성
+    
+    Args:
+        emotion: 감정 분석 결과 (EmotionAnalysisResult)
+        
+    Returns:
+        추천된 루틴 리스트 (reason, ui_message 포함)
+    """
+    try:
+        engine = RoutineRecommendFromEmotionEngine()
+        recommendations = engine.recommend(emotion)
+        return recommendations
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"루틴 추천 실패: {str(e)}")
+
+
 @app.get("/")
 async def root():
     """Root endpoint"""
@@ -133,6 +246,8 @@ if __name__ == "__main__":
     print("  - API 문서: http://localhost:8000/docs")
     print("  - 감정 분석: http://localhost:8000/emotion/api")
     print("  - STT 스트리밍: ws://localhost:8000/stt/stream")
+    print("  - LangChain Agent: http://localhost:8000/api/agent")
+    print("  - Agent 테스트: http://localhost:8000/agent.html")
     print("\n최초 실행 시:")
     print("  1. 서버 시작 후 http://localhost:8000/docs 접속")
     print("  2. POST /emotion/api/init 엔드포인트 실행하여 벡터 DB 초기화")
