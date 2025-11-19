@@ -2,14 +2,15 @@
 LangChain Agent용 Speech-to-Text 어댑터
 
 기존 speech-to-text 엔진을 LangChain Agent에서 사용할 수 있도록 래핑합니다.
+v1.1 최적화: Client 클래스 제거, 코드 간소화
 """
 import sys
 from pathlib import Path
-from typing import Optional
 
-# 프로젝트 경로 설정
+# 프로젝트 경로 설정 (한 번만)
 engine_root = Path(__file__).parent.parent.parent
-sys.path.insert(0, str(engine_root))
+if str(engine_root) not in sys.path:
+    sys.path.insert(0, str(engine_root))
 
 
 def run_speech_to_text(audio_bytes: bytes) -> str:
@@ -75,60 +76,18 @@ def run_speech_to_text(audio_bytes: bytes) -> str:
         return "오늘 하루 정말 힘들었어요. 아무것도 하기 싫고 기운이 없네요."
 
 
-class SpeechToTextClient:
-    """
-    Speech-to-Text 클라이언트 (Protocol 스타일 인터페이스)
-    
-    나중에 다른 STT 엔진으로 교체 가능하도록 인터페이스를 정의합니다.
-    """
-    
-    def __init__(self, config_path: Optional[str] = None):
-        """
-        Args:
-            config_path: 3-3 STT 엔진 설정 파일 경로 (선택)
-        """
-        self.config_path = config_path
-        
-    def run(self, audio_bytes: bytes) -> str:
-        """
-        음성을 텍스트로 변환
-        
-        Args:
-            audio_bytes: 오디오 데이터
-            
-        Returns:
-            변환된 텍스트
-        """
-        return run_speech_to_text(audio_bytes)
-
-
-# 편의를 위한 전역 함수
-def create_stt_client(config_path: Optional[str] = None) -> SpeechToTextClient:
-    """
-    STT 클라이언트 생성
-    
-    Args:
-        config_path: 설정 파일 경로 (선택)
-        
-    Returns:
-        SpeechToTextClient 인스턴스
-    """
-    return SpeechToTextClient(config_path=config_path)
 
 
 if __name__ == "__main__":
     # 테스트
-    print("=== 3-3 STT 어댑터 테스트 ===")
+    print("=== STT 어댑터 테스트 (v1.1 최적화) ===")
     
     # 더미 오디오 바이트
     dummy_audio = b"dummy audio data"
     
-    # 함수 방식 테스트
+    # STT 테스트
     result = run_speech_to_text(dummy_audio)
-    print(f"결과 (함수): {result}")
+    print(f"\n결과: {result}")
     
-    # 클래스 방식 테스트
-    client = create_stt_client()
-    result = client.run(dummy_audio)
-    print(f"결과 (클래스): {result}")
+    print("\n✅ 테스트 완료!")
 

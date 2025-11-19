@@ -2,19 +2,20 @@
 LangChain Agent용 Routine Recommend 어댑터
 
 기존 routine_recommend 엔진을 LangChain Agent에서 사용할 수 있도록 래핑합니다.
+v1.1 최적화: Lazy initialization, Client 클래스 제거, Pydantic 자동 변환
 """
 import sys
 from pathlib import Path
-from typing import Optional
 
-# 프로젝트 경로 설정
+# 프로젝트 경로 설정 (한 번만)
 engine_root = Path(__file__).parent.parent.parent
-sys.path.insert(0, str(engine_root))
+if str(engine_root) not in sys.path:
+    sys.path.insert(0, str(engine_root))
 
 
 def run_routine_recommend(emotion_result: dict) -> list[dict]:
     """
-    감정 분석 결과를 기반으로 루틴 추천
+    감정 분석 결과를 기반으로 루틴 추천 (최적화: Lazy initialization 적용)
     
     기존 RoutineRecommendFromEmotionEngine을 사용합니다.
     
@@ -25,12 +26,16 @@ def run_routine_recommend(emotion_result: dict) -> list[dict]:
         추천 루틴 리스트 [{"routine_id", "reason", "ui_message", ...}]
     """
     try:
-        # routine_recommend 엔진 import
+        # Lazy import (필요 시점에만 로드)
         from routine_recommend.engine import RoutineRecommendFromEmotionEngine
         from routine_recommend.models.schemas import EmotionAnalysisResult
         
-        # EmotionResult를 EmotionAnalysisResult로 변환
-        emotion_input = convert_emotion_result_to_schema(emotion_result)
+        # Pydantic의 model_validate를 사용한 자동 변환 시도
+        try:
+            emotion_input = EmotionAnalysisResult.model_validate(emotion_result)
+        except Exception:
+            # 자동 변환 실패 시 수동 변환
+            emotion_input = _convert_emotion_result_to_schema(emotion_result)
         
         # 루틴 추천 엔진 실행
         engine = RoutineRecommendFromEmotionEngine()
@@ -51,9 +56,9 @@ def run_routine_recommend(emotion_result: dict) -> list[dict]:
         return []
 
 
-def convert_emotion_result_to_schema(emotion_result: dict) -> 'EmotionAnalysisResult':
+def _convert_emotion_result_to_schema(emotion_result: dict) -> 'EmotionAnalysisResult':
     """
-    EmotionResult (emotion-analysis 출력)를 EmotionAnalysisResult (routine-recommend 입력)로 변환
+    EmotionResult를 EmotionAnalysisResult로 수동 변환 (Fallback)
     
     Args:
         emotion_result: emotion-analysis의 출력 형식
@@ -69,26 +74,14 @@ def convert_emotion_result_to_schema(emotion_result: dict) -> 'EmotionAnalysisRe
         ServiceSignals
     )
     
-    # raw_distribution 변환
-    raw_distribution = [
-        EmotionScore(**item) for item in emotion_result.get("raw_distribution", [])
-    ]
-    
-    # primary_emotion 변환
-    primary_data = emotion_result.get("primary_emotion", {})
-    primary_emotion = PrimaryEmotion(**primary_data)
-    
-    # secondary_emotions 변환
-    secondary_emotions = [
-        SecondaryEmotion(**item) for item in emotion_result.get("secondary_emotions", [])
-    ]
-    
-    # service_signals 변환
-    signals_data = emotion_result.get("service_signals", {})
-    service_signals = ServiceSignals(**signals_data)
+    # 각 필드를 Pydantic 모델로 변환
+    raw_distribution = [EmotionScore(**item) for item in emotion_result.get("raw_distribution", [])]
+    primary_emotion = PrimaryEmotion(**emotion_result.get("primary_emotion", {}))
+    secondary_emotions = [SecondaryEmotion(**item) for item in emotion_result.get("secondary_emotions", [])]
+    service_signals = ServiceSignals(**emotion_result.get("service_signals", {}))
     
     # EmotionAnalysisResult 생성
-    emotion_analysis = EmotionAnalysisResult(
+    return EmotionAnalysisResult(
         text=emotion_result.get("text", ""),
         language=emotion_result.get("language", "ko"),
         raw_distribution=raw_distribution,
@@ -100,48 +93,11 @@ def convert_emotion_result_to_schema(emotion_result: dict) -> 'EmotionAnalysisRe
         recommended_routine_tags=emotion_result.get("recommended_routine_tags", []),
         report_tags=emotion_result.get("report_tags", [])
     )
-    
-    return emotion_analysis
-
-
-class RoutineRecommendClient:
-    """
-    Routine Recommend 클라이언트 (인터페이스)
-    
-    나중에 다른 루틴 추천 엔진으로 교체 가능하도록 인터페이스를 정의합니다.
-    """
-    
-    def __init__(self):
-        """초기화"""
-        pass
-        
-    def run(self, emotion_result: dict) -> list[dict]:
-        """
-        감정 분석 결과를 기반으로 루틴 추천
-        
-        Args:
-            emotion_result: 감정 분석 결과
-            
-        Returns:
-            추천 루틴 리스트
-        """
-        return run_routine_recommend(emotion_result)
-
-
-# 편의를 위한 전역 함수
-def create_routine_client() -> RoutineRecommendClient:
-    """
-    Routine Recommend 클라이언트 생성
-    
-    Returns:
-        RoutineRecommendClient 인스턴스
-    """
-    return RoutineRecommendClient()
 
 
 if __name__ == "__main__":
     # 테스트
-    print("=== Routine Recommend 어댑터 테스트 ===")
+    print("=== Routine Recommend 어댑터 테스트 (v1.1 최적화) ===")
     
     # 더미 감정 분석 결과
     dummy_emotion = {
@@ -174,11 +130,19 @@ if __name__ == "__main__":
         "report_tags": ["슬픔 증가"]
     }
     
-    # 함수 방식 테스트
+    # 루틴 추천 테스트
     result = run_routine_recommend(dummy_emotion)
     print(f"\n추천 루틴 개수: {len(result)}")
-    for i, routine in enumerate(result, 1):
-        print(f"\n{i}. {routine.get('routine_name', 'N/A')}")
-        print(f"   이유: {routine.get('reason', 'N/A')}")
-        print(f"   메시지: {routine.get('ui_message', 'N/A')}")
+    
+    if result:
+        for i, routine in enumerate(result, 1):
+            print(f"\n{i}. {routine.get('title', 'N/A')}")
+            print(f"   카테고리: {routine.get('category', 'N/A')}")
+            print(f"   우선순위: {routine.get('priority', 'N/A')}")
+            print(f"   이유: {routine.get('reason', 'N/A')}")
+            print(f"   메시지: {routine.get('ui_message', 'N/A')}")
+    else:
+        print("추천된 루틴이 없습니다.")
+    
+    print("\n✅ 테스트 완료!")
 
