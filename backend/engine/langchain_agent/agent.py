@@ -28,10 +28,10 @@ from langchain_core.output_parsers import StrOutputParser
 # 직접 실행 시와 모듈로 import 시 모두 작동하도록 처리
 try:
     # 모듈로 import될 때 (from engine.langchain_agent import ...)
-    from .adapters import run_speech_to_text, run_emotion_analysis, EmotionResult
+    from .adapters import run_speech_to_text, run_emotion_analysis, EmotionResult, run_routine_recommend
 except ImportError:
     # 직접 실행될 때 (python agent.py)
-    from adapters import run_speech_to_text, run_emotion_analysis, EmotionResult
+    from adapters import run_speech_to_text, run_emotion_analysis, EmotionResult, run_routine_recommend
 
 
 # ============================================================================
@@ -158,7 +158,7 @@ class ToolRouter:
         """
         사용자 텍스트를 분석하여 필요한 Tool 실행
         
-        v1.0: 무조건 emotion-analysis 실행
+        v1.0: emotion-analysis 실행 후 routine-recommend 자동 실행
         
         Args:
             user_text: 사용자 입력 텍스트
@@ -166,12 +166,33 @@ class ToolRouter:
         Returns:
             Tool 실행 결과
         """
-        # emotion-analysis 실행
+        # 1. emotion-analysis 실행
         emotion_result = run_emotion_analysis(user_text)
+        
+        used_tools = ["emotion_analysis"]
+        routine_result = None
+        
+        # 2. routine-recommend 실행 (감정 분석 결과 기반)
+        try:
+            # service_signals에서 need_routine_recommend 확인
+            service_signals = emotion_result.get("service_signals", {})
+            need_routine = service_signals.get("need_routine_recommend", False)
+            
+            if need_routine:
+                print("🔄 루틴 추천이 필요합니다. routine-recommend 실행 중...")
+                routine_result = run_routine_recommend(emotion_result)
+                used_tools.append("routine_recommend")
+                print(f"✅ 루틴 추천 완료: {len(routine_result)}개")
+            else:
+                print("ℹ️  루틴 추천이 필요하지 않습니다.")
+        except Exception as e:
+            print(f"⚠️  루틴 추천 중 오류 발생 (무시하고 계속): {e}")
+            # graceful degradation: 루틴 추천 실패해도 계속 진행
         
         return {
             "emotion_result": emotion_result,
-            "used_tools": ["emotion_analysis"],
+            "routine_result": routine_result,
+            "used_tools": used_tools,
         }
 
 
@@ -225,7 +246,10 @@ def create_llm_chain():
 - 주요 감정: {primary_emotion_name} (강도: {primary_emotion_intensity}/5, 신뢰도: {primary_emotion_confidence})
 - 추천 응답 스타일: {recommended_response_style}
 
+{routine_info}
+
 위 정보를 참고해서, 사용자에게 따뜻하고 공감적인 답변을 해줘.
+{routine_suggestion}
 """
     
     # ChatPromptTemplate 생성
@@ -240,13 +264,14 @@ def create_llm_chain():
     return chain
 
 
-def generate_llm_response(user_text: str, emotion_result: EmotionResult) -> str:
+def generate_llm_response(user_text: str, emotion_result: EmotionResult, routine_result: list[dict] | None = None) -> str:
     """
     LLM을 호출하여 응답 생성
     
     Args:
         user_text: 사용자 입력 텍스트
         emotion_result: 감정 분석 결과
+        routine_result: 루틴 추천 결과 (선택)
         
     Returns:
         AI 봄이의 응답 텍스트
@@ -262,6 +287,15 @@ def generate_llm_response(user_text: str, emotion_result: EmotionResult) -> str:
     # 응답 스타일을 문자열로 변환
     style_str = ", ".join(recommended_response_style) if recommended_response_style else "공감적이고 따뜻한 답변"
     
+    # 루틴 추천 정보 포맷팅
+    routine_info = ""
+    routine_suggestion = ""
+    if routine_result and len(routine_result) > 0:
+        routine_info = "추천 루틴:\n"
+        for i, routine in enumerate(routine_result[:3], 1):  # 최대 3개만 표시
+            routine_info += f"  {i}. {routine.get('title', 'N/A')}: {routine.get('reason', 'N/A')}\n"
+        routine_suggestion = "가능하다면 추천 루틴을 자연스럽게 언급해줘. 단, 강요하지 말고 부드럽게 제안하는 톤으로."
+    
     # LLM 호출
     response = chain.invoke({
         "user_text": user_text,
@@ -269,7 +303,9 @@ def generate_llm_response(user_text: str, emotion_result: EmotionResult) -> str:
         "primary_emotion_name": primary_emotion.get("name_ko", "알 수 없음"),
         "primary_emotion_intensity": primary_emotion.get("intensity", 3),
         "primary_emotion_confidence": primary_emotion.get("confidence", 0.7),
-        "recommended_response_style": style_str
+        "recommended_response_style": style_str,
+        "routine_info": routine_info,
+        "routine_suggestion": routine_suggestion
     })
     
     return response
@@ -331,13 +367,14 @@ def run_ai_bomi_from_text(
     print(f"\n🔧 Tool Router 실행 중...")
     tool_result = ToolRouter().run(user_text)
     emotion_result = tool_result["emotion_result"]
+    routine_result = tool_result.get("routine_result")
     used_tools = tool_result["used_tools"]
     
     print(f"✅ 3-4 감정 분석 완료: {emotion_result['primary_emotion']['name_ko']} ({emotion_result['sentiment_overall']})")
     
     # 4. LLM 호출
     print(f"\n🤖 LLM 응답 생성 중...")
-    reply_text = generate_llm_response(user_text, emotion_result)
+    reply_text = generate_llm_response(user_text, emotion_result, routine_result)
     print(f"✅ 응답 생성 완료")
     
     # 5. Memory 업데이트
@@ -358,6 +395,7 @@ def run_ai_bomi_from_text(
         "reply_text": reply_text,
         "input_text": user_text,
         "emotion_result": emotion_result,
+        "routine_result": routine_result,  # 루틴 추천 결과 추가
         "meta": {
             "model": os.getenv("OPENAI_MODEL_NAME", "gpt-4o-mini"),
             "used_tools": used_tools,

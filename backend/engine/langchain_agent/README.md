@@ -9,13 +9,14 @@ STT → 감정 분석 → GPT-4o 응답 생성의 전체 플로우를 orchestrat
 ## 폴더 구조
 
 ```
-/backend/engine/langchain-agent/
+/backend/engine/langchain_agent/
 ├── __init__.py              # 모듈 진입점
 ├── agent.py                 # 메인 Agent 로직
 ├── adapters/                # 엔진 어댑터들
 │   ├── __init__.py
 │   ├── stt_adapter.py       # STT 어댑터
-│   └── emotion_adapter.py   # Emotion Analysis 어댑터
+│   ├── emotion_adapter.py   # Emotion Analysis 어댑터
+│   └── routine_adapter.py   # Routine Recommend 어댑터
 └── README.md                # 이 문서
 ```
 
@@ -29,11 +30,17 @@ STT → 감정 분석 → GPT-4o 응답 생성의 전체 플로우를 orchestrat
 - 기존 emotion-analysis 엔진 연동
 - 17개 감정 군집 기반 분석
 
-### 3. LLM 응답 생성
-- GPT-4o를 사용한 공감적 응답 생성
-- "AI 봄이" 페르소나
+### 3. 루틴 추천
+- 기존 routine-recommend 엔진 연동
+- 감정 분석 결과 기반 자동 루틴 추천
+- RAG + LLM 파이프라인 활용
 
-### 4. 대화 히스토리 관리
+### 4. LLM 응답 생성
+- GPT-4o-mini를 사용한 공감적 응답 생성
+- "AI 봄이" 페르소나
+- 루틴 추천 정보를 자연스럽게 포함
+
+### 5. 대화 히스토리 관리
 - In-memory 세션별 대화 저장
 - 나중에 DB/Redis로 교체 가능
 
@@ -72,6 +79,7 @@ result = run_ai_bomi_from_text(
 
 print(result["reply_text"])  # AI 봄이의 응답
 print(result["emotion_result"])  # 감정 분석 결과
+print(result["routine_result"])  # 루틴 추천 결과 (있는 경우)
 
 # 음성 입력
 with open("audio.wav", "rb") as f:
@@ -120,9 +128,23 @@ python agent.py
         "recommended_routine_tags": [...],
         "report_tags": [...]
     },
+    "routine_result": [  # 루틴 추천 결과 (need_routine_recommend=True일 때만)
+        {
+            "routine_id": "...",
+            "title": "5분 호흡 명상",
+            "category": "EMOTION_NEGATIVE",
+            "duration_min": 5,
+            "intensity_level": "low",
+            "reason": "슬픔 감정을 완화하는 데 도움이 됩니다",
+            "ui_message": "잠시 멈춰서 깊게 호흡해보는 건 어떨까요?",
+            "priority": 5,
+            "suggested_time_window": "day",
+            "followup_type": "check_completion"
+        }
+    ],
     "meta": {
-        "model": "gpt-4o",
-        "used_tools": ["emotion_analysis"],
+        "model": "gpt-4o-mini",
+        "used_tools": ["emotion_analysis", "routine_recommend"],
         "session_id": "user_123"
     }
 }
@@ -139,8 +161,9 @@ python agent.py
 
 2. **ToolRouter**
    - Tool 호출 라우팅
-   - v1.0: emotion-analysis만 사용
-   - 향후: routine_recommend, health_advisor 등 추가 가능
+   - v1.0: emotion-analysis, routine-recommend 사용
+   - 감정 분석 후 need_routine_recommend=True이면 자동으로 루틴 추천 실행
+   - 향후: health_advisor 등 추가 가능
 
 3. **LLM Chain**
    - LangChain의 ChatOpenAI + ChatPromptTemplate 사용
@@ -151,22 +174,24 @@ python agent.py
 
 기존 엔진을 수정하지 않고 어댑터를 통해 연동:
 
-- `/backend/engine/langchain-agent/adapters/stt_adapter.py`
-- `/backend/engine/langchain-agent/adapters/emotion_adapter.py`
+- `/backend/engine/langchain_agent/adapters/stt_adapter.py`
+- `/backend/engine/langchain_agent/adapters/emotion_adapter.py`
+- `/backend/engine/langchain_agent/adapters/routine_adapter.py`
 
 ## v1.0 제약사항
 
 1. **STT 엔진**: 실제 모델이 없으면 더미 텍스트 반환
 2. **대화 히스토리**: In-memory 저장 (서버 재시작 시 소실)
-3. **Tool Router**: emotion-analysis만 사용
+3. **루틴 추천**: service_signals.need_routine_recommend=True일 때만 실행
 
 ## 향후 개선 사항
 
 1. STT 엔진 실제 연동
 2. DB/Redis 기반 대화 히스토리 저장
-3. 추가 Tool 연동 (routine_recommend, health_advisor 등)
+3. 추가 Tool 연동 (health_advisor, voice_analysis 등)
 4. 스트리밍 응답 지원
 5. 에러 핸들링 강화
+6. 루틴 추천 조건 세밀화
 
 ## 라이선스
 
