@@ -399,17 +399,19 @@
                     <div class="tool-content" id="llmContent" style="display: none;"></div>
                 </div>
 
-                <!-- Future Tools Placeholder -->
-                <div class="tool-card" style="opacity: 0.5; border-left-color: #ccc;">
+                <!-- Routine Recommend Tool -->
+                <div class="tool-card" id="routineCard">
                     <div class="tool-header">
                         <div class="tool-name">
                             <span class="icon">📅</span>
-                            <span>4. Routine Recommend (예정)</span>
+                            <span>4. Routine Recommend</span>
                         </div>
-                        <div class="tool-status status-pending">준비 중</div>
+                        <div class="tool-status status-pending" id="routineStatus">대기 중</div>
                     </div>
+                    <div class="tool-content" id="routineContent" style="display: none;"></div>
                 </div>
 
+                <!-- Future Tools Placeholder -->
                 <div class="tool-card" style="opacity: 0.5; border-left-color: #ccc;">
                     <div class="tool-header">
                         <div class="tool-name">
@@ -445,6 +447,7 @@
         let timers = {
             stt: { start: 0, end: 0 },
             emotion: { start: 0, end: 0 },
+            routine: { start: 0, end: 0 },
             llm: { start: 0, end: 0 }
         };
 
@@ -530,10 +533,23 @@
                 const totalApiTime = Math.round(apiEndTime - apiStartTime);
                 
                 // Emotion Analysis 완료
-                timers.emotion.end = apiStartTime + (totalApiTime * 0.6);
+                timers.emotion.end = apiStartTime + (totalApiTime * 0.4);
                 const emotionDuration = Math.round(timers.emotion.end - timers.emotion.start);
                 updateToolStatus('emotion', 'success', '완료', emotionDuration);
                 displayEmotionResult(result.emotion_result, emotionDuration);
+
+                // Routine Recommend 처리
+                if (result.routine_result && result.routine_result.length > 0) {
+                    timers.routine.start = timers.emotion.end;
+                    updateToolStatus('routine', 'processing', '추천 중...');
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                    timers.routine.end = apiStartTime + (totalApiTime * 0.7);
+                    const routineDuration = Math.round(timers.routine.end - timers.routine.start);
+                    updateToolStatus('routine', 'success', '완료', routineDuration);
+                    displayRoutineResult(result.routine_result, routineDuration);
+                } else {
+                    updateToolStatus('routine', 'success', '추천 불필요');
+                }
 
                 // LLM Response 완료
                 updateToolStatus('llm', 'processing', '생성 중...');
@@ -545,6 +561,7 @@
 
             } catch (error) {
                 updateToolStatus('emotion', 'error', '오류');
+                updateToolStatus('routine', 'error', '오류');
                 updateToolStatus('llm', 'error', '오류');
                 throw error;
             }
@@ -679,6 +696,70 @@
             `;
         }
 
+        function displayRoutineResult(routines, duration) {
+            const content = document.getElementById('routineContent');
+            content.style.display = 'block';
+            
+            content.innerHTML = `
+                <div style="margin-bottom: 15px;">
+                    <div style="font-weight: 600; margin-bottom: 10px; color: #333;">추천 루틴 (${routines.length}개)</div>
+                </div>
+                
+                <div style="display: grid; gap: 15px;">
+                    ${routines.map((routine, index) => `
+                        <div style="background: white; padding: 15px; border-radius: 10px; border: 2px solid #e0e0e0;">
+                            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 10px;">
+                                <div style="font-weight: 600; font-size: 1.1rem; color: #333;">
+                                    ${index + 1}. ${routine.title || 'N/A'}
+                                </div>
+                                <div style="background: #667eea; color: white; padding: 4px 12px; border-radius: 15px; font-size: 0.85rem;">
+                                    우선순위 ${routine.priority || 'N/A'}
+                                </div>
+                            </div>
+                            
+                            <div style="margin-bottom: 8px;">
+                                <span style="background: #f5f5f5; padding: 4px 10px; border-radius: 12px; font-size: 0.85rem; color: #666;">
+                                    ${routine.category || 'N/A'}
+                                </span>
+                                ${routine.duration_min ? `
+                                    <span style="background: #e3f2fd; padding: 4px 10px; border-radius: 12px; font-size: 0.85rem; color: #1976d2; margin-left: 5px;">
+                                        ⏱️ ${routine.duration_min}분
+                                    </span>
+                                ` : ''}
+                                ${routine.intensity_level ? `
+                                    <span style="background: #fff3e0; padding: 4px 10px; border-radius: 12px; font-size: 0.85rem; color: #f57c00; margin-left: 5px;">
+                                        💪 ${routine.intensity_level}
+                                    </span>
+                                ` : ''}
+                            </div>
+                            
+                            <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #e0e0e0;">
+                                <div style="color: #666; font-size: 0.9rem; margin-bottom: 5px;">
+                                    <strong>추천 이유:</strong> ${routine.reason || 'N/A'}
+                                </div>
+                                <div style="color: #667eea; font-size: 0.95rem; font-weight: 500;">
+                                    💬 ${routine.ui_message || 'N/A'}
+                                </div>
+                            </div>
+                            
+                            ${routine.suggested_time_window ? `
+                                <div style="margin-top: 8px; font-size: 0.85rem; color: #999;">
+                                    ⏰ 추천 시간: ${routine.suggested_time_window}
+                                </div>
+                            ` : ''}
+                        </div>
+                    `).join('')}
+                </div>
+                
+                <div class="meta-info">
+                    <div class="meta-item">
+                        <span>⏱️</span>
+                        <span><strong>추천 시간:</strong> ${duration}ms</span>
+                    </div>
+                </div>
+            `;
+        }
+
         function displayLLMResult(result, duration) {
             const content = document.getElementById('llmContent');
             content.style.display = 'block';
@@ -686,6 +767,7 @@
             // 전체 실행 시간 계산
             const totalTime = timers.stt.end - timers.stt.start + 
                             timers.emotion.end - timers.emotion.start + 
+                            (timers.routine.end - timers.routine.start) +
                             timers.llm.end - timers.llm.start;
             
             content.innerHTML = `
@@ -720,7 +802,7 @@
         }
 
         function resetToolCards() {
-            ['stt', 'emotion', 'llm'].forEach(tool => {
+            ['stt', 'emotion', 'routine', 'llm'].forEach(tool => {
                 updateToolStatus(tool, 'pending', '대기 중', null);
                 document.getElementById(`${tool}Content`).style.display = 'none';
                 timers[tool] = { start: 0, end: 0 };
