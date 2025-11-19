@@ -7,6 +7,9 @@ from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 import json
 import numpy as np
+import base64
+import io
+import wave
 
 # 하이픈이 있는 폴더명을 import하기 위해 경로 추가
 backend_path = Path(__file__).parent
@@ -90,6 +93,24 @@ async def stt_websocket(websocket: WebSocket):
                         "text": transcript if quality in ["success", "medium"] else None,
                         "quality": quality
                     }
+
+                    # 품질이 medium 이상일 경우에만 오디오 포함
+                    if quality in ["success", "medium"]:
+                        # float32 -> int16 변환
+                        audio_int16 = (speech_audio * 32767).astype(np.int16)
+                        
+                        # WAV 파일로 변환 (메모리 상에서)
+                        wav_buffer = io.BytesIO()
+                        with wave.open(wav_buffer, 'wb') as wf:
+                            wf.setnchannels(1)
+                            wf.setsampwidth(2)  # 2 bytes for int16
+                            wf.setframerate(16000)
+                            wf.writeframes(audio_int16.tobytes())
+                        
+                        # Base64 인코딩
+                        audio_b64 = base64.b64encode(wav_buffer.getvalue()).decode('utf-8')
+                        response["audio"] = audio_b64
+
                     await websocket.send_json(response)
                     
                     engine.vad.reset()

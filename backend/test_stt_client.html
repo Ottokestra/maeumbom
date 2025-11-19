@@ -190,6 +190,20 @@
                             resultDiv.innerHTML += `<div style="color: #999;"><strong>[${data.quality}]</strong> (인식 실패 - 품질 낮음)</div>`;
                             addLog(`인식 실패 (품질: ${data.quality})`, 'error');
                         }
+                        
+                        // 오디오 데이터가 있는 경우 재생
+                        if (data.audio) {
+                            const audioContainer = document.createElement('div');
+                            audioContainer.style.marginTop = '5px';
+                            audioContainer.style.marginBottom = '15px';
+                            
+                            const audio = document.createElement('audio');
+                            audio.controls = true;
+                            audio.src = `data:audio/wav;base64,${data.audio}`;
+                            
+                            audioContainer.appendChild(audio);
+                            resultDiv.appendChild(audioContainer);
+                        }
                     } else if (data.status) {
                         addLog(`상태: ${data.message}`, 'info');
                     } else if (data.error) {
