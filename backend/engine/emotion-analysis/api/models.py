@@ -86,7 +86,17 @@ class SecondaryEmotion(BaseModel):
     """Model for secondary emotion"""
     code: str = Field(..., description="Emotion code")
     name_ko: str = Field(..., description="Korean emotion name")
+    group: Optional[str] = Field(default=None, description="Emotion group: 'positive' or 'negative'")
     intensity: int = Field(..., description="Emotion intensity (1~5)", ge=1, le=5)
+
+
+class MixedEmotion(BaseModel):
+    """Model for mixed emotion detection"""
+    is_mixed: bool = Field(..., description="Whether mixed emotion is detected")
+    dominant_group: str = Field(..., description="Dominant emotion group: 'positive' or 'negative'")
+    positive_ratio: float = Field(..., description="Positive emotion ratio (0~1)", ge=0.0, le=1.0)
+    negative_ratio: float = Field(..., description="Negative emotion ratio (0~1)", ge=0.0, le=1.0)
+    mixed_ratio: float = Field(..., description="Mixed emotion ratio (0~1)", ge=0.0, le=1.0)
 
 
 class ServiceSignals(BaseModel):
@@ -107,6 +117,7 @@ class AnalyzeResponse17(BaseModel):
     primary_emotion: PrimaryEmotion = Field(..., description="Primary detected emotion")
     secondary_emotions: List[SecondaryEmotion] = Field(default_factory=list, description="Secondary emotions (1~3)")
     sentiment_overall: str = Field(..., description="Overall sentiment: 'positive', 'neutral', 'negative'")
+    mixed_emotion: Optional[MixedEmotion] = Field(default=None, description="Mixed emotion detection result")
     
     service_signals: ServiceSignals = Field(..., description="Service signals for UI")
     recommended_response_style: List[str] = Field(default_factory=list, description="Recommended response styles")
