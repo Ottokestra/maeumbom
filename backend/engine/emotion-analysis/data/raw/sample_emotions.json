@@ -4153,5 +4153,347 @@
     "text": "이런 혼란스러운 기분, 언제쯤 나아질까요?",
     "emotion": "confusion",
     "intensity": 4
+  },
+  {
+    "text": "오늘은 특별한 일도 없고 그냥 평범한 하루였어요",
+    "emotion": "relief",
+    "intensity": 2,
+    "sentiment_overall": "neutral"
+  },
+  {
+    "text": "기분이 좋은 것도 아니고 나쁜 것도 아니에요",
+    "emotion": "relief",
+    "intensity": 2,
+    "sentiment_overall": "neutral"
+  },
+  {
+    "text": "요즘 감정 기복이 심해서 어떤 감정인지 모르겠어요",
+    "emotion": "confusion",
+    "intensity": 3,
+    "sentiment_overall": "neutral"
+  },
+  {
+    "text": "그냥 평온한 하루였어요",
+    "emotion": "relief",
+    "intensity": 2,
+    "sentiment_overall": "neutral"
+  },
+  {
+    "text": "좋긴 한데 좀 불안해요",
+    "emotion": "joy",
+    "intensity": 3,
+    "sentiment_overall": "neutral"
+  },
+  {
+    "text": "기분은 괜찮은데 내일이 걱정돼요",
+    "emotion": "joy",
+    "intensity": 2,
+    "sentiment_overall": "neutral"
+  },
+  {
+    "text": "행복한 일도 있었고 슬픈 일도 있었어요",
+    "emotion": "joy",
+    "intensity": 3,
+    "sentiment_overall": "neutral"
+  },
+  {
+    "text": "요즘 감정이 왔다 갔다 해서 정확히 뭔지 모르겠어요",
+    "emotion": "confusion",
+    "intensity": 3,
+    "sentiment_overall": "neutral"
+  },
+  {
+    "text": "마음이 편안한 것도 아니고 불안한 것도 아니에요",
+    "emotion": "relief",
+    "intensity": 2,
+    "sentiment_overall": "neutral"
+  },
+  {
+    "text": "오늘 하루가 그냥 그런 하루였어요",
+    "emotion": "relief",
+    "intensity": 2,
+    "sentiment_overall": "neutral"
+  },
+  {
+    "text": "기쁜 일도 있었지만 걱정되는 일도 있어요",
+    "emotion": "joy",
+    "intensity": 3,
+    "sentiment_overall": "neutral"
+  },
+  {
+    "text": "감정이 명확하지 않아서 혼란스러워요",
+    "emotion": "confusion",
+    "intensity": 3,
+    "sentiment_overall": "neutral"
+  },
+  {
+    "text": "그냥 아무 생각 없이 하루를 보냈어요",
+    "emotion": "relief",
+    "intensity": 2,
+    "sentiment_overall": "neutral"
+  },
+  {
+    "text": "좋은 일도 있고 나쁜 일도 있어서 감정이 복잡해요",
+    "emotion": "joy",
+    "intensity": 3,
+    "sentiment_overall": "neutral"
+  },
+  {
+    "text": "요즘은 감정이 중간쯤인 것 같아요",
+    "emotion": "relief",
+    "intensity": 2,
+    "sentiment_overall": "neutral"
+  },
+  {
+    "text": "기쁘기도 하고 불안하기도 해요",
+    "emotion": "joy",
+    "intensity": 3,
+    "sentiment_overall": "neutral"
+  },
+  {
+    "text": "오늘은 그냥 평범하게 지나갔어요",
+    "emotion": "relief",
+    "intensity": 2,
+    "sentiment_overall": "neutral"
+  },
+  {
+    "text": "감정이 섞여서 뭔지 모르겠어요",
+    "emotion": "confusion",
+    "intensity": 3,
+    "sentiment_overall": "neutral"
+  },
+  {
+    "text": "마음이 한결편한 것도 아니고 불안한 것도 아니에요",
+    "emotion": "relief",
+    "intensity": 2,
+    "sentiment_overall": "neutral"
+  },
+  {
+    "text": "좋은 일과 나쁜 일이 반반이에요",
+    "emotion": "joy",
+    "intensity": 2,
+    "sentiment_overall": "neutral"
+  },
+  {
+    "text": "요즘 감정이 그냥 중간인 것 같아요",
+    "emotion": "relief",
+    "intensity": 2,
+    "sentiment_overall": "neutral"
+  },
+  {
+    "text": "기쁨도 느끼고 걱정도 느껴요",
+    "emotion": "joy",
+    "intensity": 3,
+    "sentiment_overall": "neutral"
+  },
+  {
+    "text": "오늘은 특별히 기분이 좋지도 나쁘지도 않아요",
+    "emotion": "relief",
+    "intensity": 2,
+    "sentiment_overall": "neutral"
+  },
+  {
+    "text": "감정이 왜 이렇게 복잡한지 모르겠어요",
+    "emotion": "confusion",
+    "intensity": 3,
+    "sentiment_overall": "neutral"
+  },
+  {
+    "text": "그냥 평범하게 하루를 보내고 있어요",
+    "emotion": "relief",
+    "intensity": 2,
+    "sentiment_overall": "neutral"
+  },
+  {
+    "text": "행복한 순간도 있고 슬픈 순간도 있어요",
+    "emotion": "joy",
+    "intensity": 3,
+    "sentiment_overall": "neutral"
+  },
+  {
+    "text": "요즘 감정이 명확하지 않아요",
+    "emotion": "confusion",
+    "intensity": 2,
+    "sentiment_overall": "neutral"
+  },
+  {
+    "text": "마음이 편안한 것 같기도 하고 불안한 것 같기도 해요",
+    "emotion": "relief",
+    "intensity": 2,
+    "sentiment_overall": "neutral"
+  },
+  {
+    "text": "좋은 일과 걱정되는 일이 동시에 있어요",
+    "emotion": "joy",
+    "intensity": 3,
+    "sentiment_overall": "neutral"
+  },
+  {
+    "text": "오늘 하루가 그냥 그런 하루였어요",
+    "emotion": "relief",
+    "intensity": 2,
+    "sentiment_overall": "neutral"
+  },
+  {
+    "text": "기쁨과 불안이 동시에 느껴져요",
+    "emotion": "joy",
+    "intensity": 3,
+    "sentiment_overall": "neutral"
+  },
+  {
+    "text": "요즘 감정이 중간쯤인 것 같아요",
+    "emotion": "relief",
+    "intensity": 2,
+    "sentiment_overall": "neutral"
+  },
+  {
+    "text": "감정이 왜 이렇게 애매한지 모르겠어요",
+    "emotion": "confusion",
+    "intensity": 3,
+    "sentiment_overall": "neutral"
+  },
+  {
+    "text": "그냥 평온하게 하루를 보내고 있어요",
+    "emotion": "relief",
+    "intensity": 2,
+    "sentiment_overall": "neutral"
+  },
+  {
+    "text": "좋은 일도 있고 안 좋은 일도 있어서 감정이 복잡해요",
+    "emotion": "joy",
+    "intensity": 3,
+    "sentiment_overall": "neutral"
+  },
+  {
+    "text": "오늘은 감정이 그냥 중간인 것 같아요",
+    "emotion": "relief",
+    "intensity": 2,
+    "sentiment_overall": "neutral"
+  },
+  {
+    "text": "기쁘기도 하고 걱정되기도 해요",
+    "emotion": "joy",
+    "intensity": 3,
+    "sentiment_overall": "neutral"
+  },
+  {
+    "text": "요즘 감정이 왔다 갔다 해서 정확히 뭔지 모르겠어요",
+    "emotion": "confusion",
+    "intensity": 3,
+    "sentiment_overall": "neutral"
+  },
+  {
+    "text": "마음이 편안한 것도 아니고 불안한 것도 아니에요",
+    "emotion": "relief",
+    "intensity": 2,
+    "sentiment_overall": "neutral"
+  },
+  {
+    "text": "행복한 일도 있었고 걱정되는 일도 있었어요",
+    "emotion": "joy",
+    "intensity": 3,
+    "sentiment_overall": "neutral"
+  },
+  {
+    "text": "그냥 평범하게 하루를 보내고 있어요",
+    "emotion": "relief",
+    "intensity": 2,
+    "sentiment_overall": "neutral"
+  },
+  {
+    "text": "기쁨과 걱정이 동시에 느껴져요",
+    "emotion": "joy",
+    "intensity": 3,
+    "sentiment_overall": "neutral"
+  },
+  {
+    "text": "오늘은 특별히 기분이 좋지도 나쁘지도 않아요",
+    "emotion": "relief",
+    "intensity": 2,
+    "sentiment_overall": "neutral"
+  },
+  {
+    "text": "감정이 명확하지 않아서 혼란스러워요",
+    "emotion": "confusion",
+    "intensity": 3,
+    "sentiment_overall": "neutral"
+  },
+  {
+    "text": "요즘 감정이 그냥 중간인 것 같아요",
+    "emotion": "relief",
+    "intensity": 2,
+    "sentiment_overall": "neutral"
+  },
+  {
+    "text": "좋은 일과 나쁜 일이 반반이에요",
+    "emotion": "joy",
+    "intensity": 2,
+    "sentiment_overall": "neutral"
+  },
+  {
+    "text": "기쁘기도 하고 불안하기도 해요",
+    "emotion": "joy",
+    "intensity": 3,
+    "sentiment_overall": "neutral"
+  },
+  {
+    "text": "그냥 평온하게 하루를 보내고 있어요",
+    "emotion": "relief",
+    "intensity": 2,
+    "sentiment_overall": "neutral"
+  },
+  {
+    "text": "감정이 왜 이렇게 복잡한지 모르겠어요",
+    "emotion": "confusion",
+    "intensity": 3,
+    "sentiment_overall": "neutral"
+  },
+  {
+    "text": "오늘 하루가 그냥 그런 하루였어요",
+    "emotion": "relief",
+    "intensity": 2,
+    "sentiment_overall": "neutral"
+  },
+  {
+    "text": "행복한 순간도 있고 걱정되는 순간도 있어요",
+    "emotion": "joy",
+    "intensity": 3,
+    "sentiment_overall": "neutral"
+  },
+  {
+    "text": "요즘 감정이 명확하지 않아요",
+    "emotion": "confusion",
+    "intensity": 2,
+    "sentiment_overall": "neutral"
+  },
+  {
+    "text": "마음이 편안한 것 같기도 하고 불안한 것 같기도 해요",
+    "emotion": "relief",
+    "intensity": 2,
+    "sentiment_overall": "neutral"
+  },
+  {
+    "text": "좋은 일과 걱정되는 일이 동시에 있어요",
+    "emotion": "joy",
+    "intensity": 3,
+    "sentiment_overall": "neutral"
+  },
+  {
+    "text": "그냥 평범하게 하루를 보내고 있어요",
+    "emotion": "relief",
+    "intensity": 2,
+    "sentiment_overall": "neutral"
+  },
+  {
+    "text": "기쁨과 불안이 동시에 느껴져요",
+    "emotion": "joy",
+    "intensity": 3,
+    "sentiment_overall": "neutral"
+  },
+  {
+    "text": "오늘은 특별한 일도 없고 그냥 평범한 하루였어요",
+    "emotion": "relief",
+    "intensity": 2,
+    "sentiment_overall": "neutral"
   }
 ]
