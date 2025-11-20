@@ -43,7 +43,7 @@ except Exception as e:
     print("[WARN] Emotion analysis module load failed:", e)
     emotion_router = None
 
-# =========================
+# =========================p
 # TTS 모델 import
 # =========================
 
@@ -175,13 +175,27 @@ def get_stt_engine():
 @app.websocket("/stt/stream")
 async def stt_websocket(websocket: WebSocket):
     await websocket.accept()
+    engine = None
     
     try:
+        # 즉시 연결 확인 메시지 전송
+        await websocket.send_json({"status": "connecting", "message": "STT 엔진 초기화 중..."})
+        
+        # STT 엔진 초기화 (시간이 걸릴 수 있음)
         engine = get_stt_engine()
+        
+        # 엔진 준비 완료 메시지
         await websocket.send_json({"status": "ready", "message": "STT 엔진 준비 완료"})
         
         while True:
-            data = await websocket.receive()
+            try:
+                data = await websocket.receive()
+            except RuntimeError as e:
+                # 연결이 이미 끊긴 경우
+                if "disconnect" in str(e).lower():
+                    print("클라이언트 연결 종료 감지")
+                    break
+                raise
             
             if "bytes" in data:
                 audio_bytes = data["bytes"]
@@ -208,9 +222,9 @@ async def stt_websocket(websocket: WebSocket):
                     transcript, quality = engine.whisper.transcribe(speech_audio, callback=None)
                     print(f"[STT] STT 결과: text='{transcript}', quality={quality}")
                     
-                    # 모든 품질에 대해 결과 전송 (quality가 안좋으면 text는 null)
+                    # 모든 품질의 텍스트를 전송 (no_speech만 제외)
                     response = {
-                        "text": transcript if quality in ["success", "medium"] else None,
+                        "text": transcript if quality != "no_speech" else None,
                         "quality": quality
                     }
                     await websocket.send_json(response)
@@ -249,13 +263,28 @@ async def stt_websocket(websocket: WebSocket):
                         await websocket.send_json({"error": str(e)})
                     
     except WebSocketDisconnect:
-        print("STT WebSocket 연결 종료")
+        print("STT WebSocket 연결 종료 (WebSocketDisconnect)")
     except Exception as e:
         print(f"STT WebSocket 오류: {e}")
         import traceback
         traceback.print_exc()
-        await websocket.send_json({"error": str(e)})
-        await websocket.close()
+        # 연결이 닫혔을 수 있으므로 try-except로 감싸기
+        try:
+            await websocket.send_json({"error": str(e)})
+        except:
+            pass  # 이미 닫힌 연결이면 무시
+        try:
+            await websocket.close()
+        except:
+            pass  # 이미 닫혀있으면 무시
+    finally:
+        # 연결 종료 시 VAD 상태 초기화
+        if engine is not None:
+            try:
+                engine.vad.reset()
+                print("VAD 상태 초기화 완료")
+            except Exception as e:
+                print(f"VAD 리셋 오류 (무시): {e}")
 
 
 @app.post(
