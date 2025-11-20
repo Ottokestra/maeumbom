@@ -566,6 +566,68 @@ polarity(극성)는 다음 규칙으로 정합니다:
         else:
             return "neutral"
     
+    def _detect_mixed_emotion_hybrid(
+        self,
+        primary_emotion: Dict[str, Any],
+        secondary_emotions: List[Dict[str, Any]],
+        normalized_distribution: List[Dict[str, Any]],
+        group_threshold: float = 0.15
+    ) -> Dict[str, Any]:
+        """
+        하이브리드 방식으로 혼합 감정 감지 (그룹 기반 + 점수 기반)
+        
+        Args:
+            primary_emotion: Primary emotion dict with 'group' field
+            secondary_emotions: List of secondary emotion dicts with 'group' field
+            normalized_distribution: List of emotion distributions (정규화된 score)
+            group_threshold: Minimum score threshold for both groups (default: 0.15)
+            
+        Returns:
+            Dict with 'is_mixed', 'dominant_group', 'positive_ratio', 'negative_ratio', 'mixed_ratio'
+        """
+        # 1. 그룹 기반 감지: Primary와 Secondary의 그룹이 다른지 확인
+        primary_group = primary_emotion.get("group")
+        has_different_group = False
+        
+        for sec_emotion in secondary_emotions:
+            sec_group = sec_emotion.get("group")
+            if sec_group and sec_group != primary_group:
+                has_different_group = True
+                break
+        
+        # 2. 점수 기반 감지: 긍정/부정 점수가 모두 임계값 이상인지 확인
+        pos_sum = sum(item["score"] for item in normalized_distribution 
+                      if item.get("group") == "positive")
+        neg_sum = sum(item["score"] for item in normalized_distribution 
+                      if item.get("group") == "negative")
+        
+        has_both_groups = pos_sum >= group_threshold and neg_sum >= group_threshold
+        
+        # 3. 하이브리드 판단: 두 조건 중 하나라도 만족하면 혼합 감정
+        is_mixed = has_different_group or has_both_groups
+        
+        # 4. 혼합 비율 계산
+        total = pos_sum + neg_sum
+        if total > 0:
+            positive_ratio = pos_sum / total
+            negative_ratio = neg_sum / total
+            mixed_ratio = min(pos_sum, neg_sum) / total  # 더 작은 값이 혼합 비율
+        else:
+            positive_ratio = 0.0
+            negative_ratio = 0.0
+            mixed_ratio = 0.0
+        
+        # 5. 주도 그룹 결정
+        dominant_group = "positive" if pos_sum > neg_sum else "negative"
+        
+        return {
+            "is_mixed": is_mixed,
+            "dominant_group": dominant_group,
+            "positive_ratio": round(positive_ratio, 3),
+            "negative_ratio": round(negative_ratio, 3),
+            "mixed_ratio": round(mixed_ratio, 3)
+        }
+    
     def _generate_service_signals(self, normalized_distribution: List[Dict[str, Any]], 
                                   primary_emotion: Dict[str, Any],
                                   sentiment_overall: str) -> Dict[str, Any]:
@@ -793,11 +855,19 @@ polarity(극성)는 다음 규칙으로 정합니다:
                 secondary_emotions.append({
                     "code": item.get("code"),
                     "name_ko": item.get("name_ko"),
+                    "group": item.get("group"),  # group 필드 추가
                     "intensity": self._score_to_intensity(item.get("score", 0))
                 })
         
         # Step 6: sentiment_overall 계산
         sentiment_overall = self._calculate_sentiment_overall(normalized_distribution)
+        
+        # Step 6-1: 혼합 감정 감지
+        mixed_emotion = self._detect_mixed_emotion_hybrid(
+            primary_emotion,
+            secondary_emotions,
+            normalized_distribution
+        )
         
         # Step 7: service_signals 생성
         service_signals = self._generate_service_signals(normalized_distribution, primary_emotion, sentiment_overall)
@@ -819,6 +889,7 @@ polarity(극성)는 다음 규칙으로 정합니다:
             "primary_emotion": primary_emotion,
             "secondary_emotions": secondary_emotions,
             "sentiment_overall": sentiment_overall,
+            "mixed_emotion": mixed_emotion,  # 혼합 감정 정보 추가
             "service_signals": service_signals,
             "recommended_response_style": recommendations["recommended_response_style"],
             "recommended_routine_tags": recommendations["recommended_routine_tags"],
