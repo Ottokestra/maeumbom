@@ -333,6 +333,59 @@
         .meta-item strong {
             color: #333;
         }
+
+        /* 마이크 버튼 스타일 */
+        .btn-mic {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            border: none;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            font-size: 3rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-mic:hover {
+            transform: scale(1.05);
+            box-shadow: 0 15px 40px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-mic:active {
+            transform: scale(0.95);
+        }
+
+        .btn-mic.recording {
+            background: linear-gradient(135deg, #ef5350 0%, #e91e63 100%);
+            animation: pulse-mic 1.5s infinite;
+        }
+
+        @keyframes pulse-mic {
+            0%, 100% {
+                box-shadow: 0 10px 30px rgba(239, 83, 80, 0.3);
+            }
+            50% {
+                box-shadow: 0 10px 50px rgba(239, 83, 80, 0.6), 0 0 0 15px rgba(239, 83, 80, 0.1);
+            }
+        }
+
+        .mic-icon {
+            display: inline-block;
+            transition: transform 0.3s;
+        }
+
+        .btn-mic.recording .mic-icon {
+            animation: shake 0.5s infinite;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: rotate(-5deg); }
+            50% { transform: rotate(5deg); }
+        }
     </style>
 </head>
 <body>
@@ -344,11 +397,41 @@
 
         <div class="main-card">
             <div class="input-section">
-                <label for="userInput">사용자 입력 (텍스트)</label>
-                <textarea 
-                    id="userInput" 
-                    placeholder="예: 오늘 하루 정말 힘들었어요. 아무것도 하기 싫고 기운이 없네요."
-                ></textarea>
+                <label>입력 방식 선택</label>
+                <div style="display: flex; gap: 20px; margin-bottom: 15px;">
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                        <input type="radio" name="inputMode" value="text" checked onchange="switchInputMode('text')">
+                        <span>📝 텍스트 입력</span>
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                        <input type="radio" name="inputMode" value="voice" onchange="switchInputMode('voice')">
+                        <span>🎤 음성 입력</span>
+                    </label>
+                </div>
+                
+                <div id="textInputArea">
+                    <label for="userInput">사용자 입력 (텍스트)</label>
+                    <textarea 
+                        id="userInput"
+                        placeholder="예: 오늘 하루 정말 힘들었어요. 아무것도 하기 싫고 기운이 없네요."
+                    ></textarea>
+                </div>
+                
+                <div id="voiceInputArea" style="display: none;">
+                    <label>음성 녹음</label>
+                    <div style="text-align: center; padding: 30px;">
+                        <button class="btn-mic" id="micBtn" onclick="toggleVoiceInput()">
+                            <span class="mic-icon">🎤</span>
+                        </button>
+                        <div id="voiceStatus" style="margin-top: 15px; font-size: 0.9rem; color: #666;">
+                            마이크 버튼을 클릭하여 녹음을 시작하세요
+                        </div>
+                        <div id="recognizedText" style="margin-top: 20px; padding: 15px; background: #f5f5f5; border-radius: 10px; min-height: 60px; display: none;">
+                            <div style="font-size: 0.85rem; color: #999; margin-bottom: 8px;">인식된 텍스트:</div>
+                            <div id="recognizedTextContent" style="font-size: 1rem; color: #333;"></div>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <div class="button-group">
@@ -422,6 +505,18 @@
                     <div class="tool-content" id="llmContent" style="display: none;"></div>
                 </div>
 
+                <!-- TTS Tool -->
+                <div class="tool-card" id="ttsCard">
+                    <div class="tool-header">
+                        <div class="tool-name">
+                            <span class="icon">🔊</span>
+                            <span>3-7. Text-to-Speech (TTS)</span>
+                        </div>
+                        <div class="tool-status status-pending" id="ttsStatus">대기 중</div>
+                    </div>
+                    <div class="tool-content" id="ttsContent" style="display: none;"></div>
+                </div>
+
             </div>
         </div>
 
@@ -449,8 +544,234 @@
             stt: { start: 0, end: 0 },
             emotion: { start: 0, end: 0 },
             routine: { start: 0, end: 0 },
-            llm: { start: 0, end: 0 }
+            llm: { start: 0, end: 0 },
+            tts: { start: 0, end: 0 }
         };
+
+        // 음성 입력 관련 전역 변수
+        let inputMode = 'text';  // 'text' or 'voice'
+        let isRecording = false;
+        let audioContext = null;
+        let mediaStream = null;
+        let scriptProcessor = null;
+        let sttWebSocket = null;
+        let recognizedFullText = '';
+
+        // 입력 모드 전환
+        function switchInputMode(mode) {
+            inputMode = mode;
+            const textArea = document.getElementById('textInputArea');
+            const voiceArea = document.getElementById('voiceInputArea');
+            
+            if (mode === 'text') {
+                textArea.style.display = 'block';
+                voiceArea.style.display = 'none';
+                // 음성 녹음 중이면 중지
+                if (isRecording) {
+                    stopVoiceInput();
+                }
+            } else {
+                textArea.style.display = 'none';
+                voiceArea.style.display = 'block';
+            }
+        }
+
+        // 음성 입력 토글
+        function toggleVoiceInput() {
+            if (isRecording) {
+                stopVoiceInput();
+            } else {
+                startVoiceInput();
+            }
+        }
+
+        // 음성 입력 시작
+        async function startVoiceInput() {
+            try {
+                // 마이크 권한 요청
+                mediaStream = await navigator.mediaDevices.getUserMedia({ 
+                    audio: {
+                        channelCount: 1,
+                        sampleRate: 16000,
+                        echoCancellation: true,
+                        noiseSuppression: true
+                    } 
+                });
+
+                // AudioContext 생성 (16kHz)
+                audioContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 16000 });
+                const source = audioContext.createMediaStreamSource(mediaStream);
+                
+                // ScriptProcessor 생성 (512 샘플 버퍼)
+                scriptProcessor = audioContext.createScriptProcessor(512, 1, 1);
+                
+                // WebSocket 연결
+                sttWebSocket = new WebSocket('ws://localhost:8000/stt/stream');
+                
+                sttWebSocket.onopen = () => {
+                    console.log('STT WebSocket 연결됨');
+                    updateVoiceStatus('⏳ STT 엔진 준비 중...', 'connecting');
+                };
+                
+                sttWebSocket.onmessage = (event) => {
+                    handleSTTMessage(JSON.parse(event.data));
+                };
+                
+                sttWebSocket.onerror = (error) => {
+                    console.error('WebSocket 오류:', error);
+                    updateVoiceStatus('❌ 연결 오류가 발생했습니다', 'error');
+                    stopVoiceInput();
+                };
+                
+                sttWebSocket.onclose = () => {
+                    console.log('STT WebSocket 연결 종료');
+                };
+                
+                // 오디오 프로세싱
+                scriptProcessor.onaudioprocess = (e) => {
+                    if (sttWebSocket && sttWebSocket.readyState === WebSocket.OPEN) {
+                        const inputData = e.inputBuffer.getChannelData(0);
+                        const float32Array = new Float32Array(inputData);
+                        sttWebSocket.send(float32Array.buffer);
+                    }
+                };
+                
+                // 연결
+                source.connect(scriptProcessor);
+                scriptProcessor.connect(audioContext.destination);
+                
+                // UI 업데이트
+                isRecording = true;
+                document.getElementById('micBtn').classList.add('recording');
+                recognizedFullText = '';
+                document.getElementById('recognizedText').style.display = 'none';
+                
+            } catch (error) {
+                console.error('마이크 접근 오류:', error);
+                alert('마이크 접근이 거부되었습니다. 브라우저 설정에서 마이크 권한을 허용해주세요.');
+                updateVoiceStatus('❌ 마이크 접근 실패', 'error');
+            }
+        }
+
+        // 음성 입력 중지
+        function stopVoiceInput() {
+            // WebSocket 종료 전 강제 처리 요청
+            if (sttWebSocket && sttWebSocket.readyState === WebSocket.OPEN) {
+                sttWebSocket.send(JSON.stringify({ text: 'force_process' }));
+                setTimeout(() => {
+                    if (sttWebSocket) {
+                        sttWebSocket.close();
+                        sttWebSocket = null;
+                    }
+                }, 500);
+            }
+            
+            // 오디오 스트림 정리
+            if (scriptProcessor) {
+                scriptProcessor.disconnect();
+                scriptProcessor = null;
+            }
+            
+            if (mediaStream) {
+                mediaStream.getTracks().forEach(track => track.stop());
+                mediaStream = null;
+            }
+            
+            if (audioContext) {
+                audioContext.close();
+                audioContext = null;
+            }
+            
+            // UI 업데이트
+            isRecording = false;
+            document.getElementById('micBtn').classList.remove('recording');
+            updateVoiceStatus('녹음 완료', 'success');
+        }
+
+        // STT 메시지 처리
+        function handleSTTMessage(data) {
+            if (data.status === 'connecting') {
+                console.log('STT 엔진 초기화 중:', data.message);
+                updateVoiceStatus('⏳ ' + data.message, 'connecting');
+            } else if (data.status === 'ready') {
+                console.log('STT 엔진 준비:', data.message);
+                updateVoiceStatus('🎤 녹음 중... 말씀하세요', 'recording');
+                
+                // 파이프라인 섹션 표시 및 STT 카드 활성화
+                document.getElementById('pipelineSection').style.display = 'block';
+                timers.stt.start = performance.now();
+                updateToolStatus('stt', 'processing', '음성 인식 중...');
+            } else if (data.text !== undefined) {
+                // STT 결과 수신
+                if (data.text && data.text.trim()) {
+                    recognizedFullText = data.text;
+                    document.getElementById('recognizedText').style.display = 'block';
+                    document.getElementById('recognizedTextContent').textContent = data.text;
+                    
+                    // 텍스트 입력 필드에도 반영
+                    document.getElementById('userInput').value = data.text;
+                    
+                    // STT 완료
+                    timers.stt.end = performance.now();
+                    const duration = Math.round(timers.stt.end - timers.stt.start);
+                    
+                    // 품질에 따라 다른 상태 표시
+                    if (data.quality === 'success') {
+                        updateToolStatus('stt', 'success', '완료', duration);
+                    } else if (data.quality === 'medium') {
+                        updateToolStatus('stt', 'success', '완료 (보통)', duration);
+                    } else if (data.quality === 'low_quality') {
+                        updateToolStatus('stt', 'success', '완료 (낮은 품질)', duration);
+                        updateVoiceStatus('⚠️ 음질이 낮지만 인식되었습니다', 'warning');
+                    }
+                    
+                    // 3-2 영역에 STT 결과 표시
+                    displaySTTResult({
+                        input: data.text,
+                        method: 'voice_websocket',
+                        note: 'Silero VAD + Faster-Whisper 기반 실시간 음성 인식',
+                        duration: duration,
+                        quality: data.quality
+                    });
+                    
+                    // 자동으로 Agent 실행 (품질 무관하게 텍스트가 있으면 실행)
+                    updateVoiceStatus('✅ 인식 완료! Agent 실행 중...', 'success');
+                    setTimeout(() => {
+                        stopVoiceInput();
+                        runAgent();
+                    }, 500);
+                } else if (data.quality === 'no_speech') {
+                    console.log('음성 미감지');
+                    updateVoiceStatus('🔇 음성이 감지되지 않았습니다', 'warning');
+                    timers.stt.end = performance.now();
+                    const duration = Math.round(timers.stt.end - timers.stt.start);
+                    updateToolStatus('stt', 'success', '완료 (음성 미감지)', duration);
+                    
+                    // 음성 미감지도 3-2 영역에 표시
+                    displaySTTResult({
+                        input: '(음성이 감지되지 않았습니다)',
+                        method: 'voice_websocket',
+                        note: '마이크 입력은 정상이지만 음성이 감지되지 않았습니다',
+                        duration: duration,
+                        quality: 'no_speech'
+                    });
+                }
+            } else if (data.error) {
+                console.error('STT 오류:', data.error);
+                updateVoiceStatus('❌ ' + data.error, 'error');
+                updateToolStatus('stt', 'error', '오류');
+            }
+        }
+
+        // 음성 상태 업데이트
+        function updateVoiceStatus(message, status) {
+            const statusEl = document.getElementById('voiceStatus');
+            statusEl.textContent = message;
+            statusEl.style.color = status === 'recording' ? '#ef5350' : 
+                                   status === 'success' ? '#66bb6a' :
+                                   status === 'warning' ? '#ffa726' :
+                                   status === 'error' ? '#ef5350' : '#666';
+        }
 
         async function runAgent() {
             const userInput = document.getElementById('userInput').value.trim();
@@ -466,8 +787,14 @@
             resetToolCards();
 
             try {
-                // 1. STT 시뮬레이션 (텍스트 더미 입력)
-                await simulateSTT(userInput);
+                // 1. STT 처리 (입력 모드에 따라)
+                if (inputMode === 'voice' && recognizedFullText) {
+                    // 음성 입력은 이미 STT 결과가 표시되어 있음 - 생략
+                    console.log('음성 입력 STT 이미 완료:', recognizedFullText);
+                } else {
+                    // 텍스트 입력 - 시뮬레이션
+                    await simulateSTT(userInput);
+                }
 
                 // 2. Agent API 호출
                 await callAgentAPI(userInput);
@@ -560,10 +887,14 @@
                 updateToolStatus('llm', 'success', '완료', llmDuration);
                 displayLLMResult(result, llmDuration);
 
+                // TTS 자동 호출
+                await callTTS(result.reply_text);
+
             } catch (error) {
                 updateToolStatus('emotion', 'error', '오류');
                 updateToolStatus('routine', 'error', '오류');
                 updateToolStatus('llm', 'error', '오류');
+                updateToolStatus('tts', 'error', '오류');
                 throw error;
             }
         }
@@ -802,8 +1133,95 @@
             `;
         }
 
+        async function callTTS(text) {
+            timers.tts.start = performance.now();
+            updateToolStatus('tts', 'processing', '음성 생성 중...');
+            
+            try {
+                const response = await fetch('http://localhost:8000/api/tts', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        text: text,
+                        tone: 'senior_calm',
+                        engine: 'melo'
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                // Blob으로 오디오 데이터 받기
+                const audioBlob = await response.blob();
+                const audioUrl = URL.createObjectURL(audioBlob);
+                
+                timers.tts.end = performance.now();
+                const duration = Math.round(timers.tts.end - timers.tts.start);
+                
+                updateToolStatus('tts', 'success', '완료', duration);
+                displayTTSResult(audioUrl, duration);
+                
+                // 자동 재생
+                const audio = new Audio(audioUrl);
+                audio.play().catch(err => {
+                    console.error('자동 재생 실패:', err);
+                });
+                
+            } catch (error) {
+                console.error('TTS 오류:', error);
+                updateToolStatus('tts', 'error', '오류');
+                const content = document.getElementById('ttsContent');
+                content.style.display = 'block';
+                content.innerHTML = `
+                    <div style="color: #d32f2f; padding: 10px;">
+                        <strong>오류:</strong> ${error.message}
+                    </div>
+                `;
+                throw error;
+            }
+        }
+
+        function displayTTSResult(audioUrl, duration) {
+            const content = document.getElementById('ttsContent');
+            content.style.display = 'block';
+            
+            content.innerHTML = `
+                <div style="margin-bottom: 15px;">
+                    <strong>🔊 음성 재생</strong>
+                    <div style="margin-top: 10px;">
+                        <audio controls style="width: 100%; max-width: 500px;">
+                            <source src="${audioUrl}" type="audio/wav">
+                            브라우저가 오디오 재생을 지원하지 않습니다.
+                        </audio>
+                    </div>
+                </div>
+
+                <div class="meta-info">
+                    <div class="meta-item">
+                        <span>🎵</span>
+                        <span><strong>엔진:</strong> MeloTTS (Korean)</span>
+                    </div>
+                    <div class="meta-item">
+                        <span>🎭</span>
+                        <span><strong>톤:</strong> senior_calm (갱년기 어머니 상담 톤)</span>
+                    </div>
+                    <div class="meta-item">
+                        <span>⏱️</span>
+                        <span><strong>생성 시간:</strong> ${duration}ms</span>
+                    </div>
+                    <div class="meta-item">
+                        <span>📝</span>
+                        <span><strong>상태:</strong> 자동 재생 시작됨</span>
+                    </div>
+                </div>
+            `;
+        }
+
         function resetToolCards() {
-            ['stt', 'emotion', 'routine', 'llm'].forEach(tool => {
+            ['stt', 'emotion', 'routine', 'llm', 'tts'].forEach(tool => {
                 updateToolStatus(tool, 'pending', '대기 중', null);
                 document.getElementById(`${tool}Content`).style.display = 'none';
                 timers[tool] = { start: 0, end: 0 };
@@ -814,6 +1232,15 @@
             document.getElementById('userInput').value = '';
             document.getElementById('pipelineSection').style.display = 'none';
             currentSessionId = 'web_session_' + Date.now();
+            
+            // 음성 입력 초기화
+            recognizedFullText = '';
+            document.getElementById('recognizedText').style.display = 'none';
+            document.getElementById('recognizedTextContent').textContent = '';
+            if (isRecording) {
+                stopVoiceInput();
+            }
+            updateVoiceStatus('마이크 버튼을 클릭하여 녹음을 시작하세요', 'idle');
         }
 
         async function loadMemory() {
