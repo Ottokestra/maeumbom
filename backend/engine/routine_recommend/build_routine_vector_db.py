@@ -8,9 +8,8 @@ import chromadb
 from typing import List
 
 # routine_catalog에서 루틴 데이터 import
-from .routine_catalog import ALL_ROUTINES, RoutineItem
+from .routine_catalog import ALL_ROUTINES
 
-from engine.routine_recommend.routine_catalog import ALL_ROUTINES
 
 def build_routine_vector_db():
     """

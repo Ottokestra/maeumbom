@@ -2,114 +2,95 @@
 Routine Catalog
 루틴 카탈로그 데이터 정의
 
-이 파일은 이미 구현되어 있다고 가정합니다.
-RoutineItem dataclass와 EMOTION_ROUTINES, TIME_ROUTINES, EXERCISE_ROUTINES, ALL_ROUTINES가 정의되어 있습니다.
+※ 이 파일은 routine_db.ROUTINES(60개)를 기준으로
+   RoutineItem(dataclass) 리스트를 생성하는 래퍼입니다.
+   👉 루틴 데이터를 추가/수정할 때는 항상 routine_db.py의 ROUTINES만 수정하면 됩니다.
 """
+
 from dataclasses import dataclass
 from typing import List, Optional
 
-# RoutineItem dataclass 정의
+from .routine_db import ROUTINES  # 같은 패키지 안에 있으니 상대 import
+
+
 @dataclass
 class RoutineItem:
     """루틴 아이템 데이터 클래스"""
     id: str
     title: str
     description: str
-    group: str  # 예: "EMOTION_POSITIVE", "TIME_MORNING", "EXERCISE_NECK"
-    sub_group: str  # 예: "positive", "morning", "neck"
-    tags: List[str]  # 예: ["maintain_positive", "gratitude", "social_activity"]
+    group: str        # 예: "EMOTION_POSITIVE", "TIME_MORNING", "BODY_NECK_SHOULDER"
+    sub_group: str    # 예: "positive", "morning", "neck" 등 (보조 분류)
+    tags: List[str]   # 예: ["maintain_positive", "gratitude", "social_activity"]
 
 
-# 예시 루틴 데이터 (실제로는 더 많은 루틴이 있을 것으로 가정)
+def _infer_sub_group(category: str, time_tags: Optional[List[str]], body_part: Optional[str]) -> str:
+    """
+    category / time_tags / body_part 를 보고 sub_group 대략 유추.
+    - EMOTION_*  : 카테고리 뒷부분 소문자(ex. EMOTION_POSITIVE → "positive")
+    - TIME_*     : time_tags가 있으면 첫 번째(ex. "morning"), 없으면 "time"
+    - BODY_*     : body_part가 있으면 그대로, 없으면 "body"
+    """
+    if category.startswith("EMOTION_"):
+        return category.split("_", 1)[1].lower()  # POSITIVE, SADNESS ...
+    if category.startswith("TIME_"):
+        if time_tags:
+            return time_tags[0]
+        return "time"
+    if category.startswith("BODY_"):
+        if body_part:
+            return body_part
+        return "body"
+    # 그 외 카테고리
+    return "other"
+
+
+def _default_description(title: str, category: str) -> str:
+    """
+    routine_db에는 description이 없으니까
+    기본 설명 문장을 가볍게 만들어준다.
+    필요하면 나중에 개별 루틴에 맞게 교체 가능.
+    """
+    if category.startswith("EMOTION_"):
+        return f'"{title}" 루틴은 현재 감정을 돌보고 안정시키는 데 도움이 됩니다.'
+    if category.startswith("TIME_"):
+        return f'"{title}" 루틴은 해당 시간대에 실천하면 하루 리듬을 정리하는 데 도움이 됩니다.'
+    if category.startswith("BODY_"):
+        return f'"{title}" 루틴은 몸의 긴장을 풀고 컨디션을 관리하는 데 도움이 됩니다.'
+    return f'"{title}" 루틴을 지금 상황에 맞게 가볍게 실천해 보세요.'
+
+
+# ---------------------------------------------------------------------------
+# ROUTINES(60개)를 RoutineItem 리스트로 변환
+# ---------------------------------------------------------------------------
+ALL_ROUTINES: List[RoutineItem] = []
+
+for r in ROUTINES:
+    category: str = r["category"]
+    tags: List[str] = list(r.get("tags", []))
+    time_tags = r.get("time_tags")
+    body_part = r.get("body_part")
+
+    item = RoutineItem(
+        id=r["id"],
+        title=r["title"],
+        description=_default_description(r["title"], category),
+        group=category,
+        sub_group=_infer_sub_group(category, time_tags, body_part),
+        tags=tags,
+    )
+    ALL_ROUTINES.append(item)
+
+
+# 카테고리별 편의 리스트 (원하면 사용)
 EMOTION_ROUTINES: List[RoutineItem] = [
-    RoutineItem(
-        id="EMO_001",
-        title="감사 일기 쓰기",
-        description="하루 중 감사했던 일들을 3가지 이상 적어보는 루틴입니다. 긍정적인 감정을 유지하고 강화하는 데 도움이 됩니다.",
-        group="EMOTION_POSITIVE",
-        sub_group="positive",
-        tags=["maintain_positive", "gratitude", "journaling"]
-    ),
-    RoutineItem(
-        id="EMO_002",
-        title="가벼운 산책하기",
-        description="10-15분 정도의 가벼운 산책으로 몸과 마음을 이완시켜보세요. 자연과 접촉하면 기분 전환에 도움이 됩니다.",
-        group="EMOTION_SADNESS",
-        sub_group="sadness",
-        tags=["sadness", "low_energy", "light_walk", "nature"]
-    ),
-    RoutineItem(
-        id="EMO_003",
-        title="심호흡 명상",
-        description="5분간 심호흡을 통해 마음을 진정시키는 루틴입니다. 화나 불안한 감정을 완화하는 데 효과적입니다.",
-        group="EMOTION_ANGER",
-        sub_group="anger",
-        tags=["anger", "breathing", "meditation", "calm"]
-    ),
-    RoutineItem(
-        id="EMO_004",
-        title="4-7-8 호흡법",
-        description="4초 들이쉬고, 7초 멈추고, 8초 내쉬는 호흡법으로 불안과 공포를 완화합니다.",
-        group="EMOTION_FEAR",
-        sub_group="fear",
-        tags=["anxiety", "fear", "breathing", "calm"]
-    ),
+    r for r in ALL_ROUTINES if r.group.startswith("EMOTION_")
 ]
 
 TIME_ROUTINES: List[RoutineItem] = [
-    RoutineItem(
-        id="TIME_001",
-        title="아침 햇빛 받기",
-        description="아침에 10분 정도 햇빛을 받으며 상쾌한 하루를 시작하는 루틴입니다.",
-        group="TIME_MORNING",
-        sub_group="morning",
-        tags=["morning", "nature", "energy"]
-    ),
-    RoutineItem(
-        id="TIME_002",
-        title="점심 후 가벼운 산책",
-        description="점심 식사 후 소화를 돕고 오후 에너지를 충전하는 가벼운 산책 루틴입니다.",
-        group="TIME_DAY",
-        sub_group="day",
-        tags=["day", "light_walk", "digestion"]
-    ),
-    RoutineItem(
-        id="TIME_003",
-        title="저녁 명상",
-        description="하루를 마무리하며 마음을 차분하게 정리하는 저녁 명상 루틴입니다.",
-        group="TIME_EVENING",
-        sub_group="evening",
-        tags=["evening", "meditation", "calm"]
-    ),
+    r for r in ALL_ROUTINES if r.group.startswith("TIME_")
 ]
 
 EXERCISE_ROUTINES: List[RoutineItem] = [
-    RoutineItem(
-        id="EXE_001",
-        title="목 돌리기 스트레칭",
-        description="목과 어깨의 긴장을 풀어주는 간단한 스트레칭 루틴입니다.",
-        group="BODY_NECK_SHOULDER",
-        sub_group="neck",
-        tags=["stretching", "tension_release"]
-    ),
-    RoutineItem(
-        id="EXE_002",
-        title="고양이-소 자세",
-        description="허리와 척추를 부드럽게 움직여주는 요가 자세입니다.",
-        group="BODY_LOWER_BACK",
-        sub_group="back",
-        tags=["stretching", "yoga", "back_pain"]
-    ),
-    RoutineItem(
-        id="EXE_003",
-        title="가벼운 유산소 운동",
-        description="혈액 순환을 개선하는 가벼운 유산소 운동 루틴입니다.",
-        group="BODY_CIRCULATION",
-        sub_group="circulation",
-        tags=["exercise", "circulation", "energy"]
-    ),
+    r for r in ALL_ROUTINES if r.group.startswith("BODY_")
 ]
-
-# 모든 루틴 통합
-ALL_ROUTINES: List[RoutineItem] = EMOTION_ROUTINES + TIME_ROUTINES + EXERCISE_ROUTINES
-
