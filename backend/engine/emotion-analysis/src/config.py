@@ -214,3 +214,6 @@ INTENSITY_MAPPING = [
 # Sentiment overall 경계값
 SENTIMENT_DELTA_THRESHOLD = 0.2
 
+# 감정 없음 판단 임계값 (중립 = 감정 없는 문장)
+EMOTION_ABSENCE_THRESHOLD = 0.1  # 모든 감정 점수 합이 이 값 이하이면 감정 없음으로 판단
+

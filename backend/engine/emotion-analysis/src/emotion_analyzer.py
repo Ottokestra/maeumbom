@@ -32,6 +32,7 @@ EMOTION_CODE_TO_NAME_KO = config_module.EMOTION_CODE_TO_NAME_KO
 EMOTION_CODE_TO_GROUP = config_module.EMOTION_CODE_TO_GROUP
 INTENSITY_MAPPING = config_module.INTENSITY_MAPPING
 SENTIMENT_DELTA_THRESHOLD = config_module.SENTIMENT_DELTA_THRESHOLD
+EMOTION_ABSENCE_THRESHOLD = config_module.EMOTION_ABSENCE_THRESHOLD
 
 # OpenAI System Prompt (LLM은 raw_distribution만 생성)
 SYSTEM_PROMPT_17 = """당신은 갱년기 여성 대상 감정 공감 AI 서비스의 "감정 분포 분석 엔진"입니다.
@@ -117,6 +118,14 @@ SYSTEM_PROMPT_17 = """당신은 갱년기 여성 대상 감정 공감 AI 서비�
   - 절대 정확한 1.0을 만들려고 너무 집착할 필요는 없습니다.
   - 중요한 것은 **감정들 사이의 상대적인 크기 관계**입니다.
 
+### 감정이 없는 문장 처리
+
+- 감정이 전혀 없는 문장(예: "오늘 회의 3시입니다", "물 온도는 25도입니다")의 경우,
+- 모든 감정의 score를 **매우 낮게** 설정하십시오 (각 감정당 0.01~0.05 정도).
+- **중요**: 감정 없는 문장의 경우 17개 score의 **총합이 0.1 이하**가 되도록 하거나,
+- 또는 각 감정의 score가 **0.1 이하**가 되도록 하여, 서버에서 "감정 없음(중립)"으로 판단할 수 있게 해주세요.
+- 감정이 있는 문장의 경우에만 score 합이 1.0에 가깝게 설정하세요.
+
 ### 응답 형식에 대한 엄격한 요구사항
 
 - 반드시 위에서 정의한 JSON 구조만 반환하십시오.
@@ -156,6 +165,7 @@ class EmotionAnalyzer:
         self.emotion_code_to_group = EMOTION_CODE_TO_GROUP
         self.intensity_mapping = INTENSITY_MAPPING
         self.sentiment_delta_threshold = SENTIMENT_DELTA_THRESHOLD
+        self.emotion_absence_threshold = EMOTION_ABSENCE_THRESHOLD
         
         # OpenAI client (Lazy init)
         self._client = None
@@ -544,26 +554,41 @@ polarity(극성)는 다음 규칙으로 정합니다:
         
         return round(confidence, 2)
     
-    def _calculate_sentiment_overall(self, normalized_distribution: List[Dict[str, Any]]) -> str:
+    def _calculate_sentiment_overall(self, raw_distribution: List[Dict[str, Any]], normalized_distribution: List[Dict[str, Any]]) -> str:
         """
-        Calculate sentiment_overall from normalized distribution
+        Calculate sentiment_overall from raw and normalized distribution
+        
+        중립 = 감정이 없는 문장 (모든 감정 점수가 매우 낮음)
+        감정이 있는 경우: 긍정/부정 중 더 큰 쪽으로 분류
         
         Args:
+            raw_distribution: List of emotion distributions (정규화 전 원본 score)
             normalized_distribution: List of emotion distributions (정규화된 score)
             
         Returns:
             "positive", "neutral", or "negative"
         """
+        # 1. 감정 없음 판단 (중립 = 감정 없는 문장)
+        # 정규화 전 원본 점수의 총합과 최대 점수로 판단
+        total_raw_score = sum(item.get("score", 0) for item in raw_distribution)
+        max_raw_score = max((item.get("score", 0) for item in raw_distribution), default=0)
+        
+        # 총합이 임계값 이하이거나, 최대 점수가 매우 낮으면 감정 없음으로 판단
+        # (LLM이 감정 없는 문장에 대해 점수 합을 1.0에 가깝게 만들더라도, 최대 점수가 낮으면 감정 없음)
+        if total_raw_score <= self.emotion_absence_threshold or max_raw_score <= 0.1:
+            return "neutral"
+        
+        # 2. 감정 있음 판단: 정규화된 값으로 긍정/부정 중 더 큰 쪽으로 분류
         pos_sum = sum(item["score"] for item in normalized_distribution if item.get("group") == "positive")
         neg_sum = sum(item["score"] for item in normalized_distribution if item.get("group") == "negative")
         
-        delta = pos_sum - neg_sum
-        
-        if delta > self.sentiment_delta_threshold:
+        # 혼합 감정의 경우에도 더 큰 쪽으로 분류
+        if pos_sum > neg_sum:
             return "positive"
-        elif delta < -self.sentiment_delta_threshold:
+        elif neg_sum > pos_sum:
             return "negative"
         else:
+            # pos_sum == neg_sum인 경우 (거의 발생하지 않음)
             return "neutral"
     
     def _detect_mixed_emotion_hybrid(
@@ -859,8 +884,8 @@ polarity(극성)는 다음 규칙으로 정합니다:
                     "intensity": self._score_to_intensity(item.get("score", 0))
                 })
         
-        # Step 6: sentiment_overall 계산
-        sentiment_overall = self._calculate_sentiment_overall(normalized_distribution)
+        # Step 6: sentiment_overall 계산 (raw_distribution으로 감정 없음 판단)
+        sentiment_overall = self._calculate_sentiment_overall(raw_distribution, normalized_distribution)
         
         # Step 6-1: 혼합 감정 감지
         mixed_emotion = self._detect_mixed_emotion_hybrid(

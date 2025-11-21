@@ -4170,7 +4170,7 @@
     "text": "요즘 감정 기복이 심해서 어떤 감정인지 모르겠어요",
     "emotion": "confusion",
     "intensity": 3,
-    "sentiment_overall": "neutral"
+    "sentiment_overall": "negative"
   },
   {
     "text": "그냥 평온한 하루였어요",
@@ -4182,31 +4182,31 @@
     "text": "좋긴 한데 좀 불안해요",
     "emotion": "joy",
     "intensity": 3,
-    "sentiment_overall": "neutral"
+    "sentiment_overall": "negative"
   },
   {
     "text": "기분은 괜찮은데 내일이 걱정돼요",
     "emotion": "joy",
     "intensity": 2,
-    "sentiment_overall": "neutral"
+    "sentiment_overall": "negative"
   },
   {
     "text": "행복한 일도 있었고 슬픈 일도 있었어요",
     "emotion": "joy",
     "intensity": 3,
-    "sentiment_overall": "neutral"
+    "sentiment_overall": "positive"
   },
   {
     "text": "요즘 감정이 왔다 갔다 해서 정확히 뭔지 모르겠어요",
     "emotion": "confusion",
     "intensity": 3,
-    "sentiment_overall": "neutral"
+    "sentiment_overall": "negative"
   },
   {
     "text": "마음이 편안한 것도 아니고 불안한 것도 아니에요",
     "emotion": "relief",
     "intensity": 2,
-    "sentiment_overall": "neutral"
+    "sentiment_overall": "negative"
   },
   {
     "text": "오늘 하루가 그냥 그런 하루였어요",
@@ -4218,13 +4218,13 @@
     "text": "기쁜 일도 있었지만 걱정되는 일도 있어요",
     "emotion": "joy",
     "intensity": 3,
-    "sentiment_overall": "neutral"
+    "sentiment_overall": "positive"
   },
   {
     "text": "감정이 명확하지 않아서 혼란스러워요",
     "emotion": "confusion",
     "intensity": 3,
-    "sentiment_overall": "neutral"
+    "sentiment_overall": "negative"
   },
   {
     "text": "그냥 아무 생각 없이 하루를 보냈어요",
@@ -4236,19 +4236,19 @@
     "text": "좋은 일도 있고 나쁜 일도 있어서 감정이 복잡해요",
     "emotion": "joy",
     "intensity": 3,
-    "sentiment_overall": "neutral"
+    "sentiment_overall": "positive"
   },
   {
     "text": "요즘은 감정이 중간쯤인 것 같아요",
     "emotion": "relief",
     "intensity": 2,
-    "sentiment_overall": "neutral"
+    "sentiment_overall": "negative"
   },
   {
     "text": "기쁘기도 하고 불안하기도 해요",
     "emotion": "joy",
     "intensity": 3,
-    "sentiment_overall": "neutral"
+    "sentiment_overall": "positive"
   },
   {
     "text": "오늘은 그냥 평범하게 지나갔어요",
@@ -4260,31 +4260,31 @@
     "text": "감정이 섞여서 뭔지 모르겠어요",
     "emotion": "confusion",
     "intensity": 3,
-    "sentiment_overall": "neutral"
+    "sentiment_overall": "negative"
   },
   {
     "text": "마음이 한결편한 것도 아니고 불안한 것도 아니에요",
     "emotion": "relief",
     "intensity": 2,
-    "sentiment_overall": "neutral"
+    "sentiment_overall": "negative"
   },
   {
     "text": "좋은 일과 나쁜 일이 반반이에요",
     "emotion": "joy",
     "intensity": 2,
-    "sentiment_overall": "neutral"
+    "sentiment_overall": "positive"
   },
   {
     "text": "요즘 감정이 그냥 중간인 것 같아요",
     "emotion": "relief",
     "intensity": 2,
-    "sentiment_overall": "neutral"
+    "sentiment_overall": "negative"
   },
   {
     "text": "기쁨도 느끼고 걱정도 느껴요",
     "emotion": "joy",
     "intensity": 3,
-    "sentiment_overall": "neutral"
+    "sentiment_overall": "positive"
   },
   {
     "text": "오늘은 특별히 기분이 좋지도 나쁘지도 않아요",
@@ -4296,7 +4296,7 @@
     "text": "감정이 왜 이렇게 복잡한지 모르겠어요",
     "emotion": "confusion",
     "intensity": 3,
-    "sentiment_overall": "neutral"
+    "sentiment_overall": "negative"
   },
   {
     "text": "그냥 평범하게 하루를 보내고 있어요",
@@ -4308,25 +4308,25 @@
     "text": "행복한 순간도 있고 슬픈 순간도 있어요",
     "emotion": "joy",
     "intensity": 3,
-    "sentiment_overall": "neutral"
+    "sentiment_overall": "positive"
   },
   {
     "text": "요즘 감정이 명확하지 않아요",
     "emotion": "confusion",
     "intensity": 2,
-    "sentiment_overall": "neutral"
+    "sentiment_overall": "negative"
   },
   {
     "text": "마음이 편안한 것 같기도 하고 불안한 것 같기도 해요",
     "emotion": "relief",
     "intensity": 2,
-    "sentiment_overall": "neutral"
+    "sentiment_overall": "negative"
   },
   {
     "text": "좋은 일과 걱정되는 일이 동시에 있어요",
     "emotion": "joy",
     "intensity": 3,
-    "sentiment_overall": "neutral"
+    "sentiment_overall": "positive"
   },
   {
     "text": "오늘 하루가 그냥 그런 하루였어요",
@@ -4338,19 +4338,19 @@
     "text": "기쁨과 불안이 동시에 느껴져요",
     "emotion": "joy",
     "intensity": 3,
-    "sentiment_overall": "neutral"
+    "sentiment_overall": "positive"
   },
   {
     "text": "요즘 감정이 중간쯤인 것 같아요",
     "emotion": "relief",
     "intensity": 2,
-    "sentiment_overall": "neutral"
+    "sentiment_overall": "negative"
   },
   {
     "text": "감정이 왜 이렇게 애매한지 모르겠어요",
     "emotion": "confusion",
     "intensity": 3,
-    "sentiment_overall": "neutral"
+    "sentiment_overall": "negative"
   },
   {
     "text": "그냥 평온하게 하루를 보내고 있어요",
@@ -4362,37 +4362,37 @@
     "text": "좋은 일도 있고 안 좋은 일도 있어서 감정이 복잡해요",
     "emotion": "joy",
     "intensity": 3,
-    "sentiment_overall": "neutral"
+    "sentiment_overall": "positive"
   },
   {
     "text": "오늘은 감정이 그냥 중간인 것 같아요",
     "emotion": "relief",
     "intensity": 2,
-    "sentiment_overall": "neutral"
+    "sentiment_overall": "negative"
   },
   {
     "text": "기쁘기도 하고 걱정되기도 해요",
     "emotion": "joy",
     "intensity": 3,
-    "sentiment_overall": "neutral"
+    "sentiment_overall": "positive"
   },
   {
     "text": "요즘 감정이 왔다 갔다 해서 정확히 뭔지 모르겠어요",
     "emotion": "confusion",
     "intensity": 3,
-    "sentiment_overall": "neutral"
+    "sentiment_overall": "negative"
   },
   {
     "text": "마음이 편안한 것도 아니고 불안한 것도 아니에요",
     "emotion": "relief",
     "intensity": 2,
-    "sentiment_overall": "neutral"
+    "sentiment_overall": "negative"
   },
   {
     "text": "행복한 일도 있었고 걱정되는 일도 있었어요",
     "emotion": "joy",
     "intensity": 3,
-    "sentiment_overall": "neutral"
+    "sentiment_overall": "positive"
   },
   {
     "text": "그냥 평범하게 하루를 보내고 있어요",
@@ -4404,7 +4404,7 @@
     "text": "기쁨과 걱정이 동시에 느껴져요",
     "emotion": "joy",
     "intensity": 3,
-    "sentiment_overall": "neutral"
+    "sentiment_overall": "positive"
   },
   {
     "text": "오늘은 특별히 기분이 좋지도 나쁘지도 않아요",
@@ -4416,25 +4416,25 @@
     "text": "감정이 명확하지 않아서 혼란스러워요",
     "emotion": "confusion",
     "intensity": 3,
-    "sentiment_overall": "neutral"
+    "sentiment_overall": "negative"
   },
   {
     "text": "요즘 감정이 그냥 중간인 것 같아요",
     "emotion": "relief",
     "intensity": 2,
-    "sentiment_overall": "neutral"
+    "sentiment_overall": "negative"
   },
   {
     "text": "좋은 일과 나쁜 일이 반반이에요",
     "emotion": "joy",
     "intensity": 2,
-    "sentiment_overall": "neutral"
+    "sentiment_overall": "positive"
   },
   {
     "text": "기쁘기도 하고 불안하기도 해요",
     "emotion": "joy",
     "intensity": 3,
-    "sentiment_overall": "neutral"
+    "sentiment_overall": "positive"
   },
   {
     "text": "그냥 평온하게 하루를 보내고 있어요",
@@ -4446,7 +4446,7 @@
     "text": "감정이 왜 이렇게 복잡한지 모르겠어요",
     "emotion": "confusion",
     "intensity": 3,
-    "sentiment_overall": "neutral"
+    "sentiment_overall": "negative"
   },
   {
     "text": "오늘 하루가 그냥 그런 하루였어요",
@@ -4458,25 +4458,25 @@
     "text": "행복한 순간도 있고 걱정되는 순간도 있어요",
     "emotion": "joy",
     "intensity": 3,
-    "sentiment_overall": "neutral"
+    "sentiment_overall": "positive"
   },
   {
     "text": "요즘 감정이 명확하지 않아요",
     "emotion": "confusion",
     "intensity": 2,
-    "sentiment_overall": "neutral"
+    "sentiment_overall": "negative"
   },
   {
     "text": "마음이 편안한 것 같기도 하고 불안한 것 같기도 해요",
     "emotion": "relief",
     "intensity": 2,
-    "sentiment_overall": "neutral"
+    "sentiment_overall": "negative"
   },
   {
     "text": "좋은 일과 걱정되는 일이 동시에 있어요",
     "emotion": "joy",
     "intensity": 3,
-    "sentiment_overall": "neutral"
+    "sentiment_overall": "positive"
   },
   {
     "text": "그냥 평범하게 하루를 보내고 있어요",
@@ -4488,12 +4488,180 @@
     "text": "기쁨과 불안이 동시에 느껴져요",
     "emotion": "joy",
     "intensity": 3,
-    "sentiment_overall": "neutral"
+    "sentiment_overall": "positive"
   },
   {
     "text": "오늘은 특별한 일도 없고 그냥 평범한 하루였어요",
     "emotion": "relief",
     "intensity": 2,
+    "sentiment_overall": "neutral"
+  },
+  {
+    "text": "오늘 회의 3시입니다",
+    "emotion": "relief",
+    "intensity": 1,
+    "sentiment_overall": "neutral"
+  },
+  {
+    "text": "내일 오후 2시에 약속이 있어요",
+    "emotion": "relief",
+    "intensity": 1,
+    "sentiment_overall": "neutral"
+  },
+  {
+    "text": "다음 주 월요일에 병원 예약이 있습니다",
+    "emotion": "relief",
+    "intensity": 1,
+    "sentiment_overall": "neutral"
+  },
+  {
+    "text": "오늘 저녁 7시에 식사 예정이에요",
+    "emotion": "relief",
+    "intensity": 1,
+    "sentiment_overall": "neutral"
+  },
+  {
+    "text": "물 온도는 25도입니다",
+    "emotion": "relief",
+    "intensity": 1,
+    "sentiment_overall": "neutral"
+  },
+  {
+    "text": "오늘 날씨가 맑아요",
+    "emotion": "relief",
+    "intensity": 1,
+    "sentiment_overall": "neutral"
+  },
+  {
+    "text": "집에서 회사까지 30분 걸려요",
+    "emotion": "relief",
+    "intensity": 1,
+    "sentiment_overall": "neutral"
+  },
+  {
+    "text": "저는 50세입니다",
+    "emotion": "relief",
+    "intensity": 1,
+    "sentiment_overall": "neutral"
+  },
+  {
+    "text": "이번 달 15일이 제 생일이에요",
+    "emotion": "relief",
+    "intensity": 1,
+    "sentiment_overall": "neutral"
+  },
+  {
+    "text": "아침 8시에 일어났어요",
+    "emotion": "relief",
+    "intensity": 1,
+    "sentiment_overall": "neutral"
+  },
+  {
+    "text": "네, 알겠습니다",
+    "emotion": "relief",
+    "intensity": 1,
+    "sentiment_overall": "neutral"
+  },
+  {
+    "text": "그렇게 하겠습니다",
+    "emotion": "relief",
+    "intensity": 1,
+    "sentiment_overall": "neutral"
+  },
+  {
+    "text": "예, 맞습니다",
+    "emotion": "relief",
+    "intensity": 1,
+    "sentiment_overall": "neutral"
+  },
+  {
+    "text": "아니요, 그렇지 않아요",
+    "emotion": "relief",
+    "intensity": 1,
+    "sentiment_overall": "neutral"
+  },
+  {
+    "text": "오늘 점심은 김치찌개를 먹었어요",
+    "emotion": "relief",
+    "intensity": 1,
+    "sentiment_overall": "neutral"
+  },
+  {
+    "text": "저는 두 자녀가 있어요",
+    "emotion": "relief",
+    "intensity": 1,
+    "sentiment_overall": "neutral"
+  },
+  {
+    "text": "집은 아파트에 살고 있어요",
+    "emotion": "relief",
+    "intensity": 1,
+    "sentiment_overall": "neutral"
+  },
+  {
+    "text": "직업은 간병인입니다",
+    "emotion": "relief",
+    "intensity": 1,
+    "sentiment_overall": "neutral"
+  },
+  {
+    "text": "오늘은 화요일이에요",
+    "emotion": "relief",
+    "intensity": 1,
+    "sentiment_overall": "neutral"
+  },
+  {
+    "text": "이번 주 금요일에 휴가예요",
+    "emotion": "relief",
+    "intensity": 1,
+    "sentiment_overall": "neutral"
+  },
+  {
+    "text": "지금 집에 있어요",
+    "emotion": "relief",
+    "intensity": 1,
+    "sentiment_overall": "neutral"
+  },
+  {
+    "text": "방금 식사를 마쳤어요",
+    "emotion": "relief",
+    "intensity": 1,
+    "sentiment_overall": "neutral"
+  },
+  {
+    "text": "지금은 휴식 중이에요",
+    "emotion": "relief",
+    "intensity": 1,
+    "sentiment_overall": "neutral"
+  },
+  {
+    "text": "오늘은 집에서 쉬고 있어요",
+    "emotion": "relief",
+    "intensity": 1,
+    "sentiment_overall": "neutral"
+  },
+  {
+    "text": "오늘은 12월 25일이에요",
+    "emotion": "relief",
+    "intensity": 1,
+    "sentiment_overall": "neutral"
+  },
+  {
+    "text": "지금 시간은 오후 3시예요",
+    "emotion": "relief",
+    "intensity": 1,
+    "sentiment_overall": "neutral"
+  },
+  {
+    "text": "이번 달 말일에 정기검진이 있어요",
+    "emotion": "relief",
+    "intensity": 1,
+    "sentiment_overall": "neutral"
+  },
+  {
+    "text": "다음 달부터 새 일정이 시작돼요",
+    "emotion": "relief",
+    "intensity": 1,
     "sentiment_overall": "neutral"
   }
 ]
