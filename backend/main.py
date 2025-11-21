@@ -76,6 +76,25 @@ if emotion_router is not None:
     # 하위 호환성을 위해 /api 경로도 지원
     app.include_router(emotion_router, prefix="/api", tags=["emotion"])
 
+# =========================
+# Daily Mood Check Service
+# =========================
+try:
+    daily_mood_check_path = backend_path / "service" / "daily_mood_check" / "routes.py"
+    if not daily_mood_check_path.exists():
+        print(f"[WARN] Daily mood check routes file not found: {daily_mood_check_path}")
+    else:
+        spec = importlib.util.spec_from_file_location("daily_mood_check_routes", daily_mood_check_path)
+        daily_mood_check_module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(daily_mood_check_module)
+        daily_mood_check_router = daily_mood_check_module.router
+        app.include_router(daily_mood_check_router, prefix="/api/service/daily-mood-check", tags=["daily-mood-check"])
+        print("[INFO] Daily mood check router loaded successfully.")
+except Exception as e:
+    import traceback
+    print(f"[WARN] Daily mood check module load failed: {e}")
+    traceback.print_exc()
+
 
 
 
