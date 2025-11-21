@@ -1,14 +1,24 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import EmotionInput from './components/EmotionInput'
 import EmotionResult from './components/EmotionResult'
 import EmotionChart from './components/EmotionChart'
 import RoutineList from './components/RoutineList'
 import STTTest from './components/STTTest'
 import TTSTest from './components/TTSTest'
+import DailyMoodCheck from './components/DailyMoodCheck'
 import './App.css'
 
 function App() {
-  const [activeTab, setActiveTab] = useState('emotion') // 'emotion', 'routine-test', or 'stt-tts-test'
+  // localStorage에서 activeTab 복원 또는 기본값 사용
+  const [activeTab, setActiveTab] = useState(() => {
+    const saved = localStorage.getItem('activeTab')
+    return saved || 'emotion' // 'emotion', 'routine-test', 'stt-tts-test', 'daily-mood-check'
+  })
+
+  // activeTab이 변경될 때마다 localStorage에 저장
+  useEffect(() => {
+    localStorage.setItem('activeTab', activeTab)
+  }, [activeTab])
   
   // 감정 분석 관련 state
   const [result, setResult] = useState(null)
@@ -208,6 +218,21 @@ function App() {
         >
           STT/TTS 테스트
         </button>
+        <button
+          onClick={() => setActiveTab('daily-mood-check')}
+          style={{
+            padding: '10px 20px',
+            fontSize: '16px',
+            cursor: 'pointer',
+            backgroundColor: activeTab === 'daily-mood-check' ? '#6366f1' : '#e5e7eb',
+            color: activeTab === 'daily-mood-check' ? 'white' : '#374151',
+            border: 'none',
+            borderRadius: '8px',
+            fontWeight: activeTab === 'daily-mood-check' ? 'bold' : 'normal'
+          }}
+        >
+          일일 감정 체크
+        </button>
       </div>
 
       <div className="main-container">
@@ -392,6 +417,11 @@ function App() {
             <STTTest />
             <TTSTest />
           </>
+        )}
+
+        {/* 일일 감정 체크 섹션 */}
+        {activeTab === 'daily-mood-check' && (
+          <DailyMoodCheck />
         )}
       </div>
     </div>
