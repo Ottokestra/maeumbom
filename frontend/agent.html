@@ -556,6 +556,7 @@
         let scriptProcessor = null;
         let sttWebSocket = null;
         let recognizedFullText = '';
+        let lastSTTQuality = null;  // STT quality 저장
 
         // 입력 모드 전환
         function switchInputMode(mode) {
@@ -705,6 +706,7 @@
                 // STT 결과 수신
                 if (data.text && data.text.trim()) {
                     recognizedFullText = data.text;
+                    lastSTTQuality = data.quality;  // quality 저장
                     document.getElementById('recognizedText').style.display = 'block';
                     document.getElementById('recognizedTextContent').textContent = data.text;
                     
@@ -848,7 +850,8 @@
                     },
                     body: JSON.stringify({
                         user_text: text,
-                        session_id: currentSessionId
+                        session_id: currentSessionId,
+                        stt_quality: lastSTTQuality  // STT quality 전달
                     })
                 });
 

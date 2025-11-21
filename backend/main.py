@@ -82,23 +82,58 @@ if emotion_router is not None:
 # LangChain Agent routes
 from fastapi import HTTPException
 from pydantic import BaseModel
+from typing import Optional
 
 class AgentTextRequest(BaseModel):
     user_text: str
-    session_id: str = None
+    session_id: Optional[str] = None
+    stt_quality: Optional[str] = None  # "success" | "medium" | "low_quality" | "no_speech" | None
 
 class AgentAudioRequest(BaseModel):
     audio_bytes: bytes
-    session_id: str = None
+    session_id: Optional[str] = None
 
 @app.post("/api/agent/text")
 async def agent_text_endpoint(request: AgentTextRequest):
-    """LangChain Agent - 텍스트 입력"""
+    """LangChain Agent - 텍스트 입력 (STT Quality 전처리 포함)"""
     try:
         from engine.langchain_agent import run_ai_bomi_from_text
+        
+        # STT Quality 전처리
+        if request.stt_quality == "no_speech":
+            return {
+                "reply_text": "음성이 감지되지 않았어요. 다시 말씀해주시겠어요?",
+                "input_text": request.user_text or "",
+                "emotion_result": None,
+                "routine_result": None,
+                "meta": {
+                    "model": os.getenv("OPENAI_MODEL_NAME", "gpt-4o-mini"),
+                    "used_tools": [],
+                    "session_id": request.session_id or "default",
+                    "stt_quality": request.stt_quality,
+                    "note": "no_speech_detected"
+                }
+            }
+        elif request.stt_quality == "low_quality":
+            return {
+                "reply_text": "소음이 심해서 잘 들리지 않았어요. 조용한 곳에서 다시 말씀해주시겠어요?",
+                "input_text": request.user_text or "",
+                "emotion_result": None,
+                "routine_result": None,
+                "meta": {
+                    "model": os.getenv("OPENAI_MODEL_NAME", "gpt-4o-mini"),
+                    "used_tools": [],
+                    "session_id": request.session_id or "default",
+                    "stt_quality": request.stt_quality,
+                    "note": "low_quality_audio"
+                }
+            }
+        
+        # 정상 품질 또는 텍스트 입력인 경우 Agent 실행
         result = run_ai_bomi_from_text(
             user_text=request.user_text,
-            session_id=request.session_id
+            session_id=request.session_id,
+            stt_quality=request.stt_quality
         )
         return result
     except Exception as e:
@@ -222,9 +257,9 @@ async def stt_websocket(websocket: WebSocket):
                     transcript, quality = engine.whisper.transcribe(speech_audio, callback=None)
                     print(f"[STT] STT 결과: text='{transcript}', quality={quality}")
                     
-                    # 모든 품질의 텍스트를 전송 (no_speech만 제외)
+                    # 모든 품질에 대해 결과 전송 (quality가 안좋으면 text는 null)
                     response = {
-                        "text": transcript if quality != "no_speech" else None,
+                        "text": transcript if quality in ["success", "medium"] else None,
                         "quality": quality
                     }
                     await websocket.send_json(response)
@@ -285,6 +320,142 @@ async def stt_websocket(websocket: WebSocket):
                 print("VAD 상태 초기화 완료")
             except Exception as e:
                 print(f"VAD 리셋 오류 (무시): {e}")
+
+
+@app.websocket("/agent/stream")
+async def agent_websocket(websocket: WebSocket):
+    """
+    통합 STT + Agent WebSocket 엔드포인트
+    
+    음성 입력을 받아 STT 처리 후 자동으로 Agent 실행
+    """
+    await websocket.accept()
+    stt_engine_instance = None
+    session_id = None
+    
+    try:
+        # 초기화 메시지
+        await websocket.send_json({
+            "type": "status",
+            "status": "connecting",
+            "message": "STT + Agent 엔진 초기화 중..."
+        })
+        
+        # STT 엔진 초기화
+        stt_engine_instance = get_stt_engine()
+        
+        # 준비 완료
+        await websocket.send_json({
+            "type": "status",
+            "status": "ready",
+            "message": "준비 완료. 말씀하세요."
+        })
+        
+        while True:
+            try:
+                data = await websocket.receive()
+            except RuntimeError as e:
+                if "disconnect" in str(e).lower():
+                    print("[Agent WebSocket] 클라이언트 연결 종료")
+                    break
+                raise
+            
+            # JSON 메시지 처리 (세션 ID 설정 등)
+            if "text" in data:
+                try:
+                    message = json.loads(data["text"]) if isinstance(data["text"], str) else data["text"]
+                    if isinstance(message, dict) and "session_id" in message:
+                        session_id = message["session_id"]
+                        print(f"[Agent WebSocket] 세션 ID 설정: {session_id}")
+                        await websocket.send_json({
+                            "type": "status",
+                            "message": f"세션 ID 설정됨: {session_id}"
+                        })
+                        continue
+                except:
+                    pass  # JSON 파싱 실패 시 무시
+            
+            # 오디오 바이트 처리
+            if "bytes" in data:
+                audio_bytes = data["bytes"]
+                audio_chunk = np.frombuffer(audio_bytes, dtype=np.float32)
+                
+                if len(audio_chunk) != 512:
+                    continue
+                
+                # VAD 처리
+                is_speech_end, speech_audio, is_short_pause = stt_engine_instance.vad.process_chunk(audio_chunk)
+                
+                if is_speech_end and speech_audio is not None:
+                    print(f"[Agent WebSocket] 발화 종료 감지, STT + Agent 처리 시작")
+                    
+                    # STT 처리
+                    transcript, quality = stt_engine_instance.whisper.transcribe(speech_audio, callback=None)
+                    print(f"[Agent WebSocket] STT 결과: text='{transcript}', quality={quality}")
+                    
+                    # STT 결과 전송
+                    await websocket.send_json({
+                        "type": "stt_result",
+                        "text": transcript if quality != "no_speech" else None,
+                        "quality": quality
+                    })
+                    
+                    # Agent 자동 실행 (quality가 success 또는 medium인 경우)
+                    if quality in ["success", "medium"] and transcript:
+                        try:
+                            from engine.langchain_agent import run_ai_bomi_from_text
+                            
+                            # Agent 처리 중 메시지
+                            await websocket.send_json({
+                                "type": "status",
+                                "status": "processing",
+                                "message": "AI 봄이가 생각 중..."
+                            })
+                            
+                            result = run_ai_bomi_from_text(
+                                user_text=transcript,
+                                session_id=session_id or "websocket_default",
+                                stt_quality=quality
+                            )
+                            
+                            # Agent 응답 전송
+                            await websocket.send_json({
+                                "type": "agent_response",
+                                "data": result
+                            })
+                            
+                            print(f"[Agent WebSocket] Agent 응답 완료")
+                            
+                        except Exception as e:
+                            print(f"[Agent WebSocket] Agent 처리 오류: {e}")
+                            import traceback
+                            traceback.print_exc()
+                            await websocket.send_json({
+                                "type": "error",
+                                "message": f"Agent 처리 오류: {str(e)}"
+                            })
+                    
+                    stt_engine_instance.vad.reset()
+                    
+    except WebSocketDisconnect:
+        print("[Agent WebSocket] 연결 종료")
+    except Exception as e:
+        print(f"[Agent WebSocket] 오류: {e}")
+        import traceback
+        traceback.print_exc()
+        try:
+            await websocket.send_json({
+                "type": "error",
+                "message": str(e)
+            })
+        except:
+            pass
+    finally:
+        if stt_engine_instance is not None:
+            try:
+                stt_engine_instance.vad.reset()
+            except:
+                pass
 
 
 @app.post(
