@@ -118,6 +118,9 @@ class InMemoryConversationStore:
             메시지 리스트
         """
         history = self._store.get(session_id, [])
+        print(f"[DEBUG] 대화 히스토리 조회: session_id={session_id}, 총 {len(history)}개 메시지")
+        if history:
+            print(f"[DEBUG] 히스토리 미리보기: {[{k: v[:50] if k == 'content' else v for k, v in msg.items() if k in ['role', 'content']} for msg in history]}")
         
         if limit:
             return history[-limit:]
@@ -318,6 +321,13 @@ def create_llm_chain():
 - 별도 안내 없이 텍스트 입력과 동일하게 처리.
 - 음성 감정 신호(속도/톤 등)가 제공되면, 텍스트 감정과 동일한 방식으로 통합하여 응답.
 
+[대화 히스토리 활용 규칙]
+- 이전 대화 맥락이 제공되면 자연스럽게 기억하고 반영한다.
+- 사용자가 이전에 언급한 감정이나 상황을 기억하고 있는 듯한 반응을 보인다.
+- 단, "지난번에 말씀하셨듯이" 같은 명시적 표현은 피한다.
+- 반복되는 패턴이나 감정 변화를 자연스럽게 감지하여 언급할 수 있다.
+- 대화가 처음인 경우 히스토리 정보가 없으므로 현재 입력에만 집중한다.
+
 답변 형식:
 1) 사용자 감정 인정
 2) 감정을 받아주는 공감 표현
@@ -327,6 +337,8 @@ def create_llm_chain():
     
     # User Prompt 템플릿
     user_prompt_template = """
+{conversation_history}
+
 사용자 입력:
 "{user_text}"
 
@@ -344,6 +356,7 @@ def create_llm_chain():
 - 감정 분석(primary emotion 및 부정 감정 포함)을 최우선으로 반영한다.
 - 사용자가 느낀 신체적·감정적 불편이 갱년기적 특성과 연관될 수 있다면 자연스럽게 이해해주는 톤을 사용한다.
 - routine_suggestion이 있을 경우 마지막 문장에 선택형으로 자연스럽게 포함한다.
+- 이전 대화 맥락이 있다면 자연스럽게 반영하되, 명시적으로 언급하지 않는다.
 - 전체 답변은 2~3문장으로 간결하고 포근하게 작성한다.
 """
     
@@ -375,7 +388,12 @@ def get_llm_chain():
     return _llm_chain_cache
 
 
-def generate_llm_response(user_text: str, emotion_result: EmotionResult, routine_result: list[dict] | None = None) -> str:
+def generate_llm_response(
+    user_text: str, 
+    emotion_result: EmotionResult, 
+    routine_result: list[dict] | None = None,
+    conversation_history: list[dict] | None = None
+) -> str:
     """
     LLM을 호출하여 응답 생성
     
@@ -383,6 +401,7 @@ def generate_llm_response(user_text: str, emotion_result: EmotionResult, routine
         user_text: 사용자 입력 텍스트
         emotion_result: 감정 분석 결과
         routine_result: 루틴 추천 결과 (선택)
+        conversation_history: 대화 히스토리 (선택)
         
     Returns:
         AI 봄이의 응답 텍스트
@@ -399,6 +418,16 @@ def generate_llm_response(user_text: str, emotion_result: EmotionResult, routine
     # 응답 스타일을 문자열로 변환
     style_str = ", ".join(recommended_response_style) if recommended_response_style else "공감적이고 따뜻한 답변"
     
+    # 대화 히스토리 포맷팅
+    history_text = ""
+    if conversation_history and len(conversation_history) > 0:
+        history_text = "최근 대화 맥락:\n"
+        for msg in conversation_history:
+            role_name = "사용자" if msg["role"] == "user" else "AI 봄이"
+            content_preview = msg["content"][:100] + "..." if len(msg["content"]) > 100 else msg["content"]
+            history_text += f"- {role_name}: {content_preview}\n"
+        history_text += "\n"
+    
     # 루틴 추천 정보 포맷팅
     routine_info = ""
     routine_suggestion = ""
@@ -410,6 +439,7 @@ def generate_llm_response(user_text: str, emotion_result: EmotionResult, routine
     
     # LLM 호출
     response = chain.invoke({
+        "conversation_history": history_text,
         "user_text": user_text,
         "sentiment_overall": sentiment_overall,
         "primary_emotion_name": primary_emotion.get("name_ko", "알 수 없음"),
@@ -430,7 +460,8 @@ def generate_llm_response(user_text: str, emotion_result: EmotionResult, routine
 
 def run_ai_bomi_from_text(
     user_text: str,
-    session_id: Optional[str] = None
+    session_id: Optional[str] = None,
+    stt_quality: Optional[str] = None
 ) -> dict[str, Any]:
     """
     텍스트 입력으로 AI 봄이 실행
@@ -445,6 +476,7 @@ def run_ai_bomi_from_text(
     Args:
         user_text: 사용자 입력 텍스트
         session_id: 세션 ID (선택, 없으면 "default" 사용)
+        stt_quality: STT 품질 정보 (선택, "success" | "medium" | "low_quality" | "no_speech")
         
     Returns:
         AI 봄이의 응답 결과
@@ -471,11 +503,12 @@ def run_ai_bomi_from_text(
     # 연속 공백 제거
     user_text = " ".join(user_text.split())
     
-    # 2. Agent Memory 조회 (v1.0에서는 단순 저장만)
+    # 2. Agent Memory 조회 및 히스토리 준비
     conversation_store = get_conversation_store()
 
-    # 이전 대화 히스토리 조회
-    history = conversation_store.get_history(session_id, limit=5)
+    # 이전 대화 히스토리 조회 (최근 3개만 LLM에 전달)
+    history = conversation_store.get_history(session_id, limit=3)
+    print(f"[DEBUG] run_ai_bomi_from_text: 조회된 히스토리 개수 = {len(history)}")
     
     # 3. Tool Router 실행
     logger.debug("🔧 Tool Router 실행 중...")
@@ -486,9 +519,15 @@ def run_ai_bomi_from_text(
     
     logger.info(f"✅ 감정 분석 완료: {emotion_result['primary_emotion']['name_ko']} ({emotion_result['sentiment_overall']})")
     
-    # 4. LLM 호출
+    # 4. LLM 호출 (대화 히스토리 포함)
     logger.debug("🤖 LLM 응답 생성 중...")
-    reply_text = generate_llm_response(user_text, emotion_result, routine_result)
+    print(f"[DEBUG] LLM에 전달되는 히스토리: {len(history)}개")
+    reply_text = generate_llm_response(
+        user_text, 
+        emotion_result, 
+        routine_result,
+        conversation_history=history
+    )
     logger.info("✅ 응답 생성 완료")
     
     # 5. Memory 업데이트
@@ -517,6 +556,10 @@ def run_ai_bomi_from_text(
         }
     }
     
+    # STT quality 정보가 있으면 메타에 추가
+    if stt_quality:
+        result["meta"]["stt_quality"] = stt_quality
+    
     return result
 
 
@@ -526,6 +569,10 @@ def run_ai_bomi_from_audio(
 ) -> dict[str, Any]:
     """
     음성 입력으로 AI 봄이 실행
+    
+    ⚠️ DEPRECATED: 이 함수는 더 이상 권장되지 않습니다.
+    현재 WebSocket 스트리밍 방식(/agent/stream)과 호환되지 않습니다.
+    대신 /agent/stream WebSocket 엔드포인트를 사용하세요.
     
     전체 플로우:
     1. STT 엔진 호출 (adapters.stt_adapter.run_speech_to_text)
@@ -538,6 +585,12 @@ def run_ai_bomi_from_audio(
     Returns:
         AI 봄이의 응답 결과
     """
+    import warnings
+    warnings.warn(
+        "run_ai_bomi_from_audio is deprecated. Use /agent/stream WebSocket endpoint instead.",
+        DeprecationWarning,
+        stacklevel=2
+    )
     # 1. STT 실행
     logger.debug("🎤 STT 실행 중...")
     user_text = run_speech_to_text(audio_bytes)
@@ -620,10 +673,6 @@ if __name__ == "__main__":
     
     store = get_conversation_store()
     history = store.get_history("test_session_1")
-    print(f"\ntest_session_1의 대화 개수: {len(history)}")
-    for i, msg in enumerate(history, 1):
-        print(f"{i}. [{msg['role']}] {msg['content'][:50]}...")
-    
     print("\n" + "=" * 80)
     print("테스트 완료!")
     print("=" * 80)
