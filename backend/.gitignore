@@ -112,3 +112,7 @@ engine/text-to-speech/outputs/
 reproduce_error.py
 
 backend/engine/routine_recommend/chroma/routines/
+
+# ===== LangChain Agent Memory & RAG =====
+engine/langchain_agent/memory_data/
+engine/langchain_agent/vectordb/
