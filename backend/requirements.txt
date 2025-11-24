@@ -21,6 +21,7 @@ chromadb>=0.4.18
 
 # Utils
 python-dotenv>=1.0.0
+python-dateutil>=2.8.0
 
 # OpenAI API
 openai>=1.55.0
@@ -56,7 +57,7 @@ langid==1.1.6
 # ======================
 librosa==0.9.1
 pydub==0.25.1
-# pyaudio==0.2.14
+pyaudio==0.2.14
 soxr
 soundfile
 
@@ -71,6 +72,9 @@ packaging>=21.0
 
 # Faster-Whisper
 faster-whisper>=1.0.0
+
+# Speaker Verification
+resemblyzer>=0.1.1
 
 # LangChain Agent (최신 안정 버전으로 업그레이드)
 langchain>=0.3.0,<0.4.0
