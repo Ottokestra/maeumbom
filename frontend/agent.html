@@ -535,6 +535,171 @@
             font-size: 0.9rem;
             line-height: 1.6;
         }
+
+        /* Daily Mood Check 스타일 */
+        .mood-check-button {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            border: none;
+            border-radius: 15px;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 15px rgba(245, 87, 108, 0.3);
+        }
+
+        .mood-check-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(245, 87, 108, 0.4);
+        }
+
+        .mood-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.3s ease;
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        .mood-modal.active {
+            display: flex;
+        }
+
+        .mood-content {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            max-width: 900px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        .mood-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .mood-header h2 {
+            margin: 0;
+            color: #333;
+            font-size: 1.5rem;
+        }
+
+        .mood-close {
+            background: none;
+            border: none;
+            font-size: 2rem;
+            cursor: pointer;
+            color: #999;
+            padding: 0;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: all 0.3s;
+        }
+
+        .mood-close:hover {
+            background: #f5f5f5;
+            color: #333;
+        }
+
+        .mood-images-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .mood-image-card {
+            background: #f8f9fa;
+            border-radius: 15px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 3px solid transparent;
+        }
+
+        .mood-image-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+            border-color: #667eea;
+        }
+
+        .mood-image-card.selected {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.3);
+        }
+
+        .mood-image-card.disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .mood-image-wrapper {
+            width: 100%;
+            height: 300px;
+            background: #f3f4f6;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .mood-image-wrapper img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+
+
+        .mood-loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+
+        .mood-status {
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        .mood-status.completed {
+            background-color: #d1fae5;
+            border: 1px solid #10b981;
+            color: #065f46;
+        }
+
+        .mood-status.pending {
+            background-color: #fef3c7;
+            border: 1px solid #f59e0b;
+            color: #92400e;
+        }
     </style>
 </head>
 
@@ -571,9 +736,14 @@
                     <label for="userInput">사용자 입력</label>
                     <div class="input-wrapper">
                         <textarea id="userInput" placeholder="예: 오늘 하루 정말 힘들었어요. 아무것도 하기 싫고 기운이 없네요."></textarea>
-                        <button class="mic-button" onclick="startVoiceInput()" title="음성 입력">
-                            🎤
-                        </button>
+                        <div style="display: flex; flex-direction: column; gap: 10px;">
+                            <button class="mic-button" onclick="startVoiceInput()" title="음성 입력">
+                                🎤
+                            </button>
+                            <button class="mood-check-button" onclick="openMoodCheckModal()" title="일일 감정 체크">
+                                🌸
+                            </button>
+                        </div>
                     </div>
                 </div>
 
@@ -649,6 +819,19 @@
         </div>
     </div>
 
+    <div class="mood-modal" id="moodModal">
+        <div class="mood-content">
+            <div class="mood-header">
+                <h2>🌸 일일 감정 체크</h2>
+                <button class="mood-close" onclick="closeMoodCheckModal()">✕</button>
+            </div>
+            <div class="mood-status" id="moodStatus"></div>
+            <div id="moodImagesContainer">
+                <div class="mood-loading">이미지를 불러오는 중...</div>
+            </div>
+        </div>
+    </div>
+
     <script>
         let currentSessionId = null;
         let sessions = {};
@@ -670,6 +853,11 @@
         let recognizedFullText = '';
         let animationFrameId = null;
         let dotAnimationInterval = null;
+
+        // Daily Mood Check 관련 변수
+        const DAILY_MOOD_API_BASE = '/api/service/daily-mood-check';
+        const DAILY_MOOD_USER_ID = 1;
+        let dailyMoodStatus = null;
 
         window.addEventListener('DOMContentLoaded', () => {
             loadSessions();
@@ -1197,6 +1385,293 @@
             updateToolStatus('tts', 'pending', '대기 중');
 
             document.getElementById('runBtn').disabled = false;
+        }
+
+        // Daily Mood Check 함수들
+        async function openMoodCheckModal() {
+            document.getElementById('moodModal').classList.add('active');
+            await loadDailyMoodStatus();
+            await loadDailyMoodImages();
+        }
+
+        function closeMoodCheckModal() {
+            document.getElementById('moodModal').classList.remove('active');
+        }
+
+        async function loadDailyMoodStatus() {
+            try {
+                const response = await fetch(`${DAILY_MOOD_API_BASE}/status/${DAILY_MOOD_USER_ID}`);
+                if (response.ok) {
+                    dailyMoodStatus = await response.json();
+                    displayDailyMoodStatus();
+                }
+            } catch (error) {
+                console.error('Daily mood status error:', error);
+            }
+        }
+
+        function displayDailyMoodStatus() {
+            const statusEl = document.getElementById('moodStatus');
+            if (dailyMoodStatus && dailyMoodStatus.completed) {
+                statusEl.className = 'mood-status completed';
+                statusEl.textContent = `✅ 오늘 체크 완료 (${dailyMoodStatus.last_check_date || ''})`;
+            } else {
+                statusEl.className = 'mood-status pending';
+                statusEl.textContent = '⏰ 오늘 체크가 필요합니다';
+            }
+        }
+
+        async function loadDailyMoodImages() {
+            const container = document.getElementById('moodImagesContainer');
+            container.innerHTML = '<div class="mood-loading">이미지를 불러오는 중...</div>';
+
+            try {
+                const response = await fetch(`${DAILY_MOOD_API_BASE}/images?t=${Date.now()}`, {
+                    cache: 'no-store'
+                });
+                if (!response.ok) {
+                    throw new Error('이미지 로드 실패');
+                }
+                const data = await response.json();
+                displayDailyMoodImages(data.images || []);
+            } catch (error) {
+                console.error('Daily mood images error:', error);
+                container.innerHTML = '<div class="mood-loading" style="color: #ef4444;">이미지를 불러올 수 없습니다.</div>';
+            }
+        }
+
+        function displayDailyMoodImages(images) {
+            const container = document.getElementById('moodImagesContainer');
+            if (images.length === 0) {
+                container.innerHTML = '<div class="mood-loading">이미지가 없습니다.</div>';
+                return;
+            }
+
+            const isDisabled = dailyMoodStatus && dailyMoodStatus.completed;
+            container.innerHTML = `
+                <div class="mood-images-grid">
+                    ${images.map(image => `
+                        <div class="mood-image-card ${isDisabled ? 'disabled' : ''}" 
+                             onclick="${isDisabled ? '' : `selectDailyMoodImage(${image.id})`}">
+                            <div class="mood-image-wrapper">
+                                <img src="http://localhost:8000${image.url}?t=${Date.now()}" 
+                                     alt="${image.description}"
+                                     onerror="this.src='data:image/svg+xml,%3Csvg xmlns=\\'http://www.w3.org/2000/svg\\' width=\\'200\\' height=\\'200\\'%3E%3Crect width=\\'200\\' height=\\'200\\' fill=\\'%23e5e7eb\\'/%3E%3Ctext x=\\'50%25\\' y=\\'50%25\\' text-anchor=\\'middle\\' dy=\\'0.3em\\' fill=\\'%239ca3af\\'%3E이미지 없음%3C/text%3E%3C/svg%3E'">
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+
+        async function selectDailyMoodImage(imageId) {
+            if (dailyMoodStatus && dailyMoodStatus.completed) {
+                alert('오늘 이미 체크를 완료했습니다.');
+                return;
+            }
+
+            const container = document.getElementById('moodImagesContainer');
+            container.innerHTML = '<div class="mood-loading">감정을 분석하고 있습니다...</div>';
+
+            try {
+                const response = await fetch(`${DAILY_MOOD_API_BASE}/select`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        user_id: DAILY_MOOD_USER_ID,
+                        image_id: imageId
+                    })
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({ detail: response.statusText }));
+                    throw new Error(errorData.detail || '이미지 선택 실패');
+                }
+
+                const data = await response.json();
+
+                // 상태 업데이트
+                await loadDailyMoodStatus();
+
+                // 대화창에 선택한 이미지 표시
+                if (!currentSessionId) {
+                    createNewSession();
+                }
+                
+                // 선택한 이미지를 사용자 메시지로 추가
+                const imageUrl = `http://localhost:8000${data.selected_image.url}`;
+                const imageMessage = {
+                    role: 'user',
+                    content: `<img src="${imageUrl}" style="max-width: 200px; border-radius: 10px; margin-bottom: 5px;" /><br><span style="font-size: 0.9rem; opacity: 0.9;">선택한 이미지</span>`,
+                    timestamp: new Date().toISOString()
+                };
+                currentConversationHistory.push(imageMessage);
+                displayConversationHistory();
+
+                // "분석 중입니다" 메시지 추가
+                const analyzingMessage = {
+                    role: 'assistant',
+                    content: '분석 중입니다...',
+                    timestamp: new Date().toISOString()
+                };
+                currentConversationHistory.push(analyzingMessage);
+                displayConversationHistory();
+
+                // 감정 분석 결과를 agent 파이프라인에 연결
+                if (data.emotion_result) {
+                    connectMoodCheckToAgent(data.emotion_result, data.selected_image);
+                }
+
+                // 모달 닫기
+                setTimeout(() => {
+                    closeMoodCheckModal();
+                }, 500);
+
+            } catch (error) {
+                alert('오류: ' + error.message);
+                console.error('Image select error:', error);
+                await loadDailyMoodImages();
+            }
+        }
+
+        async function connectMoodCheckToAgent(emotionResult, selectedImage) {
+            // 이전 결과 초기화
+            document.getElementById('emotionContent').style.display = 'none';
+            document.getElementById('routineContent').style.display = 'none';
+            document.getElementById('llmContent').style.display = 'none';
+            document.getElementById('ttsContent').style.display = 'none';
+
+            // 감정 분석 결과 표시
+            updateToolStatus('emotion', 'success', '완료 (그림 체크)');
+            displayEmotionResult(emotionResult);
+
+            // 루틴 추천 확인 및 실행
+            const serviceSignals = emotionResult.service_signals || {};
+            if (serviceSignals.need_routine_recommend) {
+                try {
+                    timers.routine.start = performance.now();
+                    updateToolStatus('routine', 'processing', '추천 중...');
+
+                    const routineResponse = await fetch('http://localhost:8000/api/engine/routine-from-emotion', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(emotionResult)
+                    });
+
+                    if (routineResponse.ok) {
+                        const routineResult = await routineResponse.json();
+                        timers.routine.end = performance.now();
+                        const routineTime = Math.round(timers.routine.end - timers.routine.start);
+                        updateToolStatus('routine', 'success', `완료 (${routineTime}ms)`);
+                        displayRoutineResult(Array.isArray(routineResult) ? routineResult : []);
+                    } else {
+                        updateToolStatus('routine', 'pending', '필요 없음');
+                    }
+                } catch (error) {
+                    console.error('Routine recommend error:', error);
+                    updateToolStatus('routine', 'pending', '필요 없음');
+                }
+            } else {
+                updateToolStatus('routine', 'pending', '필요 없음');
+            }
+
+            // LLM 응답 생성 - 감정 분석 결과를 기반으로 텍스트 생성
+            try {
+                timers.llm.start = performance.now();
+                updateToolStatus('llm', 'processing', '생성 중...');
+
+                // 감정 분석 결과를 기반으로 사용자 입력 텍스트 생성
+                const primaryEmotion = emotionResult.primary_emotion || {};
+                const emotionName = primaryEmotion.name_ko || '감정';
+                const sentiment = emotionResult.sentiment_overall || 'neutral';
+                
+                // 이미지 설명 대신 감정 분석 결과를 기반으로 한 자연스러운 텍스트 사용
+                const userText = sentiment === 'positive' 
+                    ? `오늘 기분이 좋아 보여요. ${emotionName} 같은 감정이 느껴져요.`
+                    : sentiment === 'negative'
+                    ? `오늘 조금 힘들어 보이네요. ${emotionName} 같은 감정이 느껴져요.`
+                    : `오늘은 ${emotionName} 같은 감정이 느껴져요.`;
+
+                const llmResponse = await fetch('http://localhost:8000/api/agent/text', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        user_text: userText,
+                        session_id: currentSessionId || 'default'
+                    })
+                });
+
+                if (llmResponse.ok) {
+                    const llmResult = await llmResponse.json();
+                    timers.llm.end = performance.now();
+                    const llmTime = Math.round(timers.llm.end - timers.llm.start);
+                    updateToolStatus('llm', 'success', `완료 (${llmTime}ms)`);
+                    displayLLMResponse(llmResult.reply_text, llmResult.meta || {});
+
+                    // "분석 중입니다" 메시지를 실제 응답으로 업데이트
+                    if (currentConversationHistory.length > 0) {
+                        const lastMessage = currentConversationHistory[currentConversationHistory.length - 1];
+                        if (lastMessage.role === 'assistant' && lastMessage.content === '분석 중입니다...') {
+                            lastMessage.content = llmResult.reply_text;
+                            lastMessage.timestamp = new Date().toISOString();
+                            displayConversationHistory();
+                        } else {
+                            // "분석 중입니다" 메시지가 없으면 새로 추가
+                            const aiMessage = {
+                                role: 'assistant',
+                                content: llmResult.reply_text,
+                                timestamp: new Date().toISOString()
+                            };
+                            currentConversationHistory.push(aiMessage);
+                            displayConversationHistory();
+                        }
+                    }
+
+                    // TTS 생성
+                    timers.tts.start = performance.now();
+                    updateToolStatus('tts', 'processing', '음성 생성 중...');
+                    try {
+                        const ttsResponse = await fetch('http://localhost:8000/api/tts', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({
+                                text: llmResult.reply_text
+                            })
+                        });
+
+                        if (ttsResponse.ok) {
+                            const audioBlob = await ttsResponse.blob();
+                            const audioUrl = URL.createObjectURL(audioBlob);
+                            const audio = new Audio(audioUrl);
+                            audio.play();
+
+                            timers.tts.end = performance.now();
+                            const ttsTime = Math.round(timers.tts.end - timers.tts.start);
+                            updateToolStatus('tts', 'success', `완료 (${ttsTime}ms)`);
+                            displayTTSResult(audioUrl);
+                        } else {
+                            updateToolStatus('tts', 'error', '오류');
+                        }
+                    } catch (ttsError) {
+                        console.error('TTS 오류:', ttsError);
+                        updateToolStatus('tts', 'error', '오류');
+                    }
+                } else {
+                    updateToolStatus('llm', 'error', '오류');
+                }
+            } catch (error) {
+                console.error('LLM response error:', error);
+                updateToolStatus('llm', 'error', '오류');
+            }
         }
     </script>
 </body>
