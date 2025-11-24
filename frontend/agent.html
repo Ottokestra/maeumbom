@@ -858,6 +858,7 @@
         const DAILY_MOOD_API_BASE = '/api/service/daily-mood-check';
         const DAILY_MOOD_USER_ID = 1;
         let dailyMoodStatus = null;
+        let dailyMoodImagesList = []; // 현재 표시된 이미지 목록 저장
 
         window.addEventListener('DOMContentLoaded', () => {
             loadSessions();
@@ -1442,6 +1443,9 @@
 
         function displayDailyMoodImages(images) {
             const container = document.getElementById('moodImagesContainer');
+            // 이미지 목록을 전역 변수에 저장
+            dailyMoodImagesList = images;
+            
             if (images.length === 0) {
                 container.innerHTML = '<div class="mood-loading">이미지가 없습니다.</div>';
                 return;
@@ -1471,6 +1475,13 @@
                 return;
             }
 
+            // 선택한 이미지 정보 찾기
+            const selectedImageInfo = dailyMoodImagesList.find(img => img.id === imageId);
+            if (!selectedImageInfo) {
+                alert('선택한 이미지를 찾을 수 없습니다.');
+                return;
+            }
+
             const container = document.getElementById('moodImagesContainer');
             container.innerHTML = '<div class="mood-loading">감정을 분석하고 있습니다...</div>';
 
@@ -1482,7 +1493,9 @@
                     },
                     body: JSON.stringify({
                         user_id: DAILY_MOOD_USER_ID,
-                        image_id: imageId
+                        image_id: imageId,
+                        filename: selectedImageInfo.filename,
+                        sentiment: selectedImageInfo.sentiment
                     })
                 });
 
