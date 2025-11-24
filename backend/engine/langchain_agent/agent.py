@@ -9,6 +9,7 @@ import logging
 from pathlib import Path
 from typing import Any, Optional
 from datetime import datetime
+import uuid
 
 # 로깅 설정
 logger = logging.getLogger(__name__)
@@ -31,13 +32,14 @@ if env_path.exists():
     load_dotenv(dotenv_path=env_path)
 
 # 어댑터 imports
-# 직접 실행 시와 모듈로 import 시 모두 작동하도록 처리
 try:
-    # 모듈로 import될 때 (from engine.langchain_agent import ...)
     from .adapters import run_speech_to_text, run_emotion_analysis, EmotionResult, run_routine_recommend
+    from .adapters.memory_adapter import should_store_memory, add_memory, get_memories_for_prompt
+    from .conversation_vectorstore import add_message_to_rag, get_rag_context_for_prompt
 except ImportError:
-    # 직접 실행될 때 (python agent.py)
     from adapters import run_speech_to_text, run_emotion_analysis, EmotionResult, run_routine_recommend
+    from adapters.memory_adapter import should_store_memory, add_memory, get_memories_for_prompt
+    from conversation_vectorstore import add_message_to_rag, get_rag_context_for_prompt
 
 
 # ============================================================================
@@ -48,25 +50,60 @@ class InMemoryConversationStore:
     """
     세션별 대화 히스토리를 메모리에 저장하는 클래스
     
-    v1.0에서는 간단한 in-memory 구현만 제공.
-    나중에 DB/Redis로 교체 가능하도록 인터페이스를 정의.
+    v1.1: 세션 메타데이터 관리 및 타임아웃 기능 추가
     
     메모리 누수 방지를 위해 세션 수 및 메시지 수 제한을 적용.
     """
     
-    def __init__(self, max_sessions: int = 100, max_messages_per_session: int = 50):
+    def __init__(self, max_sessions: int = 100, max_messages_per_session: int = 50, session_timeout_minutes: int = 60):
         """
         초기화
         
         Args:
             max_sessions: 최대 세션 수 (기본값: 100)
             max_messages_per_session: 세션당 최대 메시지 수 (기본값: 50)
+            session_timeout_minutes: 세션 만료 시간 (분) (기본값: 60)
         """
         # session_id -> list[dict] 형태로 히스토리 보관
         self._store: dict[str, list[dict]] = {}
+        # session_id -> dict 형태로 메타데이터 보관
+        self._session_metadata: dict[str, dict] = {}
+        self._speaker_profiles: dict[str, dict] = {}
+        
         self.max_sessions = max_sessions
         self.max_messages_per_session = max_messages_per_session
+        self.session_timeout_minutes = session_timeout_minutes
         
+    def _init_session_metadata(self, session_id: str):
+        """세션 메타데이터 초기화"""
+        self._session_metadata[session_id] = {
+            "created_at": datetime.now().isoformat(),
+            "last_activity_at": datetime.now().isoformat(),
+            "message_count": 0,
+            "status": "active"
+        }
+
+    def _update_session_activity(self, session_id: str):
+        """세션 활동 시간 업데이트"""
+        if session_id in self._session_metadata:
+            self._session_metadata[session_id]["last_activity_at"] = datetime.now().isoformat()
+            self._session_metadata[session_id]["message_count"] = len(self._store.get(session_id, []))
+
+    def _check_session_timeout(self, session_id: str) -> bool:
+        """세션 타임아웃 확인"""
+        if session_id not in self._session_metadata:
+            return False
+            
+        try:
+            last_activity = datetime.fromisoformat(self._session_metadata[session_id]["last_activity_at"])
+            elapsed = datetime.now() - last_activity
+            if elapsed.total_seconds() > self.session_timeout_minutes * 60:
+                return True
+        except Exception as e:
+            logger.error(f"세션 타임아웃 체크 중 오류: {e}")
+            
+        return False
+
     def add_message(self, session_id: str, role: str, content: str, metadata: Optional[dict] = None):
         """
         메시지 추가
@@ -77,23 +114,35 @@ class InMemoryConversationStore:
             content: 메시지 내용
             metadata: 추가 메타데이터 (선택)
         """
-        # 세션 수 제한 (LRU 방식: 가장 오래된 세션 제거)
-        if len(self._store) >= self.max_sessions and session_id not in self._store:
-            # 가장 오래된 메시지를 가진 세션 찾기
-            oldest_session = min(
-                self._store.items(),
-                key=lambda x: x[1][-1]['timestamp'] if x[1] else ''
-            )[0]
-            del self._store[oldest_session]
-            logger.warning(f"세션 수 제한 도달. 가장 오래된 세션 제거: {oldest_session}")
-        
+        # 세션 초기화 및 메타데이터 설정
         if session_id not in self._store:
             self._store[session_id] = []
+            self._init_session_metadata(session_id)
         
-        # 메시지 수 제한 (FIFO: 가장 오래된 메시지 제거)
+        # 타임아웃 체크
+        if self._check_session_timeout(session_id):
+            logger.info(f"⏳ 세션 {session_id} 만료됨 (마지막 활동 후 {self.session_timeout_minutes}분 경과).")
+            # 만료된 세션 처리 정책:
+            # 1. 로그를 남기고 계속 사용 (현재 방식)
+            # 2. 아카이브 후 새 세션 시작 (향후 구현)
+            self._session_metadata[session_id]["status"] = "expired"
+        
+        # 세션 수 제한 (LRU 방식)
+        if len(self._store) > self.max_sessions:
+            # 가장 오래된 활동 세션 찾기
+            oldest_session = min(
+                self._session_metadata.items(),
+                key=lambda x: x[1]['last_activity_at']
+            )[0]
+            if oldest_session != session_id: # 현재 세션은 삭제하지 않음
+                del self._store[oldest_session]
+                del self._session_metadata[oldest_session]
+                logger.warning(f"🧹 세션 수 제한 도달. 가장 오래된 세션 제거: {oldest_session}")
+        
+        # 메시지 수 제한 (FIFO)
         if len(self._store[session_id]) >= self.max_messages_per_session:
-            removed = self._store[session_id].pop(0)
-            logger.warning(f"메시지 수 제한 도달. 가장 오래된 메시지 제거 (세션: {session_id})")
+            self._store[session_id].pop(0)
+            logger.warning(f"🧹 메시지 수 제한 도달. 가장 오래된 메시지 제거 (세션: {session_id})")
         
         message = {
             "role": role,
@@ -105,6 +154,7 @@ class InMemoryConversationStore:
             message["metadata"] = metadata
             
         self._store[session_id].append(message)
+        self._update_session_activity(session_id)
         
     def get_history(self, session_id: str, limit: Optional[int] = None) -> list[dict]:
         """
@@ -118,13 +168,16 @@ class InMemoryConversationStore:
             메시지 리스트
         """
         history = self._store.get(session_id, [])
-        print(f"[DEBUG] 대화 히스토리 조회: session_id={session_id}, 총 {len(history)}개 메시지")
-        if history:
-            print(f"[DEBUG] 히스토리 미리보기: {[{k: v[:50] if k == 'content' else v for k, v in msg.items() if k in ['role', 'content']} for msg in history]}")
+        
+        # 활동 시간 업데이트 (조회도 활동으로 간주할지 여부는 정책에 따름, 여기서는 업데이트 안 함)
         
         if limit:
             return history[-limit:]
         return history
+        
+    def get_session_metadata(self, session_id: str) -> Optional[dict]:
+        """세션 메타데이터 조회"""
+        return self._session_metadata.get(session_id)
         
     def clear_session(self, session_id: str):
         """
@@ -135,6 +188,29 @@ class InMemoryConversationStore:
         """
         if session_id in self._store:
             del self._store[session_id]
+        if session_id in self._session_metadata:
+            del self._session_metadata[session_id]
+
+    def add_speaker_profile(self, speaker_id: str, embedding: Any, quality: str, session_id: Optional[str] = None):
+        """화자 프로필 추가"""
+        self._speaker_profiles[speaker_id] = {
+            "embedding": embedding,
+            "quality": quality,
+            "created_at": datetime.now().isoformat(),
+            "updated_at": datetime.now().isoformat(),
+            "session_id": session_id
+        }
+
+    def update_speaker_embedding(self, speaker_id: str, new_embedding: Any, quality: str):
+        """화자 임베딩 업데이트"""
+        if speaker_id in self._speaker_profiles:
+            self._speaker_profiles[speaker_id]["embedding"] = new_embedding
+            self._speaker_profiles[speaker_id]["quality"] = quality
+            self._speaker_profiles[speaker_id]["updated_at"] = datetime.now().isoformat()
+
+    def get_all_speaker_ids(self) -> list[str]:
+        """등록된 모든 화자 ID 반환"""
+        return list(self._speaker_profiles.keys())
 
 
 # 전역 인스턴스
@@ -156,17 +232,33 @@ def get_all_sessions() -> dict[str, Any]:
     모든 세션 정보 반환
     
     Returns:
-        세션별 대화 개수 및 최근 메시지 정보
+        세션별 메타데이터 및 상태 정보
     """
     store = get_conversation_store()
     sessions_info = {}
     
+    # 메타데이터가 있는 세션 우선 조회
+    for session_id, metadata in store._session_metadata.items():
+        sessions_info[session_id] = metadata.copy()
+        # 메시지 미리보기 추가
+        history = store.get_history(session_id, limit=1)
+        if history:
+            last_msg = history[-1]
+            sessions_info[session_id]["last_message_preview"] = (
+                last_msg.get("content", "")[:50] + "..." 
+                if len(last_msg.get("content", "")) > 50 
+                else last_msg.get("content", "")
+            )
+            
+    # 메타데이터에는 없지만 store에는 있는 세션 (하위 호환성)
     for session_id, messages in store._store.items():
-        if messages:
+        if session_id not in sessions_info and messages:
             sessions_info[session_id] = {
+                "created_at": messages[0].get("timestamp"),
+                "last_activity_at": messages[-1].get("timestamp"),
                 "message_count": len(messages),
-                "last_message_time": messages[-1].get("timestamp"),
-                "last_message_preview": messages[-1].get("content", "")[:50] + "..." if len(messages[-1].get("content", "")) > 50 else messages[-1].get("content", "")
+                "status": "active",
+                "last_message_preview": messages[-1].get("content", "")[:50] + "..."
             }
     
     return sessions_info
@@ -263,7 +355,7 @@ def create_llm_chain():
     
     # System Prompt 정의
     system_prompt = """
-너는 감정 공감을 기반으로 사용자의 하루를 따뜻하게 돌봐주는 케어 AI 친구 “AI 봄이"이다.
+너는 감정 공감을 기반으로 사용자의 하루를 따뜻하게 돌봐주는 케어 AI 친구 "AI 봄이"이다.
 
 [정체성]
 - 전문 상담사가 아니라, 사용자의 마음을 편하게 들어주는 일상 속 따뜻한 친구.
@@ -287,20 +379,20 @@ def create_llm_chain():
 
 [상황 탐색 규칙]
 - 사용자의 발화가 막연하거나 단편적일 때는 바로 위로하지 말고,
-  “어떤 상황인지 조금 더 들어보고 싶어” 같은 부드러운 질문 1문장으로 먼저 탐색 가능.
+  "어떤 상황인지 조금 더 들어보고 싶어" 같은 부드러운 질문 1문장으로 먼저 탐색 가능.
 - 단, 사용자의 발화가 감정적으로 매우 명확하고 이미 고통을 표현하는 경우에는
   질문보다는 바로 감정 공감 단계로 넘어가도 된다.
 - 탐색 질문은 최대 1문장, 짧고 부담 없게.
 예)  
-- “그때 어떤 상황이었는지 조금 더 이야기해줄래?”  
-- “혹시 언제부터 그런 느낌이 들었어?”  
-- “조금만 더 말해주면 더 잘 이해할 수 있을 것 같아.”
+- "그때 어떤 상황이었는지 조금 더 이야기해줄래?"  
+- "혹시 언제부터 그런 느낌이 들었어?"  
+- "조금만 더 말해주면 더 잘 이해할 수 있을 것 같아."
 
 [갱년기 특화 공감 규칙]
 - 갱년기인 걸 확인하지만, 사용자에게 갱년기라는걸 티내지 않도록 답변한다.
 - 신체 반응(열감, 안면홍조, 피곤함, 갑작스러운 기분 변화)에 민감하게 공감해준다.
-- “나만 이런가?”라는 걱정에 자연스럽게 안심을 준다.
-- 조심스럽게 “괜찮다면…”, “도움이 될 수도 있어” 같은 선택형 제안을 활용한다.
+- "나만 이런가?"라는 걱정에 자연스럽게 안심을 준다.
+- 조심스럽게 "괜찮다면…", "도움이 될 수도 있어" 같은 선택형 제안을 활용한다.
 - 사용자가 스스로를 탓하지 않도록 돕는다.
 
 [감정 기반 답변 정책]
@@ -315,7 +407,7 @@ def create_llm_chain():
 
 [루틴 정보 활용 규칙]
 - routine_suggestion이 제공된 경우에만 자연스럽게 1문장 정도로 제안.
-- 강요하지 않고 “해볼 수도 있을 것 같아” 정도로 완만하게 제시.
+- 강요하지 않고 "해볼 수도 있을 것 같아" 정도로 완만하게 제시.
 
 [음성 입력의 경우]
 - 별도 안내 없이 텍스트 입력과 동일하게 처리.
@@ -337,6 +429,10 @@ def create_llm_chain():
     
     # User Prompt 템플릿
     user_prompt_template = """
+{memory_context}
+
+{rag_context}
+
 {conversation_history}
 
 사용자 입력:
@@ -353,6 +449,7 @@ def create_llm_chain():
 {routine_info}
 
 아래 규칙에 따라 따뜻하고 자연스러운 봄이의 답변을 만들어라:
+- [중요] Memory Layer와 RAG Context에 있는 사용자의 과거 정보나 고민을 자연스럽게 반영하여, "기억하고 있다"는 느낌을 준다.
 - 감정 분석(primary emotion 및 부정 감정 포함)을 최우선으로 반영한다.
 - 사용자가 느낀 신체적·감정적 불편이 갱년기적 특성과 연관될 수 있다면 자연스럽게 이해해주는 톤을 사용한다.
 - routine_suggestion이 있을 경우 마지막 문장에 선택형으로 자연스럽게 포함한다.
@@ -392,7 +489,9 @@ def generate_llm_response(
     user_text: str, 
     emotion_result: EmotionResult, 
     routine_result: list[dict] | None = None,
-    conversation_history: list[dict] | None = None
+    conversation_history: list[dict] | None = None,
+    memory_context: str = "",
+    rag_context: str = ""
 ) -> str:
     """
     LLM을 호출하여 응답 생성
@@ -402,6 +501,8 @@ def generate_llm_response(
         emotion_result: 감정 분석 결과
         routine_result: 루틴 추천 결과 (선택)
         conversation_history: 대화 히스토리 (선택)
+        memory_context: Memory Layer 조회 결과 문자열 (선택)
+        rag_context: RAG 검색 결과 문자열 (선택)
         
     Returns:
         AI 봄이의 응답 텍스트
@@ -440,6 +541,8 @@ def generate_llm_response(
     # LLM 호출
     response = chain.invoke({
         "conversation_history": history_text,
+        "memory_context": memory_context,
+        "rag_context": rag_context,
         "user_text": user_text,
         "sentiment_overall": sentiment_overall,
         "primary_emotion_name": primary_emotion.get("name_ko", "알 수 없음"),
@@ -459,221 +562,137 @@ def generate_llm_response(
 # ============================================================================
 
 def run_ai_bomi_from_text(
-    user_text: str,
-    session_id: Optional[str] = None,
-    stt_quality: Optional[str] = None
+    user_text: str, 
+    session_id: str = "default",
+    stt_quality: str = "success",
+    speaker_id: Optional[str] = None
 ) -> dict[str, Any]:
     """
-    텍스트 입력으로 AI 봄이 실행
-    
-    전체 플로우:
-    1. 입력 수신 및 전처리
-    2. Agent Memory 조회/업데이트
-    3. Tool Router → tool 호출(emotion-analysis, routine-recommend 등)
-    4. LLM(GPT-4o) 호출, 한국어 응답 생성
-    5. 결과 묶어서 반환
-    
-    Args:
-        user_text: 사용자 입력 텍스트
-        session_id: 세션 ID (선택, 없으면 "default" 사용)
-        stt_quality: STT 품질 정보 (선택, "success" | "medium" | "low_quality" | "no_speech")
-        
-    Returns:
-        AI 봄이의 응답 결과
+    텍스트 입력 기반 AI 봄이 실행 (Memory + RAG 통합)
     """
-    # 세션 ID 기본값
-    if not session_id:
-        session_id = "default"
-    
-    # 1. 입력 전처리
-    user_text = user_text.strip()
-    if not user_text:
-        return {
-            "reply_text": "무슨 말씀을 하고 싶으신가요? 편하게 이야기해주세요.",
-            "input_text": "",
-            "emotion_result": None,
-            "meta": {
-                "model": os.getenv("OPENAI_MODEL_NAME", "gpt-4o-mini"),
-                "used_tools": [],
-                "session_id": session_id,
-                "error": "empty_input"
-            }
-        }
-    
-    # 연속 공백 제거
-    user_text = " ".join(user_text.split())
-    
-    # 2. Agent Memory 조회 및 히스토리 준비
-    conversation_store = get_conversation_store()
-
-    # 이전 대화 히스토리 조회 (최근 3개만 LLM에 전달)
-    history = conversation_store.get_history(session_id, limit=3)
-    print(f"[DEBUG] run_ai_bomi_from_text: 조회된 히스토리 개수 = {len(history)}")
-    
-    # 3. Tool Router 실행
-    logger.debug("🔧 Tool Router 실행 중...")
-    tool_result = route_tools(user_text)
-    emotion_result = tool_result["emotion_result"]
-    routine_result = tool_result.get("routine_result")
-    used_tools = tool_result["used_tools"]
-    
-    logger.info(f"✅ 감정 분석 완료: {emotion_result['primary_emotion']['name_ko']} ({emotion_result['sentiment_overall']})")
-    
-    # 4. LLM 호출 (대화 히스토리 포함)
-    logger.debug("🤖 LLM 응답 생성 중...")
-    print(f"[DEBUG] LLM에 전달되는 히스토리: {len(history)}개")
-    reply_text = generate_llm_response(
-        user_text, 
-        emotion_result, 
-        routine_result,
-        conversation_history=history
-    )
-    logger.info("✅ 응답 생성 완료")
-    
-    # 5. Memory 업데이트
-    conversation_store.add_message(
-        session_id=session_id,
-        role="user",
-        content=user_text,
-        metadata={"emotion_result": emotion_result}
-    )
-    conversation_store.add_message(
-        session_id=session_id,
-        role="assistant",
-        content=reply_text
-    )
-    
-    # 6. 최종 결과 반환
-    result = {
-        "reply_text": reply_text,
-        "input_text": user_text,
-        "emotion_result": emotion_result,
-        "routine_result": routine_result,  # 루틴 추천 결과 추가
-        "meta": {
-            "model": os.getenv("OPENAI_MODEL_NAME", "gpt-4o-mini"),
-            "used_tools": used_tools,
-            "session_id": session_id,
-        }
-    }
-    
-    # STT quality 정보가 있으면 메타에 추가
-    if stt_quality:
-        result["meta"]["stt_quality"] = stt_quality
-    
-    return result
-
-
-def run_ai_bomi_from_audio(
-    audio_bytes: bytes,
-    session_id: Optional[str] = None
-) -> dict[str, Any]:
-    """
-    음성 입력으로 AI 봄이 실행
-    
-    ⚠️ DEPRECATED: 이 함수는 더 이상 권장되지 않습니다.
-    현재 WebSocket 스트리밍 방식(/agent/stream)과 호환되지 않습니다.
-    대신 /agent/stream WebSocket 엔드포인트를 사용하세요.
-    
-    전체 플로우:
-    1. STT 엔진 호출 (adapters.stt_adapter.run_speech_to_text)
-    2. 텍스트로 변환된 결과를 run_ai_bomi_from_text(...)에 위임
-    
-    Args:
-        audio_bytes: 오디오 데이터 (바이트열)
-        session_id: 세션 ID (선택)
-        
-    Returns:
-        AI 봄이의 응답 결과
-    """
-    import warnings
-    warnings.warn(
-        "run_ai_bomi_from_audio is deprecated. Use /agent/stream WebSocket endpoint instead.",
-        DeprecationWarning,
-        stacklevel=2
-    )
-    # 1. STT 실행
-    logger.debug("🎤 STT 실행 중...")
-    user_text = run_speech_to_text(audio_bytes)
-    logger.info(f"✅ STT 완료: {user_text}")
-    
-    # 2. 텍스트 입력 함수에 위임
-    result = run_ai_bomi_from_text(user_text, session_id)
-    
-    # used_tools에 speech_to_text 추가
-    result["meta"]["used_tools"].insert(0, "speech_to_text")
-    
-    return result
-
-
-# ============================================================================
-# 5. 테스트 코드
-# ============================================================================
-
-if __name__ == "__main__":
-    print("=" * 80)
-    print("마음봄 - LangChain Agent v1.0 테스트")
-    print("=" * 80)
-    
-    # 테스트 1: 텍스트 입력
-    print("\n\n[테스트 1] 텍스트 입력 - 긍정적인 감정")
-    print("-" * 80)
-    
-    test_text_1 = "아침에 눈을 뜨자 햇살이 방 안을 가득 채우고 있었고, 오랜만에 상쾌한 기분이 들어 따뜻한 커피를 한 잔 들고 여유롭게 집을 나설 수 있었다."
-    
-    result_1 = run_ai_bomi_from_text(test_text_1, session_id="test_session_1")
-    
-    print(f"\n📝 입력: {result_1['input_text']}")
-    print(f"\n💬 AI 봄이 응답:\n{result_1['reply_text']}")
-    print(f"\n📊 3-4 감정 분석:")
-    print(f"  - 주요 감정: {result_1['emotion_result']['primary_emotion']['name_ko']} "
-          f"(강도: {result_1['emotion_result']['primary_emotion']['intensity']}/5, "
-          f"신뢰도: {result_1['emotion_result']['primary_emotion']['confidence']})")
-    print(f"  - 전체 감정: {result_1['emotion_result']['sentiment_overall']}")
-    print(f"  - 위험 수준: {result_1['emotion_result']['service_signals']['risk_level']}")
-    print(f"\n🔧 사용된 도구: {result_1['meta']['used_tools']}")
-    print(f"🤖 모델: {result_1['meta']['model']}")
-    
-    # 테스트 2: 텍스트 입력 - 부정적인 감정
-    print("\n\n[테스트 2] 텍스트 입력 - 부정적인 감정")
-    print("-" * 80)
-    
-    test_text_2 = "오늘 하루 정말 힘들었어요. 아무것도 하기 싫고 기운이 없네요."
-    
-    result_2 = run_ai_bomi_from_text(test_text_2, session_id="test_session_2")
-    
-    print(f"\n📝 입력: {result_2['input_text']}")
-    print(f"\n💬 AI 봄이 응답:\n{result_2['reply_text']}")
-    print(f"\n📊 3-4 감정 분석:")
-    print(f"  - 주요 감정: {result_2['emotion_result']['primary_emotion']['name_ko']} "
-          f"(강도: {result_2['emotion_result']['primary_emotion']['intensity']}/5, "
-          f"신뢰도: {result_2['emotion_result']['primary_emotion']['confidence']})")
-    print(f"  - 전체 감정: {result_2['emotion_result']['sentiment_overall']}")
-    print(f"  - 위험 수준: {result_2['emotion_result']['service_signals']['risk_level']}")
-    print(f"  - 추천 루틴: {result_2['emotion_result']['recommended_routine_tags']}")
-    print(f"\n🔧 사용된 도구: {result_2['meta']['used_tools']}")
-    
-    # 테스트 3: 음성 입력 (더미 바이트)
-    print("\n\n[테스트 3] 음성 입력 (더미 데이터)")
-    print("-" * 80)
-    
-    dummy_audio = b"dummy audio bytes for testing"
-    
-    result_3 = run_ai_bomi_from_audio(dummy_audio, session_id="test_session_3")
-    
-    print(f"\n📝 입력 (3-3 STT 결과): {result_3['input_text']}")
-    print(f"\n💬 AI 봄이 응답:\n{result_3['reply_text']}")
-    print(f"\n📊 3-4 감정 분석:")
-    print(f"  - 주요 감정: {result_3['emotion_result']['primary_emotion']['name_ko']}")
-    print(f"  - 전체 감정: {result_3['emotion_result']['sentiment_overall']}")
-    print(f"\n🔧 사용된 도구: {result_3['meta']['used_tools']}")
-    
-    # 대화 히스토리 확인
-    print("\n\n[대화 히스토리 확인]")
-    print("-" * 80)
+    logger.info(f"🚀 [Agent] 텍스트 입력 처리 시작 (세션: {session_id})")
     
     store = get_conversation_store()
-    history = store.get_history("test_session_1")
-    print("\n" + "=" * 80)
-    print("테스트 완료!")
-    print("=" * 80)
+    
+    # 1. 사용자 메시지 저장
+    store.add_message(session_id, "user", user_text)
+    
+    # 2. Tool Routing (감정 분석 등)
+    tool_results = route_tools(user_text)
+    emotion_result = tool_results["emotion_result"]
+    routine_result = tool_results["routine_result"]
+    
+    # 3. Memory Layer & RAG Context Retrieval
+    memory_context = ""
+    rag_context = ""
+    
+    try:
+        # 3-1. Memory Layer (장기 기억)
+        # 저장 여부 판단 및 저장
+        if should_store_memory(user_text, emotion_result):
+            add_memory(user_text, emotion_result, session_id)
+            
+        # 관련 기억 조회
+        memories = get_memories_for_prompt(user_text)
+        if memories:
+            memory_context = f"[기억된 정보]\n{memories}\n"
+            
+        # 3-2. Conversation RAG (과거 대화)
+        # 현재 메시지를 RAG에 저장 (비동기로 하면 좋지만 일단 동기 처리)
+        msg_id_user = f"msg_{session_id}_{uuid.uuid4().hex[:8]}"
+        add_message_to_rag(msg_id_user, session_id, "user", user_text, emotion_result)
+        
+        # 관련 대화 조회
+        rag_docs = get_rag_context_for_prompt(user_text, session_id)
+        if rag_docs:
+            rag_context = f"[과거 대화]\n{rag_docs}\n"
+            
+    except Exception as e:
+        logger.error(f"Memory/RAG 처리 중 오류 (무시하고 진행): {e}")
+    
+    # 4. 대화 히스토리 조회 (전체 세션 대화)
+    conversation_history = store.get_history(session_id, limit=None)
+    
+    # 5. LLM 응답 생성
+    ai_response_text = generate_llm_response(
+        user_text=user_text,
+        emotion_result=emotion_result,
+        routine_result=routine_result,
+        conversation_history=conversation_history,
+        memory_context=memory_context,
+        rag_context=rag_context
+    )
+    
+    # 6. AI 응답 저장
+    store.add_message(session_id, "assistant", ai_response_text)
+    
+    # RAG에도 AI 응답 저장
+    try:
+        msg_id_ai = f"msg_{session_id}_{uuid.uuid4().hex[:8]}"
+        add_message_to_rag(msg_id_ai, session_id, "assistant", ai_response_text)
+    except Exception as e:
+        logger.error(f"RAG 저장 중 오류: {e}")
+    
+    logger.info(f"✅ [Agent] 응답 생성 완료: {ai_response_text[:50]}...")
+    
+    return {
+        "reply_text": ai_response_text,
+        "input_text": user_text,
+        "emotion_result": emotion_result,
+        "routine_result": routine_result,
+        "meta": {
+            "model": os.getenv("OPENAI_MODEL_NAME", "gpt-4o-mini"),
+            "used_tools": tool_results["used_tools"],
+            "session_id": session_id,
+            "stt_quality": stt_quality,
+            "speaker_id": speaker_id,
+            "memory_used": bool(memory_context),
+            "rag_used": bool(rag_context)
+        }
+    }
 
+
+def run_ai_bomi_from_audio(audio_bytes: bytes, session_id: str = "default") -> dict[str, Any]:
+    """
+    음성 입력 기반 AI 봄이 실행
+    """
+    logger.info(f"🎤 [Agent] 음성 입력 처리 시작 (세션: {session_id})")
+    
+    # 1. STT 실행
+    stt_result = run_speech_to_text(audio_bytes)
+    user_text = stt_result["text"]
+    stt_quality = stt_result["quality"]
+    
+    # 음성 인식 실패 시 조기 종료
+    if not user_text:
+        return {
+            "reply_text": "죄송해요, 잘 들리지 않았어요. 다시 말씀해주시겠어요?",
+            "input_text": "",
+            "emotion_result": None,
+            "routine_result": None,
+            "meta": {
+                "stt_quality": stt_quality,
+                "session_id": session_id
+            }
+        }
+        
+    # 2. 텍스트 기반 처리로 위임
+    return run_ai_bomi_from_text(user_text, session_id, stt_quality)
+
+
+if __name__ == "__main__":
+    # 간단한 테스트
+    print("Agent 테스트 시작...")
+    
+    # 1. 텍스트 테스트
+    result = run_ai_bomi_from_text("요즘 잠이 잘 안 와서 너무 피곤해.", session_id="test_session")
+    print("\n[테스트 결과]")
+    print(f"사용자: {result['input_text']}")
+    print(f"AI 봄이: {result['reply_text']}")
+    print(f"감정: {result['emotion_result']['primary_emotion']['name_ko']}")
+    
+    # 2. 연속 대화 테스트
+    print("\n[연속 대화 테스트]")
+    result2 = run_ai_bomi_from_text("그래서 낮에도 계속 멍하고 집중이 안 돼.", session_id="test_session")
+    print(f"사용자: {result2['input_text']}")
+    print(f"AI 봄이: {result2['reply_text']}")

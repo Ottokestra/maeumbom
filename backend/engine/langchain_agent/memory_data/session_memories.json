@@ -1,0 +1,78 @@
+{
+  "test_session_2": {
+    "mem_mood_pattern_20251123211921": {
+      "memory_id": "mem_mood_pattern_20251123211921",
+      "type": "long_term_pattern",
+      "category": "mood_pattern",
+      "summary": "오늘 하루 정말 힘들었어요. 아무것도 하기 싫고 기운이 없네요.",
+      "first_mentioned": "2025-11-23T21:19:21.832851",
+      "last_mentioned": "2025-11-23T21:19:21.832851",
+      "frequency": 1,
+      "related_emotions": [
+        "sadness",
+        "depression",
+        "discontent"
+      ],
+      "session_ids": [
+        "test_session_2"
+      ],
+      "risk_level": "alert"
+    },
+    "mem_mood_pattern_20251123214941": {
+      "memory_id": "mem_mood_pattern_20251123214941",
+      "type": "long_term_pattern",
+      "category": "mood_pattern",
+      "summary": "오늘 하루 정말 힘들었어요. 아무것도 하기 싫고 기운이 없네요.",
+      "first_mentioned": "2025-11-23T21:49:41.331788",
+      "last_mentioned": "2025-11-23T21:49:41.331788",
+      "frequency": 1,
+      "related_emotions": [
+        "sadness",
+        "depression",
+        "discontent"
+      ],
+      "session_ids": [
+        "test_session_2"
+      ],
+      "risk_level": "alert"
+    }
+  },
+  "test_session_3": {
+    "mem_mood_pattern_20251123211958": {
+      "memory_id": "mem_mood_pattern_20251123211958",
+      "type": "long_term_pattern",
+      "category": "mood_pattern",
+      "summary": "오늘 하루 정말 힘들었어요. 아무것도 하기 싫고 기운이 없네요.",
+      "first_mentioned": "2025-11-23T21:19:58.689056",
+      "last_mentioned": "2025-11-23T21:19:58.689056",
+      "frequency": 1,
+      "related_emotions": [
+        "sadness",
+        "depression",
+        "discontent"
+      ],
+      "session_ids": [
+        "test_session_3"
+      ],
+      "risk_level": "alert"
+    },
+    "mem_mood_pattern_20251123215030": {
+      "memory_id": "mem_mood_pattern_20251123215030",
+      "type": "long_term_pattern",
+      "category": "mood_pattern",
+      "summary": "오늘 하루 정말 힘들었어요. 아무것도 하기 싫고 기운이 없네요.",
+      "first_mentioned": "2025-11-23T21:50:30.337980",
+      "last_mentioned": "2025-11-23T21:50:30.337980",
+      "frequency": 1,
+      "related_emotions": [
+        "sadness",
+        "depression",
+        "discontent"
+      ],
+      "session_ids": [
+        "test_session_3"
+      ],
+      "risk_level": "alert"
+    }
+  }
+}
