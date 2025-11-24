@@ -7,18 +7,20 @@ Routine Database
 - title: 루틴 제목
 - category: 카테고리 (EMOTION_*, TIME_*, BODY_*)
 - tags: 감정/상황 태그 리스트
-- time_tags: 추천 시간대 리스트 (선택사항)
-- body_part: 신체 부위 (선택사항)
+- time_tags: 추천 시간대 리스트 (선택사항: "morning", "day", "evening", "pre_sleep")
+- body_part: 신체 부위 (선택사항: "neck", "shoulder", "back", "leg", 등)
 """
+
 from typing import List, Dict, Any, Optional
 
 # ============================================================================
-# 루틴 데이터베이스
+# 루틴 데이터베이스 (현재 60개)
 # ============================================================================
 
 ROUTINES: List[Dict[str, Any]] = [
     # ========================================================================
-    # 감정 기반 루틴 - 긍정 감정 (EMOTION_POSITIVE)
+    # 1. 감정 기반 루틴 - 긍정 감정 (EMOTION_POSITIVE)
+    # 목표: 긍정적 상태 유지 및 강화
     # ========================================================================
     {
         "id": "POS_001",
@@ -60,9 +62,10 @@ ROUTINES: List[Dict[str, Any]] = [
         "time_tags": ["day", "evening"],
         "body_part": None,
     },
-    
+
     # ========================================================================
-    # 감정 기반 루틴 - 슬픔 (EMOTION_SADNESS)
+    # 2. 감정 기반 루틴 - 슬픔 (EMOTION_SADNESS)
+    # 목표: 에너지를 낮추지 않으면서 부드러운 위로 제공
     # ========================================================================
     {
         "id": "SAD_001",
@@ -104,9 +107,10 @@ ROUTINES: List[Dict[str, Any]] = [
         "time_tags": ["evening", "pre_sleep"],
         "body_part": None,
     },
-    
+
     # ========================================================================
-    # 감정 기반 루틴 - 화/분노 (EMOTION_ANGER)
+    # 3. 감정 기반 루틴 - 화/분노 (EMOTION_ANGER)
+    # 목표: 에너지를 해소하고 이완 유도
     # ========================================================================
     {
         "id": "ANG_001",
@@ -148,9 +152,10 @@ ROUTINES: List[Dict[str, Any]] = [
         "time_tags": ["day", "evening"],
         "body_part": None,
     },
-    
+
     # ========================================================================
-    # 감정 기반 루틴 - 불안/공포 (EMOTION_FEAR)
+    # 4. 감정 기반 루틴 - 불안/공포 (EMOTION_FEAR)
+    # 목표: 즉각적인 진정 및 그라운딩
     # ========================================================================
     {
         "id": "FEA_001",
@@ -192,9 +197,10 @@ ROUTINES: List[Dict[str, Any]] = [
         "time_tags": ["morning", "day", "evening"],
         "body_part": None,
     },
-    
+
     # ========================================================================
-    # 시간대 기반 루틴 - 아침 (TIME_MORNING)
+    # 5. 시간대 기반 루틴 - 아침 (TIME_MORNING)
+    # 목표: 활력 증진 및 하루 계획
     # ========================================================================
     {
         "id": "MOR_001",
@@ -236,9 +242,10 @@ ROUTINES: List[Dict[str, Any]] = [
         "time_tags": ["morning"],
         "body_part": None,
     },
-    
+
     # ========================================================================
-    # 시간대 기반 루틴 - 낮 (TIME_DAY)
+    # 6. 시간대 기반 루틴 - 낮 (TIME_DAY)
+    # 목표: 집중력 유지 및 에너지 보충
     # ========================================================================
     {
         "id": "DAY_001",
@@ -280,9 +287,10 @@ ROUTINES: List[Dict[str, Any]] = [
         "time_tags": ["day"],
         "body_part": None,
     },
-    
+
     # ========================================================================
-    # 시간대 기반 루틴 - 저녁 (TIME_EVENING)
+    # 7. 시간대 기반 루틴 - 저녁 (TIME_EVENING)
+    # 목표: 하루 마무리 및 이완
     # ========================================================================
     {
         "id": "EVE_001",
@@ -324,9 +332,10 @@ ROUTINES: List[Dict[str, Any]] = [
         "time_tags": ["evening"],
         "body_part": None,
     },
-    
+
     # ========================================================================
-    # 신체 부위 기반 루틴 - 목/어깨 (BODY_NECK_SHOULDER)
+    # 8. 신체 부위 기반 루틴 - 목/어깨 (BODY_NECK_SHOULDER)
+    # 목표: 긴장 완화 및 통증 해소
     # ========================================================================
     {
         "id": "NEC_001",
@@ -368,9 +377,10 @@ ROUTINES: List[Dict[str, Any]] = [
         "time_tags": ["morning", "day", "evening"],
         "body_part": "neck",
     },
-    
+
     # ========================================================================
-    # 신체 부위 기반 루틴 - 허리 (BODY_LOWER_BACK)
+    # 9. 신체 부위 기반 루틴 - 허리 (BODY_LOWER_BACK)
+    # 목표: 허리 통증 완화 및 유연성 증가
     # ========================================================================
     {
         "id": "BAC_001",
@@ -412,9 +422,10 @@ ROUTINES: List[Dict[str, Any]] = [
         "time_tags": ["morning", "day", "evening"],
         "body_part": "back",
     },
-    
+
     # ========================================================================
-    # 신체 부위 기반 루틴 - 다리 (BODY_LEG)
+    # 10. 신체 부위 기반 루틴 - 다리 (BODY_LEG)
+    # 목표: 혈액 순환 및 피로 해소
     # ========================================================================
     {
         "id": "LEG_001",
@@ -456,9 +467,10 @@ ROUTINES: List[Dict[str, Any]] = [
         "time_tags": ["morning", "day", "evening"],
         "body_part": "leg",
     },
-    
+
     # ========================================================================
-    # 신체 부위 기반 루틴 - 순환 (BODY_CIRCULATION)
+    # 11. 신체 부위 기반 루틴 - 순환 (BODY_CIRCULATION)
+    # 목표: 전신 혈액 순환 및 활성화
     # ========================================================================
     {
         "id": "CIR_001",
@@ -500,9 +512,10 @@ ROUTINES: List[Dict[str, Any]] = [
         "time_tags": ["morning", "day"],
         "body_part": None,
     },
-    
+
     # ========================================================================
-    # 신체 부위 기반 루틴 - 균형 (BODY_BALANCE)
+    # 12. 신체 부위 기반 루틴 - 균형 (BODY_BALANCE)
+    # 목표: 균형 감각 및 안정성 향상
     # ========================================================================
     {
         "id": "BAL_001",
@@ -553,10 +566,10 @@ ROUTINES: List[Dict[str, Any]] = [
 def get_routine_by_id(routine_id: str) -> Optional[Dict[str, Any]]:
     """
     ID로 루틴 조회
-    
+
     Args:
         routine_id: 루틴 ID
-        
+
     Returns:
         루틴 dict 또는 None
     """
@@ -569,10 +582,10 @@ def get_routine_by_id(routine_id: str) -> Optional[Dict[str, Any]]:
 def get_routines_by_category(category: str) -> List[Dict[str, Any]]:
     """
     카테고리로 루틴 조회
-    
+
     Args:
         category: 카테고리 (예: "EMOTION_POSITIVE", "TIME_MORNING")
-        
+
     Returns:
         해당 카테고리의 루틴 리스트
     """
@@ -582,10 +595,10 @@ def get_routines_by_category(category: str) -> List[Dict[str, Any]]:
 def get_routines_by_tag(tag: str) -> List[Dict[str, Any]]:
     """
     태그로 루틴 조회
-    
+
     Args:
         tag: 태그 (예: "sadness", "morning", "stretching")
-        
+
     Returns:
         해당 태그를 가진 루틴 리스트
     """
@@ -595,10 +608,10 @@ def get_routines_by_tag(tag: str) -> List[Dict[str, Any]]:
 def get_routines_by_time_tag(time_tag: str) -> List[Dict[str, Any]]:
     """
     시간대 태그로 루틴 조회
-    
+
     Args:
         time_tag: 시간대 태그 ("morning", "day", "evening", "pre_sleep")
-        
+
     Returns:
         해당 시간대에 추천되는 루틴 리스트
     """
@@ -608,12 +621,11 @@ def get_routines_by_time_tag(time_tag: str) -> List[Dict[str, Any]]:
 def get_routines_by_body_part(body_part: str) -> List[Dict[str, Any]]:
     """
     신체 부위로 루틴 조회
-    
+
     Args:
-        body_part: 신체 부위 ("neck", "shoulder", "back", "leg", "balance")
-        
+        body_part: 신체 부위 ("neck", "shoulder", "back", "leg", 등)
+
     Returns:
         해당 신체 부위 루틴 리스트
     """
     return [r for r in ROUTINES if r.get("body_part") == body_part]
-

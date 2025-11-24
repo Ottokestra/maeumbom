@@ -15,7 +15,7 @@ class WhisperSTT:
         self,
         model_path: str = "models/ggml-base.bin",  # 호환성 유지, 사용 안 함
         language: str = "ko",
-        n_threads: int = 4,
+        n_threads: int = 8,
         sample_rate: int = 16000
     ):
         """
@@ -61,14 +61,14 @@ class WhisperSTT:
                 # 원래 경로 복원
                 sys.path = original_path
             
-            print("📥 Faster-Whisper 모델 로딩 중...")
+            print("📥 Faster-Whisper 모델 로딩 중 (large-v3-turbo)...")
             self.model = WhisperModel(
-                "base",
+                "large-v3-turbo",
                 device="cpu",
                 compute_type="int8",
                 num_workers=self.n_threads
             )
-            print("✅ Faster-Whisper 로드 완료")
+            print("✅ Faster-Whisper large-v3-turbo 로드 완료")
             
         except ImportError as e:
             print(f"❌ faster-whisper를 찾을 수 없습니다: {e}")
