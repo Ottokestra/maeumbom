@@ -24,7 +24,8 @@ from service import (
     get_daily_random_images,
     analyze_emotion_from_image,
     get_image_by_id,
-    get_images_base_path
+    get_images_base_path,
+    SENTIMENT_DESCRIPTIONS
 )
 from storage import get_storage
 
@@ -87,17 +88,41 @@ async def select_image(request: ImageSelectionRequest):
             detail="오늘 이미 체크를 완료했습니다."
         )
     
-    # 오늘의 이미지 목록 가져오기
-    daily_images = get_daily_random_images()
-    
-    # 선택한 이미지 찾기
-    selected_image = get_image_by_id(request.image_id, daily_images)
-    
-    if not selected_image:
-        raise HTTPException(
-            status_code=404,
-            detail=f"이미지 ID {request.image_id}를 찾을 수 없습니다."
-        )
+    # 프론트엔드에서 전송한 filename과 sentiment가 있으면 우선 사용
+    if request.filename and request.sentiment:
+        # 전송받은 정보로 직접 이미지 정보 구성
+        selected_image = {
+            "id": request.image_id,
+            "sentiment": request.sentiment,
+            "filename": request.filename,
+            "description": "",  # 감정 분석에 사용될 설명은 나중에 설정
+            "url": f"/api/service/daily-mood-check/images/{request.sentiment}/{request.filename}"
+        }
+        
+        # 이미지 파일이 실제로 존재하는지 확인
+        base_path = get_images_base_path()
+        image_path = base_path / request.sentiment / request.filename
+        if not image_path.exists() or not image_path.is_file():
+            raise HTTPException(
+                status_code=404,
+                detail=f"이미지 파일을 찾을 수 없습니다: {request.sentiment}/{request.filename}"
+            )
+        
+        # 설명은 감정 분석 시 사용되므로, sentiment 기반 기본 설명 사용
+        descriptions = SENTIMENT_DESCRIPTIONS.get(request.sentiment, [""])
+        selected_image["description"] = descriptions[0] if descriptions else ""
+    else:
+        # 기존 방식: 오늘의 이미지 목록 가져오기
+        daily_images = get_daily_random_images()
+        
+        # 선택한 이미지 찾기
+        selected_image = get_image_by_id(request.image_id, daily_images)
+        
+        if not selected_image:
+            raise HTTPException(
+                status_code=404,
+                detail=f"이미지 ID {request.image_id}를 찾을 수 없습니다."
+            )
     
     # 감정 분석 수행
     emotion_result = analyze_emotion_from_image(selected_image)
