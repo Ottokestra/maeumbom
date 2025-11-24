@@ -19,6 +19,8 @@ class ImageSelectionRequest(BaseModel):
     """이미지 선택 요청"""
     user_id: int = Field(..., description="사용자 ID")
     image_id: int = Field(..., description="선택한 이미지 ID")
+    filename: Optional[str] = Field(None, description="선택한 이미지 파일명 (선택사항, 정확한 이미지 식별용)")
+    sentiment: Optional[str] = Field(None, description="선택한 이미지 감정 분류 (선택사항, 정확한 이미지 식별용)")
 
 
 class ImageSelectionResponse(BaseModel):
