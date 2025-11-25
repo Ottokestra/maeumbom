@@ -3,9 +3,8 @@ import EmotionResult from './EmotionResult'
 import './DailyMoodCheck.css'
 
 const API_BASE_URL = 'http://localhost:8000/api/service/daily-mood-check'
-const USER_ID = 1 // 테스트용 사용자 ID
 
-function DailyMoodCheck() {
+function DailyMoodCheck({ user }) {
   const [status, setStatus] = useState(null)
   const [images, setImages] = useState([])
   const [selectedImage, setSelectedImage] = useState(null)
@@ -15,16 +14,28 @@ function DailyMoodCheck() {
 
   // 체크 상태 확인
   useEffect(() => {
-    checkStatus()
-    loadImages()
-  }, [])
+    if (user) {
+      checkStatus()
+      loadImages()
+    }
+  }, [user])
 
   const checkStatus = async () => {
+    if (!user) return
+    
     try {
-      const response = await fetch(`${API_BASE_URL}/status/${USER_ID}`)
+      const accessToken = localStorage.getItem('access_token')
+      const response = await fetch(`${API_BASE_URL}/status`, {
+        headers: {
+          'Authorization': `Bearer ${accessToken}`
+        }
+      })
       if (response.ok) {
         const data = await response.json()
         setStatus(data)
+      } else if (response.status === 401) {
+        // 인증 오류 - 로그인 필요
+        console.error('인증이 필요합니다.')
       }
     } catch (err) {
       console.error('Status check error:', err)
@@ -53,6 +64,11 @@ function DailyMoodCheck() {
   }
 
   const handleImageSelect = async (imageId) => {
+    if (!user) {
+      alert('로그인이 필요합니다.')
+      return
+    }
+    
     if (status?.completed) {
       alert('오늘 이미 체크를 완료했습니다.')
       return
@@ -63,14 +79,20 @@ function DailyMoodCheck() {
     setSelectedImage(imageId)
 
     try {
+      const accessToken = localStorage.getItem('access_token')
+      const selectedImageData = images.find(img => img.id === imageId)
+      
       const response = await fetch(`${API_BASE_URL}/select`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${accessToken}`
         },
         body: JSON.stringify({
-          user_id: USER_ID,
-          image_id: imageId
+          user_id: user.id, // 백엔드에서 무시되지만 하위 호환성을 위해 전송
+          image_id: imageId,
+          filename: selectedImageData?.filename,
+          sentiment: selectedImageData?.sentiment
         })
       })
 
@@ -116,6 +138,27 @@ function DailyMoodCheck() {
       default:
         return sentiment
     }
+  }
+
+  // 로그인하지 않은 경우
+  if (!user) {
+    return (
+      <div className="daily-mood-check">
+        <div className="card">
+          <h2>일일 감정 체크</h2>
+          <div style={{
+            padding: '40px',
+            textAlign: 'center',
+            color: '#6b7280'
+          }}>
+            <p>일일 감정 체크를 사용하려면 로그인이 필요합니다.</p>
+            <p style={{ fontSize: '0.9rem', marginTop: '10px' }}>
+              상단의 "로그인" 버튼을 클릭하여 로그인해주세요.
+            </p>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (

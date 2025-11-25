@@ -119,6 +119,24 @@ except Exception as e:
     print(f"[WARN] Daily mood check module load failed: {e}")
     traceback.print_exc()
 
+# =========================
+# Authentication (Google OAuth + JWT)
+# =========================
+try:
+    from app.auth import router as auth_router
+    from app.auth.database import init_db
+    
+    # Initialize database tables
+    init_db()
+    
+    # Include auth router
+    app.include_router(auth_router, prefix="/auth", tags=["authentication"])
+    print("[INFO] Authentication router loaded successfully.")
+except Exception as e:
+    import traceback
+    print(f"[WARN] Authentication module load failed: {e}")
+    traceback.print_exc()
+
 
 
 
