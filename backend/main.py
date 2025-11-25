@@ -13,7 +13,7 @@ from pathlib import Path
 import numpy as np
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
-
+from service.weather.routes import router as weather_router
 
 
 # 하이픈이 있는 폴더명을 import하기 위해 경로 추가
@@ -80,6 +80,15 @@ if emotion_router is not None:
 # Daily Mood Check Service
 # =========================
 try:
+    from service.weather.routes import router as weather_router
+    app.include_router(weather_router)
+    print("[INFO] Weather router loaded successfully.")
+except Exception as e:
+    import traceback
+    print(f"[WARN] Weather module load failed: {e}")
+    traceback.print_exc()
+    
+try:
     daily_mood_check_path = backend_path / "service" / "daily_mood_check" / "routes.py"
     if not daily_mood_check_path.exists():
         print(f"[WARN] Daily mood check routes file not found: {daily_mood_check_path}")
@@ -90,6 +99,21 @@ try:
         daily_mood_check_router = daily_mood_check_module.router
         app.include_router(daily_mood_check_router, prefix="/api/service/daily-mood-check", tags=["daily-mood-check"])
         print("[INFO] Daily mood check router loaded successfully.")
+
+    # =========================
+    # Weather Service
+    # =========================
+    try:
+        app.include_router(
+            weather_router,
+            prefix="/api/service/weather",
+            tags=["weather"]
+        )
+        print("[INFO] Weather router loaded successfully.")
+    except Exception as e:
+        print(f"[WARN] Weather router load failed: {e}")
+        
+        
 except Exception as e:
     import traceback
     print(f"[WARN] Daily mood check module load failed: {e}")
@@ -678,23 +702,44 @@ async def agent_websocket(websocket: WebSocket):
     response_model=List[RoutineRecommendationItem],
     tags=["routine-recommend"],
 )
-async def recommend_routine_from_emotion(emotion: EmotionAnalysisResult):
+async def recommend_routine_from_emotion(
+    emotion: EmotionAnalysisResult,
+    city: Optional[str] = "Seoul",      # 🌦️ 쿼리 파라미터로 도시 받기 (기본: Seoul)
+    country: str = "KR"                  # 🌦️ 쿼리 파라미터로 국가 받기 (기본: KR)
+):
     """
     감정 분석 결과를 기반으로 루틴을 추천합니다.
 
     프로세스:
     1. RAG를 사용하여 ChromaDB에서 관련 루틴 후보 검색
-    2. GPT-4o-mini를 사용하여 최종 추천 루틴 선택 및 설명 생성
+    2. 🌦️ 날씨 정보 조회 (비/눈/뇌우 시 야외 루틴 필터링)
+    3. GPT-4o-mini를 사용하여 최종 추천 루틴 선택 및 설명 생성
 
     Args:
         emotion: 감정 분석 결과 (EmotionAnalysisResult)
+        city: 날씨 조회 도시 (선택, 기본값: "Seoul")
+        country: 날씨 조회 국가 코드 (선택, 기본값: "KR")
 
     Returns:
         추천된 루틴 리스트 (reason, ui_message 포함)
+    
+    Example:
+        POST /api/engine/routine-from-emotion?city=Busan&country=KR
+        
+    Note:
+        - city 파라미터를 전달하지 않으면 Seoul 기준으로 날씨 조회
+        - 프론트엔드에서 사용자 위치 정보를 얻으면 city 파라미터로 전달 가능
     """
     try:
         engine = RoutineRecommendFromEmotionEngine()
-        recommendations = engine.recommend(emotion)
+        
+        # 🌦️ 날씨 정보를 고려한 루틴 추천
+        recommendations = await engine.recommend(
+            emotion,
+            city=city,
+            country=country
+        )
+        
         return recommendations
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"루틴 추천 실패: {str(e)}")

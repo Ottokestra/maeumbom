@@ -6,6 +6,7 @@ import RoutineList from './components/RoutineList'
 import STTTest from './components/STTTest'
 import TTSTest from './components/TTSTest'
 import DailyMoodCheck from './components/DailyMoodCheck'
+import WeatherCard from './components/WeatherCard'
 import './App.css'
 
 function App() {
@@ -19,13 +20,13 @@ function App() {
   useEffect(() => {
     localStorage.setItem('activeTab', activeTab)
   }, [activeTab])
-  
+
   // 감정 분석 관련 state
   const [result, setResult] = useState(null)
   const [routines, setRoutines] = useState([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
-  
+
   // 루틴 추천 테스트 관련 state
   const [testJson, setTestJson] = useState('')
   const [testRoutines, setTestRoutines] = useState([])
@@ -95,12 +96,12 @@ function App() {
       "text": "아침에 눈을 뜨자 햇살이 방 안을 가득 채우고 있었고, 오랜만에 상쾌한 기분이 들어 따뜻한 커피를 한 잔 들고 여유롭게 집을 나설 수 있었다.",
       "language": "ko",
       "raw_distribution": [
-        {"code": "joy", "name_ko": "기쁨", "group": "positive", "score": 0.8},
-        {"code": "excitement", "name_ko": "흥분", "group": "positive", "score": 0.6},
-        {"code": "confidence", "name_ko": "자신감", "group": "positive", "score": 0.5},
-        {"code": "relief", "name_ko": "안심", "group": "positive", "score": 0.4},
-        {"code": "sadness", "name_ko": "슬픔", "group": "negative", "score": 0.0},
-        {"code": "anger", "name_ko": "분노", "group": "negative", "score": 0.0}
+        { "code": "joy", "name_ko": "기쁨", "group": "positive", "score": 0.8 },
+        { "code": "excitement", "name_ko": "흥분", "group": "positive", "score": 0.6 },
+        { "code": "confidence", "name_ko": "자신감", "group": "positive", "score": 0.5 },
+        { "code": "relief", "name_ko": "안심", "group": "positive", "score": 0.4 },
+        { "code": "sadness", "name_ko": "슬픔", "group": "negative", "score": 0.0 },
+        { "code": "anger", "name_ko": "분노", "group": "negative", "score": 0.0 }
       ],
       "primary_emotion": {
         "code": "joy",
@@ -110,8 +111,8 @@ function App() {
         "confidence": 0.85
       },
       "secondary_emotions": [
-        {"code": "excitement", "name_ko": "흥분", "intensity": 3},
-        {"code": "confidence", "name_ko": "자신감", "intensity": 3}
+        { "code": "excitement", "name_ko": "흥분", "intensity": 3 },
+        { "code": "confidence", "name_ko": "자신감", "intensity": 3 }
       ],
       "sentiment_overall": "positive",
       "service_signals": {
@@ -332,51 +333,86 @@ function App() {
           </>
         )}
 
-        {/* 기존 감정 분석 섹션 */}
+        {/* 감정 분석 섹션 */}
         {activeTab === 'emotion' && (
           <>
-        <div className="input-section card">
-          <EmotionInput
-            onAnalyze={handleAnalyze}
-            onReset={handleReset}
-            loading={loading}
-          />
+            {/* 1. 감정 분석 (입력) */}
+            <div className="card" style={{ marginBottom: '1rem' }}>
+              <h2 style={{ marginBottom: '0.75rem' }}>감정 분석</h2>
+              <EmotionInput
+                onAnalyze={handleAnalyze}
+                onReset={handleReset}
+                loading={loading}
+              />
 
-          {error && (
-            <div className="error">
-              <strong>오류:</strong> {error}
-            </div>
-          )}
-        </div>
-
-        {loading && (
-          <div className="card">
-            <div className="loading">
-              <div className="loading-spinner"></div>
-              <p>감정을 분석하고 있습니다...</p>
-            </div>
-          </div>
-        )}
-
-        {!loading && result && (
-          <>
-            <div className="card">
-              <EmotionResult result={result} />
+              {error && (
+                <div className="error" style={{ marginTop: '0.75rem' }}>
+                  <strong>오류:</strong> {error}
+                </div>
+              )}
             </div>
 
-            {/* 새로운 형식일 때는 raw_distribution 사용 */}
-            {result.raw_distribution ? (
-              <div className="card">
-                <EmotionChart rawDistribution={result.raw_distribution} />
-              </div>
-            ) : (
-              <div className="card">
-                <EmotionChart emotions={result.top_emotions || result.emotions} />
-              </div>
-            )}
+            {/* 2. 분석 결과 */}
+            <div className="card" style={{ marginBottom: '1rem' }}>
+              <h2 style={{ marginBottom: '0.75rem' }}>분석 결과</h2>
 
-            {result.similar_contexts && result.similar_contexts.length > 0 && (
-              <div className="card contexts-section">
+              {loading && (
+                <div className="loading">
+                  <div className="loading-spinner"></div>
+                  <p>감정을 분석하고 있습니다...</p>
+                </div>
+              )}
+
+              {!loading && result && (
+                <EmotionResult result={result} />
+              )}
+
+              {!loading && !result && !error && (
+                <p style={{ color: '#6b7280', fontSize: '14px' }}>
+                  위에 텍스트를 입력하고 분석 버튼을 눌러주세요.
+                </p>
+              )}
+            </div>
+
+            {/* 3. 감정 분포 */}
+            <div className="card" style={{ marginBottom: '1rem' }}>
+              <h2 style={{ marginBottom: '0.75rem' }}>감정 분포</h2>
+
+              {loading && (
+                <p style={{ color: '#6b7280', fontSize: '14px' }}>
+                  감정 분포를 계산하는 중입니다...
+                </p>
+              )}
+
+              {!loading && result && (
+                <>
+                  {result.raw_distribution ? (
+                    <EmotionChart rawDistribution={result.raw_distribution} />
+                  ) : (
+                    <EmotionChart
+                      emotions={result.top_emotions || result.emotions}
+                    />
+                  )}
+                </>
+              )}
+
+              {!loading && !result && !error && (
+                <p style={{ color: '#6b7280', fontSize: '14px' }}>
+                  분석이 완료되면 감정 분포가 여기에서 그래프로 보여져요.
+                </p>
+              )}
+            </div>
+
+            {/* 4. 오늘 날씨 (항상 표시) */}
+            <div className="card" style={{ marginBottom: '1rem' }}>
+              <h2 style={{ marginBottom: '0.75rem' }}>오늘 날씨</h2>
+              {/* 현재 위치 기반 WeatherCard (city prop 없이) */}
+              <WeatherCard />
+            </div>
+
+            {/* 부가: 유사 문맥 */}
+            {!loading && result && result.similar_contexts && result.similar_contexts.length > 0 && (
+              <div className="card contexts-section" style={{ marginBottom: '1rem' }}>
                 <h2>유사한 감정 표현</h2>
                 {result.similar_contexts.map((context, index) => (
                   <div key={index} className="context-item">
@@ -391,23 +427,12 @@ function App() {
               </div>
             )}
 
-            {/* 루틴 추천 결과 표시 */}
-            {routines && routines.length > 0 && (
+            {/* 부가: 루틴 추천 결과 */}
+            {!loading && routines && routines.length > 0 && (
               <div className="card">
                 <RoutineList recommendations={routines} />
               </div>
             )}
-          </>
-        )}
-
-        {!loading && !result && !error && (
-          <div className="card">
-            <div className="empty-state">
-              <div className="empty-state-icon">💭</div>
-              <p>텍스트를 입력하고 분석 버튼을 눌러주세요</p>
-            </div>
-          </div>
-        )}
           </>
         )}
 
@@ -445,4 +470,3 @@ function getEmotionLabel(emotion) {
 }
 
 export default App
-

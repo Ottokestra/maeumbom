@@ -145,8 +145,13 @@ body {
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 .error {
@@ -378,7 +383,8 @@ body {
 .va-chart {
   position: relative;
   width: 100%;
-  padding-top: 100%; /* 정사각형 비율 */
+  padding-top: 100%;
+  /* 정사각형 비율 */
   background: white;
   border-radius: 8px;
   border: 2px solid #e0e0e0;
@@ -564,4 +570,3 @@ body {
   background: #fce4ec;
   color: #880e4f;
 }
-
