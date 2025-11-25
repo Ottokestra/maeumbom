@@ -3,14 +3,20 @@
 """
 import sys
 from pathlib import Path
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, HTTPException, Depends
 from fastapi.responses import FileResponse
 from typing import List
+from sqlalchemy.orm import Session
 
 # 상대 import를 위한 경로 설정
 current_dir = Path(__file__).parent
 if str(current_dir) not in sys.path:
     sys.path.insert(0, str(current_dir))
+
+# Backend root 경로 추가 (app.auth 모듈 import용)
+backend_path = Path(__file__).parent.parent.parent
+if str(backend_path) not in sys.path:
+    sys.path.insert(0, str(backend_path))
 
 # 절대 import로 변경
 from models import (
@@ -25,26 +31,40 @@ from service import (
     analyze_emotion_from_image,
     get_image_by_id,
     get_images_base_path,
-    SENTIMENT_DESCRIPTIONS
+    SENTIMENT_DESCRIPTIONS,
+    save_daily_selection,
+    get_user_daily_status,
+    is_user_checked_today
 )
 from storage import get_storage
+from app.auth.dependencies import get_current_user
+from app.auth.models import User
+from app.auth.database import get_db
 
 router = APIRouter()
 
 
-@router.get("/status/{user_id}", response_model=DailyCheckStatus)
-async def get_daily_check_status(user_id: int):
+@router.get("/status", response_model=DailyCheckStatus)
+async def get_daily_check_status(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
     """
-    사용자의 일일 체크 상태 확인
+    현재 로그인한 사용자의 일일 체크 상태 확인
     
-    Args:
-        user_id: 사용자 ID
-        
     Returns:
         일일 체크 상태
     """
-    storage = get_storage()
-    status = storage.get_status(user_id)
+    # DB에서 상태 조회 (우선)
+    status = get_user_daily_status(db, current_user.id)
+    
+    # DB에 없으면 기존 JSON 파일 저장소에서 조회 (하위 호환성)
+    if not status.get("completed"):
+        storage = get_storage()
+        json_status = storage.get_status(current_user.id)
+        if json_status.get("completed"):
+            status = json_status
+    
     return DailyCheckStatus(**status)
 
 
@@ -67,22 +87,34 @@ async def get_daily_images():
 
 
 @router.post("/select", response_model=ImageSelectionResponse)
-async def select_image(request: ImageSelectionRequest):
+async def select_image(
+    request: ImageSelectionRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
     """
     이미지 선택 및 감정 분석 트리거
     
     Args:
-        request: 이미지 선택 요청
+        request: 이미지 선택 요청 (user_id는 무시되고 현재 로그인한 사용자 사용)
+        current_user: 현재 로그인한 사용자 (인증 필수)
+        db: Database session
         
     Returns:
         이미지 선택 응답 (감정 분석 결과 포함)
     """
-    storage = get_storage()
+    user_id = current_user.id  # 인증된 사용자 ID 사용
     
-    # 테스트 모드가 아닐 때만 일일 체크 제한 적용
-    # storage.py의 is_checked_today()가 테스트 모드에서는 항상 False를 반환하므로
-    # 여기서는 별도 체크 불필요 (테스트 모드에서는 제한 없음)
-    if storage.is_checked_today(request.user_id):
+    # DB에서 오늘 체크 여부 확인
+    if is_user_checked_today(db, user_id):
+        raise HTTPException(
+            status_code=400,
+            detail="오늘 이미 체크를 완료했습니다."
+        )
+    
+    # 기존 JSON 파일 저장소도 확인 (하위 호환성)
+    storage = get_storage()
+    if storage.is_checked_today(user_id):
         raise HTTPException(
             status_code=400,
             detail="오늘 이미 체크를 완료했습니다."
@@ -127,8 +159,19 @@ async def select_image(request: ImageSelectionRequest):
     # 감정 분석 수행
     emotion_result = analyze_emotion_from_image(selected_image)
     
-    # 체크 완료 표시
-    storage.mark_checked(request.user_id, request.image_id)
+    # DB에 저장
+    save_daily_selection(
+        db=db,
+        user_id=user_id,
+        image_id=request.image_id,
+        sentiment=selected_image["sentiment"],
+        filename=selected_image["filename"],
+        description=selected_image.get("description"),
+        emotion_result=emotion_result
+    )
+    
+    # 기존 JSON 파일 저장소에도 저장 (하위 호환성)
+    storage.mark_checked(user_id, request.image_id)
     
     return ImageSelectionResponse(
         success=True,

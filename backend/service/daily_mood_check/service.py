@@ -7,6 +7,8 @@ from pathlib import Path
 from typing import List, Dict, Optional
 from datetime import datetime, date
 import sys
+from sqlalchemy.orm import Session
+from sqlalchemy import and_
 
 # emotion-analysis 엔진 import
 backend_path = Path(__file__).parent.parent.parent
@@ -168,4 +170,127 @@ def get_image_by_id(image_id: int, daily_images: List[Dict]) -> Optional[Dict]:
         if img.get("id") == image_id:
             return img
     return None
+
+
+# ============================================================================
+# Database functions for daily mood selections
+# ============================================================================
+
+def save_daily_selection(
+    db: Session,
+    user_id: int,
+    image_id: int,
+    sentiment: str,
+    filename: str,
+    description: Optional[str],
+    emotion_result: Optional[Dict]
+) -> None:
+    """
+    Save daily mood selection to database
+    
+    Args:
+        db: Database session
+        user_id: User ID
+        image_id: Selected image ID
+        sentiment: Sentiment classification
+        filename: Image filename
+        description: Image description
+        emotion_result: Emotion analysis result
+    """
+    from app.auth.models import DailyMoodSelection
+    
+    today = date.today()
+    
+    # Check if user already selected today
+    existing = db.query(DailyMoodSelection).filter(
+        and_(
+            DailyMoodSelection.user_id == user_id,
+            DailyMoodSelection.selected_date == today
+        )
+    ).first()
+    
+    if existing:
+        # Update existing record
+        existing.image_id = image_id
+        existing.sentiment = sentiment
+        existing.filename = filename
+        existing.description = description
+        existing.emotion_result = emotion_result
+    else:
+        # Create new record
+        selection = DailyMoodSelection(
+            user_id=user_id,
+            selected_date=today,
+            image_id=image_id,
+            sentiment=sentiment,
+            filename=filename,
+            description=description,
+            emotion_result=emotion_result
+        )
+        db.add(selection)
+    
+    db.commit()
+
+
+def get_user_daily_status(db: Session, user_id: int) -> Dict:
+    """
+    Get user's daily check status from database
+    
+    Args:
+        db: Database session
+        user_id: User ID
+        
+    Returns:
+        Dictionary with status information
+    """
+    from app.auth.models import DailyMoodSelection
+    
+    today = date.today()
+    
+    selection = db.query(DailyMoodSelection).filter(
+        and_(
+            DailyMoodSelection.user_id == user_id,
+            DailyMoodSelection.selected_date == today
+        )
+    ).first()
+    
+    if selection:
+        return {
+            "user_id": user_id,
+            "completed": True,
+            "last_check_date": selection.selected_date.isoformat(),
+            "selected_image_id": selection.image_id
+        }
+    else:
+        return {
+            "user_id": user_id,
+            "completed": False,
+            "last_check_date": None,
+            "selected_image_id": None
+        }
+
+
+def is_user_checked_today(db: Session, user_id: int) -> bool:
+    """
+    Check if user has already selected an image today
+    
+    Args:
+        db: Database session
+        user_id: User ID
+        
+    Returns:
+        True if user has checked today, False otherwise
+    """
+    from app.auth.models import DailyMoodSelection
+    
+    today = date.today()
+    
+    selection = db.query(DailyMoodSelection).filter(
+        and_(
+            DailyMoodSelection.user_id == user_id,
+            DailyMoodSelection.selected_date == today
+        )
+    ).first()
+    
+    return selection is not None
 

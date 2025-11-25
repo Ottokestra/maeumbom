@@ -6,9 +6,240 @@ import RoutineList from './components/RoutineList'
 import STTTest from './components/STTTest'
 import TTSTest from './components/TTSTest'
 import DailyMoodCheck from './components/DailyMoodCheck'
+import Login from './components/Login'
 import './App.css'
 
+const API_BASE_URL = 'http://localhost:8000'
+
 function App() {
+  // 로그인 상태 관리 (선택사항 - 테스트 중)
+  const [isLoggedIn, setIsLoggedIn] = useState(() => {
+    return !!localStorage.getItem('access_token')
+  })
+  const [user, setUser] = useState(null)
+  const [showLoginModal, setShowLoginModal] = useState(false)
+  const [isProcessingCallback, setIsProcessingCallback] = useState(false)
+
+  // 로그인 성공 핸들러
+  const handleLoginSuccess = () => {
+    setIsLoggedIn(true)
+    setShowLoginModal(false)
+    fetchUserInfo()
+  }
+
+  // 로그아웃 핸들러
+  const handleLogout = async () => {
+    const accessToken = localStorage.getItem('access_token')
+    
+    try {
+      // 서버에 로그아웃 요청
+      await fetch(`${API_BASE_URL}/auth/logout`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`
+        }
+      })
+    } catch (err) {
+      console.error('Logout error:', err)
+    } finally {
+      // 로컬 스토리지 정리
+      localStorage.removeItem('access_token')
+      localStorage.removeItem('refresh_token')
+      setIsLoggedIn(false)
+      setUser(null)
+    }
+  }
+
+  // 사용자 정보 조회
+  const fetchUserInfo = async () => {
+    const accessToken = localStorage.getItem('access_token')
+    if (!accessToken) return
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/auth/me`, {
+        headers: {
+          'Authorization': `Bearer ${accessToken}`
+        }
+      })
+
+      if (response.status === 401) {
+        // 토큰 만료 시 재발급 시도
+        await refreshToken()
+        return
+      }
+
+      if (response.ok) {
+        const userData = await response.json()
+        setUser(userData)
+      }
+    } catch (err) {
+      console.error('Failed to fetch user info:', err)
+    }
+  }
+
+  // 토큰 재발급
+  const refreshToken = async () => {
+    const refreshTokenValue = localStorage.getItem('refresh_token')
+    if (!refreshTokenValue) {
+      handleLogout()
+      return
+    }
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/auth/refresh`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ refresh_token: refreshTokenValue })
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        localStorage.setItem('access_token', data.access_token)
+        localStorage.setItem('refresh_token', data.refresh_token)
+        fetchUserInfo()
+      } else {
+        handleLogout()
+      }
+    } catch (err) {
+      console.error('Token refresh failed:', err)
+      handleLogout()
+    }
+  }
+
+  // OAuth callback 처리 (URL에 code가 있는 경우) - 중복 요청 방지
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search)
+    const code = urlParams.get('code')
+    const state = urlParams.get('state')
+    
+    // code가 있고, 아직 로그인되지 않았으며, 이미 처리 중이 아닌 경우만 처리
+    if (code && !isLoggedIn && !isProcessingCallback) {
+      setIsProcessingCallback(true)
+      
+      const handleOAuthCallback = async () => {
+        try {
+          // URL에서 code를 즉시 제거 (중복 요청 방지)
+          window.history.replaceState({}, document.title, window.location.pathname)
+          
+          let endpoint = `${API_BASE_URL}/auth/google`
+          let requestBody = {
+            auth_code: code,
+            redirect_uri: `${window.location.origin}/auth/callback`
+          }
+          
+          // Naver OAuth인 경우 (state 파라미터가 있는 경우)
+          if (state) {
+            const savedState = sessionStorage.getItem('naver_state')
+            if (savedState === state) {
+              endpoint = `${API_BASE_URL}/auth/naver`
+              requestBody.state = state
+              sessionStorage.removeItem('naver_state')
+            } else {
+              console.error('[OAuth] Naver state mismatch')
+              setIsProcessingCallback(false)
+              return
+            }
+          } else {
+            // Kakao vs Google 구분: sessionStorage에 kakao_login 플래그 확인
+            const isKakaoLogin = sessionStorage.getItem('kakao_login')
+            if (isKakaoLogin === 'true') {
+              endpoint = `${API_BASE_URL}/auth/kakao`
+              sessionStorage.removeItem('kakao_login')
+            }
+          }
+          
+          const response = await fetch(endpoint, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(requestBody)
+          })
+
+          if (response.ok) {
+            const data = await response.json()
+            localStorage.setItem('access_token', data.access_token)
+            localStorage.setItem('refresh_token', data.refresh_token)
+            
+            // 로그인 상태 업데이트
+            setIsLoggedIn(true)
+            fetchUserInfo()
+          } else {
+            const errorData = await response.json().catch(() => ({ detail: '로그인 실패' }))
+            console.error('[OAuth] 로그인 실패:', errorData.detail)
+          }
+        } catch (err) {
+          console.error('[OAuth] Callback 처리 오류:', err)
+        } finally {
+          setIsProcessingCallback(false)
+        }
+      }
+      
+      handleOAuthCallback()
+    }
+  }, [isLoggedIn, isProcessingCallback])
+
+  // 앱 시작 시 토큰 검증 및 자동 로그인
+  useEffect(() => {
+    const initializeAuth = async () => {
+      const accessToken = localStorage.getItem('access_token')
+      const refreshTokenValue = localStorage.getItem('refresh_token')
+      
+      // Access Token이 있으면 검증 시도
+      if (accessToken) {
+        setIsLoggedIn(true)
+        // 자동으로 사용자 정보 조회 (만료 시 Refresh Token으로 재발급)
+        await fetchUserInfo()
+      } else if (refreshTokenValue) {
+        // Access Token은 없지만 Refresh Token이 있으면 재발급 시도
+        await refreshToken()
+      } else {
+        // 둘 다 없으면 로그아웃 상태
+        setIsLoggedIn(false)
+        setUser(null)
+      }
+    }
+
+    initializeAuth()
+  }, []) // 마운트 시 한 번만 실행
+
+  // localStorage 변경 감지하여 로그인 상태 동기화
+  useEffect(() => {
+    const checkLoginStatus = () => {
+      const hasToken = !!localStorage.getItem('access_token')
+      if (hasToken !== isLoggedIn) {
+        setIsLoggedIn(hasToken)
+        if (hasToken) {
+          fetchUserInfo()
+        } else {
+          setUser(null)
+        }
+      }
+    }
+
+    // storage 이벤트 리스너 (다른 탭에서 로그인/로그아웃 시)
+    window.addEventListener('storage', checkLoginStatus)
+    
+    // 주기적으로 체크 (같은 탭에서 localStorage 변경 감지)
+    const interval = setInterval(checkLoginStatus, 1000)
+
+    return () => {
+      window.removeEventListener('storage', checkLoginStatus)
+      clearInterval(interval)
+    }
+  }, [isLoggedIn])
+
+  // 로그인 상태 확인 및 사용자 정보 로드
+  useEffect(() => {
+    if (isLoggedIn) {
+      fetchUserInfo()
+    }
+  }, [isLoggedIn])
+
+  // 로그인은 선택사항이므로 항상 메인 화면 표시 (테스트 중)
+
   // localStorage에서 activeTab 복원 또는 기본값 사용
   const [activeTab, setActiveTab] = useState(() => {
     const saved = localStorage.getItem('activeTab')
@@ -167,8 +398,95 @@ function App() {
   return (
     <div className="app">
       <header className="header">
-        <h1>💜 감정 분석 AI</h1>
-        <p>갱년기 여성을 위한 감정 공감 서비스</p>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+          <div>
+            <h1>💜 감정 분석 AI</h1>
+            <p>갱년기 여성을 위한 감정 공감 서비스</p>
+          </div>
+           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+             {isLoggedIn && user && (
+               <div style={{ textAlign: 'right' }}>
+                 <div style={{ fontWeight: '500', color: '#374151' }}>{user.nickname}</div>
+                 <div style={{ fontSize: '0.875rem', color: '#6b7280' }}>{user.email}</div>
+               </div>
+             )}
+             {isLoggedIn && (
+               <button
+                 onClick={async () => {
+                   const token = localStorage.getItem('access_token')
+                   console.log('🔐 Access Token:', token ? `${token.substring(0, 50)}...` : '없음')
+                   console.log('📋 Full Token:', token)
+                   
+                   // 실제 API 호출로 토큰 전달 확인
+                   try {
+                     const response = await fetch(`${API_BASE_URL}/auth/me`, {
+                       headers: {
+                         'Authorization': `Bearer ${token}`
+                       }
+                     })
+                     console.log('✅ API 응답 상태:', response.status)
+                     if (response.ok) {
+                       const userData = await response.json()
+                       console.log('✅ 사용자 정보:', userData)
+                       alert(`✅ 토큰 정상 전달됨!\n\n사용자: ${userData.nickname}\n이메일: ${userData.email}`)
+                     } else {
+                       console.error('❌ API 오류:', response.status)
+                       alert(`❌ 토큰 전달 실패 (${response.status})`)
+                     }
+                   } catch (err) {
+                     console.error('❌ 요청 오류:', err)
+                     alert('❌ 요청 실패: ' + err.message)
+                   }
+                 }}
+                 style={{
+                   padding: '8px 16px',
+                   backgroundColor: '#10b981',
+                   color: 'white',
+                   border: 'none',
+                   borderRadius: '8px',
+                   cursor: 'pointer',
+                   fontSize: '0.875rem',
+                   fontWeight: '500'
+                 }}
+               >
+                 토큰 확인
+               </button>
+             )}
+             {!isLoggedIn ? (
+               <button
+                 onClick={() => setShowLoginModal(true)}
+                 style={{
+                   padding: '8px 16px',
+                   backgroundColor: '#6366f1',
+                   color: 'white',
+                   border: 'none',
+                   borderRadius: '8px',
+                   cursor: 'pointer',
+                   fontSize: '0.875rem',
+                   fontWeight: '500'
+                 }}
+               >
+                 로그인
+               </button>
+             ) : (
+               <button
+                 onClick={handleLogout}
+                 style={{
+                   padding: '8px 16px',
+                   backgroundColor: '#ef4444',
+                   color: 'white',
+                   border: 'none',
+                   borderRadius: '8px',
+                   cursor: 'pointer',
+                   fontSize: '0.875rem',
+                   fontWeight: '500'
+                 }}
+               >
+                 로그아웃
+               </button>
+             )}
+           </div>
+        </div>
       </header>
 
       {/* 탭 전환 버튼 */}
@@ -421,9 +739,60 @@ function App() {
 
         {/* 일일 감정 체크 섹션 */}
         {activeTab === 'daily-mood-check' && (
-          <DailyMoodCheck />
+          <DailyMoodCheck user={user} />
         )}
       </div>
+
+      {showLoginModal && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            zIndex: 1000
+          }}
+          onClick={() => setShowLoginModal(false)}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              /* ▼▼▼ 기존의 400px 제한과 흰 배경을 모두 없앴습니다 ▼▼▼ */
+              width: '100%',  /* 이제 내용물 크기만큼 시원하게 늘어납니다 */
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}
+          >
+            {/* 로그인 컴포넌트가 이제 자유롭게 크기를 가집니다 */}
+            <Login onLoginSuccess={handleLoginSuccess} />
+            
+            <button
+              onClick={() => setShowLoginModal(false)}
+              style={{
+                marginTop: '16px',
+                padding: '10px 30px',
+                backgroundColor: 'white',
+                color: '#374151',
+                border: 'none',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                fontSize: '1rem',
+                fontWeight: 'bold',
+                boxShadow: '0 4px 6px rgba(0,0,0,0.1)' // 닫기 버튼이 잘 보이게 그림자 추가
+              }}
+            >
+              닫기
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
