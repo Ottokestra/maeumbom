@@ -27,6 +27,7 @@ def run_routine_recommend(emotion_result: dict) -> list[dict]:
     """
     try:
         # Lazy import (필요 시점에만 로드)
+        import asyncio
         from routine_recommend.engine import RoutineRecommendFromEmotionEngine
         from routine_recommend.models.schemas import EmotionAnalysisResult
         
@@ -39,7 +40,40 @@ def run_routine_recommend(emotion_result: dict) -> list[dict]:
         
         # 루틴 추천 엔진 실행
         engine = RoutineRecommendFromEmotionEngine()
-        recommendations = engine.recommend(emotion_input)
+        
+        # 비동기 메서드 실행을 위한 처리
+        # 이미 실행 중인 이벤트 루프가 있는지 확인
+        try:
+            loop = asyncio.get_event_loop()
+            if loop.is_running():
+                # 이미 루프가 실행 중이면 (FastAPI 등) create_task로 실행하고 기다려야 함
+                # 하지만 여기는 동기 함수이므로, 비동기 래퍼가 필요함.
+                # 임시방편: nest_asyncio를 사용하거나, 별도 스레드에서 실행
+                # 가장 안전한 방법: 이 함수 자체를 async로 바꾸는 것이 좋지만, 
+                # 호출 구조를 다 바꾸기 어려우므로 new_event_loop 사용 시도
+                
+                # 주의: FastAPI 내부에서 동기 함수가 호출될 때 asyncio.run()을 쓰면 에러 발생 가능
+                # 여기서는 간단히 코루틴을 실행하는 헬퍼 사용
+                import nest_asyncio
+                nest_asyncio.apply()
+                recommendations = loop.run_until_complete(engine.recommend(
+                    emotion_input,
+                    city="Seoul",  # 🌦️ Agent 테스트용 기본값
+                    country="KR"
+                ))
+            else:
+                recommendations = loop.run_until_complete(engine.recommend(
+                    emotion_input,
+                    city="Seoul",
+                    country="KR"
+                ))
+        except RuntimeError:
+            # 루프가 없으면 새로 생성
+            recommendations = asyncio.run(engine.recommend(
+                emotion_input,
+                city="Seoul",
+                country="KR"
+            ))
         
         # Pydantic 모델을 dict로 변환
         result = [rec.model_dump() for rec in recommendations]

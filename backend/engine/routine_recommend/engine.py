@@ -6,9 +6,24 @@ Routine Recommendation Engine (RAG + LLM)
 from typing import List, Optional, Dict
 import random
 
-from .models.schemas import EmotionAnalysisResult, RoutineRecommendationItem
+from .models.schemas import (
+    EmotionAnalysisResult,
+    RoutineRecommendationItem,
+    RoutineCandidate,  # ✅ 후보 타입도 같이 사용
+)
 from .routine_rag import retrieve_candidates
 from .llm_selector import select_and_explain_routines
+
+# 날씨 서비스 import
+import sys
+from pathlib import Path
+
+# backend 경로를 sys.path에 추가 (service 모듈 import를 위해)
+backend_path = Path(__file__).parent.parent.parent
+if str(backend_path) not in sys.path:
+    sys.path.insert(0, str(backend_path))
+
+from service.weather.service import get_current_weather_info
 
 
 # 개인화 시간 슬롯 -> time_tag / 카테고리 매핑
@@ -27,6 +42,10 @@ PERSONAL_SLOT_TO_TIME_CATEGORIES = {
     "sleep_prep": ["TIME_EVENING"],
 }
 
+# 🌦️ 날씨에 따라 막을 야외 태그/키워드
+OUTDOOR_TAGS = {"light_walk", "nature", "outdoor"}
+OUTDOOR_KEYWORDS_KO = {"산책", "걷기", "외출", "야외"}
+
 
 class RoutineRecommendFromEmotionEngine:
     """
@@ -34,9 +53,10 @@ class RoutineRecommendFromEmotionEngine:
 
     프로세스:
     1. RAG를 사용하여 ChromaDB에서 관련 루틴 후보 15~20개 검색
-    2. 후보를 셔플한 뒤, 일부를 LLM에 전달해 reason/ui_message 생성
-    3. 시간대 기준으로 TIME 루틴 최대 1개만 유지
-    4. 카테고리(감정/신체/시간대)별로 섞어서,
+    2. (선택) 날씨 정보 조회 후, 비/눈/뇌우일 때 야외 루틴 후보 제거
+    3. 후보를 셔플한 뒤, 일부를 LLM에 전달해 reason/ui_message 생성
+    4. 시간대 기준으로 TIME 루틴 최대 1개만 유지
+    5. 카테고리(감정/신체/시간대)별로 섞어서,
        비슷한 것 겹치지 않게 랜덤 샘플링으로
        → 3개씩 3세트(최대 9개) 반환
     """
@@ -45,7 +65,7 @@ class RoutineRecommendFromEmotionEngine:
         """엔진 초기화"""
         pass
 
-    def recommend(
+    async def recommend(
         self,
         emotion: EmotionAnalysisResult,
         *,
@@ -53,6 +73,8 @@ class RoutineRecommendFromEmotionEngine:
         rag_top_k: int = 20,             # ✅ 15~20개 넉넉히 뽑기 (기본 20)
         hours_since_wake: Optional[float] = None,
         hours_to_sleep: Optional[float] = None,
+        city: Optional[str] = None,      # 🌦️ 날씨 정보를 위한 도시 이름
+        country: str = "KR",             # 🌦️ 국가 코드
     ) -> List[RoutineRecommendationItem]:
         """
         감정 분석 결과를 기반으로 루틴을 추천합니다.
@@ -63,20 +85,48 @@ class RoutineRecommendFromEmotionEngine:
             rag_top_k: RAG에서 가져올 후보 수 (15~20 권장)
             hours_since_wake: 기상 후 경과 시간 (예: 2.5)
             hours_to_sleep: 예상 취침까지 남은 시간 (선택)
+            city: 날씨 정보를 조회할 도시 이름 (선택, 예: "Seoul")
+            country: 국가 코드 (기본 "KR")
 
         Returns:
             추천된 루틴 리스트 (reason, ui_message 포함)
             - 최대 9개 (3개 × 3세트)
             - 프론트에서 3개씩 슬라이스해서 사용
         """
-        # 0) 현재 개인화 시간 슬롯 계산
+        # 🌦️ 0) 날씨 정보 조회 (city가 제공된 경우)
+        weather_info = None
+        weather_tag = None
+
+        if city:
+            try:
+                print(f"날씨 정보 조회 중... (city={city}, country={country})")
+                weather_info = await get_current_weather_info(city=city, country=country)
+                # ✅ 필드 이름 수정: temperature_c
+                print(f"날씨 조회 완료: {weather_info.condition}, {weather_info.temperature_c}°C")
+
+                # 날씨 condition을 태그로 변환 (예: clear → weather_clear)
+                weather_tag = f"weather_{weather_info.condition}"
+
+                # emotion 객체의 recommended_routine_tags에 날씨 태그 추가 (검색 힌트)
+                if hasattr(emotion, "recommended_routine_tags"):
+                    if emotion.recommended_routine_tags is None:
+                        emotion.recommended_routine_tags = []
+                    if weather_tag not in emotion.recommended_routine_tags:
+                        emotion.recommended_routine_tags.append(weather_tag)
+                        print(f"날씨 태그 추가됨: {weather_tag}")
+
+            except Exception as e:
+                print(f"날씨 정보 조회 실패 (무시하고 계속): {e}")
+                # 날씨 조회 실패해도 루틴 추천은 계속 진행
+
+        # 1) 현재 개인화 시간 슬롯 계산
         slot = self._infer_personal_time_slot(
             hours_since_wake=hours_since_wake,
             hours_to_sleep=hours_to_sleep,
         )
         print(f"개인화 시간 슬롯: {slot}")
 
-        # 1) RAG로 후보 검색 (15~20개 정도 넉넉하게)
+        # 2) RAG로 후보 검색 (15~20개 정도 넉넉하게)
         print("RAG 검색 중...")
         candidates = retrieve_candidates(emotion, top_k=rag_top_k)
         print(f"후보 {len(candidates)}개 검색 완료")
@@ -85,13 +135,30 @@ class RoutineRecommendFromEmotionEngine:
             print("RAG 후보가 없어 추천을 생성할 수 없습니다.")
             return []
 
+        # 🌦️ 2-1) 날씨 기반 야외 루틴 필터링
+        if weather_info is not None:
+            before_count = len(candidates)
+            candidates = self._filter_candidates_by_weather(
+                candidates=candidates,
+                weather=weather_info,
+            )
+            after_count = len(candidates)
+            print(
+                f"날씨 필터 적용: {before_count} → {after_count}개 "
+                f"(condition={weather_info.condition}, is_rainy={weather_info.is_rainy})"
+            )
+
+        if not candidates:
+            print("날씨 필터 후 후보가 없어 추천을 생성할 수 없습니다.")
+            return []
+
         # 후보 순서를 먼저 셔플해서 항상 같은 조합만 나오지 않게
         random.shuffle(candidates)
 
-        # 2) LLM에 넘길 후보 수 제한
+        # 3) LLM에 넘길 후보 수 제한
         #    - 너무 많으면 느려지니, 최종 추천의 2~3배 정도만 사용
-        llm_max_recommend = max_recommend * 3          # LLM이 최대 6개 정도 골라보게 (fallback용)
-        max_for_llm = min(len(candidates), max_recommend * 9)  # 입력 후보는 최대 12개 정도
+        llm_max_recommend = max_recommend * 3          # LLM이 최대 9개 정도 골라보게 (fallback용)
+        max_for_llm = min(len(candidates), max_recommend * 9)  # 입력 후보는 최대 27개 정도
         candidates_for_llm = candidates[:max_for_llm]
 
         print(
@@ -100,7 +167,7 @@ class RoutineRecommendFromEmotionEngine:
             f"LLM 최대 추천 {llm_max_recommend}개)"
         )
 
-        # 3) LLM으로 1차 추천 + reason/ui_message 생성
+        # 4) LLM으로 1차 추천 + reason/ui_message 생성
         recommendations = select_and_explain_routines(
             emotion=emotion,
             candidates=candidates_for_llm,
@@ -111,7 +178,7 @@ class RoutineRecommendFromEmotionEngine:
         if not recommendations:
             return []
 
-        # 4) 시간대 제약 적용 (TIME_* 루틴은 현재 슬롯과 맞는 것만 + 최대 1개)
+        # 5) 시간대 제약 적용 (TIME_* 루틴은 현재 슬롯과 맞는 것만 + 최대 1개)
         recommendations = self._apply_time_slot_constraints(
             recommendations=recommendations,
             slot=slot,
@@ -121,7 +188,7 @@ class RoutineRecommendFromEmotionEngine:
         if not recommendations:
             return []
 
-        # 5) 카테고리별로 섞고, 비슷한 것 안 겹치게
+        # 6) 카테고리별로 섞고, 비슷한 것 안 겹치게
         #    3개씩 3세트(최대 9개) 뽑기
         all_sets: List[List[RoutineRecommendationItem]] = []
         pool = recommendations[:]  # 작업용 리스트 복사
@@ -157,6 +224,48 @@ class RoutineRecommendFromEmotionEngine:
         )
 
         return final
+
+    # ------------------------------------------------------------------
+    # 🌦️ 날씨 기반 후보 필터링
+    # ------------------------------------------------------------------
+    def _filter_candidates_by_weather(
+        self,
+        candidates: List[RoutineCandidate],
+        weather,
+    ) -> List[RoutineCandidate]:
+        """
+        날씨에 따라 야외/산책 계열 루틴을 걸러냅니다.
+
+        - 비/눈/뇌우 등일 때:
+          tags나 제목/설명에 산책/야외 관련이 있는 후보는 제외.
+        - 맑음/구름 정도면 그대로 둠.
+        """
+        # 비/눈/뇌우 계열이면 야외 루틴 제한
+        bad_for_outdoor = bool(
+            getattr(weather, "is_rainy", False)
+            or getattr(weather, "condition", "") in {"rain", "drizzle", "thunderstorm", "snow"}
+        )
+
+        if not bad_for_outdoor:
+            # 날씨 괜찮으면 필터링 안 함
+            return candidates
+
+        filtered: List[RoutineCandidate] = []
+        for c in candidates:
+            tags = set(c.tags or [])
+            text_for_check = (c.title or "") + " " + (c.description or "")
+
+            has_outdoor_tag = bool(tags & OUTDOOR_TAGS)
+            has_outdoor_keyword = any(k in text_for_check for k in OUTDOOR_KEYWORDS_KO)
+
+            # 야외/산책 루틴이면 제외
+            if has_outdoor_tag or has_outdoor_keyword:
+                print(f"  - 날씨 때문에 제외: {c.id} ({c.title})")
+                continue
+
+            filtered.append(c)
+
+        return filtered
 
     # ------------------------------------------------------------------
     # 개인화 시간 슬롯 판별
