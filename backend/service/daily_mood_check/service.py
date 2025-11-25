@@ -14,6 +14,11 @@ from sqlalchemy import and_
 backend_path = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(backend_path))
 
+# 현재 디렉토리를 sys.path에 추가 (storage 모듈 import용)
+current_dir = Path(__file__).parent
+if str(current_dir) not in sys.path:
+    sys.path.insert(0, str(current_dir))
+
 try:
     # 하이픈이 있는 모듈명은 직접 경로로 import
     import importlib.util

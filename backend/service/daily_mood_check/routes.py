@@ -8,35 +8,46 @@ from fastapi.responses import FileResponse
 from typing import List
 from sqlalchemy.orm import Session
 
-# 상대 import를 위한 경로 설정
-current_dir = Path(__file__).parent
-if str(current_dir) not in sys.path:
-    sys.path.insert(0, str(current_dir))
-
 # Backend root 경로 추가 (app.auth 모듈 import용)
 backend_path = Path(__file__).parent.parent.parent
 if str(backend_path) not in sys.path:
     sys.path.insert(0, str(backend_path))
 
-# 절대 import로 변경
-from models import (
-    ImageSelectionRequest,
-    ImageSelectionResponse,
-    DailyCheckStatus,
-    ImagesResponse,
-    ImageInfo
-)
-from service import (
-    get_daily_random_images,
-    analyze_emotion_from_image,
-    get_image_by_id,
-    get_images_base_path,
-    SENTIMENT_DESCRIPTIONS,
-    save_daily_selection,
-    get_user_daily_status,
-    is_user_checked_today
-)
-from storage import get_storage
+# importlib를 사용하여 같은 디렉토리의 모듈들을 직접 로드 (이름 충돌 방지)
+import importlib.util
+current_dir = Path(__file__).parent
+
+# models import
+models_path = current_dir / "models.py"
+spec = importlib.util.spec_from_file_location("daily_mood_check_models", models_path)
+models_module = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(models_module)
+ImageSelectionRequest = models_module.ImageSelectionRequest
+ImageSelectionResponse = models_module.ImageSelectionResponse
+DailyCheckStatus = models_module.DailyCheckStatus
+ImagesResponse = models_module.ImagesResponse
+ImageInfo = models_module.ImageInfo
+
+# service import
+service_path = current_dir / "service.py"
+spec = importlib.util.spec_from_file_location("daily_mood_check_service", service_path)
+service_module = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(service_module)
+get_daily_random_images = service_module.get_daily_random_images
+analyze_emotion_from_image = service_module.analyze_emotion_from_image
+get_image_by_id = service_module.get_image_by_id
+get_images_base_path = service_module.get_images_base_path
+SENTIMENT_DESCRIPTIONS = service_module.SENTIMENT_DESCRIPTIONS
+save_daily_selection = service_module.save_daily_selection
+get_user_daily_status = service_module.get_user_daily_status
+is_user_checked_today = service_module.is_user_checked_today
+
+# storage import
+storage_path = current_dir / "storage.py"
+spec = importlib.util.spec_from_file_location("daily_mood_check_storage", storage_path)
+storage_module = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(storage_module)
+get_storage = storage_module.get_storage
 from app.auth.dependencies import get_current_user
 from app.auth.models import User
 from app.auth.database import get_db
