@@ -7,6 +7,7 @@ import STTTest from './components/STTTest'
 import TTSTest from './components/TTSTest'
 import DailyMoodCheck from './components/DailyMoodCheck'
 import Login from './components/Login'
+import WeatherCard from './components/WeatherCard'
 import './App.css'
 
 const API_BASE_URL = 'http://localhost:8000'
@@ -30,7 +31,7 @@ function App() {
   // 로그아웃 핸들러
   const handleLogout = async () => {
     const accessToken = localStorage.getItem('access_token')
-    
+
     try {
       // 서버에 로그아웃 요청
       await fetch(`${API_BASE_URL}/auth/logout`, {
@@ -113,22 +114,22 @@ function App() {
     const urlParams = new URLSearchParams(window.location.search)
     const code = urlParams.get('code')
     const state = urlParams.get('state')
-    
+
     // code가 있고, 아직 로그인되지 않았으며, 이미 처리 중이 아닌 경우만 처리
     if (code && !isLoggedIn && !isProcessingCallback) {
       setIsProcessingCallback(true)
-      
+
       const handleOAuthCallback = async () => {
         try {
           // URL에서 code를 즉시 제거 (중복 요청 방지)
           window.history.replaceState({}, document.title, window.location.pathname)
-          
+
           let endpoint = `${API_BASE_URL}/auth/google`
           let requestBody = {
             auth_code: code,
             redirect_uri: `${window.location.origin}/auth/callback`
           }
-          
+
           // Naver OAuth인 경우 (state 파라미터가 있는 경우)
           if (state) {
             const savedState = sessionStorage.getItem('naver_state')
@@ -149,7 +150,7 @@ function App() {
               sessionStorage.removeItem('kakao_login')
             }
           }
-          
+
           const response = await fetch(endpoint, {
             method: 'POST',
             headers: {
@@ -162,7 +163,7 @@ function App() {
             const data = await response.json()
             localStorage.setItem('access_token', data.access_token)
             localStorage.setItem('refresh_token', data.refresh_token)
-            
+
             // 로그인 상태 업데이트
             setIsLoggedIn(true)
             fetchUserInfo()
@@ -176,7 +177,7 @@ function App() {
           setIsProcessingCallback(false)
         }
       }
-      
+
       handleOAuthCallback()
     }
   }, [isLoggedIn, isProcessingCallback])
@@ -186,7 +187,7 @@ function App() {
     const initializeAuth = async () => {
       const accessToken = localStorage.getItem('access_token')
       const refreshTokenValue = localStorage.getItem('refresh_token')
-      
+
       // Access Token이 있으면 검증 시도
       if (accessToken) {
         setIsLoggedIn(true)
@@ -221,7 +222,7 @@ function App() {
 
     // storage 이벤트 리스너 (다른 탭에서 로그인/로그아웃 시)
     window.addEventListener('storage', checkLoginStatus)
-    
+
     // 주기적으로 체크 (같은 탭에서 localStorage 변경 감지)
     const interval = setInterval(checkLoginStatus, 1000)
 
@@ -250,13 +251,13 @@ function App() {
   useEffect(() => {
     localStorage.setItem('activeTab', activeTab)
   }, [activeTab])
-  
+
   // 감정 분석 관련 state
   const [result, setResult] = useState(null)
   const [routines, setRoutines] = useState([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
-  
+
   // 루틴 추천 테스트 관련 state
   const [testJson, setTestJson] = useState('')
   const [testRoutines, setTestRoutines] = useState([])
@@ -326,12 +327,12 @@ function App() {
       "text": "아침에 눈을 뜨자 햇살이 방 안을 가득 채우고 있었고, 오랜만에 상쾌한 기분이 들어 따뜻한 커피를 한 잔 들고 여유롭게 집을 나설 수 있었다.",
       "language": "ko",
       "raw_distribution": [
-        {"code": "joy", "name_ko": "기쁨", "group": "positive", "score": 0.8},
-        {"code": "excitement", "name_ko": "흥분", "group": "positive", "score": 0.6},
-        {"code": "confidence", "name_ko": "자신감", "group": "positive", "score": 0.5},
-        {"code": "relief", "name_ko": "안심", "group": "positive", "score": 0.4},
-        {"code": "sadness", "name_ko": "슬픔", "group": "negative", "score": 0.0},
-        {"code": "anger", "name_ko": "분노", "group": "negative", "score": 0.0}
+        { "code": "joy", "name_ko": "기쁨", "group": "positive", "score": 0.8 },
+        { "code": "excitement", "name_ko": "흥분", "group": "positive", "score": 0.6 },
+        { "code": "confidence", "name_ko": "자신감", "group": "positive", "score": 0.5 },
+        { "code": "relief", "name_ko": "안심", "group": "positive", "score": 0.4 },
+        { "code": "sadness", "name_ko": "슬픔", "group": "negative", "score": 0.0 },
+        { "code": "anger", "name_ko": "분노", "group": "negative", "score": 0.0 }
       ],
       "primary_emotion": {
         "code": "joy",
@@ -341,8 +342,8 @@ function App() {
         "confidence": 0.85
       },
       "secondary_emotions": [
-        {"code": "excitement", "name_ko": "흥분", "intensity": 3},
-        {"code": "confidence", "name_ko": "자신감", "intensity": 3}
+        { "code": "excitement", "name_ko": "흥분", "intensity": 3 },
+        { "code": "confidence", "name_ko": "자신감", "intensity": 3 }
       ],
       "sentiment_overall": "positive",
       "service_signals": {
@@ -416,7 +417,7 @@ function App() {
                    const token = localStorage.getItem('access_token')
                    console.log('🔐 Access Token:', token ? `${token.substring(0, 50)}...` : '없음')
                    console.log('📋 Full Token:', token)
-                   
+
                    // 실제 API 호출로 토큰 전달 확인
                    try {
                      const response = await fetch(`${API_BASE_URL}/auth/me`, {
@@ -650,51 +651,86 @@ function App() {
           </>
         )}
 
-        {/* 기존 감정 분석 섹션 */}
+        {/* 감정 분석 섹션 */}
         {activeTab === 'emotion' && (
           <>
-        <div className="input-section card">
-          <EmotionInput
-            onAnalyze={handleAnalyze}
-            onReset={handleReset}
-            loading={loading}
-          />
+            {/* 1. 감정 분석 (입력) */}
+            <div className="card" style={{ marginBottom: '1rem' }}>
+              <h2 style={{ marginBottom: '0.75rem' }}>감정 분석</h2>
+              <EmotionInput
+                onAnalyze={handleAnalyze}
+                onReset={handleReset}
+                loading={loading}
+              />
 
-          {error && (
-            <div className="error">
-              <strong>오류:</strong> {error}
-            </div>
-          )}
-        </div>
-
-        {loading && (
-          <div className="card">
-            <div className="loading">
-              <div className="loading-spinner"></div>
-              <p>감정을 분석하고 있습니다...</p>
-            </div>
-          </div>
-        )}
-
-        {!loading && result && (
-          <>
-            <div className="card">
-              <EmotionResult result={result} />
+              {error && (
+                <div className="error" style={{ marginTop: '0.75rem' }}>
+                  <strong>오류:</strong> {error}
+                </div>
+              )}
             </div>
 
-            {/* 새로운 형식일 때는 raw_distribution 사용 */}
-            {result.raw_distribution ? (
-              <div className="card">
-                <EmotionChart rawDistribution={result.raw_distribution} />
-              </div>
-            ) : (
-              <div className="card">
-                <EmotionChart emotions={result.top_emotions || result.emotions} />
-              </div>
-            )}
+            {/* 2. 분석 결과 */}
+            <div className="card" style={{ marginBottom: '1rem' }}>
+              <h2 style={{ marginBottom: '0.75rem' }}>분석 결과</h2>
 
-            {result.similar_contexts && result.similar_contexts.length > 0 && (
-              <div className="card contexts-section">
+              {loading && (
+                <div className="loading">
+                  <div className="loading-spinner"></div>
+                  <p>감정을 분석하고 있습니다...</p>
+                </div>
+              )}
+
+              {!loading && result && (
+                <EmotionResult result={result} />
+              )}
+
+              {!loading && !result && !error && (
+                <p style={{ color: '#6b7280', fontSize: '14px' }}>
+                  위에 텍스트를 입력하고 분석 버튼을 눌러주세요.
+                </p>
+              )}
+            </div>
+
+            {/* 3. 감정 분포 */}
+            <div className="card" style={{ marginBottom: '1rem' }}>
+              <h2 style={{ marginBottom: '0.75rem' }}>감정 분포</h2>
+
+              {loading && (
+                <p style={{ color: '#6b7280', fontSize: '14px' }}>
+                  감정 분포를 계산하는 중입니다...
+                </p>
+              )}
+
+              {!loading && result && (
+                <>
+                  {result.raw_distribution ? (
+                    <EmotionChart rawDistribution={result.raw_distribution} />
+                  ) : (
+                    <EmotionChart
+                      emotions={result.top_emotions || result.emotions}
+                    />
+                  )}
+                </>
+              )}
+
+              {!loading && !result && !error && (
+                <p style={{ color: '#6b7280', fontSize: '14px' }}>
+                  분석이 완료되면 감정 분포가 여기에서 그래프로 보여져요.
+                </p>
+              )}
+            </div>
+
+            {/* 4. 오늘 날씨 (항상 표시) */}
+            <div className="card" style={{ marginBottom: '1rem' }}>
+              <h2 style={{ marginBottom: '0.75rem' }}>오늘 날씨</h2>
+              {/* 현재 위치 기반 WeatherCard (city prop 없이) */}
+              <WeatherCard />
+            </div>
+
+            {/* 부가: 유사 문맥 */}
+            {!loading && result && result.similar_contexts && result.similar_contexts.length > 0 && (
+              <div className="card contexts-section" style={{ marginBottom: '1rem' }}>
                 <h2>유사한 감정 표현</h2>
                 {result.similar_contexts.map((context, index) => (
                   <div key={index} className="context-item">
@@ -709,23 +745,12 @@ function App() {
               </div>
             )}
 
-            {/* 루틴 추천 결과 표시 */}
-            {routines && routines.length > 0 && (
+            {/* 부가: 루틴 추천 결과 */}
+            {!loading && routines && routines.length > 0 && (
               <div className="card">
                 <RoutineList recommendations={routines} />
               </div>
             )}
-          </>
-        )}
-
-        {!loading && !result && !error && (
-          <div className="card">
-            <div className="empty-state">
-              <div className="empty-state-icon">💭</div>
-              <p>텍스트를 입력하고 분석 버튼을 눌러주세요</p>
-            </div>
-          </div>
-        )}
           </>
         )}
 
@@ -772,7 +797,7 @@ function App() {
           >
             {/* 로그인 컴포넌트가 이제 자유롭게 크기를 가집니다 */}
             <Login onLoginSuccess={handleLoginSuccess} />
-            
+
             <button
               onClick={() => setShowLoginModal(false)}
               style={{

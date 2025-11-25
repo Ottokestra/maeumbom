@@ -9,10 +9,7 @@ import chromadb
 
 
 from .models.schemas import EmotionAnalysisResult, RoutineCandidate
-from engine.routine_recommend.models.schemas import (
-    EmotionAnalysisResult,
-    RoutineCandidate,
-)
+
 # 전역 초기화 (모듈 로드 시 한 번만 실행)
 _script_path = Path(__file__).parent
 _chroma_path = _script_path / "chroma" / "routines"
