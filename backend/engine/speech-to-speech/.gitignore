@@ -1,0 +1,53 @@
+__pycache__
+tmp
+cache
+
+__pycache__
+tmp
+cache
+
+# =========================
+# Python / 가상환경
+# =========================
+.venv/
+venv/
+ENV/
+env/
+
+# =========================
+# 공통 캐시 / 로그 / 환경파일
+# =========================
+*.log
+logs/
+__pycache__/
+*.pyc
+*.pyo
+
+.env
+.env.local
+.env.development
+.env.production
+
+# =========================
+# speech-to-speech 모듈 전용
+# (backend/.gitignore 기준 경로)
+# =========================
+engine/speech-to-speech/.venv/
+engine/speech-to-speech/venv/
+engine/speech-to-speech/__pycache__/
+engine/speech-to-speech/logs/
+engine/speech-to-speech/tmp/
+engine/speech-to-speech/cache/
+
+# 생성/결과물 관련
+engine/speech-to-speech/output/
+engine/speech-to-speech/recordings/
+engine/speech-to-speech/checkpoints/
+engine/speech-to-speech/model_cache/
+engine/speech-to-speech/models/
+
+# 오디오 파일 (대용량)
+engine/speech-to-speech/*.wav
+engine/speech-to-speech/*.mp3
+engine/speech-to-speech/*.flac
+engine/speech-to-speech/*.ogg

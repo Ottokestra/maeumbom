@@ -31,6 +31,7 @@ backend/venv/
 backend/.venv/
 backend/model_cache/
 model_cache/
+service/daily_mood_check/daily_checks.json
 
 # Node
 node_modules/
@@ -112,3 +113,31 @@ engine/text-to-speech/outputs/
 reproduce_error.py
 
 backend/engine/routine_recommend/chroma/routines/
+
+# ===== LangChain Agent Memory & RAG =====
+engine/langchain_agent/memory_data/
+engine/langchain_agent/vectordb/
+
+# Python cache / env
+__pycache__
+tmp
+cache
+.venv/
+venv/
+ENV/
+env/
+
+*.pyc
+*.pyo
+*.log
+
+# env files
+.env
+.env.local
+.env.development
+.env.production
+
+# speech-to-speech secrets
+engine/speech-to-speech/.env
+engine/speech-to-speech/*.env
+engine/speech-to-speech/env_backup.txt
