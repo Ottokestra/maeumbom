@@ -124,7 +124,7 @@ except Exception as e:
 # =========================
 try:
     from app.auth import router as auth_router
-    from app.auth.database import init_db
+    from app.db.database import init_db
     
     # Initialize database tables
     init_db()

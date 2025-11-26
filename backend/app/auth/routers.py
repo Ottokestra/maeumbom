@@ -4,7 +4,7 @@ API endpoints for authentication (Controller layer)
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
-from .database import get_db
+from app.db.database import get_db
 from .schemas import (
     GoogleLoginRequest,
     KakaoLoginRequest,
