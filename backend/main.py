@@ -13,7 +13,7 @@ from pathlib import Path
 import numpy as np
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
-from service.weather.routes import router as weather_router
+from app.weather.routes import router as weather_router
 
 
 # 하이픈이 있는 폴더명을 import하기 위해 경로 추가
@@ -80,7 +80,7 @@ if emotion_router is not None:
 # Daily Mood Check Service
 # =========================
 try:
-    from service.weather.routes import router as weather_router
+    from app.weather.routes import router as weather_router
     app.include_router(weather_router)
     print("[INFO] Weather router loaded successfully.")
 except Exception as e:
@@ -89,7 +89,7 @@ except Exception as e:
     traceback.print_exc()
     
 try:
-    daily_mood_check_path = backend_path / "service" / "daily_mood_check" / "routes.py"
+    daily_mood_check_path = backend_path / "app" / "daily_mood_check" / "routes.py"
     if not daily_mood_check_path.exists():
         print(f"[WARN] Daily mood check routes file not found: {daily_mood_check_path}")
     else:

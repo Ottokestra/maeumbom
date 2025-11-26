@@ -31,7 +31,7 @@ backend/venv/
 backend/.venv/
 backend/model_cache/
 model_cache/
-service/daily_mood_check/daily_checks.json
+app/daily_mood_check/daily_checks.json
 
 # Node
 node_modules/
