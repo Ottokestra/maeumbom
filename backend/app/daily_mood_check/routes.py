@@ -50,7 +50,7 @@ spec.loader.exec_module(storage_module)
 get_storage = storage_module.get_storage
 from app.auth.dependencies import get_current_user
 from app.auth.models import User
-from app.auth.database import get_db
+from app.db.database import get_db
 
 router = APIRouter()
 
