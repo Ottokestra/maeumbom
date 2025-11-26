@@ -18,12 +18,12 @@ from .llm_selector import select_and_explain_routines
 import sys
 from pathlib import Path
 
-# backend 경로를 sys.path에 추가 (service 모듈 import를 위해)
+# backend 경로를 sys.path에 추가 (app 모듈 import를 위해)
 backend_path = Path(__file__).parent.parent.parent
 if str(backend_path) not in sys.path:
     sys.path.insert(0, str(backend_path))
 
-from service.weather.service import get_current_weather_info
+from app.weather.service import get_current_weather_info
 
 
 # 개인화 시간 슬롯 -> time_tag / 카테고리 매핑
