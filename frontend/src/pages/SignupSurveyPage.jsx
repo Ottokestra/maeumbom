@@ -97,6 +97,14 @@ function SignupSurveyPage({ apiBaseUrl = '' }) {
       }
 
       const data = await response.json()
+      if (!Array.isArray(data) || data.length === 0) {
+        setError('준비 중인 설문이에요. 곧 더 재밌는 질문으로 찾아올게요!')
+        setErrorType('inactive')
+        setQuestions([])
+        setAnswers({})
+        setStep('intro')
+        return
+      }
       setQuestions(data)
       setAnswers({})
       setCurrentIndex(0)
@@ -163,11 +171,14 @@ function SignupSurveyPage({ apiBaseUrl = '' }) {
   const handleRestart = () => {
     setAnswers({})
     setResult(null)
+    setError('')
+    setErrorType(null)
     setCurrentIndex(0)
     setStep('survey')
   }
 
   const handleStart = () => {
+    if (!questions.length) return
     setStep('survey')
     setCurrentIndex(0)
   }
@@ -226,7 +237,7 @@ function SignupSurveyPage({ apiBaseUrl = '' }) {
         </div>
         <div className="survey-hero__actions">
           {step === 'intro' ? (
-            <button className="survey-primary" onClick={handleStart} disabled={loading}>
+            <button className="survey-primary" onClick={handleStart} disabled={loading || !!errorType || !questions.length}>
               지금 시작하기
             </button>
           ) : (
