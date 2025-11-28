@@ -509,7 +509,10 @@ function MainApp() {
           감정 분석
         </button>
         <button
-          onClick={() => setActiveTab('routine-test')}
+          onClick={() => {
+            setActiveTab('routine-test')
+            window.location.href = '/signup/survey'
+          }}
           style={{
             padding: '10px 20px',
             fontSize: '16px',

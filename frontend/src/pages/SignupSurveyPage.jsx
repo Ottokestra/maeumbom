@@ -2,21 +2,23 @@ import { useEffect, useMemo, useState } from 'react'
 
 const RISK_COLORS = {
   LOW: {
-    background: '#e8f5e9',
-    text: '#1b5e20',
-    accent: '#22c55e'
+    background: '#f0f9f4',
+    text: '#146c43',
+    accent: '#22c55e',
   },
   MID: {
     background: '#fff7e6',
     text: '#92400e',
-    accent: '#f59e0b'
+    accent: '#f59e0b',
   },
   HIGH: {
     background: '#fff2e7',
     text: '#9a3412',
-    accent: '#f97316'
-  }
+    accent: '#f97316',
+  },
 }
+
+const EMOJI_POOL = ['😌', '🌿', '💭', '☕', '🌤️', '🍃', '🌷', '🍊', '🧡']
 
 const getRiskStyle = (level) => RISK_COLORS[level?.toUpperCase()] || RISK_COLORS.MID
 
@@ -32,13 +34,14 @@ const ChoiceChip = ({ label, active, onClick }) => {
   )
 }
 
-const SurveyProgress = ({ current, total }) => {
-  const percent = total === 0 ? 0 : Math.round((current / total) * 100)
+const SurveyProgress = ({ current, total, answered }) => {
+  const percent = total === 0 ? 0 : Math.round(((current + 1) / total) * 100)
 
   return (
     <div className="survey-progress">
       <div className="survey-progress__label">
-        {current} / {total} 문항 완료
+        <span className="survey-progress__step">{current + 1} / {total}</span>
+        <span className="survey-progress__hint">{answered}문항 응답 완료</span>
       </div>
       <div className="survey-progress__bar">
         <div className="survey-progress__bar-fill" style={{ width: `${percent}%` }} />
@@ -53,12 +56,14 @@ function SignupSurveyPage({ apiBaseUrl = '' }) {
   const [answers, setAnswers] = useState({})
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [errorType, setErrorType] = useState(null)
   const [submitting, setSubmitting] = useState(false)
   const [result, setResult] = useState(null)
+  const [currentIndex, setCurrentIndex] = useState(0)
 
   const answeredCount = useMemo(() => {
-    return Object.values(answers).filter(Boolean).length
-  }, [answers])
+    return questions.reduce((count, q) => (answers[q.question_id] ? count + 1 : count), 0)
+  }, [answers, questions])
 
   const allAnswered = questions.length > 0 && answeredCount === questions.length
 
@@ -66,30 +71,47 @@ function SignupSurveyPage({ apiBaseUrl = '' }) {
     const token = localStorage.getItem('access_token')
     if (!token) return {}
     return {
-      Authorization: `Bearer ${token}`
+      Authorization: `Bearer ${token}`,
     }
   }
 
   const fetchQuestions = async () => {
     setLoading(true)
     setError('')
+    setErrorType(null)
     try {
       const response = await fetch(`${apiBaseUrl}/api/routine-survey/questions`, {
         headers: {
-          ...authHeader()
-        }
+          ...authHeader(),
+        },
       })
 
       if (!response.ok) {
         const detail = await response.json().catch(() => ({}))
+        if (response.status === 404) {
+          setError('준비 중인 설문이에요. 곧 더 재밌는 질문으로 찾아올게요!')
+          setErrorType('inactive')
+          return
+        }
         throw new Error(detail?.detail || '설문 문항을 불러오지 못했습니다.')
       }
 
       const data = await response.json()
+      if (!Array.isArray(data) || data.length === 0) {
+        setError('준비 중인 설문이에요. 곧 더 재밌는 질문으로 찾아올게요!')
+        setErrorType('inactive')
+        setQuestions([])
+        setAnswers({})
+        setStep('intro')
+        return
+      }
       setQuestions(data)
       setAnswers({})
+      setCurrentIndex(0)
+      setStep('intro')
     } catch (err) {
       setError(err.message || '설문 문항을 불러오지 못했습니다.')
+      setErrorType('network')
     } finally {
       setLoading(false)
     }
@@ -102,7 +124,7 @@ function SignupSurveyPage({ apiBaseUrl = '' }) {
   const handleSelect = (questionId, value) => {
     setAnswers((prev) => ({
       ...prev,
-      [questionId]: prev[questionId] === value ? undefined : value
+      [questionId]: prev[questionId] === value ? undefined : value,
     }))
   }
 
@@ -117,22 +139,22 @@ function SignupSurveyPage({ apiBaseUrl = '' }) {
         survey_id: surveyId,
         answers: questions.map((question) => ({
           question_id: question.question_id,
-          answer_value: answers[question.question_id] || 'N'
-        }))
+          answer_value: answers[question.question_id] || 'N',
+        })),
       }
 
       const response = await fetch(`${apiBaseUrl}/api/routine-survey/submit`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          ...authHeader()
+          ...authHeader(),
         },
-        body: JSON.stringify(payload)
+        body: JSON.stringify(payload),
       })
 
       if (!response.ok) {
         const detail = await response.json().catch(() => ({}))
-        throw new Error(detail?.detail || '제출에 실패했습니다. 다시 시도해주세요.')
+        throw new Error(detail?.detail || '제출에 실패했습니다.')
       }
 
       const data = await response.json()
@@ -140,6 +162,7 @@ function SignupSurveyPage({ apiBaseUrl = '' }) {
       setStep('result')
     } catch (err) {
       setError(err.message || '제출에 실패했습니다.')
+      setErrorType('network')
     } finally {
       setSubmitting(false)
     }
@@ -148,13 +171,62 @@ function SignupSurveyPage({ apiBaseUrl = '' }) {
   const handleRestart = () => {
     setAnswers({})
     setResult(null)
+    setError('')
+    setErrorType(null)
+    setCurrentIndex(0)
     setStep('survey')
   }
 
+  const handleStart = () => {
+    if (!questions.length) return
+    setStep('survey')
+    setCurrentIndex(0)
+  }
+
+  const handlePrev = () => {
+    setCurrentIndex((prev) => Math.max(prev - 1, 0))
+  }
+
+  const handleNext = () => {
+    setCurrentIndex((prev) => Math.min(prev + 1, questions.length - 1))
+  }
+
+  const currentQuestion = questions[currentIndex]
   const riskStyle = getRiskStyle(result?.risk_level)
 
+  const renderQuestion = (question, index) => {
+    const emoji = EMOJI_POOL[index % EMOJI_POOL.length]
+    const selected = answers[question.question_id]
+
+    return (
+      <div key={question.question_id} className="survey-card question-card">
+        <SurveyProgress current={index} total={questions.length} answered={answeredCount} />
+        <div className="survey-question__header">
+          <span className="question-emoji" aria-hidden="true">{emoji}</span>
+          <div>
+            <p className="survey-eyebrow">오늘의 질문</p>
+            <p className="survey-question__title">{question.title}</p>
+            {question.description && <p className="survey-question__desc">{question.description}</p>}
+          </div>
+        </div>
+        <div className="survey-chip-row">
+          <ChoiceChip
+            label="예, 그런 편이에요"
+            active={selected === 'Y'}
+            onClick={() => handleSelect(question.question_id, 'Y')}
+          />
+          <ChoiceChip
+            label="아니오 / 해당 없음"
+            active={selected === 'N'}
+            onClick={() => handleSelect(question.question_id, 'N')}
+          />
+        </div>
+      </div>
+    )
+  }
+
   return (
-    <div className="survey-page">
+    <div className="survey-page survey-shell">
       <header className="survey-hero">
         <div>
           <p className="survey-eyebrow">마음봄 온보딩 1-4-1</p>
@@ -164,12 +236,11 @@ function SignupSurveyPage({ apiBaseUrl = '' }) {
           </p>
         </div>
         <div className="survey-hero__actions">
-          {step === 'intro' && (
-            <button className="survey-primary" onClick={() => setStep('survey')} disabled={loading}>
+          {step === 'intro' ? (
+            <button className="survey-primary" onClick={handleStart} disabled={loading || !!errorType || !questions.length}>
               지금 시작하기
             </button>
-          )}
-          {step !== 'intro' && (
+          ) : (
             <button className="survey-secondary" onClick={handleRestart}>
               다시 설문하기
             </button>
@@ -178,24 +249,46 @@ function SignupSurveyPage({ apiBaseUrl = '' }) {
       </header>
 
       {loading && (
-        <div className="survey-card">
-          <div className="survey-loading">문항을 불러오는 중이에요...</div>
+        <div className="survey-card loading-card">
+          <div className="loader" aria-hidden="true" />
+          <p className="survey-subtitle">오늘의 질문들을 가져오는 중이에요…</p>
+          <div className="skeleton-row">
+            <span className="skeleton-chip" />
+            <span className="skeleton-chip" />
+            <span className="skeleton-chip" />
+          </div>
         </div>
       )}
 
-      {error && !loading && (
-        <div className="survey-card error">
-          <p>{error}</p>
-          <button className="survey-secondary" onClick={fetchQuestions}>
-            다시 시도하기
-          </button>
+      {error && !loading && errorType === 'inactive' && (
+        <div className="survey-card empty-card">
+          <div className="empty-visual">😴</div>
+          <p className="survey-question__title">현재 활성화된 설문이 없습니다.</p>
+          <p className="survey-subtitle">준비 중인 설문이에요. 곧 더 재밌는 질문으로 찾아올게요!</p>
+          <div className="survey-actions centered">
+            <button className="survey-secondary" onClick={fetchQuestions}>
+              다시 시도하기
+            </button>
+          </div>
+        </div>
+      )}
+
+      {error && !loading && errorType && errorType !== 'inactive' && (
+        <div className="survey-card gentle-error">
+          <p className="survey-question__title">잠시 연결이 불안정해요.</p>
+          <p className="survey-subtitle">새로고침 후 다시 시도해 주세요.</p>
+          <div className="survey-actions centered">
+            <button className="survey-secondary" onClick={fetchQuestions}>
+              다시 시도하기
+            </button>
+          </div>
         </div>
       )}
 
       {!loading && !error && step === 'intro' && (
-        <div className="survey-card">
+        <div className="survey-card intro-card">
           <p>가볍게 체크해보고 싶은 날, 언제든 다시 시작할 수 있어요.</p>
-          <div className="survey-chip-row">
+          <div className="survey-chip-row muted-row">
             <span className="survey-chip muted">예/아니오로 간단히 응답</span>
             <span className="survey-chip muted">오늘 컨디션 확인</span>
             <span className="survey-chip muted">루틴 점검</span>
@@ -203,61 +296,69 @@ function SignupSurveyPage({ apiBaseUrl = '' }) {
         </div>
       )}
 
-      {!loading && !error && step === 'survey' && (
+      {!loading && !error && step === 'survey' && currentQuestion && (
         <>
-          <div className="survey-card">
-            <SurveyProgress current={answeredCount} total={questions.length} />
-            <div className="survey-question-list">
-              {questions.map((question) => (
-                <div key={question.question_id} className="survey-question">
-                  <div className="survey-question__meta">
-                    <span className="survey-question__no">Q{question.question_no}</span>
-                    <div>
-                      <p className="survey-question__title">{question.title}</p>
-                      {question.description && <p className="survey-question__desc">{question.description}</p>}
-                    </div>
-                  </div>
-                  <div className="survey-chip-row">
-                    <ChoiceChip
-                      label="예, 그런 편이에요"
-                      active={answers[question.question_id] === 'Y'}
-                      onClick={() => handleSelect(question.question_id, 'Y')}
-                    />
-                    <ChoiceChip
-                      label="아니오 / 해당 없음"
-                      active={answers[question.question_id] === 'N'}
-                      onClick={() => handleSelect(question.question_id, 'N')}
-                    />
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
+          {renderQuestion(currentQuestion, currentIndex)}
 
-          <div className="survey-actions">
-            <button className="survey-primary" onClick={handleSubmit} disabled={!allAnswered || submitting}>
-              {submitting ? '제출 중...' : '결과 보기'}
+          <div className="survey-actions question-actions">
+            <button className="survey-secondary" onClick={handlePrev} disabled={currentIndex === 0}>
+              이전
             </button>
-            {!allAnswered && (
-              <p className="survey-hint">모든 문항에 답변하면 결과를 볼 수 있어요.</p>
+            {currentIndex < questions.length - 1 && (
+              <button
+                className="survey-primary"
+                onClick={handleNext}
+                disabled={!answers[currentQuestion.question_id]}
+              >
+                다음
+              </button>
+            )}
+            {currentIndex === questions.length - 1 && (
+              <button
+                className="survey-primary"
+                onClick={handleSubmit}
+                disabled={!allAnswered || submitting}
+              >
+                {submitting ? '제출 중…' : '결과 보기'}
+              </button>
             )}
           </div>
         </>
       )}
 
       {step === 'result' && result && (
-        <div className="survey-card" style={{ backgroundColor: riskStyle.background, borderColor: riskStyle.accent }}>
+        <div
+          className="survey-card result-card"
+          style={{ backgroundColor: riskStyle.background, borderColor: riskStyle.accent }}
+        >
           <div className="survey-result__header">
-            <p className="survey-eyebrow">오늘의 마음봄 진단</p>
-            <span className="survey-result__pill" style={{ color: riskStyle.text, backgroundColor: '#ffffffaa' }}>
+            <div>
+              <p className="survey-eyebrow">오늘의 루틴/마음 상태</p>
+              <h2 style={{ color: riskStyle.text }}>전체 점수 {result.total_score}점</h2>
+              {result.comment && <p className="survey-result__comment">{result.comment}</p>}
+            </div>
+            <span
+              className="survey-result__pill"
+              style={{ color: riskStyle.text, backgroundColor: '#ffffffaa', border: `1px solid ${riskStyle.accent}` }}
+            >
               위험도 {result.risk_level}
             </span>
           </div>
-          <h2 style={{ color: riskStyle.text }}>
-            전체 점수 {result.total_score}점
-          </h2>
-          {result.comment && <p className="survey-result__comment">{result.comment}</p>}
+
+          <div className="badge-row">
+            <span className="survey-chip accent" style={{ borderColor: riskStyle.accent, color: riskStyle.text }}>
+              스트레스 지수 · {result.total_score}
+            </span>
+            <span className="survey-chip accent" style={{ borderColor: riskStyle.accent, color: riskStyle.text }}>
+              에너지 상태 · {result.risk_level}
+            </span>
+            <span className="survey-chip accent" style={{ borderColor: riskStyle.accent, color: riskStyle.text }}>
+              오늘의 루틴 힌트
+            </span>
+          </div>
+
           <p className="survey-result__time">측정 시각: {new Date(result.taken_at).toLocaleString('ko-KR')}</p>
+
           <div className="survey-actions">
             <button className="survey-secondary" onClick={handleRestart}>
               다시 설문하기
@@ -269,7 +370,7 @@ function SignupSurveyPage({ apiBaseUrl = '' }) {
                 console.log('봄이와 대화 시작하기 클릭')
               }}
             >
-              봄이와 대화 시작하기
+              메인으로 돌아가기
             </button>
           </div>
         </div>
