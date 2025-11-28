@@ -19,6 +19,7 @@ const RISK_COLORS = {
 }
 
 const EMOJI_POOL = ['😌', '🌿', '💭', '☕', '🌤️', '🍃', '🌷', '🍊', '🧡']
+const SKIP_KEY = 'routineSurvey:skipDate'
 
 const getRiskStyle = (level) => RISK_COLORS[level?.toUpperCase()] || RISK_COLORS.MID
 
@@ -60,6 +61,7 @@ function SignupSurveyPage({ apiBaseUrl = '' }) {
   const [submitting, setSubmitting] = useState(false)
   const [result, setResult] = useState(null)
   const [currentIndex, setCurrentIndex] = useState(0)
+  const [skippedToday, setSkippedToday] = useState(false)
 
   const answeredCount = useMemo(() => {
     return questions.reduce((count, q) => (answers[q.question_id] ? count + 1 : count), 0)
@@ -121,6 +123,14 @@ function SignupSurveyPage({ apiBaseUrl = '' }) {
     fetchQuestions()
   }, [])
 
+  useEffect(() => {
+    const today = new Date().toISOString().slice(0, 10)
+    const saved = localStorage.getItem(SKIP_KEY)
+    if (saved === today) {
+      setSkippedToday(true)
+    }
+  }, [])
+
   const handleSelect = (questionId, value) => {
     setAnswers((prev) => ({
       ...prev,
@@ -179,8 +189,16 @@ function SignupSurveyPage({ apiBaseUrl = '' }) {
 
   const handleStart = () => {
     if (!questions.length) return
+    setSkippedToday(false)
     setStep('survey')
     setCurrentIndex(0)
+  }
+
+  const handleSkipToday = () => {
+    const today = new Date().toISOString().slice(0, 10)
+    localStorage.setItem(SKIP_KEY, today)
+    setSkippedToday(true)
+    // TODO: 홈 혹은 다른 경로로 이동이 필요하면 여기에서 navigate를 연결하세요.
   }
 
   const handlePrev = () => {
@@ -237,15 +255,27 @@ function SignupSurveyPage({ apiBaseUrl = '' }) {
         </div>
         <div className="survey-hero__actions">
           {step === 'intro' ? (
-            <button className="survey-primary" onClick={handleStart} disabled={loading || !!errorType || !questions.length}>
-              지금 시작하기
-            </button>
+            <>
+              <button
+                className={`survey-primary ${skippedToday ? 'ghost' : ''}`}
+                onClick={handleStart}
+                disabled={loading || !!errorType || !questions.length}
+              >
+                지금 시작하기
+              </button>
+              <button className="survey-tertiary" type="button" onClick={handleSkipToday}>
+                다음에 할게요
+              </button>
+            </>
           ) : (
             <button className="survey-secondary" onClick={handleRestart}>
               다시 설문하기
             </button>
           )}
         </div>
+        {skippedToday && step === 'intro' && (
+          <p className="survey-skip-hint">오늘은 쉬어가기로 하셨어요. 언제든 다시 시작할 수 있어요.</p>
+        )}
       </header>
 
       {loading && (

@@ -845,6 +845,29 @@ body {
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
 }
 
+.survey-tertiary {
+  border: 1px solid #e5e7eb;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: transparent;
+  color: #6b7280;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease, transform 0.2s ease;
+}
+
+.survey-tertiary:hover {
+  background: rgba(255, 255, 255, 0.4);
+  color: #4b5563;
+  transform: translateY(-1px);
+}
+
+.survey-skip-hint {
+  margin-top: 6px;
+  color: #e5e7eb;
+  font-size: 14px;
+}
+
 .survey-hint {
   color: #6b7280;
   margin: 0;
