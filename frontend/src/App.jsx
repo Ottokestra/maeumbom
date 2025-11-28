@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import SignupSurveyPage from './pages/SignupSurveyPage'
 import EmotionInput from './components/EmotionInput'
 import EmotionResult from './components/EmotionResult'
 import EmotionChart from './components/EmotionChart'
@@ -12,7 +13,7 @@ import './App.css'
 
 const API_BASE_URL = 'http://localhost:8000'
 
-function App() {
+function MainApp() {
   // 로그인 상태 관리 (선택사항 - 테스트 중)
   const [isLoggedIn, setIsLoggedIn] = useState(() => {
     return !!localStorage.getItem('access_token')
@@ -836,6 +837,16 @@ function getEmotionLabel(emotion) {
     frustration: '좌절'
   }
   return labels[emotion] || emotion
+}
+
+function App() {
+  const isSurveyRoute = window.location.pathname.startsWith('/signup/survey')
+
+  if (isSurveyRoute) {
+    return <SignupSurveyPage apiBaseUrl={API_BASE_URL} />
+  }
+
+  return <MainApp />
 }
 
 export default App
