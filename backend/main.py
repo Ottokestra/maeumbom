@@ -14,6 +14,7 @@ import numpy as np
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from app.weather.routes import router as weather_router
+from app.routine_survey.routers import router as routine_survey_router
 
 
 # 하이픈이 있는 폴더명을 import하기 위해 경로 추가
@@ -112,12 +113,17 @@ try:
         print("[INFO] Weather router loaded successfully.")
     except Exception as e:
         print(f"[WARN] Weather router load failed: {e}")
-        
-        
+
+
 except Exception as e:
     import traceback
     print(f"[WARN] Daily mood check module load failed: {e}")
     traceback.print_exc()
+
+# =========================
+# Routine survey
+# =========================
+app.include_router(routine_survey_router, prefix="/api", tags=["routine-survey"])
 
 # =========================
 # Authentication (Google OAuth + JWT)
