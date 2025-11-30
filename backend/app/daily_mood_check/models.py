@@ -29,6 +29,7 @@ class ImageSelectionResponse(BaseModel):
     selected_image: ImageInfo = Field(..., description="선택한 이미지 정보")
     emotion_result: Optional[dict] = Field(None, description="감정 분석 결과")
     message: str = Field(..., description="응답 메시지")
+    is_update: bool = Field(False, description="기존 선택 변경 여부 (True면 UPDATE, False면 INSERT)")
 
 
 class DailyCheckStatus(BaseModel):

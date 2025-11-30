@@ -181,6 +181,60 @@ def get_image_by_id(image_id: int, daily_images: List[Dict]) -> Optional[Dict]:
 # Database functions for daily mood selections
 # ============================================================================
 
+def save_emotion_analysis(
+    db: Session,
+    user_id: int,
+    text: str,
+    emotion_result: Dict,
+    check_root: str
+) -> int:
+    """
+    Save emotion analysis result to TB_EMOTION_ANALYSIS
+    
+    Args:
+        db: Database session
+        user_id: User ID
+        text: Input text that was analyzed
+        emotion_result: Emotion analysis result dictionary
+        check_root: Source of the check ("conversation" or "daily_mood_check")
+        
+    Returns:
+        ID of created EmotionAnalysis record
+        
+    Raises:
+        ValueError: If check_root is not one of the allowed values
+    """
+    from app.db.models import EmotionAnalysis
+    
+    # Validate check_root
+    allowed_values = ["conversation", "daily_mood_check"]
+    if check_root not in allowed_values:
+        raise ValueError(f"check_root must be one of {allowed_values}, got: {check_root}")
+    
+    # Create EmotionAnalysis record
+    emotion_analysis = EmotionAnalysis(
+        USER_ID=user_id,
+        CHECK_ROOT=check_root,
+        TEXT=text,
+        LANGUAGE=emotion_result.get("language", "ko"),
+        RAW_DISTRIBUTION=emotion_result.get("raw_distribution"),
+        PRIMARY_EMOTION=emotion_result.get("primary_emotion"),
+        SECONDARY_EMOTIONS=emotion_result.get("secondary_emotions"),
+        SENTIMENT_OVERALL=emotion_result.get("sentiment_overall", "neutral"),
+        MIXED_EMOTION=emotion_result.get("mixed_emotion"),
+        SERVICE_SIGNALS=emotion_result.get("service_signals"),
+        RECOMMENDED_RESPONSE_STYLE=emotion_result.get("recommended_response_style"),
+        RECOMMENDED_ROUTINE_TAGS=emotion_result.get("recommended_routine_tags"),
+        REPORT_TAGS=emotion_result.get("report_tags")
+    )
+    
+    db.add(emotion_analysis)
+    db.commit()
+    db.refresh(emotion_analysis)
+    
+    return emotion_analysis.ID
+
+
 def save_daily_selection(
     db: Session,
     user_id: int,
@@ -235,6 +289,20 @@ def save_daily_selection(
         db.add(selection)
     
     db.commit()
+    
+    # Also save to TB_EMOTION_ANALYSIS if emotion_result is available
+    if emotion_result and description:
+        try:
+            save_emotion_analysis(
+                db=db,
+                user_id=user_id,
+                text=description,
+                emotion_result=emotion_result,
+                check_root="daily_mood_check"
+            )
+        except Exception as e:
+            print(f"Warning: Failed to save emotion analysis: {e}")
+            # Don't fail the whole operation if emotion analysis save fails
 
 
 def get_user_daily_status(db: Session, user_id: int) -> Dict:

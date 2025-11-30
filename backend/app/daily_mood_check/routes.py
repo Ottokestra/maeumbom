@@ -112,24 +112,12 @@ async def select_image(
         db: Database session
         
     Returns:
-        이미지 선택 응답 (감정 분석 결과 포함)
+        이미지 선택 응답 (감정 분석 결과 포함, is_update 플래그 포함)
     """
     user_id = current_user.id  # 인증된 사용자 ID 사용
     
-    # DB에서 오늘 체크 여부 확인
-    if is_user_checked_today(db, user_id):
-        raise HTTPException(
-            status_code=400,
-            detail="오늘 이미 체크를 완료했습니다."
-        )
-    
-    # 기존 JSON 파일 저장소도 확인 (하위 호환성)
-    storage = get_storage()
-    if storage.is_checked_today(user_id):
-        raise HTTPException(
-            status_code=400,
-            detail="오늘 이미 체크를 완료했습니다."
-        )
+    # Check if user already checked today (for is_update flag)
+    is_update = is_user_checked_today(db, user_id)
     
     # 프론트엔드에서 전송한 filename과 sentiment가 있으면 우선 사용
     if request.filename and request.sentiment:
@@ -170,7 +158,7 @@ async def select_image(
     # 감정 분석 수행
     emotion_result = analyze_emotion_from_image(selected_image)
     
-    # DB에 저장
+    # DB에 저장 (upsert: 존재하면 update, 없으면 insert)
     save_daily_selection(
         db=db,
         user_id=user_id,
@@ -182,13 +170,15 @@ async def select_image(
     )
     
     # 기존 JSON 파일 저장소에도 저장 (하위 호환성)
+    storage = get_storage()
     storage.mark_checked(user_id, request.image_id)
     
     return ImageSelectionResponse(
         success=True,
         selected_image=ImageInfo(**selected_image),
         emotion_result=emotion_result,
-        message="이미지 선택이 완료되었습니다."
+        message="이미지 선택이 완료되었습니다." if not is_update else "오늘의 기분이 변경되었습니다.",
+        is_update=is_update
     )
 
 
