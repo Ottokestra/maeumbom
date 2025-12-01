@@ -142,7 +142,7 @@ def get_daily_random_images() -> List[Dict]:
     # 섞은 후 ID를 순서대로 재할당 (1, 2, 3)
     for idx, img in enumerate(result, start=1):
         img["id"] = idx
-    
+
     return result
 
 
@@ -194,34 +194,34 @@ def save_emotion_analysis(
 ) -> int:
     """
     Save emotion analysis result to TB_EMOTION_ANALYSIS
-    
+
     Args:
         db: Database session
         user_id: User ID
         text: Input text that was analyzed
         emotion_result: Emotion analysis result dictionary
         check_root: Source of the check ("conversation" or "daily_mood_check")
-        
+
     Returns:
         ID of created EmotionAnalysis record
-        
+
     Raises:
         ValueError: If check_root is not one of the allowed values
     """
     from app.db.models import EmotionAnalysis
     from datetime import datetime
-    
+
     # Validate check_root
     allowed_values = ["conversation", "daily_mood_check"]
     if check_root not in allowed_values:
         raise ValueError(f"check_root must be one of {allowed_values}, got: {check_root}")
-    
+
     # For daily_mood_check, check if record exists for today and update it
     if check_root == "daily_mood_check":
         today = date.today()
         today_start = datetime.combine(today, datetime.min.time())
         today_end = datetime.combine(today, datetime.max.time())
-        
+
         existing = db.query(EmotionAnalysis).filter(
             and_(
                 EmotionAnalysis.USER_ID == user_id,
@@ -230,7 +230,7 @@ def save_emotion_analysis(
                 EmotionAnalysis.CREATED_AT <= today_end
             )
         ).first()
-        
+
         if existing:
             # Update existing record
             existing.TEXT = text
@@ -244,11 +244,11 @@ def save_emotion_analysis(
             existing.RECOMMENDED_RESPONSE_STYLE = emotion_result.get("recommended_response_style")
             existing.RECOMMENDED_ROUTINE_TAGS = emotion_result.get("recommended_routine_tags")
             existing.REPORT_TAGS = emotion_result.get("report_tags")
-            
+
             db.commit()
             db.refresh(existing)
             return existing.ID
-    
+
     # Create new record (for conversation or first daily_mood_check of the day)
     emotion_analysis = EmotionAnalysis(
         USER_ID=user_id,
@@ -265,11 +265,11 @@ def save_emotion_analysis(
         RECOMMENDED_ROUTINE_TAGS=emotion_result.get("recommended_routine_tags"),
         REPORT_TAGS=emotion_result.get("report_tags")
     )
-    
+
     db.add(emotion_analysis)
     db.commit()
     db.refresh(emotion_analysis)
-    
+
     return emotion_analysis.ID
 
 
@@ -333,7 +333,7 @@ def save_daily_selection(
         db.add(selection)
     
     db.commit()
-    
+
     # Also save to TB_EMOTION_ANALYSIS if emotion_result is available
     if emotion_result and description:
         try:

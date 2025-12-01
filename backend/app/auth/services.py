@@ -144,9 +144,9 @@ async def google_login(auth_code: str, redirect_uri: str, db: Session) -> TokenR
     # Step 2: Get user info from Google
     user_info = await get_google_user_info(google_access_token)
     
-    social_id = user_info.get("id")  # Google's unique user ID (sub)
+    social_id = user_info.get("sub") or user_info.get("id")  # Google's unique user ID (sub)
     email = user_info.get("email")
-    name = user_info.get("name", email.split("@")[0])  # Use email prefix if name not available
+    name = user_info.get("name", email.split("@")[0] if email else "User")  # Use email prefix if name not available
     
     if not social_id or not email:
         raise HTTPException(

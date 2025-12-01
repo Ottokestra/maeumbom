@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import SignupSurveyPage from './pages/SignupSurveyPage'
 import EmotionInput from './components/EmotionInput'
 import EmotionResult from './components/EmotionResult'
 import EmotionChart from './components/EmotionChart'
@@ -6,13 +7,14 @@ import RoutineList from './components/RoutineList'
 import STTTest from './components/STTTest'
 import TTSTest from './components/TTSTest'
 import DailyMoodCheck from './components/DailyMoodCheck'
+import ScenarioTest from './components/ScenarioTest'
 import Login from './components/Login'
 import WeatherCard from './components/WeatherCard'
 import './App.css'
 
 const API_BASE_URL = 'http://localhost:8000'
 
-function App() {
+function MainApp() {
   // 로그인 상태 관리 (선택사항 - 테스트 중)
   const [isLoggedIn, setIsLoggedIn] = useState(() => {
     return !!localStorage.getItem('access_token')
@@ -508,7 +510,10 @@ function App() {
           감정 분석
         </button>
         <button
-          onClick={() => setActiveTab('routine-test')}
+          onClick={() => {
+            setActiveTab('routine-test')
+            window.location.href = '/signup/survey'
+          }}
           style={{
             padding: '10px 20px',
             fontSize: '16px',
@@ -551,6 +556,21 @@ function App() {
           }}
         >
           일일 감정 체크
+        </button>
+        <button
+          onClick={() => setActiveTab('scenario-test')}
+          style={{
+            padding: '10px 20px',
+            fontSize: '16px',
+            cursor: 'pointer',
+            backgroundColor: activeTab === 'scenario-test' ? '#6366f1' : '#e5e7eb',
+            color: activeTab === 'scenario-test' ? 'white' : '#374151',
+            border: 'none',
+            borderRadius: '8px',
+            fontWeight: activeTab === 'scenario-test' ? 'bold' : 'normal'
+          }}
+        >
+          시나리오 테스트
         </button>
       </div>
 
@@ -766,6 +786,11 @@ function App() {
         {activeTab === 'daily-mood-check' && (
           <DailyMoodCheck user={user} />
         )}
+
+        {/* 시나리오 테스트 섹션 */}
+        {activeTab === 'scenario-test' && (
+          <ScenarioTest />
+        )}
       </div>
 
       {showLoginModal && (
@@ -836,6 +861,16 @@ function getEmotionLabel(emotion) {
     frustration: '좌절'
   }
   return labels[emotion] || emotion
+}
+
+function App() {
+  const isSurveyRoute = window.location.pathname.startsWith('/signup/survey')
+
+  if (isSurveyRoute) {
+    return <SignupSurveyPage apiBaseUrl={API_BASE_URL} />
+  }
+
+  return <MainApp />
 }
 
 export default App

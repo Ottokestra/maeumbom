@@ -62,6 +62,35 @@ def init_db():
     Call this function on application startup
     """
     from . import models  # Import models to register them
+    from sqlalchemy import text, inspect
+    
     Base.metadata.create_all(bind=engine)
+    
+    # 마이그레이션: 컬럼 추가
+    try:
+        inspector = inspect(engine)
+        table_names = inspector.get_table_names()
+        
+        # TB_SCENARIO_RESULTS에 IMAGE_URL 컬럼 추가
+        if 'TB_SCENARIO_RESULTS' in table_names:
+            columns = [col['name'] for col in inspector.get_columns('TB_SCENARIO_RESULTS')]
+            if 'IMAGE_URL' not in columns:
+                with engine.begin() as conn:
+                    conn.execute(text("ALTER TABLE TB_SCENARIO_RESULTS ADD COLUMN IMAGE_URL VARCHAR(500) NULL"))
+                print("[DB] Added IMAGE_URL column to TB_SCENARIO_RESULTS")
+        
+        # TB_SCENARIOS에 START_IMAGE_URL 컬럼 추가
+        if 'TB_SCENARIOS' in table_names:
+            columns = [col['name'] for col in inspector.get_columns('TB_SCENARIOS')]
+            if 'START_IMAGE_URL' not in columns:
+                with engine.begin() as conn:
+                    conn.execute(text("ALTER TABLE TB_SCENARIOS ADD COLUMN START_IMAGE_URL VARCHAR(500) NULL"))
+                print("[DB] Added START_IMAGE_URL column to TB_SCENARIOS")
+                
+    except Exception as e:
+        import traceback
+        print(f"[DB] Migration failed: {e}")
+        traceback.print_exc()
+    
     print("[DB] All tables created successfully")
 

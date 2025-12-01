@@ -75,16 +75,16 @@ async def get_daily_images(
     """
     오늘의 랜덤 이미지 목록 반환 (부정/중립/긍정 각 1개씩)
     이미 선택한 경우 저장된 이미지를 반환
-    
+
     Returns:
         이미지 목록 (3개)
     """
     from app.auth.models import DailyMoodSelection
     from datetime import date
-    
+
     user_id = current_user.ID
     today = date.today()
-    
+
     # Check if user has already selected today
     existing = db.query(DailyMoodSelection).filter(
         and_(
@@ -92,7 +92,7 @@ async def get_daily_images(
             DailyMoodSelection.SELECTED_DATE == today
         )
     ).first()
-    
+
     # If user has selected and we have stored images, return them
     if existing and existing.DISPLAYED_IMAGES:
         images = existing.DISPLAYED_IMAGES
@@ -126,7 +126,7 @@ async def select_image(
         이미지 선택 응답 (감정 분석 결과 포함, is_update 플래그 포함)
     """
     user_id = current_user.ID  # 인증된 사용자 ID 사용
-    
+
     # Check if user already checked today (for is_update flag)
     is_update = is_user_checked_today(db, user_id)
     
@@ -138,7 +138,7 @@ async def select_image(
         # User already selected - retrieve stored images
         from app.auth.models import DailyMoodSelection
         from datetime import date
-        
+
         today = date.today()
         existing = db.query(DailyMoodSelection).filter(
             and_(
@@ -146,7 +146,7 @@ async def select_image(
                 DailyMoodSelection.SELECTED_DATE == today
             )
         ).first()
-        
+
         if existing and existing.DISPLAYED_IMAGES:
             daily_images = existing.DISPLAYED_IMAGES
         else:
@@ -164,7 +164,7 @@ async def select_image(
             if img.get("filename") == request.filename and img.get("sentiment") == request.sentiment:
                 selected_image = img
                 break
-        
+
         # If not found in daily_images, construct manually (shouldn't happen)
         if not selected_image:
             selected_image = {
@@ -174,7 +174,7 @@ async def select_image(
                 "description": "",
                 "url": f"/api/service/daily-mood-check/images/{request.sentiment}/{request.filename}"
             }
-            
+
             # 이미지 파일이 실제로 존재하는지 확인
             base_path = get_images_base_path()
             image_path = base_path / request.sentiment / request.filename
@@ -183,7 +183,7 @@ async def select_image(
                     status_code=404,
                     detail=f"이미지 파일을 찾을 수 없습니다: {request.sentiment}/{request.filename}"
                 )
-            
+
             # 설명은 감정 분석 시 사용되므로, sentiment 기반 기본 설명 사용
             descriptions = SENTIMENT_DESCRIPTIONS.get(request.sentiment, [""])
             selected_image["description"] = descriptions[0] if descriptions else ""
@@ -197,13 +197,12 @@ async def select_image(
                 detail=f"이미지 ID {request.image_id}를 찾을 수 없습니다."
             )
 
-    
     # 감정 분석 수행
     emotion_result = analyze_emotion_from_image(selected_image)
     
     # DB에 저장 (upsert: 존재하면 update, 없으면 insert)
     # Save the displayed images only on first selection (not on update)
-    
+
     save_daily_selection(
         db=db,
         user_id=user_id,
@@ -268,13 +267,13 @@ async def cleanup_mood_selections(
 ):
     """Delete all mood selections for current user"""
     from app.auth.models import DailyMoodSelection
-    
+
     deleted_count = db.query(DailyMoodSelection).filter(
         DailyMoodSelection.USER_ID == current_user.ID
     ).delete()
-    
+
     db.commit()
-    
+
     return {
         "success": True,
         "deleted_count": deleted_count,
@@ -289,16 +288,16 @@ async def cleanup_emotion_analysis(
 ):
     """Delete all daily mood check emotion analysis for current user"""
     from app.db.models import EmotionAnalysis
-    
+
     deleted_count = db.query(EmotionAnalysis).filter(
         and_(
             EmotionAnalysis.USER_ID == current_user.ID,
             EmotionAnalysis.CHECK_ROOT == "daily_mood_check"
         )
     ).delete()
-    
+
     db.commit()
-    
+
     return {
         "success": True,
         "deleted_count": deleted_count,
@@ -313,16 +312,16 @@ async def cleanup_conversation_emotion_analysis(
 ):
     """Delete all conversation emotion analysis for current user"""
     from app.db.models import EmotionAnalysis
-    
+
     deleted_count = db.query(EmotionAnalysis).filter(
         and_(
             EmotionAnalysis.USER_ID == current_user.ID,
             EmotionAnalysis.CHECK_ROOT == "conversation"
         )
     ).delete()
-    
+
     db.commit()
-    
+
     return {
         "success": True,
         "deleted_count": deleted_count,
