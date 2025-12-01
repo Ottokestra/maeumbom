@@ -204,8 +204,13 @@ class ScenarioImporter:
         
         return is_valid
     
-    def import_scenario(self, data: Dict, update_if_exists: bool = False) -> Tuple[bool, bool]:
+    def import_scenario(self, data: Dict, update_if_exists: bool = False, file_mtime: float = None) -> Tuple[bool, bool]:
         """시나리오 데이터를 DB에 저장
+        
+        Args:
+            data: 시나리오 데이터
+            update_if_exists: 기존 시나리오 업데이트 여부
+            file_mtime: 파일 수정 시간 (timestamp)
         
         Returns:
             (success, skipped): (성공 여부, 중복으로 스킵되었는지)
@@ -221,11 +226,21 @@ class ScenarioImporter:
                 ).first()
                 
                 if existing:
+                    # 스마트 업데이트: 파일 수정 시간과 DB 업데이트 시간 비교
+                    if file_mtime and existing.UPDATED_AT:
+                        import datetime
+                        db_updated_timestamp = existing.UPDATED_AT.timestamp()
+                        
+                        # 파일이 DB보다 최신이 아니면 스킵
+                        if file_mtime <= db_updated_timestamp:
+                            skipped = True
+                            continue
+                    
                     if not update_if_exists:
                         skipped = True
                         continue
                     else:
-                        # 업데이트 모드: 기존 데이터 삭제
+                        # 업데이트 모드: 기존 데이터 삭제 (같은 ID 유지를 위해 재생성)
                         self.db.query(ScenarioOption).filter(
                             ScenarioOption.NODE_ID.in_(
                                 self.db.query(ScenarioNode.ID).filter(
@@ -396,6 +411,10 @@ def import_file(file_path: Path, update: bool = False):
     try:
         importer = ScenarioImporter(db)
         
+        # 파일 수정 시간 가져오기
+        import os
+        file_mtime = os.path.getmtime(file_path)
+        
         # 파일 읽기 (Excel 또는 JSON)
         try:
             data = importer.read_file(file_path)
@@ -413,8 +432,8 @@ def import_file(file_path: Path, update: bool = False):
                 print(f"  - {error}")
             return False
         
-        # DB에 저장
-        success, skipped = importer.import_scenario(data, update_if_exists=update)
+        # DB에 저장 (파일 수정 시간 전달)
+        success, skipped = importer.import_scenario(data, update_if_exists=update, file_mtime=file_mtime)
         
         if success:
             if skipped:

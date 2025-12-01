@@ -190,7 +190,7 @@ try:
             if excel_files or json_files:
                 print(f"[INFO] Importing scenario files (Excel: {len(excel_files)}, JSON: {len(json_files)})...")
                 try:
-                    import_all(data_dir, update=False, clear=False)
+                    import_all(data_dir, update=True, clear=False)
                 except Exception as import_error:
                     import traceback
                     print(f"[ERROR] Scenario import 실행 중 에러 발생: {import_error}")

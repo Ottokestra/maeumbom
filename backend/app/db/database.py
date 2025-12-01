@@ -86,6 +86,12 @@ def init_db():
                 with engine.begin() as conn:
                     conn.execute(text("ALTER TABLE TB_SCENARIOS ADD COLUMN START_IMAGE_URL VARCHAR(500) NULL"))
                 print("[DB] Added START_IMAGE_URL column to TB_SCENARIOS")
+            
+            # TB_SCENARIOS에 UPDATED_AT 컬럼 추가
+            if 'UPDATED_AT' not in columns:
+                with engine.begin() as conn:
+                    conn.execute(text("ALTER TABLE TB_SCENARIOS ADD COLUMN UPDATED_AT DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"))
+                print("[DB] Added UPDATED_AT column to TB_SCENARIOS")
                 
     except Exception as e:
         import traceback

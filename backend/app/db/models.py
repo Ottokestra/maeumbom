@@ -271,6 +271,7 @@ class Scenario(Base):
         CATEGORY: Scenario category ('TRAINING' or 'DRAMA')
         START_IMAGE_URL: Optional start image URL for the scenario
         CREATED_AT: Creation timestamp
+        UPDATED_AT: Last update timestamp
     """
     __tablename__ = "TB_SCENARIOS"
     
@@ -280,6 +281,7 @@ class Scenario(Base):
     CATEGORY = Column(String(20), nullable=False)  # 'TRAINING' or 'DRAMA'
     START_IMAGE_URL = Column(String(500), nullable=True)
     CREATED_AT = Column(DateTime(timezone=True), server_default=func.now())
+    UPDATED_AT = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
     
     # Relationships
     nodes = relationship("ScenarioNode", back_populates="scenario", cascade="all, delete-orphan")
