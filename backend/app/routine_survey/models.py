@@ -1,8 +1,10 @@
-"""SQLAlchemy models for the mental routine survey domain."""
+"""SQLAlchemy models for the mental routine survey domain + seed 함수"""
+
 from sqlalchemy import Column, BigInteger, Integer, String, DateTime, ForeignKey
 from sqlalchemy.sql import func
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, Session
 
+# ✅ 기존 방식 그대로 절대 경로 import
 from app.db.database import Base
 
 
@@ -107,3 +109,66 @@ class MentalRoutineSurveyAnswer(Base):
 
     result = relationship("MentalRoutineSurveyResult", back_populates="answers")
     question = relationship("MentalRoutineSurveyQuestion", back_populates="answers")
+
+
+# =====================================================================
+# ✅ 기본 온보딩 설문 Seed 함수 (main.py 에서 startup 때 한 번 호출)
+# =====================================================================
+
+def seed_default_mr_survey(db: Session) -> MentalRoutineSurvey:
+    """
+    활성화된 설문이 없으면 기본 온보딩 설문(1-4-1)을 생성한다.
+    이미 있으면 그대로 리턴.
+    """
+    existing = (
+        db.query(MentalRoutineSurvey)
+        .filter(MentalRoutineSurvey.active_yn == "Y")
+        .order_by(MentalRoutineSurvey.survey_id.desc())
+        .first()
+    )
+    if existing:
+        return existing
+
+    # 설문 마스터
+    survey = MentalRoutineSurvey(
+        name="마음봄 온보딩 1-4-1",
+        description="요즘 마음과 하루 루틴을 가볍게 살펴보는 3단계 설문이에요.",
+        active_yn="Y",
+    )
+    db.add(survey)
+    db.flush()  # survey.survey_id 사용을 위해
+
+    # Q1
+    q1 = MentalRoutineSurveyQuestion(
+        survey_id=survey.survey_id,
+        question_no=1,
+        title="오늘 하루, 마음 날씨는 어떤가요?",
+        description="가장 가까운 느낌 하나만 골라주세요.",
+        score=1,
+        active_yn="Y",
+    )
+
+    # Q2
+    q2 = MentalRoutineSurveyQuestion(
+        survey_id=survey.survey_id,
+        question_no=2,
+        title="요즘 자주 무너지는 하루 루틴은 무엇인가요?",
+        description="(예: 수면, 식사, 운동, 일/집안일, 사람관계 등)",
+        score=1,
+        active_yn="Y",
+    )
+
+    # Q3
+    q3 = MentalRoutineSurveyQuestion(
+        survey_id=survey.survey_id,
+        question_no=3,
+        title="지금 나에게 가장 필요한 도움은 무엇인가요?",
+        description="마음에 와닿는 키워드를 떠올려보세요.",
+        score=1,
+        active_yn="Y",
+    )
+
+    db.add_all([q1, q2, q3])
+    db.commit()
+
+    return survey

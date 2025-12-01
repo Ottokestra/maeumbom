@@ -13,7 +13,7 @@ from .models import (
 )
 from .schemas import SurveyResultSummary, SurveySubmitItem
 
-DEFAULT_SURVEY_NAME = "심리상태·루틴 체크 설문"
+DEFAULT_SURVEY_NAME = "마음봄 온보딩 1-4-1"
 
 
 RISK_COMMENTS = {
