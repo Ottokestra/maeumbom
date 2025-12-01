@@ -139,6 +139,10 @@ def get_daily_random_images() -> List[Dict]:
     # 이미지 순서를 랜덤으로 섞기 (날짜 기반 시드는 이미 설정되어 있음)
     random.shuffle(result)
     
+    # 섞은 후 ID를 순서대로 재할당 (1, 2, 3)
+    for idx, img in enumerate(result, start=1):
+        img["id"] = idx
+    
     return result
 
 
@@ -205,13 +209,47 @@ def save_emotion_analysis(
         ValueError: If check_root is not one of the allowed values
     """
     from app.db.models import EmotionAnalysis
+    from datetime import datetime
     
     # Validate check_root
     allowed_values = ["conversation", "daily_mood_check"]
     if check_root not in allowed_values:
         raise ValueError(f"check_root must be one of {allowed_values}, got: {check_root}")
     
-    # Create EmotionAnalysis record
+    # For daily_mood_check, check if record exists for today and update it
+    if check_root == "daily_mood_check":
+        today = date.today()
+        today_start = datetime.combine(today, datetime.min.time())
+        today_end = datetime.combine(today, datetime.max.time())
+        
+        existing = db.query(EmotionAnalysis).filter(
+            and_(
+                EmotionAnalysis.USER_ID == user_id,
+                EmotionAnalysis.CHECK_ROOT == "daily_mood_check",
+                EmotionAnalysis.CREATED_AT >= today_start,
+                EmotionAnalysis.CREATED_AT <= today_end
+            )
+        ).first()
+        
+        if existing:
+            # Update existing record
+            existing.TEXT = text
+            existing.LANGUAGE = emotion_result.get("language", "ko")
+            existing.RAW_DISTRIBUTION = emotion_result.get("raw_distribution")
+            existing.PRIMARY_EMOTION = emotion_result.get("primary_emotion")
+            existing.SECONDARY_EMOTIONS = emotion_result.get("secondary_emotions")
+            existing.SENTIMENT_OVERALL = emotion_result.get("sentiment_overall", "neutral")
+            existing.MIXED_EMOTION = emotion_result.get("mixed_emotion")
+            existing.SERVICE_SIGNALS = emotion_result.get("service_signals")
+            existing.RECOMMENDED_RESPONSE_STYLE = emotion_result.get("recommended_response_style")
+            existing.RECOMMENDED_ROUTINE_TAGS = emotion_result.get("recommended_routine_tags")
+            existing.REPORT_TAGS = emotion_result.get("report_tags")
+            
+            db.commit()
+            db.refresh(existing)
+            return existing.ID
+    
+    # Create new record (for conversation or first daily_mood_check of the day)
     emotion_analysis = EmotionAnalysis(
         USER_ID=user_id,
         CHECK_ROOT=check_root,
@@ -242,7 +280,8 @@ def save_daily_selection(
     sentiment: str,
     filename: str,
     description: Optional[str],
-    emotion_result: Optional[Dict]
+    emotion_result: Optional[Dict],
+    displayed_images: Optional[List[Dict]] = None
 ) -> None:
     """
     Save daily mood selection to database
@@ -255,6 +294,7 @@ def save_daily_selection(
         filename: Image filename
         description: Image description
         emotion_result: Emotion analysis result
+        displayed_images: The 3 images shown during selection
     """
     from app.auth.models import DailyMoodSelection
     
@@ -263,28 +303,32 @@ def save_daily_selection(
     # Check if user already selected today
     existing = db.query(DailyMoodSelection).filter(
         and_(
-            DailyMoodSelection.user_id == user_id,
-            DailyMoodSelection.selected_date == today
+            DailyMoodSelection.USER_ID == user_id,
+            DailyMoodSelection.SELECTED_DATE == today
         )
     ).first()
     
     if existing:
         # Update existing record
-        existing.image_id = image_id
-        existing.sentiment = sentiment
-        existing.filename = filename
-        existing.description = description
-        existing.emotion_result = emotion_result
+        existing.IMAGE_ID = image_id
+        existing.SENTIMENT = sentiment
+        existing.FILENAME = filename
+        existing.DESCRIPTION = description
+        existing.EMOTION_RESULT = emotion_result
+        # Only update displayed_images if provided (first selection stores them, updates don't change them)
+        if displayed_images and not existing.DISPLAYED_IMAGES:
+            existing.DISPLAYED_IMAGES = displayed_images
     else:
         # Create new record
         selection = DailyMoodSelection(
-            user_id=user_id,
-            selected_date=today,
-            image_id=image_id,
-            sentiment=sentiment,
-            filename=filename,
-            description=description,
-            emotion_result=emotion_result
+            USER_ID=user_id,
+            SELECTED_DATE=today,
+            IMAGE_ID=image_id,
+            SENTIMENT=sentiment,
+            FILENAME=filename,
+            DESCRIPTION=description,
+            EMOTION_RESULT=emotion_result,
+            DISPLAYED_IMAGES=displayed_images
         )
         db.add(selection)
     
@@ -322,8 +366,8 @@ def get_user_daily_status(db: Session, user_id: int) -> Dict:
     
     selection = db.query(DailyMoodSelection).filter(
         and_(
-            DailyMoodSelection.user_id == user_id,
-            DailyMoodSelection.selected_date == today
+            DailyMoodSelection.USER_ID == user_id,
+            DailyMoodSelection.SELECTED_DATE == today
         )
     ).first()
     
@@ -331,8 +375,8 @@ def get_user_daily_status(db: Session, user_id: int) -> Dict:
         return {
             "user_id": user_id,
             "completed": True,
-            "last_check_date": selection.selected_date.isoformat(),
-            "selected_image_id": selection.image_id
+            "last_check_date": selection.SELECTED_DATE.isoformat(),
+            "selected_image_id": selection.IMAGE_ID
         }
     else:
         return {
@@ -360,8 +404,8 @@ def is_user_checked_today(db: Session, user_id: int) -> bool:
     
     selection = db.query(DailyMoodSelection).filter(
         and_(
-            DailyMoodSelection.user_id == user_id,
-            DailyMoodSelection.selected_date == today
+            DailyMoodSelection.USER_ID == user_id,
+            DailyMoodSelection.SELECTED_DATE == today
         )
     ).first()
     

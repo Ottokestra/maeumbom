@@ -238,36 +238,17 @@ class MemoryLayer:
         """
         db = self._get_db()
         try:
-            # 기존 Global Memory 확인 (동일 카테고리)
-            existing_global = db.query(GlobalMemory).filter(
-                and_(
-                    GlobalMemory.USER_ID == user_id,
-                    GlobalMemory.CATEGORY == category,
-                    GlobalMemory.IS_DELETED == 'N'
-                )
-            ).first()
-            
-            if existing_global:
-                # 기존 메모리 업데이트 (더 최신 정보로, 중요도는 최대값 유지)
-                existing_global.MEMORY_TEXT = content
-                existing_global.IMPORTANCE = max(existing_global.IMPORTANCE, importance)
-                existing_global.SOURCE_SESSION_ID = session_id
-                existing_global.LAST_ACCESSED_AT = datetime.now()
-                existing_global.UPDATED_BY = user_id
-                existing_global.UPDATED_AT = datetime.now()
-                print(f"[MemoryLayer] ✅ Global memory updated: {category} (importance: {existing_global.IMPORTANCE})")
-            else:
-                # 새 Global Memory 생성
-                new_global = GlobalMemory(
-                    USER_ID=user_id,
-                    CATEGORY=category,
-                    MEMORY_TEXT=content,
-                    IMPORTANCE=importance,
-                    SOURCE_SESSION_ID=session_id,
-                    CREATED_BY=user_id
-                )
-                db.add(new_global)
-                print(f"[MemoryLayer] ✅ Memory promoted to Global: {category} (reason: {reason}, importance: {importance})")
+            # 항상 새 Global Memory 생성 (누적 저장)
+            new_global = GlobalMemory(
+                USER_ID=user_id,
+                CATEGORY=category,
+                MEMORY_TEXT=content,
+                IMPORTANCE=importance,
+                SOURCE_SESSION_ID=session_id,
+                CREATED_BY=user_id
+            )
+            db.add(new_global)
+            print(f"[MemoryLayer] ✅ Memory promoted to Global: {category} (reason: {reason}, importance: {importance})")
             
             db.commit()
             return True
@@ -421,33 +402,16 @@ class MemoryLayer:
         """Session Memory에만 저장 (Upsert)"""
         db = self._get_db()
         try:
-            # 기존 세션 메모리 확인 (같은 카테고리)
-            existing_mem = db.query(SessionMemory).filter(
-                and_(
-                    SessionMemory.USER_ID == user_id,
-                    SessionMemory.SESSION_ID == session_id,
-                    SessionMemory.MEMORY_TYPE == category,
-                    SessionMemory.IS_DELETED == 'N'
-                )
-            ).first()
-            
-            if existing_mem:
-                # 업데이트: 최신 내용으로 덮어쓰기
-                existing_mem.KEY_CONTENT = content
-                existing_mem.VALUE_DATA = metadata
-                existing_mem.UPDATED_BY = user_id
-                existing_mem.UPDATED_AT = datetime.now()
-            else:
-                # 새로 생성
-                new_mem = SessionMemory(
-                    USER_ID=user_id,
-                    SESSION_ID=session_id,
-                    MEMORY_TYPE=category,
-                    KEY_CONTENT=content,
-                    VALUE_DATA=metadata,
-                    CREATED_BY=user_id
-                )
-                db.add(new_mem)
+            # 항상 새로 생성 (누적 저장)
+            new_mem = SessionMemory(
+                USER_ID=user_id,
+                SESSION_ID=session_id,
+                MEMORY_TYPE=category,
+                KEY_CONTENT=content,
+                VALUE_DATA=metadata,
+                CREATED_BY=user_id
+            )
+            db.add(new_mem)
                 
             db.commit()
         except Exception as e:

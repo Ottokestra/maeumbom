@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import desc, and_, func
 
 from app.db.database import SessionLocal
-from app.db.models import Conversation, User
+from app.db.models import Conversation, User, EmotionAnalysis
 
 # Import vectorstore for RAG sync
 # Note: Using local import inside methods to avoid circular import if necessary, 
@@ -55,6 +55,55 @@ class DBConversationStore:
     #     except ImportError:
     #         print("[DBConversationStore] ⚠️ VectorStore import failed")
     #         return None
+
+    def save_emotion_analysis(
+        self,
+        user_id: int,
+        text: str,
+        emotion_result: Dict[str, Any],
+        check_root: str = "conversation"
+    ) -> int:
+        """
+        Save emotion analysis result to TB_EMOTION_ANALYSIS
+        
+        Args:
+            user_id: User ID
+            text: Input text
+            emotion_result: Emotion analysis result dictionary
+            check_root: Source of check (default: "conversation")
+            
+        Returns:
+            ID of created record, or -1 if failed
+        """
+        db = self._get_db()
+        try:
+            emotion_analysis = EmotionAnalysis(
+                USER_ID=user_id,
+                CHECK_ROOT=check_root,
+                TEXT=text,
+                LANGUAGE=emotion_result.get("language", "ko"),
+                RAW_DISTRIBUTION=emotion_result.get("raw_distribution"),
+                PRIMARY_EMOTION=emotion_result.get("primary_emotion"),
+                SECONDARY_EMOTIONS=emotion_result.get("secondary_emotions"),
+                SENTIMENT_OVERALL=emotion_result.get("sentiment_overall", "neutral"),
+                MIXED_EMOTION=emotion_result.get("mixed_emotion"),
+                SERVICE_SIGNALS=emotion_result.get("service_signals"),
+                RECOMMENDED_RESPONSE_STYLE=emotion_result.get("recommended_response_style"),
+                RECOMMENDED_ROUTINE_TAGS=emotion_result.get("recommended_routine_tags"),
+                REPORT_TAGS=emotion_result.get("report_tags")
+            )
+            
+            db.add(emotion_analysis)
+            db.commit()
+            db.refresh(emotion_analysis)
+            return emotion_analysis.ID
+            
+        except Exception as e:
+            print(f"[DBConversationStore] ⚠️ Failed to save emotion analysis: {e}")
+            db.rollback()
+            return -1
+        finally:
+            db.close()
 
     def add_message(
         self,

@@ -645,7 +645,11 @@ async function openDailyMoodCheckModal() {
 
     // Fetch images
     try {
-        const imagesRes = await fetch('/api/service/daily-mood-check/images');
+        const imagesRes = await fetch('/api/service/daily-mood-check/images', {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
         if (imagesRes.ok) {
             const data = await imagesRes.json();
             moodCheckState.images = data.images;
@@ -767,7 +771,8 @@ async function selectMoodImage(image) {
                 user_id: 0, // Will be ignored, using JWT
                 image_id: image.id,
                 filename: image.filename,
-                sentiment: image.sentiment
+                sentiment: image.sentiment,
+                displayed_images: moodCheckState.images  // Send entire image array
             })
         });
 
@@ -893,4 +898,103 @@ async function updateSidebarMoodCheckStatus(forceCompleted = false) {
 document.addEventListener('DOMContentLoaded', () => {
     updateSidebarMoodCheckStatus();
 });
+
+// Daily Mood Check Cleanup Functions
+async function cleanupMoodSelections() {
+    if (!confirm('정말로 모든 기분 체크 기록을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.')) {
+        return;
+    }
+
+    const token = getToken();
+    try {
+        const response = await fetch(`${API_BASE}/api/service/daily-mood-check/cleanup/selections`, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (response.ok) {
+            const result = await response.json();
+            alert(result.message);
+
+            // Reset UI states
+            updateSidebarMoodCheckStatus(); // Reset button status
+
+            // Reset modal status message if modal is open
+            const statusMessage = document.getElementById('moodStatusMessage');
+            if (statusMessage) {
+                statusMessage.textContent = '오늘의 감정을 선택 해주세요.';
+            }
+
+            // Close modal if it's open
+            const modal = document.getElementById('moodModal');
+            if (modal && modal.style.display === 'flex') {
+                closeDailyMoodCheckModal();
+            }
+        } else {
+            alert('초기화 실패');
+        }
+    } catch (e) {
+        console.error(e);
+        alert('오류 발생');
+    }
+}
+
+async function cleanupMoodEmotionAnalysis() {
+    if (!confirm('정말로 모든 기분 분석 데이터를 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.')) {
+        return;
+    }
+
+    const token = getToken();
+    try {
+        const response = await fetch(`${API_BASE}/api/service/daily-mood-check/cleanup/emotion-analysis`, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (response.ok) {
+            const result = await response.json();
+            alert(result.message);
+        } else {
+            alert('초기화 실패');
+        }
+    } catch (e) {
+        console.error(e);
+        alert('오류 발생');
+    }
+}
+
+async function resetConversationEmotionData() {
+    if (!confirm('정말로 대화 감정 분석 기록을 모두 삭제하시겠습니까?')) return;
+
+    try {
+        const token = getToken();
+        const headers = {
+            'Content-Type': 'application/json'
+        };
+
+        if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+        }
+
+        const response = await fetch('/api/service/daily-mood-check/cleanup/conversation-emotion-analysis', {
+            method: 'DELETE',
+            headers: headers
+        });
+
+        if (response.status === 401 || response.status === 403) {
+            alert('로그인이 필요하거나 권한이 없습니다.');
+            return;
+        }
+
+        const result = await response.json();
+        if (result.success) {
+            alert(result.message);
+        } else {
+            alert('삭제 실패: ' + (result.detail || '알 수 없는 오류'));
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('오류가 발생했습니다.');
+    }
+}
 

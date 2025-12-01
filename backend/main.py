@@ -132,9 +132,14 @@ try:
     # Include auth router
     app.include_router(auth_router, prefix="/auth", tags=["authentication"])
     print("[INFO] Authentication router loaded successfully.")
+
+    # Include dashboard router
+    from app.dashboard.routes import router as dashboard_router
+    app.include_router(dashboard_router, prefix="/api/dashboard", tags=["dashboard"])
+    print("[INFO] Dashboard router loaded successfully.")
 except Exception as e:
     import traceback
-    print(f"[WARN] Authentication module load failed: {e}")
+    print(f"[WARN] Authentication/Dashboard module load failed: {e}")
     traceback.print_exc()
 
 

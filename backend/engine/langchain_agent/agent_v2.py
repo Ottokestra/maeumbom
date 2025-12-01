@@ -165,6 +165,12 @@ async def run_ai_bomi_from_text_v2(
     emotion_result = tool_results["emotion_result"]
     routine_result = tool_results["routine_result"]
     
+    # 2.5 Save Emotion Analysis
+    try:
+        store.save_emotion_analysis(user_id, user_text, emotion_result, check_root="conversation")
+    except Exception as e:
+        logger.error(f"Failed to save emotion analysis: {e}")
+    
     # 3. Memory Layer & RAG Context Retrieval (기존 로직 재사용)
     memory_context = ""
     rag_context = ""
