@@ -24,6 +24,7 @@ from pydantic import BaseModel
 # 경로 설정
 # ============================================================
 
+# 하이픈이 있는 폴더명을 import하기 위해 경로 추가
 backend_path = Path(__file__).parent
 sys.path.insert(0, str(backend_path))
 
@@ -35,7 +36,6 @@ sys.path.insert(0, str(tts_path))
 # 서브 모듈 import
 # ============================================================
 
-# Emotion 분석 라우터는 동적 로딩
 import importlib.util
 
 emotion_router = None
@@ -47,10 +47,14 @@ try:
     emotion_router = emotion_routes.router
     print("[INFO] Emotion analysis router loaded successfully.")
 except Exception as e:
+    # 여기서 막혀도 서버 전체는 계속 뜨도록
     print("[WARN] Emotion analysis module load failed:", e)
     emotion_router = None
 
-# TTS 모델
+# =========================p
+# TTS 모델 import
+# =========================
+
 from tts_model import synthesize_to_wav
 
 # 루틴 추천 엔진
@@ -126,7 +130,6 @@ if emotion_router is not None:
 # ============================================================
 
 try:
-    # Daily mood check 라우터는 파일 경로 기반 동적 로딩
     daily_mood_check_path = backend_path / "app" / "daily_mood_check" / "routes.py"
     if not daily_mood_check_path.exists():
         print(f"[WARN] Daily mood check routes file not found: {daily_mood_check_path}")
@@ -166,8 +169,43 @@ app.include_router(routine_survey_router, prefix="/api", tags=["routine-survey"]
 
 try:
     from app.auth import router as auth_router
+    from app.db.database import init_db
+    
+    # Initialize database tables
+    init_db()
+    
+    # 시나리오 데이터 자동 import (init_db 직후 실행)
+    try:
+        from app.relation_training.import_data import import_all
+        from pathlib import Path
 
-    # init_db() 는 startup 에서 이미 호출되므로 여기서는 라우터만 포함
+        data_dir = Path(__file__).parent / "app" / "relation_training" / "data"
+        if data_dir.exists():
+            # Excel과 JSON 파일 모두 확인
+            excel_files = list(data_dir.glob('*.xlsx'))
+            excel_files = [f for f in excel_files if not f.name.startswith('~') and f.name != 'template.xlsx']
+            json_files = list(data_dir.glob('*.json'))
+            json_files = [f for f in json_files if f.name != 'template.json']
+
+            if excel_files or json_files:
+                print(f"[INFO] Importing scenario files (Excel: {len(excel_files)}, JSON: {len(json_files)})...")
+                try:
+                    import_all(data_dir, update=False, clear=False)
+                except Exception as import_error:
+                    import traceback
+                    print(f"[ERROR] Scenario import 실행 중 에러 발생: {import_error}")
+                    traceback.print_exc()
+            else:
+                print("[INFO] No scenario files found in data folder.")
+        else:
+            print(f"[WARN] Scenario data directory not found: {data_dir}")
+    except Exception as e:
+        import traceback
+        print(f"[ERROR] Scenario data auto-import setup failed: {e}")
+        traceback.print_exc()
+        # 에러가 발생해도 서버는 계속 실행
+
+    # Include auth router
     app.include_router(auth_router, prefix="/auth", tags=["authentication"])
     print("[INFO] Authentication router loaded successfully.")
 except Exception as e:
@@ -175,9 +213,42 @@ except Exception as e:
     print(f"[WARN] Authentication module load failed: {e}")
     traceback.print_exc()
 
-# ============================================================
-# LangChain Agent REST API
-# ============================================================
+# =========================
+# User Phase Service
+# =========================
+try:
+    from app.user_phase.routes import router as user_phase_router
+
+    app.include_router(user_phase_router, tags=["user-phase"])
+    print("[INFO] User Phase router loaded successfully.")
+except Exception as e:
+    import traceback
+    print(f"[WARN] User Phase module load failed: {e}")
+    traceback.print_exc()
+
+# =========================
+# Relation Training Service (Interactive Scenario)
+# =========================
+try:
+    from app.relation_training.routes import router as relation_training_router
+
+    app.include_router(
+        relation_training_router,
+        prefix="/api/service/relation-training",
+        tags=["relation-training"]
+    )
+    print("[INFO] Relation training router loaded successfully.")
+
+except Exception as e:
+    import traceback
+    print(f"[WARN] Relation training module load failed: {e}")
+    traceback.print_exc()
+
+
+# LangChain Agent routes
+from fastapi import HTTPException
+from pydantic import BaseModel
+from typing import Optional
 
 class AgentTextRequest(BaseModel):
     user_text: str
@@ -269,86 +340,73 @@ async def get_agent_session(session_id: str, limit: int = None):
     """LangChain Agent - 특정 세션의 대화 히스토리 및 메타데이터 조회"""
     try:
         from engine.langchain_agent import get_conversation_store
-
         store = get_conversation_store()
-
+        
         # 히스토리 조회
         history = store.get_history(session_id, limit=limit)
-
+        
         # 메타데이터 조회
         metadata = store.get_session_metadata(session_id)
-
+        
         return {
             "session_id": session_id,
             "metadata": metadata,
             "message_count": len(history),
-            "messages": history,
+            "messages": history
         }
     except Exception as e:
         import traceback
-
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
-
 
 @app.delete("/api/agent/sessions/{session_id}")
 async def delete_agent_session(session_id: str):
     """LangChain Agent - 특정 세션 삭제"""
     try:
         from engine.langchain_agent import get_conversation_store
-
         store = get_conversation_store()
-
+        
         # 세션 존재 여부 확인 (선택적)
         if session_id not in store._store and session_id not in store._session_metadata:
-            raise HTTPException(status_code=404, detail="Session not found")
-
+             raise HTTPException(status_code=404, detail="Session not found")
+             
         store.clear_session(session_id)
         return {"status": "success", "message": f"Session {session_id} deleted"}
     except HTTPException:
         raise
     except Exception as e:
         import traceback
-
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
-
 
 @app.get("/api/agent/sessions")
 async def get_all_agent_sessions():
     """LangChain Agent - 모든 세션 정보 조회"""
     try:
         from engine.langchain_agent import get_all_sessions
-
         sessions = get_all_sessions()
         return {
             "session_count": len(sessions),
-            "sessions": sessions,
+            "sessions": sessions
         }
     except Exception as e:
         import traceback
-
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
 
-# ============================================================
-# STT WebSocket
-# ============================================================
-
+# STT 엔진 초기화 (전역)
 stt_engine = None
-
 
 def get_stt_engine():
     """STT 엔진 싱글톤"""
     global stt_engine
     if stt_engine is None:
         import importlib.util
-
         stt_engine_path = backend_path / "engine" / "speech-to-text" / "faster_whisper" / "stt_engine.py"
         spec = importlib.util.spec_from_file_location("stt_engine", stt_engine_path)
         stt_module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(stt_module)
-
+        
         # config.yaml 경로
         config_path = backend_path / "engine" / "speech-to-text" / "faster_whisper" / "config.yaml"
         stt_engine = stt_module.MaumBomSTT(str(config_path))
@@ -359,42 +417,44 @@ def get_stt_engine():
 async def stt_websocket(websocket: WebSocket):
     await websocket.accept()
     engine = None
-
+    
     try:
         # 즉시 연결 확인 메시지 전송
         await websocket.send_json({"status": "connecting", "message": "STT 엔진 초기화 중..."})
-
-        # STT 엔진 초기화
+        
+        # STT 엔진 초기화 (시간이 걸릴 수 있음)
         engine = get_stt_engine()
-
+        
         # 엔진 준비 완료 메시지
         await websocket.send_json({"status": "ready", "message": "STT 엔진 준비 완료"})
-
+        
         while True:
             try:
                 data = await websocket.receive()
             except RuntimeError as e:
+                # 연결이 이미 끊긴 경우
                 if "disconnect" in str(e).lower():
                     print("클라이언트 연결 종료 감지")
                     break
                 raise
-
+            
             if "bytes" in data:
                 audio_bytes = data["bytes"]
                 audio_chunk = np.frombuffer(audio_bytes, dtype=np.float32)
 
+                # 512 샘플이 맞는지 확인 (선택적)
                 if len(audio_chunk) != 512:
                     continue
 
                 # VAD 처리
                 is_speech_end, speech_audio, is_short_pause = engine.vad.process_chunk(audio_chunk)
-
-                # 디버그 카운터
-                if hasattr(engine.vad, "_debug_counter"):
-                    engine.vad._debug_counter = getattr(engine.vad, "_debug_counter", 0) + 1
+                
+                # 디버깅: VAD 상태 로그 (100번마다 한 번씩)
+                if hasattr(engine.vad, '_debug_counter'):
+                    engine.vad._debug_counter = getattr(engine.vad, '_debug_counter', 0) + 1
                 else:
                     engine.vad._debug_counter = 1
-
+                
                 if engine.vad._debug_counter % 100 == 0:
                     print(
                         f"[STT DEBUG] 청크 처리: speech_end={is_speech_end}, "

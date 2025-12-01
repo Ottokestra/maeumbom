@@ -67,12 +67,12 @@ async def get_daily_check_status(
         일일 체크 상태
     """
     # DB에서 상태 조회 (우선)
-    status = get_user_daily_status(db, current_user.id)
+    status = get_user_daily_status(db, current_user.ID)
     
     # DB에 없으면 기존 JSON 파일 저장소에서 조회 (하위 호환성)
     if not status.get("completed"):
         storage = get_storage()
-        json_status = storage.get_status(current_user.id)
+        json_status = storage.get_status(current_user.ID)
         if json_status.get("completed"):
             status = json_status
     
@@ -114,7 +114,7 @@ async def select_image(
     Returns:
         이미지 선택 응답 (감정 분석 결과 포함)
     """
-    user_id = current_user.id  # 인증된 사용자 ID 사용
+    user_id = current_user.ID  # 인증된 사용자 ID 사용
     
     # DB에서 오늘 체크 여부 확인
     if is_user_checked_today(db, user_id):

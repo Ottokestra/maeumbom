@@ -7,6 +7,7 @@ import RoutineList from './components/RoutineList'
 import STTTest from './components/STTTest'
 import TTSTest from './components/TTSTest'
 import DailyMoodCheck from './components/DailyMoodCheck'
+import ScenarioTest from './components/ScenarioTest'
 import Login from './components/Login'
 import WeatherCard from './components/WeatherCard'
 import './App.css'
@@ -556,6 +557,21 @@ function MainApp() {
         >
           일일 감정 체크
         </button>
+        <button
+          onClick={() => setActiveTab('scenario-test')}
+          style={{
+            padding: '10px 20px',
+            fontSize: '16px',
+            cursor: 'pointer',
+            backgroundColor: activeTab === 'scenario-test' ? '#6366f1' : '#e5e7eb',
+            color: activeTab === 'scenario-test' ? 'white' : '#374151',
+            border: 'none',
+            borderRadius: '8px',
+            fontWeight: activeTab === 'scenario-test' ? 'bold' : 'normal'
+          }}
+        >
+          시나리오 테스트
+        </button>
       </div>
 
       <div className="main-container">
@@ -769,6 +785,11 @@ function MainApp() {
         {/* 일일 감정 체크 섹션 */}
         {activeTab === 'daily-mood-check' && (
           <DailyMoodCheck user={user} />
+        )}
+
+        {/* 시나리오 테스트 섹션 */}
+        {activeTab === 'scenario-test' && (
+          <ScenarioTest />
         )}
       </div>
 

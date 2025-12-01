@@ -209,28 +209,28 @@ def save_daily_selection(
     # Check if user already selected today
     existing = db.query(DailyMoodSelection).filter(
         and_(
-            DailyMoodSelection.user_id == user_id,
-            DailyMoodSelection.selected_date == today
+            DailyMoodSelection.USER_ID == user_id,
+            DailyMoodSelection.SELECTED_DATE == today
         )
     ).first()
     
     if existing:
         # Update existing record
-        existing.image_id = image_id
-        existing.sentiment = sentiment
-        existing.filename = filename
-        existing.description = description
-        existing.emotion_result = emotion_result
+        existing.IMAGE_ID = image_id
+        existing.SENTIMENT = sentiment
+        existing.FILENAME = filename
+        existing.DESCRIPTION = description
+        existing.EMOTION_RESULT = emotion_result
     else:
         # Create new record
         selection = DailyMoodSelection(
-            user_id=user_id,
-            selected_date=today,
-            image_id=image_id,
-            sentiment=sentiment,
-            filename=filename,
-            description=description,
-            emotion_result=emotion_result
+            USER_ID=user_id,
+            SELECTED_DATE=today,
+            IMAGE_ID=image_id,
+            SENTIMENT=sentiment,
+            FILENAME=filename,
+            DESCRIPTION=description,
+            EMOTION_RESULT=emotion_result
         )
         db.add(selection)
     
@@ -254,8 +254,8 @@ def get_user_daily_status(db: Session, user_id: int) -> Dict:
     
     selection = db.query(DailyMoodSelection).filter(
         and_(
-            DailyMoodSelection.user_id == user_id,
-            DailyMoodSelection.selected_date == today
+            DailyMoodSelection.USER_ID == user_id,
+            DailyMoodSelection.SELECTED_DATE == today
         )
     ).first()
     
@@ -263,8 +263,8 @@ def get_user_daily_status(db: Session, user_id: int) -> Dict:
         return {
             "user_id": user_id,
             "completed": True,
-            "last_check_date": selection.selected_date.isoformat(),
-            "selected_image_id": selection.image_id
+            "last_check_date": selection.SELECTED_DATE.isoformat(),
+            "selected_image_id": selection.IMAGE_ID
         }
     else:
         return {
@@ -292,8 +292,8 @@ def is_user_checked_today(db: Session, user_id: int) -> bool:
     
     selection = db.query(DailyMoodSelection).filter(
         and_(
-            DailyMoodSelection.user_id == user_id,
-            DailyMoodSelection.selected_date == today
+            DailyMoodSelection.USER_ID == user_id,
+            DailyMoodSelection.SELECTED_DATE == today
         )
     ).first()
     
