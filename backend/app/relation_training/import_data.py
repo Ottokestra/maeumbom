@@ -224,7 +224,8 @@ class ScenarioImporter:
                     if not update_if_exists:
                         skipped = True
                         continue
-                        # 기존 데이터 삭제
+                    else:
+                        # 업데이트 모드: 기존 데이터 삭제
                         self.db.query(ScenarioOption).filter(
                             ScenarioOption.NODE_ID.in_(
                                 self.db.query(ScenarioNode.ID).filter(

@@ -33,6 +33,7 @@ function ScenarioTest() {
     if (isLoggedIn) {
       loadScenarios()
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedCategory, isLoggedIn])
 
   const loadScenarios = async () => {
@@ -60,7 +61,19 @@ function ScenarioTest() {
       }
 
       const data = await response.json()
-      setScenarios(data.scenarios || [])
+      const scenariosList = data.scenarios || []
+      
+      // 제목 기준으로 중복 제거 (같은 제목이면 가장 높은 ID만 유지)
+      const titleMap = new Map()
+      scenariosList.forEach(scenario => {
+        const existing = titleMap.get(scenario.title)
+        if (!existing || scenario.id > existing.id) {
+          titleMap.set(scenario.title, scenario)
+        }
+      })
+      
+      const uniqueScenarios = Array.from(titleMap.values()).sort((a, b) => a.id - b.id)
+      setScenarios(uniqueScenarios)
     } catch (err) {
       setError(err.message)
       console.error('Load scenarios error:', err)
@@ -411,7 +424,7 @@ function ScenarioTest() {
       {!loading && scenarios.length > 0 && (
         <div className="scenarios-grid">
           {scenarios.map((scenario) => (
-            <div key={scenario.id} className="scenario-card">
+            <div key={`scenario-${scenario.id}-${scenario.title}`} className="scenario-card">
               {scenario.start_image_url && (
                 <div className="scenario-card-image">
                   <img 

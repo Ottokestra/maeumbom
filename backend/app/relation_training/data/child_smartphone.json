@@ -1,315 +1,247 @@
 {
-    "scenario": {
-      "title": "스마트폰 하나 물어봤다가 서러워진 날",
-      "target_type": "CHILD",
-      "category": "TRAINING",
-      "start_image_url": "/api/service/relation-training/images/child_smartphone/start.png"
+  "scenario": {
+    "title": "스마트폰 하나 물어봤다가 서러워진 날",
+    "target_type": "CHILD",
+    "category": "TRAINING",
+    "start_image_url": "/api/service/relation-training/images/child_smartphone/start.png"
+  },
+  "nodes": [
+    {
+      "id": "node_1",
+      "step_level": 1,
+      "text": "은행 앱 송금하는 법이 또 헷갈려서 아들에게 물어봤습니다. 아들이 폰을 낚아채듯 가져가더니 한숨을 푹 쉬며 말합니다.\n\n\"아 엄마, 내가 이거 지난번에도 알려줬잖아! 이게 뭐가 어렵다고 자꾸 물어봐? 아 진짜 답답하네.\""
     },
-    "nodes": [
-      {
-        "id": "node_1",
-        "step_level": 1,
-        "text": "은행 앱 송금하는 법이 또 헷갈려서 아들에게 물어봤습니다. 아들이 폰을 낚아채듯 가져가더니 한숨을 푹 쉬며 말합니다.\n\n\"아 엄마, 내가 이거 지난번에도 알려줬잖아! 이게 뭐가 어렵다고 자꾸 물어봐? 아 진짜 답답하네.\""
-      },
-      {
-        "id": "node_2_a",
-        "step_level": 2,
-        "text": "(아들의 짜증에 덩달아 기분이 상해버린 상황)\n아들은 빠른 속도로 화면을 탁탁 넘기며 설명합니다. \n\"봐봐, 여기 누르고 이거 누르면 되잖아. 딴 거 누르지 말라고!\""
-      },
-      {
-        "id": "node_2_b",
-        "step_level": 2,
-        "text": "(감정을 가라앉히고 배우려는 상황)\n아들은 여전히 툴툴대지만, 엄마가 가만히 있자 속도를 조금 늦춥니다.\n\"...여기서 '이체' 버튼을 찾으라고. 글씨 보이지?\""
-      },
-      {
-        "id": "node_3_aa",
-        "step_level": 3,
-        "text": "분위기가 험악해졌습니다. 아들은 핸드폰을 탁자에 거칠게 내려놓으며 말합니다.\n\"아 됐어. 그냥 내가 해줄게. 엄마는 만지지 마. 또 뭐 잘못 눌러서 잠기게 하지 말고.\""
-      },
-      {
-        "id": "node_3_ab",
-        "step_level": 3,
-        "text": "아들의 표정이 조금 누그러졌지만 여전히 귀찮아합니다.\n\"하... 알겠어? 이제 혼자 할 수 있겠어? 나 바쁜데 자꾸 부르지 좀 마.\""
-      },
-      {
-        "id": "node_3_ba",
-        "step_level": 3,
-        "text": "엄마의 농담에 아들이 피식 웃지는 않았지만, 짜증은 좀 줄었습니다. 그런데 설명하다가 엄마가 또 실수를 했습니다.\n\"아니 엄마! 그거 아니라고! 아까 말했잖아!\""
-      },
-      {
-        "id": "node_3_bb",
-        "step_level": 3,
-        "text": "차근차근 따라 하니 송금에 성공했습니다. 아들이 핸드폰을 돌려주며 머쓱한 듯 말합니다.\n\"거봐, 하니까 되네. 돋보기안경 좀 쓰고 해.\""
-      },
-      {
-        "id": "node_4_aaa",
-        "step_level": 4,
-        "text": "아들은 방으로 쾅 들어가 버렸고, 거실엔 정적만 흐릅니다. 폰 화면은 꺼져있고 마음은 시커멓게 타들어 갑니다."
-      },
-      {
-        "id": "node_4_aab",
-        "step_level": 4,
-        "text": "아들이 방으로 들어가려다 엄마의 사과에 멈칫합니다. 문은 닫혔지만 '쾅' 소리는 나지 않았습니다."
-      },
-      {
-        "id": "node_4_aba",
-        "step_level": 4,
-        "text": "아들의 핀잔을 듣고 기분이 상해 입을 꾹 다물었습니다. 송금은 해결됐지만 찝찝함만 남았습니다."
-      },
-      {
-        "id": "node_4_abb",
-        "step_level": 4,
-        "text": "아들은 \"다음엔 까먹지 마\"라고 툭 던지고 방으로 갑니다. 완벽하진 않지만 싸우지 않고 넘어갔습니다."
-      },
-      {
-        "id": "node_4_baa",
-        "step_level": 4,
-        "text": "결국 아들은 짜증을 내며 폰을 두고 가버렸습니다. 잘 참다가 마지막에 터진 게 후회됩니다."
-      },
-      {
-        "id": "node_4_bab",
-        "step_level": 4,
-        "text": "아들은 고개를 절레절레 흔들면서도, 다시 처음 화면으로 돌아가 줍니다. 겨우겨우 마무리는 될 것 같습니다."
-      },
-      {
-        "id": "node_4_bba",
-        "step_level": 4,
-        "text": "아들의 표정이 다시 굳어집니다. \"칭찬을 해줘도 뭐라 그러네...\" 하며 쌩하니 가버립니다."
-      },
-      {
-        "id": "node_4_bbb",
-        "step_level": 4,
-        "text": "아들이 쑥스러운 듯 뒷머리를 긁적이며 방으로 들어갑니다. \"나중에 또 모르면 물어봐\"라는 말이 작게 들립니다."
-      }
-    ],
-    "options": [
-      {
-        "from_node_id": "node_1",
-        "option_code": "A",
-        "text": "\"야, 넌 말을 그렇게밖에 못 하냐? 엄마가 모를 수도 있지, 늙은 게 죄다 죄야.\"",
-        "to_node_id": "node_2_a",
-        "result_code": null
-      },
-      {
-        "from_node_id": "node_1",
-        "option_code": "B",
-        "text": "\"엄마 머리가 이제 굳어서 그래~ 네가 똑똑하니까 한 번만 더 천천히 알려줘.\"",
-        "to_node_id": "node_2_b",
-        "result_code": null
-      },
-      {
-        "from_node_id": "node_2_a",
-        "option_code": "A",
-        "text": "\"됐어! 치사해서 안 배운다. 너한테 부탁한 내가 미친년이지.\"",
-        "to_node_id": "node_3_aa",
-        "result_code": null
-      },
-      {
-        "from_node_id": "node_2_a",
-        "option_code": "B",
-        "text": "(심호흡 한번 하고) \"아들, 네가 손이 너무 빨라서 안 보여. 엄마 손가락으로 누르게 기다려줘.\"",
-        "to_node_id": "node_3_ab",
-        "result_code": null
-      },
-      {
-        "from_node_id": "node_2_b",
-        "option_code": "A",
-        "text": "\"아이고, 알았어. 상전 모시는 것 같아서 무서워서 묻겠나 원.\"",
-        "to_node_id": "node_3_ba",
-        "result_code": null
-      },
-      {
-        "from_node_id": "node_2_b",
-        "option_code": "B",
-        "text": "\"아, 이 글씨 말이구나. 오케이, 접수했어.\"",
-        "to_node_id": "node_3_bb",
-        "result_code": null
-      },
-      {
-        "from_node_id": "node_3_aa",
-        "option_code": "A",
-        "text": "\"그래, 넌 평생 그렇게 잘나고 똑똑하게 살아라! 엄마 무시하면서!\"",
-        "to_node_id": "node_4_aaa",
-        "result_code": "AAAA"
-      },
-      {
-        "from_node_id": "node_3_aa",
-        "option_code": "B",
-        "text": "\"후... 그래, 엄마가 말이 좀 심했네. 기계가 뭐라고 우리가 얼굴을 붉히니. 미안하다.\"",
-        "to_node_id": "node_4_aab",
-        "result_code": "AAAB"
-      },
-      {
-        "from_node_id": "node_3_ab",
-        "option_code": "A",
-        "text": "\"말하는 본새 하고는... 너 나중에 네 자식 낳아서 똑같이 당해봐라.\"",
-        "to_node_id": "node_4_aba",
-        "result_code": "AABA"
-      },
-      {
-        "from_node_id": "node_3_ab",
-        "option_code": "B",
-        "text": "\"고맙다. 바쁜데 시간 뺏어서 미안해. 덕분에 급한 돈 잘 보냈어.\"",
-        "to_node_id": "node_4_abb",
-        "result_code": "AABB"
-      },
-      {
-        "from_node_id": "node_3_ba",
-        "option_code": "A",
-        "text": "\"야! 넌 무슨 선생님이 그렇게 성질이 급해? 안 해, 안 해!\"",
-        "to_node_id": "node_4_baa",
-        "result_code": "ABAA"
-      },
-      {
-        "from_node_id": "node_3_ba",
-        "option_code": "B",
-        "text": "\"아이고 깜짝이야. 엄마가 딴생각했네. 다시 다시. 이번엔 진짜 집중할게.\"",
-        "to_node_id": "node_4_bab",
-        "result_code": "ABAB"
-      },
-      {
-        "from_node_id": "node_3_bb",
-        "option_code": "A",
-        "text": "\"근데 너 아까 처음에 짜증 낸 건 좀 심했어. 엄마가 모를 수도 있지.\"",
-        "to_node_id": "node_4_bba",
-        "result_code": "BBBA"
-      },
-      {
-        "from_node_id": "node_3_bb",
-        "option_code": "B",
-        "text": "\"그러게, 우리 아들 덕분에 엄마가 신세대 다 됐네. 고마워, 물 한 잔 줄까?\"",
-        "to_node_id": "node_4_bbb",
-        "result_code": "BBBB"
-      }
-    ],
-    "results": [
-      {
-        "result_code": "AAAA",
-        "display_title": "서로에게 상처만 남긴 전쟁",
-        "analysis_text": "결국 감정 싸움으로 번져 관계에 금이 갔네요. '늙은 게 죄'라며 스스로를 비하하는 말은 상대방에게 죄책감을 주려는 공격적인 방어기제입니다. 이런 대화는 자식에게 '엄마랑은 말이 안 통해'라는 인식만 심어줍니다.",
-        "atmosphere_image_type": "STORM",
-        "score": 10,
-        "image_url": "/api/service/relation-training/images/child_smartphone/result_AAAA.png"
-      },
-      {
-        "result_code": "AAAB",
-        "display_title": "폭풍 속에서 찾은 우산",
-        "analysis_text": "초반에는 감정적으로 대응했지만, 마지막 순간에 멈추고 사과한 것은 대단한 용기입니다. 자식도 머리로는 미안함을 느끼고 있을 거예요. 이미 상한 기분을 바로 풀 순 없어도, '엄마가 노력했다'는 사실은 남았습니다.",
-        "atmosphere_image_type": "CLOUDY",
-        "score": 45,
-        "image_url": "/api/service/relation-training/images/child_smartphone/result_AAAB.png"
-      },
-      {
-        "result_code": "AABA",
-        "display_title": "가시 돋친 마무리",
-        "analysis_text": "기술적인 문제는 해결했지만, 마지막에 던진 '저주의 말'이 뼈아픕니다. 자식에게 '너도 당해봐라'라고 말하는 것은 부모로서의 권위를 스스로 깎아먹는 행동입니다. 섭섭함은 이해하지만, 표현 방식이 아쉬워요.",
-        "atmosphere_image_type": "STORM",
-        "score": 30,
-        "image_url": "/api/service/relation-training/images/child_smartphone/result_AABA.png"
-      },
-      {
-        "result_code": "AABB",
-        "display_title": "성숙한 어른의 인내",
-        "analysis_text": "초반의 갈등을 딛고 감사를 표현하며 마무리했네요. 자식의 짜증을 받아주는 게 억울할 수도 있지만, 결과적으로 '도움'에 초점을 맞춘 덕분에 다툼을 막았습니다. 다음번엔 자식도 조금 더 부드러워질 겁니다.",
-        "atmosphere_image_type": "CLOUDY",
-        "score": 60,
-        "image_url": "/api/service/relation-training/images/child_smartphone/result_AABB.png"
-      },
-      {
-        "result_code": "ABAA",
-        "display_title": "참다가 터진 둑",
-        "analysis_text": "잘 참아오다가 마지막 실수에 대한 지적을 견디지 못했군요. '비꼬기'는 화내는 것보다 때론 더 기분을 상하게 합니다. 배우는 과정에서의 실수는 당당하게 인정하고 넘어가는 여유가 필요해요.",
-        "atmosphere_image_type": "STORM",
-        "score": 35,
-        "image_url": "/api/service/relation-training/images/child_smartphone/result_ABAA.png"
-      },
-      {
-        "result_code": "ABAB",
-        "display_title": "유연한 대처",
-        "analysis_text": "자식의 짜증에도 '깜짝이야' 하며 유머러스하게 넘기는 모습이 지혜롭습니다. 내 실수를 쿨하게 인정하면 상대방도 더 이상 화를 낼 명분이 사라지죠. 아주 훌륭한 위기관리 능력입니다.",
-        "atmosphere_image_type": "SUNNY",
-        "score": 80,
-        "image_url": "/api/service/relation-training/images/child_smartphone/result_ABAB.png"
-      },
-      {
-        "result_code": "BBBA",
-        "display_title": "다 된 밥에 재 뿌리기",
-        "analysis_text": "정말 잘해오셨는데, 마지막 한마디가 아쉽습니다. 일이 잘 끝났을 때 과거의 잘잘못을 다시 꺼내는 것은 상대방의 성취감을 뺏는 행동입니다. '좋은 게 좋은 거다'라고 넘기는 훈련이 조금 더 필요해요.",
-        "atmosphere_image_type": "CLOUDY",
-        "score": 70,
-        "image_url": "/api/service/relation-training/images/child_smartphone/result_BBBA.png"
-      },
-      {
-        "result_code": "BBBB",
-        "display_title": "환상의 짝꿍",
-        "analysis_text": "완벽합니다! 자식의 자존심을 세워주면서 실리(배움)도 챙겼습니다. 짜증을 유머로 받아치고, 고마움으로 마무리하는 대화법은 자식이 앞으로 엄마를 돕는 것을 두려워하지 않게 만들 거예요.",
-        "atmosphere_image_type": "FLOWER",
-        "score": 100,
-        "image_url": "/api/service/relation-training/images/child_smartphone/result_BBBB.png"
-      },
-      {
-        "result_code": "BAAA",
-        "display_title": "엇갈린 주파수",
-        "analysis_text": "초반에 유머로 잘 시작했지만, 중간에 상대의 태도를 비꼬면서 관계가 틀어졌네요. '상전 모시는 것 같다'는 말은 자식의 호의를 무시하는 말로 들릴 수 있습니다.",
-        "atmosphere_image_type": "CLOUDY",
-        "score": 40,
-        "image_url": "/api/service/relation-training/images/child_smartphone/result_BAAA.png"
-      },
-      {
-        "result_code": "BAAB",
-        "display_title": "절반의 성공",
-        "analysis_text": "비꼬는 태도로 위기가 있었지만, 마지막에 감사의 인사로 수습했네요. 자식은 찝찝하지만 그래도 '엄마가 고마워하네'라고 생각할 겁니다. 감정 조절이 조금만 더 된다면 좋겠어요.",
-        "atmosphere_image_type": "SUNNY",
-        "score": 65,
-        "image_url": "/api/service/relation-training/images/child_smartphone/result_BAAB.png"
-      },
-      {
-        "result_code": "BABA",
-        "display_title": "서운함이 남은 배움",
-        "analysis_text": "잘 배우셨지만 마지막에 '너도 당해봐라' 식의 태도는 좋지 않습니다. 자식이 가르쳐준 공은 공대로 인정해주세요. 서운함은 나중에 맛있는 밥 먹으며 웃으면서 얘기해도 늦지 않습니다.",
-        "atmosphere_image_type": "CLOUDY",
-        "score": 55,
-        "image_url": "/api/service/relation-training/images/child_smartphone/result_BABA.png"
-      },
-      {
-        "result_code": "BABB",
-        "display_title": "깔끔한 마무리",
-        "analysis_text": "중간에 약간의 마찰은 있었지만, 쿨하게 고마움을 표현하며 잘 마무리했습니다. 자식들은 부모가 자신을 인정해줄 때 가장 기뻐합니다. 이 정도면 훌륭한 엄마입니다.",
-        "atmosphere_image_type": "SUNNY",
-        "score": 85,
-        "image_url": "/api/service/relation-training/images/child_smartphone/result_BABB.png"
-      },
-      {
-        "result_code": "ABBA",
-        "display_title": "아쉬운 훈계",
-        "analysis_text": "엄마의 실수에 아들이 짜증을 냈고, 엄마도 참지 않고 화를 냈네요. 하지만 마지막에 아들이 잘 가르쳐줘서 결과는 좋았습니다. 과정이 조금 시끄러웠지만 해결된 것에 만족해야겠네요.",
-        "atmosphere_image_type": "CLOUDY",
-        "score": 50,
-        "image_url": "/api/service/relation-training/images/child_smartphone/result_ABBA.png"
-      },
-      {
-        "result_code": "ABBB",
-        "display_title": "따뜻한 반전",
-        "analysis_text": "중간에 엄마가 욱해서 화를 낼 뻔했지만, 아들이 잘 가르쳐주자 금세 풀렸군요. 칭찬 한마디에 분위기가 반전되었습니다. 감정 기복을 조금만 줄이면 더 좋을 거예요.",
-        "atmosphere_image_type": "SUNNY",
-        "score": 75,
-        "image_url": "/api/service/relation-training/images/child_smartphone/result_ABBB.png"
-      },
-      {
-        "result_code": "BBAA",
-        "display_title": "긁어 부스럼",
-        "analysis_text": "아주 잘해오다가 마지막에 과거의 잘못을 들춰내며 싸움이 났습니다. '끝이 좋아야 다 좋다'는 말이 있죠. 잘 참으셨는데 마지막 한순간의 방심이 아쉽습니다.",
-        "atmosphere_image_type": "STORM",
-        "score": 40,
-        "image_url": "/api/service/relation-training/images/child_smartphone/result_BBAA.png"
-      },
-      {
-        "result_code": "BBAB",
-        "display_title": "2% 부족한 칭찬",
-        "analysis_text": "전반적으로 훌륭했지만, 마지막 칭찬이 조금 어색했나요? 그래도 이 정도면 아주 평화로운 해결입니다. 다음엔 물 한 잔보다 '용돈'을 주면 더 좋아할지도 몰라요!",
-        "atmosphere_image_type": "SUNNY",
-        "score": 90,
-        "image_url": "/api/service/relation-training/images/child_smartphone/result_BBAB.png"
-      }
-    ]
-  }
+    {
+      "id": "node_2_a",
+      "step_level": 2,
+      "text": "(아들의 짜증에 덩달아 기분이 상해버린 상황)\n아들은 빠른 속도로 화면을 탁탁 넘기며 설명합니다. \n\"봐봐, 여기 누르고 이거 누르면 되잖아. 딴 거 누르지 말라고!\""
+    },
+    {
+      "id": "node_2_b",
+      "step_level": 2,
+      "text": "(감정을 가라앉히고 배우려는 상황)\n아들은 여전히 툴툴대지만, 엄마가 가만히 있자 속도를 조금 늦춥니다.\n\"...여기서 '이체' 버튼을 찾으라고. 글씨 보이지?\""
+    },
+    {
+      "id": "node_3_aa",
+      "step_level": 3,
+      "text": "분위기가 험악해졌습니다. 아들은 핸드폰을 탁자에 거칠게 내려놓으며 말합니다.\n\n\"아 됐어. 그냥 내가 해줄게. 엄마는 만지지 마. 또 뭐 잘못 눌러서 잠기게 하지 말고.\""
+    },
+    {
+      "id": "node_3_ab",
+      "step_level": 3,
+      "text": "아들의 표정이 조금 누그러졌지만 여전히 귀찮아합니다.\n\n\"하... 알겠어? 이제 혼자 할 수 있겠어? 나 바쁜데 자꾸 부르지 좀 마.\""
+    },
+    {
+      "id": "node_3_ba",
+      "step_level": 3,
+      "text": "엄마의 농담에 아들이 피식 웃지는 않았지만, 짜증은 좀 줄었습니다. 그런데 설명하다가 엄마가 또 실수를 했습니다.\n\n\"아니 엄마! 그거 아니라고! 아까 말했잖아!\""
+    },
+    {
+      "id": "node_3_bb",
+      "step_level": 3,
+      "text": "차근차근 따라 하니 송금에 성공했습니다. 아들이 핸드폰을 돌려주며 머쓱한 듯 말합니다.\n\n\"거봐, 하니까 되네. 돋보기안경 좀 쓰고 해.\""
+    },
+    {
+      "id": "node_4_aaa",
+      "step_level": 4,
+      "text": "아들은 방으로 쾅 들어가 버렸고, 거실엔 정적만 흐릅니다. 폰 화면은 꺼져있고 마음은 시커멓게 타들어 갑니다."
+    },
+    {
+      "id": "node_4_aab",
+      "step_level": 4,
+      "text": "아들이 방으로 들어가려다 엄마의 사과에 멈칫합니다. 문은 닫혔지만 '쾅' 소리는 나지 않았습니다."
+    },
+    {
+      "id": "node_4_aba",
+      "step_level": 4,
+      "text": "아들의 핀잔을 듣고 기분이 상해 입을 꾹 다물었습니다. 송금은 해결됐지만 찝찝함만 남았습니다."
+    },
+    {
+      "id": "node_4_abb",
+      "step_level": 4,
+      "text": "아들은 \"다음엔 까먹지 마\"라고 툭 던지고 방으로 갑니다. 완벽하진 않지만 싸우지 않고 넘어갔습니다."
+    },
+    {
+      "id": "node_4_baa",
+      "step_level": 4,
+      "text": "결국 아들은 짜증을 내며 폰을 두고 가버렸습니다. 잘 참다가 마지막에 터진 게 후회됩니다."
+    },
+    {
+      "id": "node_4_bab",
+      "step_level": 4,
+      "text": "아들은 고개를 절레절레 흔들면서도, 다시 처음 화면으로 돌아가 줍니다. 겨우겨우 마무리는 될 것 같습니다."
+    },
+    {
+      "id": "node_4_bba",
+      "step_level": 4,
+      "text": "아들의 표정이 다시 굳어집니다. \"칭찬을 해줘도 뭐라 그러네...\" 하며 쌩하니 가버립니다."
+    },
+    {
+      "id": "node_4_bbb",
+      "step_level": 4,
+      "text": "아들이 쑥스러운 듯 뒷머리를 긁적이며 방으로 들어갑니다. \"나중에 또 모르면 물어봐\"라는 말이 작게 들립니다."
+    }
+  ],
+  "options": [
+    { "from_node_id": "node_1", "option_code": "A", "text": "\"야, 넌 말을 그렇게밖에 못 하냐? 엄마가 모를 수도 있지, 늙은 게 죄다 죄야.\"", "to_node_id": "node_2_a", "result_code": null },
+    { "from_node_id": "node_1", "option_code": "B", "text": "\"엄마 머리가 이제 굳어서 그래~ 네가 똑똑하니까 한 번만 더 천천히 알려줘.\"", "to_node_id": "node_2_b", "result_code": null },
+    { "from_node_id": "node_2_a", "option_code": "A", "text": "\"됐어! 치사해서 안 배운다. 너한테 부탁한 내가 미친년이지.\"", "to_node_id": "node_3_aa", "result_code": null },
+    { "from_node_id": "node_2_a", "option_code": "B", "text": "(심호흡 한번 하고) \"아들, 네가 손이 너무 빨라서 안 보여. 엄마 손가락으로 누르게 기다려줘.\"", "to_node_id": "node_3_ab", "result_code": null },
+    { "from_node_id": "node_2_b", "option_code": "A", "text": "\"아이고, 알았어. 상전 모시는 것 같아서 무서워서 묻겠나 원.\"", "to_node_id": "node_3_ba", "result_code": null },
+    { "from_node_id": "node_2_b", "option_code": "B", "text": "\"아, 이 글씨 말이구나. 오케이, 접수했어.\"", "to_node_id": "node_3_bb", "result_code": null },
+    { "from_node_id": "node_3_aa", "option_code": "A", "text": "\"그래, 넌 평생 그렇게 잘나고 똑똑하게 살아라! 엄마 무시하면서!\"", "to_node_id": "node_4_aaa", "result_code": null },
+    { "from_node_id": "node_3_aa", "option_code": "B", "text": "\"후... 그래, 엄마가 말이 좀 심했네. 기계가 뭐라고 우리가 얼굴을 붉히니. 미안하다.\"", "to_node_id": "node_4_aab", "result_code": null },
+    { "from_node_id": "node_3_ab", "option_code": "A", "text": "\"말하는 본새 하고는... 너 나중에 네 자식 낳아서 똑같이 당해봐라.\"", "to_node_id": "node_4_aba", "result_code": null },
+    { "from_node_id": "node_3_ab", "option_code": "B", "text": "\"고맙다. 바쁜데 시간 뺏어서 미안해. 덕분에 급한 돈 잘 보냈어.\"", "to_node_id": "node_4_abb", "result_code": null },
+    { "from_node_id": "node_3_ba", "option_code": "A", "text": "\"야! 넌 무슨 선생님이 그렇게 성질이 급해? 안 해, 안 해!\"", "to_node_id": "node_4_baa", "result_code": null },
+    { "from_node_id": "node_3_ba", "option_code": "B", "text": "\"아이고 깜짝이야. 엄마가 딴생각했네. 다시 다시. 이번엔 진짜 집중할게.\"", "to_node_id": "node_4_bab", "result_code": null },
+    { "from_node_id": "node_3_bb", "option_code": "A", "text": "\"근데 너 아까 처음에 짜증 낸 건 좀 심했어. 엄마가 모를 수도 있지.\"", "to_node_id": "node_4_bba", "result_code": null },
+    { "from_node_id": "node_3_bb", "option_code": "B", "text": "\"그러게, 우리 아들 덕분에 엄마가 신세대 다 됐네. 고마워, 물 한 잔 줄까?\"", "to_node_id": "node_4_bbb", "result_code": null },
+    { "from_node_id": "node_4_aaa", "option_code": "A", "text": "(닫힌 방문을 향해) \"야! 너 엄마 말이 안 들려? 문 열어!\"", "to_node_id": null, "result_code": "AAAA" },
+    { "from_node_id": "node_4_aaa", "option_code": "B", "text": "(깊은 한숨을 쉬며) \"...그래, 엄마가 그만할게. 밥 먹을 때 나오렴.\"", "to_node_id": null, "result_code": "AAAB" },
+    { "from_node_id": "node_4_aab", "option_code": "A", "text": "\"하여간 성질머리는 누구 닮아서... 어휴, 내 팔자야.\"", "to_node_id": null, "result_code": "AABA" },
+    { "from_node_id": "node_4_aab", "option_code": "B", "text": "\"아들, 과일 깎아줄까? 나와서 같이 먹자.\"", "to_node_id": null, "result_code": "AABB" },
+    { "from_node_id": "node_4_aba", "option_code": "A", "text": "\"너 말 다 했니? 스마트폰 하나 알려준 거로 유세는!\"", "to_node_id": null, "result_code": "ABAA" },
+    { "from_node_id": "node_4_aba", "option_code": "B", "text": "\"...그래, 엄마가 다음엔 안 까먹게 메모해둬야겠다.\"", "to_node_id": null, "result_code": "ABAB" },
+    { "from_node_id": "node_4_abb", "option_code": "A", "text": "\"근데 너 아까 '자꾸 부르지 마'라고 한 건 좀 서운하더라.\"", "to_node_id": null, "result_code": "ABBA" },
+    { "from_node_id": "node_4_abb", "option_code": "B", "text": "\"오냐, 알았다. 우리 아들 바쁜데 고생했어.\"", "to_node_id": null, "result_code": "ABBB" },
+    { "from_node_id": "node_4_baa", "option_code": "A", "text": "\"가르쳐주기 싫으면 말지, 왜 성질을 내고 난리야!\"", "to_node_id": null, "result_code": "BAAA" },
+    { "from_node_id": "node_4_baa", "option_code": "B", "text": "(방문 앞으로 가서) \"...아까는 엄마가 미안해. 마음 풀리면 나와.\"", "to_node_id": null, "result_code": "BAAB" },
+    { "from_node_id": "node_4_bab", "option_code": "A", "text": "\"이번엔 제대로 알려줘. 대충 넘기지 말고.\"", "to_node_id": null, "result_code": "BABA" },
+    { "from_node_id": "node_4_bab", "option_code": "B", "text": "\"자, 이번엔 엄마가 눈 크게 뜨고 볼게. 다시 알려줘서 고마워.\"", "to_node_id": null, "result_code": "BABB" },
+    { "from_node_id": "node_4_bba", "option_code": "A", "text": "\"아니 내 말은, 네 태도가 문제라는 거지!\"", "to_node_id": null, "result_code": "BBAA" },
+    { "from_node_id": "node_4_bba", "option_code": "B", "text": "\"아차차, 엄마가 또 잔소리를 했네. 미안, 고마워서 그런 거야.\"", "to_node_id": null, "result_code": "BBAB" },
+    { "from_node_id": "node_4_bbb", "option_code": "A", "text": "\"물은 무슨. 너나 마셔라. 엄마 피곤하다.\"", "to_node_id": null, "result_code": "BBBA" },
+    { "from_node_id": "node_4_bbb", "option_code": "B", "text": "\"그래, 나중에 또 물어볼게~ 용돈 좀 줄까?\"", "to_node_id": null, "result_code": "BBBB" }
+  ],
+  "results": [
+    { 
+      "result_code": "AAAA", 
+      "display_title": "서로에게 상처만 남긴 전쟁", 
+      "analysis_text": "결국 감정 싸움으로 번져 관계에 금이 갔네요. '늙은 게 죄'라며 스스로를 비하하는 말은 상대방에게 죄책감을 주려는 공격적인 방어기제입니다. 이런 대화는 자식에게 '엄마랑은 말이 안 통해'라는 인식만 심어줍니다.", 
+      "atmosphere_image_type": "STORM", 
+      "score": 10,
+      "image_url": "/api/service/relation-training/images/child_smartphone/result_AAAA.png"
+    },
+    { 
+      "result_code": "AAAB", 
+      "display_title": "폭풍 속에서 찾은 우산", 
+      "analysis_text": "초반에는 감정적으로 대응했지만, 마지막 순간에 멈추고 사과한 것은 대단한 용기입니다. 자식도 머리로는 미안함을 느끼고 있을 거예요. 이미 상한 기분을 바로 풀 순 없어도, '엄마가 노력했다'는 사실은 남았습니다.", 
+      "atmosphere_image_type": "CLOUDY", 
+      "score": 45,
+      "image_url": "/api/service/relation-training/images/child_smartphone/result_AAAB.png"
+    },
+    { 
+      "result_code": "AABA", 
+      "display_title": "가시 돋친 마무리", 
+      "analysis_text": "기술적인 문제는 해결했지만, 마지막에 던진 '저주의 말'이 뼈아픕니다. 자식에게 '너도 당해봐라'라고 말하는 것은 부모로서의 권위를 스스로 깎아먹는 행동입니다. 섭섭함은 이해하지만, 표현 방식이 아쉬워요.", 
+      "atmosphere_image_type": "STORM", 
+      "score": 30,
+      "image_url": "/api/service/relation-training/images/child_smartphone/result_AABA.png"
+    },
+    { 
+      "result_code": "AABB", 
+      "display_title": "성숙한 어른의 인내", 
+      "analysis_text": "초반의 갈등을 딛고 감사를 표현하며 마무리했네요. 자식의 짜증을 받아주는 게 억울할 수도 있지만, 결과적으로 '도움'에 초점을 맞춘 덕분에 다툼을 막았습니다. 다음번엔 자식도 조금 더 부드러워질 겁니다.", 
+      "atmosphere_image_type": "CLOUDY", 
+      "score": 60,
+      "image_url": "/api/service/relation-training/images/child_smartphone/result_AABB.png"
+    },
+    { 
+      "result_code": "ABAA", 
+      "display_title": "참다가 터진 둑", 
+      "analysis_text": "잘 참아오다가 마지막 실수에 대한 지적을 견디지 못했군요. '비꼬기'는 화내는 것보다 때론 더 기분을 상하게 합니다. 배우는 과정에서의 실수는 당당하게 인정하고 넘어가는 여유가 필요해요.", 
+      "atmosphere_image_type": "STORM", 
+      "score": 35,
+      "image_url": "/api/service/relation-training/images/child_smartphone/result_ABAA.png"
+    },
+    { 
+      "result_code": "ABAB", 
+      "display_title": "유연한 대처", 
+      "analysis_text": "자식의 짜증에도 '깜짝이야' 하며 유머러스하게 넘기는 모습이 지혜롭습니다. 내 실수를 쿨하게 인정하면 상대방도 더 이상 화를 낼 명분이 사라지죠. 아주 훌륭한 위기관리 능력입니다.", 
+      "atmosphere_image_type": "SUNNY", 
+      "score": 80,
+      "image_url": "/api/service/relation-training/images/child_smartphone/result_ABAB.png"
+    },
+    { 
+      "result_code": "ABBA", 
+      "display_title": "아쉬운 훈계", 
+      "analysis_text": "엄마의 실수에 아들이 짜증을 냈고, 엄마도 참지 않고 화를 냈네요. 하지만 마지막에 아들이 잘 가르쳐줘서 결과는 좋았습니다. 과정이 조금 시끄러웠지만 해결된 것에 만족해야겠네요.", 
+      "atmosphere_image_type": "CLOUDY", 
+      "score": 50,
+      "image_url": "/api/service/relation-training/images/child_smartphone/result_ABBA.png"
+    },
+    { 
+      "result_code": "ABBB", 
+      "display_title": "따뜻한 반전", 
+      "analysis_text": "중간에 엄마가 욱해서 화를 낼 뻔했지만, 아들이 잘 가르쳐주자 금세 풀렸군요. 칭찬 한마디에 분위기가 반전되었습니다. 감정 기복을 조금만 줄이면 더 좋을 거예요.", 
+      "atmosphere_image_type": "SUNNY", 
+      "score": 75,
+      "image_url": "/api/service/relation-training/images/child_smartphone/result_ABBB.png"
+    },
+    { 
+      "result_code": "BAAA", 
+      "display_title": "엇갈린 주파수", 
+      "analysis_text": "초반에 유머로 잘 시작했지만, 중간에 상대의 태도를 비꼬면서 관계가 틀어졌네요. '상전 모시는 것 같다'는 말은 자식의 호의를 무시하는 말로 들릴 수 있습니다.", 
+      "atmosphere_image_type": "CLOUDY", 
+      "score": 40,
+      "image_url": "/api/service/relation-training/images/child_smartphone/result_BAAA.png"
+    },
+    { 
+      "result_code": "BAAB", 
+      "display_title": "절반의 성공", 
+      "analysis_text": "비꼬는 태도로 위기가 있었지만, 마지막에 감사의 인사로 수습했네요. 자식은 찝찝하지만 그래도 '엄마가 고마워하네'라고 생각할 겁니다. 감정 조절이 조금만 더 된다면 좋겠어요.", 
+      "atmosphere_image_type": "SUNNY", 
+      "score": 65,
+      "image_url": "/api/service/relation-training/images/child_smartphone/result_BAAB.png"
+    },
+    { 
+      "result_code": "BABA", 
+      "display_title": "서운함이 남은 배움", 
+      "analysis_text": "잘 배우셨지만 마지막에 '너도 당해봐라' 식의 태도는 좋지 않습니다. 자식이 가르쳐준 공은 공대로 인정해주세요. 서운함은 나중에 맛있는 밥 먹으며 웃으면서 얘기해도 늦지 않습니다.", 
+      "atmosphere_image_type": "CLOUDY", 
+      "score": 55,
+      "image_url": "/api/service/relation-training/images/child_smartphone/result_BABA.png"
+    },
+    { 
+      "result_code": "BABB", 
+      "display_title": "깔끔한 마무리", 
+      "analysis_text": "중간에 약간의 마찰은 있었지만, 쿨하게 고마움을 표현하며 잘 마무리했습니다. 자식들은 부모가 자신을 인정해줄 때 가장 기뻐합니다. 이 정도면 훌륭한 엄마입니다.", 
+      "atmosphere_image_type": "SUNNY", 
+      "score": 85,
+      "image_url": "/api/service/relation-training/images/child_smartphone/result_BABB.png"
+    },
+    { 
+      "result_code": "BBAA", 
+      "display_title": "긁어 부스럼", 
+      "analysis_text": "아주 잘해오다가 마지막에 과거의 잘못을 들춰내며 싸움이 났습니다. '끝이 좋아야 다 좋다'는 말이 있죠. 잘 참으셨는데 마지막 한순간의 방심이 아쉽습니다.", 
+      "atmosphere_image_type": "STORM", 
+      "score": 40,
+      "image_url": "/api/service/relation-training/images/child_smartphone/result_BBAA.png"
+    },
+    { 
+      "result_code": "BBAB", 
+      "display_title": "2% 부족한 칭찬", 
+      "analysis_text": "전반적으로 훌륭했지만, 마지막 칭찬이 조금 어색했나요? 그래도 이 정도면 아주 평화로운 해결입니다. 다음엔 물 한 잔보다 '용돈'을 주면 더 좋아할지도 몰라요!", 
+      "atmosphere_image_type": "SUNNY", 
+      "score": 90,
+      "image_url": "/api/service/relation-training/images/child_smartphone/result_BBAB.png"
+    },
+    { 
+      "result_code": "BBBA", 
+      "display_title": "다 된 밥에 재 뿌리기", 
+      "analysis_text": "정말 잘해오셨는데, 마지막 한마디가 아쉽습니다. 일이 잘 끝났을 때 과거의 잘잘못을 다시 꺼내는 것은 상대방의 성취감을 뺏는 행동입니다. '좋은 게 좋은 거다'라고 넘기는 훈련이 조금 더 필요해요.", 
+      "atmosphere_image_type": "CLOUDY", 
+      "score": 70,
+      "image_url": "/api/service/relation-training/images/child_smartphone/result_BBBA.png"
+    },
+    { 
+      "result_code": "BBBB", 
+      "display_title": "환상의 짝꿍", 
+      "analysis_text": "완벽합니다! 자식의 자존심을 세워주면서 실리(배움)도 챙겼습니다. 짜증을 유머로 받아치고, 고마움으로 마무리하는 대화법은 자식이 앞으로 엄마를 돕는 것을 두려워하지 않게 만들 거예요.", 
+      "atmosphere_image_type": "FLOWER", 
+      "score": 100,
+      "image_url": "/api/service/relation-training/images/child_smartphone/result_BBBB.png"
+    }
+  ]
+}
