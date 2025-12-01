@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>마음봄 설문</title>
+  <style>
+    /* index.html: Landing + step-by-step survey experience for 마음봄 */
+    :root {
+      --bg-gradient: linear-gradient(135deg, #7a5af8 0%, #4b8df8 100%);
+      --card-bg: #ffffff;
+      --text-main: #1f2a44;
+      --text-sub: #5f6b7c;
+      --accent-start: #7a5af8;
+      --accent-end: #9c6bff;
+      --accent-strong: #5a3beb;
+      --pill-bg: #f4f6fb;
+      --pill-border: #d7ddf0;
+      --pill-active-bg: #ede8ff;
+      --pill-active-border: #7a5af8;
+      --button-radius: 999px;
+      --transition: 0.2s ease;
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: var(--bg-gradient);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--text-main);
+      padding: 16px;
+    }
+
+    .card {
+      width: 100%;
+      max-width: 960px;
+      background: var(--card-bg);
+      border-radius: 24px;
+      box-shadow: 0 20px 60px rgba(47, 60, 92, 0.15);
+      padding: 32px;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    .label {
+      display: inline-block;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--accent-strong);
+      background: rgba(122, 90, 248, 0.12);
+      padding: 8px 12px;
+      border-radius: 12px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(26px, 4vw, 36px);
+      line-height: 1.3;
+      font-weight: 800;
+    }
+
+    .subtitle {
+      margin: 8px 0 0;
+      font-size: 16px;
+      line-height: 1.6;
+      color: var(--text-sub);
+    }
+
+    .primary-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 12px 18px;
+      border: none;
+      border-radius: 14px;
+      background: linear-gradient(135deg, var(--accent-start), var(--accent-end));
+      color: #ffffff;
+      font-weight: 700;
+      font-size: 15px;
+      cursor: pointer;
+      transition: transform var(--transition), box-shadow var(--transition);
+    }
+
+    .primary-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 10px 30px rgba(122, 90, 248, 0.3);
+    }
+
+    .primary-btn:active {
+      transform: translateY(0);
+      box-shadow: none;
+    }
+
+    .cta-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 8px;
+    }
+
+    .pill-btn {
+      border: 1px solid var(--pill-border);
+      background: var(--pill-bg);
+      color: var(--text-main);
+      padding: 10px 14px;
+      border-radius: var(--button-radius);
+      font-weight: 600;
+      cursor: pointer;
+      transition: background var(--transition), border-color var(--transition), transform var(--transition), color var(--transition);
+    }
+
+    .pill-btn:hover {
+      border-color: var(--accent-start);
+      color: var(--accent-start);
+      transform: translateY(-1px);
+    }
+
+    .pill-btn:active,
+    .pill-btn.active {
+      background: var(--pill-active-bg);
+      border-color: var(--pill-active-border);
+      color: var(--accent-strong);
+      transform: translateY(0);
+    }
+
+    .landing-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .survey {
+      display: none;
+      flex-direction: column;
+      gap: 24px;
+      width: 100%;
+      max-width: 760px;
+      margin: 0 auto;
+    }
+
+    .survey-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .progress {
+      width: 100%;
+      background: #edf0f8;
+      border-radius: 999px;
+      height: 10px;
+      overflow: hidden;
+    }
+
+    .progress-bar {
+      height: 100%;
+      background: linear-gradient(135deg, var(--accent-start), var(--accent-end));
+      width: 0;
+      transition: width 0.25s ease;
+    }
+
+    .question {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .question h2 {
+      margin: 0;
+      font-size: clamp(22px, 3vw, 28px);
+      line-height: 1.4;
+    }
+
+    .help-text {
+      font-size: 14px;
+      color: var(--text-sub);
+    }
+
+    .answers {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .answer-btn {
+      border: 1.5px solid var(--pill-border);
+      background: #fff;
+      color: var(--text-main);
+      padding: 12px 16px;
+      border-radius: var(--button-radius);
+      font-weight: 700;
+      min-width: 96px;
+      text-align: center;
+      cursor: pointer;
+      transition: background var(--transition), color var(--transition), border-color var(--transition), transform var(--transition), box-shadow var(--transition);
+      box-shadow: 0 6px 16px rgba(31, 42, 68, 0.06);
+    }
+
+    .answer-btn:hover {
+      border-color: var(--accent-start);
+      color: var(--accent-start);
+      transform: translateY(-1px);
+    }
+
+    .answer-btn.selected {
+      background: linear-gradient(135deg, var(--accent-start), var(--accent-end));
+      color: #fff;
+      border-color: transparent;
+      transform: translateY(0);
+      box-shadow: 0 10px 28px rgba(122, 90, 248, 0.3);
+    }
+
+    .nav-actions {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .secondary-btn {
+      padding: 12px 16px;
+      border-radius: 12px;
+      border: 1px solid #d7ddf0;
+      background: #f6f8fd;
+      color: var(--text-main);
+      font-weight: 700;
+      cursor: pointer;
+      transition: background var(--transition), color var(--transition), border-color var(--transition);
+    }
+
+    .secondary-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .secondary-btn:not(:disabled):hover {
+      border-color: var(--accent-start);
+      color: var(--accent-start);
+    }
+
+    .result-box {
+      display: none;
+      flex-direction: column;
+      gap: 12px;
+      text-align: center;
+      background: #f6f8ff;
+      border-radius: 16px;
+      padding: 24px;
+      color: var(--text-main);
+    }
+
+    .hidden { display: none; }
+
+    @media (max-width: 720px) {
+      .card { padding: 24px; }
+      .landing-actions { justify-content: center; }
+      .nav-actions { flex-direction: column; align-items: stretch; }
+      .nav-actions .primary-btn, .nav-actions .secondary-btn { width: 100%; justify-content: center; }
+      .survey-header { flex-direction: column; align-items: flex-start; }
+    }
+  </style>
+</head>
+<body>
+  <div class="card" id="landing">
+    <span class="label">마음봄 오픈랩 1-4-1</span>
+    <div>
+      <h1>오늘 마음과 루틴, 가볍게 점검해볼까요?</h1>
+      <p class="subtitle">5분 정도면 끝나는 간단한 설문이에요. 결과는 진단이 아니라 오늘의 마음 상태를 돌아보는 참고 정보로만 사용돼요.</p>
+    </div>
+    <div class="landing-actions">
+      <button class="primary-btn" onclick="startSurvey()">지금 시작하기</button>
+    </div>
+    <div class="cta-container">
+      <button class="pill-btn" data-pill>예/아니오로 간단히 응답</button>
+      <button class="pill-btn" data-pill>오늘 컨디션 확인</button>
+      <button class="pill-btn" data-pill>루틴 점검</button>
+    </div>
+  </div>
+
+  <div class="card hidden" id="survey-card">
+    <div class="survey" id="survey">
+      <div class="survey-header">
+        <div>
+          <div class="label" style="background: rgba(122, 90, 248, 0.12);">오늘의 마음봄 설문</div>
+          <div style="margin-top: 6px; font-weight: 700; color: var(--text-main);" id="progress-text">1 / 1 문항</div>
+        </div>
+        <div style="font-weight: 700; color: var(--accent-strong);">루틴과 마음을 함께 돌아봐요 ✨</div>
+      </div>
+
+      <div class="progress">
+        <div class="progress-bar" id="progress-bar"></div>
+      </div>
+
+      <div class="question" id="question-area">
+        <h2 id="question-text"></h2>
+        <p class="help-text" id="question-help"></p>
+      </div>
+
+      <div class="answers" id="answers"></div>
+
+      <div class="nav-actions">
+        <button class="secondary-btn" id="prev-btn" onclick="goPrev()">이전</button>
+        <button class="primary-btn" id="next-btn" onclick="goNext()">다음</button>
+      </div>
+    </div>
+
+    <div class="result-box" id="result-box">
+      <h2 style="margin: 0;">오늘 마음봄 점검이 완료되었어요.</h2>
+      <p style="margin: 0; color: var(--text-sub);">답변해 주셔서 감사합니다. 오늘의 마음과 루틴을 가볍게 돌아볼 수 있는 시간이 되었길 바라요.</p>
+      <button class="primary-btn" style="align-self: center; margin-top: 8px;" onclick="location.reload()">처음으로</button>
+    </div>
+  </div>
+
+  <script>
+    const pills = document.querySelectorAll('[data-pill]');
+    pills.forEach((pill) => {
+      pill.addEventListener('click', () => {
+        pills.forEach((p) => p.classList.remove('active'));
+        pill.classList.add('active');
+      });
+    });
+
+    const questions = [
+      { id: 1, text: '어제 밤에 7시간 이상 잤나요?', type: 'YES_NO' },
+      { id: 2, text: '오늘의 에너지 수준은 어떤가요?', type: 'SCALE_1_5', helpText: '1은 거의 에너지가 없는 상태, 5는 매우 활기찬 상태' },
+      { id: 3, text: '오늘 하루를 생각하면 마음이 전반적으로 편안한가요?', type: 'YES_NO' },
+      { id: 4, text: '최근 1주일 동안 가장 부담되었던 일상 루틴은 어느 정도였나요?', type: 'SCALE_1_5' }
+    ];
+
+    let currentIndex = 0;
+    const answers = {};
+
+    const landingCard = document.getElementById('landing');
+    const surveyCard = document.getElementById('survey-card');
+    const surveyEl = document.getElementById('survey');
+    const resultBox = document.getElementById('result-box');
+    const questionText = document.getElementById('question-text');
+    const questionHelp = document.getElementById('question-help');
+    const answersEl = document.getElementById('answers');
+    const progressText = document.getElementById('progress-text');
+    const progressBar = document.getElementById('progress-bar');
+    const prevBtn = document.getElementById('prev-btn');
+    const nextBtn = document.getElementById('next-btn');
+
+    const startSurvey = () => {
+      landingCard.classList.add('hidden');
+      surveyCard.classList.remove('hidden');
+      renderQuestion();
+    };
+
+    const renderQuestion = () => {
+      const question = questions[currentIndex];
+      questionText.textContent = question.text;
+      questionHelp.textContent = question.helpText || '';
+      questionHelp.style.display = question.helpText ? 'block' : 'none';
+
+      progressText.textContent = `${currentIndex + 1} / ${questions.length} 문항`;
+      progressBar.style.width = `${((currentIndex + 1) / questions.length) * 100}%`;
+
+      prevBtn.disabled = currentIndex === 0;
+      nextBtn.textContent = currentIndex === questions.length - 1 ? '완료' : '다음';
+
+      answersEl.innerHTML = '';
+      if (question.type === 'YES_NO') {
+        ['예', '아니오'].forEach((label) => {
+          const btn = document.createElement('button');
+          btn.className = 'answer-btn';
+          btn.textContent = label;
+          const selected = answers[question.id];
+          if (selected === label) btn.classList.add('selected');
+          btn.onclick = () => selectAnswer(question.id, label);
+          answersEl.appendChild(btn);
+        });
+      } else if (question.type === 'SCALE_1_5') {
+        for (let i = 1; i <= 5; i += 1) {
+          const btn = document.createElement('button');
+          btn.className = 'answer-btn';
+          btn.textContent = i;
+          const selected = answers[question.id];
+          if (selected === i) btn.classList.add('selected');
+          btn.onclick = () => selectAnswer(question.id, i);
+          answersEl.appendChild(btn);
+        }
+      }
+    };
+
+    const selectAnswer = (questionId, value) => {
+      answers[questionId] = value;
+      Array.from(answersEl.children).forEach((btn) => {
+        btn.classList.toggle('selected', btn.textContent === String(value));
+      });
+    };
+
+    const goNext = () => {
+      const question = questions[currentIndex];
+      if (answers[question.id] === undefined) {
+        alert('답변을 선택해 주세요');
+        return;
+      }
+
+      if (currentIndex === questions.length - 1) {
+        showResult();
+        return;
+      }
+
+      currentIndex += 1;
+      renderQuestion();
+    };
+
+    const goPrev = () => {
+      if (currentIndex === 0) return;
+      currentIndex -= 1;
+      renderQuestion();
+    };
+
+    const showResult = () => {
+      console.log('answers', answers);
+      surveyEl.style.display = 'none';
+      resultBox.style.display = 'flex';
+    };
+
+    window.startSurvey = startSurvey;
+    window.goPrev = goPrev;
+    window.goNext = goNext;
+  </script>
+</body>
+</html>
