@@ -129,6 +129,37 @@ try:
     # Initialize database tables
     init_db()
     
+    # 시나리오 데이터 자동 import (init_db 직후 실행)
+    try:
+        from app.relation_training.import_data import import_all
+        from pathlib import Path
+        
+        data_dir = Path(__file__).parent / "app" / "relation_training" / "data"
+        if data_dir.exists():
+            # Excel과 JSON 파일 모두 확인
+            excel_files = list(data_dir.glob('*.xlsx'))
+            excel_files = [f for f in excel_files if not f.name.startswith('~') and f.name != 'template.xlsx']
+            json_files = list(data_dir.glob('*.json'))
+            json_files = [f for f in json_files if f.name != 'template.json']
+            
+            if excel_files or json_files:
+                print(f"[INFO] Importing scenario files (Excel: {len(excel_files)}, JSON: {len(json_files)})...")
+                try:
+                    import_all(data_dir, update=False, clear=False)
+                except Exception as import_error:
+                    import traceback
+                    print(f"[ERROR] Scenario import 실행 중 에러 발생: {import_error}")
+                    traceback.print_exc()
+            else:
+                print("[INFO] No scenario files found in data folder.")
+        else:
+            print(f"[WARN] Scenario data directory not found: {data_dir}")
+    except Exception as e:
+        import traceback
+        print(f"[ERROR] Scenario data auto-import setup failed: {e}")
+        traceback.print_exc()
+        # 에러가 발생해도 서버는 계속 실행
+    
     # Include auth router
     app.include_router(auth_router, prefix="/auth", tags=["authentication"])
     print("[INFO] Authentication router loaded successfully.")
@@ -137,7 +168,36 @@ except Exception as e:
     print(f"[WARN] Authentication module load failed: {e}")
     traceback.print_exc()
 
+# =========================
+# User Phase Service
+# =========================
+try:
+    from app.user_phase.routes import router as user_phase_router
+    
+    app.include_router(user_phase_router, tags=["user-phase"])
+    print("[INFO] User Phase router loaded successfully.")
+except Exception as e:
+    import traceback
+    print(f"[WARN] User Phase module load failed: {e}")
+    traceback.print_exc()
 
+# =========================
+# Relation Training Service (Interactive Scenario)
+# =========================
+try:
+    from app.relation_training.routes import router as relation_training_router
+    
+    app.include_router(
+        relation_training_router,
+        prefix="/api/service/relation-training",
+        tags=["relation-training"]
+    )
+    print("[INFO] Relation training router loaded successfully.")
+        
+except Exception as e:
+    import traceback
+    print(f"[WARN] Relation training module load failed: {e}")
+    traceback.print_exc()
 
 
 # LangChain Agent routes

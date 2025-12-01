@@ -1,0 +1,247 @@
+{
+  "scenario": {
+    "title": "기승전'자식자랑' 친구와의 대화",
+    "target_type": "FRIEND",
+    "category": "TRAINING",
+    "start_image_url": "/api/service/relation-training/images/friend_bragging/start.png"
+  },
+  "nodes": [
+    {
+      "id": "node_1",
+      "step_level": 1,
+      "text": "오랜만에 만난 고향 친구 영숙이. 커피가 나오자마자 시작된 사위 자랑이 1시간째입니다.\n\n\"어머, 이번에 우리 사위가 유럽 여행 보내준다잖아. 가방도 샤넬로 딱! 너는 며느리가 뭐 안 해주니?\""
+    },
+    {
+      "id": "node_2_a",
+      "step_level": 2,
+      "text": "(비교하는 마음에 비꼬는 말이 나간 상황)\n영숙이의 표정이 순식간에 굳어집니다. 찻잔을 탁 내려놓으며 쏘아붙이네요.\n\n\"야, 너는 친구가 좋은 일 있다는데 축하는 못해줄망정 말을 왜 그렇게 꼬아서 듣니? 너 질투해?\""
+    },
+    {
+      "id": "node_2_b",
+      "step_level": 2,
+      "text": "(일단 맞장구쳐주며 들어준 상황)\n영숙이는 신이 나서 핸드폰 사진첩을 엽니다.\n\n\"그치? 내 말이! 자, 이거 봐라. 이번에 사준 건데 색깔이 너무 곱지 않니? 내 친구들이 다 부러워 죽는대.\""
+    },
+    {
+      "id": "node_3_aa",
+      "step_level": 3,
+      "text": "분위기가 험악해졌습니다. 영숙이가 핸드폰을 가방에 챙기며 자리에서 일어나려 합니다.\n\n\"됐다, 됐어. 내가 돈 자랑하러 나왔냐? 오랜만에 얼굴 좀 보자니까, 사람 무안하게 진짜. 나 갈란다.\""
+    },
+    {
+      "id": "node_3_ab",
+      "step_level": 3,
+      "text": "영숙이가 기분은 좀 상했지만, 다시 자리에 앉으며 훈계조로 말을 이어갑니다.\n\n\"휴... 그래, 네가 요즘 며느리 때문에 속상한 건 알겠는데, 마음을 곱게 써야 복이 오는 거야. 나처럼 긍정적으로 살아봐.\""
+    },
+    {
+      "id": "node_3_ba",
+      "step_level": 3,
+      "text": "영숙이가 사진을 보여주다 말고 멈칫합니다. 당신의 지루한 표정을 읽은 것 같네요.\n\n\"...너 왜 반응이 그래? 내 얘기가 재미없니? 아니면 뭐, 배가 아파서 그래?\""
+    },
+    {
+      "id": "node_3_bb",
+      "step_level": 3,
+      "text": "주제를 건강 이야기로 돌리려 했지만, 영숙이는 다시 자기 자랑으로 돌아옵니다.\n\n\"무릎? 난 사위가 지어준 보약 먹고 싹 낫잖아~ 아 맞다, 그 보약이 얼마나 비싸냐면...\""
+    },
+    {
+      "id": "node_4_aaa",
+      "step_level": 4,
+      "text": "영숙이가 가방을 들고 일어섰습니다. 이미 마음이 상해서 뒤도 안 돌아볼 기세입니다. 카페 안 사람들이 쳐다봅니다."
+    },
+    {
+      "id": "node_4_aab",
+      "step_level": 4,
+      "text": "영숙이가 나가려다 당신의 사과에 발걸음을 멈춥니다. 하지만 여전히 입이 댓 발 나와 있습니다."
+    },
+    {
+      "id": "node_4_aba",
+      "step_level": 4,
+      "text": "영숙이의 훈계가 계속됩니다. \"네가 그러니까 며느리가 안 챙겨주는 거야\"라며 선을 넘습니다. 속에서 천불이 납니다."
+    },
+    {
+      "id": "node_4_abb",
+      "step_level": 4,
+      "text": "듣기 싫은 소리를 한 귀로 흘리며 밥을 먹자고 했습니다. 영숙이도 눈치는 있는지 숟가락을 듭니다."
+    },
+    {
+      "id": "node_4_baa",
+      "step_level": 4,
+      "text": "친구의 직설적인 질문에 당황했습니다. 솔직하게 말하자니 싸울 것 같고, 참자니 답답합니다."
+    },
+    {
+      "id": "node_4_bab",
+      "step_level": 4,
+      "text": "당신이 둘러대자 친구의 표정이 금세 풀립니다. 다시 눈치 없이 자랑을 시작하려 시동을 겁니다."
+    },
+    {
+      "id": "node_4_bba",
+      "step_level": 4,
+      "text": "기껏 주제를 돌렸는데 또 '기승전 사위'라니. 인내심의 한계가 왔습니다. 영숙이는 눈치 없이 가격표를 보여주려 합니다."
+    },
+    {
+      "id": "node_4_bbb",
+      "step_level": 4,
+      "text": "보약 이야기에 관심을 보이며 구체적인 정보를 물었습니다. 영숙이는 신나서 한의원 명함을 찾습니다."
+    }
+  ],
+  "options": [
+    { "from_node_id": "node_1", "option_code": "A", "text": "\"아유 좋겠네~ 우리 며느린 바빠서 명절에 얼굴 보기도 힘든데. 넌 참 복도 많아, 누구랑 다르게.\" (비꼬기)", "to_node_id": "node_2_a", "result_code": null },
+    { "from_node_id": "node_1", "option_code": "B", "text": "\"와, 진짜 좋겠다! 유럽 어디로 보내준대? 사진 많이 찍어와, 구경 좀 하게.\" (맞장구)", "to_node_id": "node_2_b", "result_code": null },
+    { "from_node_id": "node_2_a", "option_code": "A", "text": "\"질투는 무슨! 너야말로 돈 자랑하러 나왔니? 밥맛 떨어지게 진짜.\" (비난)", "to_node_id": "node_3_aa", "result_code": null },
+    { "from_node_id": "node_2_a", "option_code": "B", "text": "\"아니, 그냥 내 처지가 비교돼서 섭섭해서 그랬어. 미안해, 좋은 날인데 내가 주책이다.\" (솔직함)", "to_node_id": "node_3_ab", "result_code": null },
+    { "from_node_id": "node_2_b", "option_code": "A", "text": "(하품을 참지 않으며) \"그래... 좋겠네... 근데 우리 밥은 언제 나오니? 배고프다.\" (무관심)", "to_node_id": "node_3_ba", "result_code": null },
+    { "from_node_id": "node_2_b", "option_code": "B", "text": "\"어머, 가방 색깔 곱네~ 근데 영숙아, 나 요즘 무릎이 좀 쑤시더라. 우리 건강 얘기도 좀 하자.\" (주제 전환)", "to_node_id": "node_3_bb", "result_code": null },
+    { "from_node_id": "node_3_aa", "option_code": "A", "text": "\"그래 가라 가! 너 잘난 맛에 평생 살아라! 다시는 보지 말자!\"", "to_node_id": "node_4_aaa", "result_code": null },
+    { "from_node_id": "node_3_aa", "option_code": "B", "text": "(옷소매를 잡으며) \"야, 어디 가. 내가 요즘 갱년기라 예민해서 그래. 미안해, 앉아봐.\"", "to_node_id": "node_4_aab", "result_code": null },
+    { "from_node_id": "node_3_ab", "option_code": "A", "text": "\"너 말 다 했니? 내가 긍정적으로 안 살아서 복이 없다는 거야? 말 참 예쁘게 한다?\"", "to_node_id": "node_4_aba", "result_code": null },
+    { "from_node_id": "node_3_ab", "option_code": "B", "text": "\"그래... 네 말이 맞다. 내가 요즘 마음의 여유가 없었네. 밥이나 먹자.\"", "to_node_id": "node_4_abb", "result_code": null },
+    { "from_node_id": "node_3_ba", "option_code": "A", "text": "\"솔직히 지루해. 1시간 동안 사위 얘기만 하는데 안 지루하겠니?\"", "to_node_id": "node_4_baa", "result_code": null },
+    { "from_node_id": "node_3_ba", "option_code": "B", "text": "\"아니야, 어제 잠을 좀 설쳤더니 피곤해서 그래. 계속해봐, 보약 먹고 나았다고?\"", "to_node_id": "node_4_bab", "result_code": null },
+    { "from_node_id": "node_3_bb", "option_code": "A", "text": "\"아, 그놈의 사위 얘기 좀 그만해! 너 지금 나 약 올리냐?\"", "to_node_id": "node_4_bba", "result_code": null },
+    { "from_node_id": "node_3_bb", "option_code": "B", "text": "\"진짜? 그 한의원이 어딘데? 나도 우리 딸한테 사달라고 졸라봐야겠다. 정보 좀 줘봐.\"", "to_node_id": "node_4_bbb", "result_code": null },
+    { "from_node_id": "node_4_aaa", "option_code": "A", "text": "\"흥, 별꼴이야 진짜. 돈 좀 있다고 유세는.\"", "to_node_id": null, "result_code": "AAAA" },
+    { "from_node_id": "node_4_aaa", "option_code": "B", "text": "\"...영숙아! 잠깐만! 내가 잘못했어!\"", "to_node_id": null, "result_code": "AAAB" },
+    { "from_node_id": "node_4_aab", "option_code": "A", "text": "\"뭘 또 그렇게 꽁해 있어? 친구끼리 그럴 수도 있지.\"", "to_node_id": null, "result_code": "AABA" },
+    { "from_node_id": "node_4_aab", "option_code": "B", "text": "\"오랜만에 봤는데 이러지 말자. 내가 맛있는 거 살게. 응?\"", "to_node_id": null, "result_code": "AABB" },
+    { "from_node_id": "node_4_aba", "option_code": "A", "text": "\"됐어! 너랑은 말이 안 통한다. 밥이고 뭐고 다 관둬!\"", "to_node_id": null, "result_code": "ABAA" },
+    { "from_node_id": "node_4_aba", "option_code": "B", "text": "\"...그래, 친구가 잘되라고 하는 소린데 내가 꼬아 들었네. 고마워.\"", "to_node_id": null, "result_code": "ABAB" },
+    { "from_node_id": "node_4_abb", "option_code": "A", "text": "\"근데 너도 눈치 좀 챙겨. 듣는 사람 생각도 해야지.\"", "to_node_id": null, "result_code": "ABBA" },
+    { "from_node_id": "node_4_abb", "option_code": "B", "text": "\"자, 이거 먹어봐. 여기 김치가 맛있더라.\"", "to_node_id": null, "result_code": "ABBB" },
+    { "from_node_id": "node_4_baa", "option_code": "A", "text": "\"그래, 배 아프다 배 아파! 넌 좋겠다 사위 잘 만나서!\"", "to_node_id": null, "result_code": "BAAA" },
+    { "from_node_id": "node_4_baa", "option_code": "B", "text": "\"배 아픈 게 아니라, 나도 우리 딸 걱정돼서 그렇지... 미안해.\"", "to_node_id": null, "result_code": "BAAB" },
+    { "from_node_id": "node_4_bab", "option_code": "A", "text": "(핸드폰을 꺼내며) \"아, 딸한테 전화 왔네. 잠깐만.\"", "to_node_id": null, "result_code": "BABA" },
+    { "from_node_id": "node_4_bab", "option_code": "B", "text": "\"그래, 보약 먹고 무릎은 좀 어때? 등산도 갈 수 있어?\"", "to_node_id": null, "result_code": "BABB" },
+    { "from_node_id": "node_4_bba", "option_code": "A", "text": "\"그만 좀 하라니까! 귀에 딱지 앉겠다!\"", "to_node_id": null, "result_code": "BBAA" },
+    { "from_node_id": "node_4_bba", "option_code": "B", "text": "\"...아휴, 알았어. 그 보약 나도 한번 먹어보자. 얼마라고?\"", "to_node_id": null, "result_code": "BBAB" },
+    { "from_node_id": "node_4_bbb", "option_code": "A", "text": "\"근데 거긴 너무 비싸지 않아? 우리 동네는 더 싼데.\"", "to_node_id": null, "result_code": "BBBA" },
+    { "from_node_id": "node_4_bbb", "option_code": "B", "text": "\"오, 위치도 좋네? 다음에 너 갈 때 나도 좀 데려가 줘.\"", "to_node_id": null, "result_code": "BBBB" }
+  ],
+  "results": [
+    { 
+      "result_code": "AAAA", 
+      "display_title": "돌이킬 수 없는 파국", 
+      "analysis_text": "결국 친구를 잃고 말았네요. 비교 의식과 열등감은 내 마음만 갉아먹을 뿐입니다. 상대방의 기쁨을 축하해주지 못하면, 내 기쁨도 축하받을 수 없다는 걸 기억하세요.", 
+      "atmosphere_image_type": "STORM", 
+      "score": 10,
+      "image_url": "/api/service/relation-training/images/friend_bragging/result_AAAA.png"
+    },
+    { 
+      "result_code": "AAAB", 
+      "display_title": "벼랑 끝의 멈춤", 
+      "analysis_text": "친구가 떠나기 직전에 붙잡은 것은 정말 큰 용기였습니다. 비록 상처는 남았지만, 적어도 영원한 이별은 막았습니다. 당신의 그 한마디가 관계를 살렸습니다.", 
+      "atmosphere_image_type": "CLOUDY", 
+      "score": 45,
+      "image_url": "/api/service/relation-training/images/friend_bragging/result_AAAB.png"
+    },
+    { 
+      "result_code": "AABA", 
+      "display_title": "적반하장의 늪", 
+      "analysis_text": "사과해놓고 다시 뻔뻔하게 나오는 태도는 친구를 더 화나게 합니다. '친구끼리 그럴 수도 있지'라는 말은 가해자가 할 말이 아니라 피해자가 할 말입니다.", 
+      "atmosphere_image_type": "STORM", 
+      "score": 30,
+      "image_url": "/api/service/relation-training/images/friend_bragging/result_AABA.png"
+    },
+    { 
+      "result_code": "AABB", 
+      "display_title": "밥 한 끼의 화해", 
+      "analysis_text": "어색한 분위기를 밥과 긍정적인 제안으로 잘 풀었습니다. 맛있는 음식을 함께 먹는 것만큼 좋은 화해법도 없죠. 비 온 뒤에 땅이 굳어질 겁니다.", 
+      "atmosphere_image_type": "CLOUDY", 
+      "score": 60,
+      "image_url": "/api/service/relation-training/images/friend_bragging/result_AABB.png"
+    },
+    { 
+      "result_code": "ABAA", 
+      "display_title": "자존심이 밥 먹여주나", 
+      "analysis_text": "친구의 훈계가 싫어서 자리를 박차고 나왔군요. 순간의 시원함은 있겠지만, 남는 건 후회뿐입니다. 쓴소리도 약이 될 때가 있습니다.", 
+      "atmosphere_image_type": "STORM", 
+      "score": 35,
+      "image_url": "/api/service/relation-training/images/friend_bragging/result_ABAA.png"
+    },
+    { 
+      "result_code": "ABAB", 
+      "display_title": "성숙한 수용", 
+      "analysis_text": "얄미운 친구의 말도 '약'으로 받아들이는 당신의 그릇이 큽니다. 속으로는 아니더라도 겉으로나마 고맙다고 말한 것이 관계를 부드럽게 만들었습니다.", 
+      "atmosphere_image_type": "SUNNY", 
+      "score": 80,
+      "image_url": "/api/service/relation-training/images/friend_bragging/result_ABAB.png"
+    },
+    { 
+      "result_code": "ABBA", 
+      "display_title": "뒤끝 작렬", 
+      "analysis_text": "잘 참다가 마지막에 한마디를 덧붙여 점수를 깎아먹었네요. 훈계는 훈계로 갚아주는 게 아니라, 침묵이나 미소로 흘려보내는 게 고수입니다.", 
+      "atmosphere_image_type": "CLOUDY", 
+      "score": 50,
+      "image_url": "/api/service/relation-training/images/friend_bragging/result_ABBA.png"
+    },
+    { 
+      "result_code": "ABBB", 
+      "display_title": "따뜻한 밥상 머리", 
+      "analysis_text": "듣기 싫은 소리도 밥 한 숟가락으로 덮어주는 당신의 넉넉한 마음씨가 돋보입니다. 친구도 당신의 따뜻함에 미안함을 느낄 거예요.", 
+      "atmosphere_image_type": "SUNNY", 
+      "score": 75,
+      "image_url": "/api/service/relation-training/images/friend_bragging/result_ABBB.png"
+    },
+    { 
+      "result_code": "BAAA", 
+      "display_title": "솔직함의 칼날", 
+      "analysis_text": "배 아프다고 소리치는 모습은 솔직한 게 아니라 무례한 것입니다. 친구의 행복을 질투하는 모습을 그대로 드러내는 건 당신의 품격을 떨어뜨리는 일입니다.", 
+      "atmosphere_image_type": "STORM", 
+      "score": 25,
+      "image_url": "/api/service/relation-training/images/friend_bragging/result_BAAA.png"
+    },
+    { 
+      "result_code": "BAAB", 
+      "display_title": "진심 어린 고백", 
+      "analysis_text": "질투가 아니라 걱정 때문이라고 솔직하게 말한 점이 좋았습니다. 나의 약한 부분을 드러내면 상대방도 공격을 멈추고 공감하게 됩니다.", 
+      "atmosphere_image_type": "CLOUDY", 
+      "score": 65,
+      "image_url": "/api/service/relation-training/images/friend_bragging/result_BAAB.png"
+    },
+    { 
+      "result_code": "BABA", 
+      "display_title": "회피하는 관계", 
+      "analysis_text": "대화가 불편하다고 전화를 핑계로 피하는 건 임시방편일 뿐입니다. 친구는 당신이 자신을 피한다고 느끼고 섭섭해할 수 있습니다.", 
+      "atmosphere_image_type": "CLOUDY", 
+      "score": 40,
+      "image_url": "/api/service/relation-training/images/friend_bragging/result_BABA.png"
+    },
+    { 
+      "result_code": "BABB", 
+      "display_title": "경청의 여왕", 
+      "analysis_text": "피곤함을 무릅쓰고 친구의 이야기에 다시 귀 기울여주는 배려심이 대단합니다. 당신은 친구의 마음을 얻는 법을 아는 사람이군요.", 
+      "atmosphere_image_type": "SUNNY", 
+      "score": 85,
+      "image_url": "/api/service/relation-training/images/friend_bragging/result_BABB.png"
+    },
+    { 
+      "result_code": "BBAA", 
+      "display_title": "참을 인 세 번이면 폭발", 
+      "analysis_text": "잘 참아오다가 마지막 고비를 넘기지 못했네요. '귀에 딱지 앉겠다'는 말은 친구에게 큰 상처가 됩니다. 차라리 정중하게 화제를 바꾸자고 다시 제안했으면 어땠을까요?", 
+      "atmosphere_image_type": "CLOUDY", 
+      "score": 45,
+      "image_url": "/api/service/relation-training/images/friend_bragging/result_BBAA.png"
+    },
+    { 
+      "result_code": "BBAB", 
+      "display_title": "현실적인 타협", 
+      "analysis_text": "도저히 못 참겠을 때, 차라리 굴복(?)하고 정보를 묻는 것도 방법입니다. 어차피 들을 거라면 실속이라도 챙기는 게 정신 건강에 좋으니까요.", 
+      "atmosphere_image_type": "SUNNY", 
+      "score": 75,
+      "image_url": "/api/service/relation-training/images/friend_bragging/result_BBAB.png"
+    },
+    { 
+      "result_code": "BBBA", 
+      "display_title": "초치기 화법", 
+      "analysis_text": "정보를 얻는 와중에도 '비싸다'며 딴지를 거는 습관이 나왔네요. 좋은 정보를 얻었으면 그냥 고맙다고 하세요. 사족을 붙이면 고마움이 반감됩니다.", 
+      "atmosphere_image_type": "CLOUDY", 
+      "score": 70,
+      "image_url": "/api/service/relation-training/images/friend_bragging/result_BBBA.png"
+    },
+    { 
+      "result_code": "BBBB", 
+      "display_title": "대화의 연금술사", 
+      "analysis_text": "완벽합니다! 친구의 자랑을 막지 않고, 자연스럽게 '함께 가자'는 제안으로 연결해 관계를 더욱 돈독하게 만들었습니다. 친구도 기분 좋고, 당신도 좋고, 최고의 마무리입니다.", 
+      "atmosphere_image_type": "FLOWER", 
+      "score": 100,
+      "image_url": "/api/service/relation-training/images/friend_bragging/result_BBBB.png"
+    }
+  ]
+}

@@ -160,7 +160,7 @@ async def logout_user(
     Returns:
         LogoutResponse with success message
     """
-    logout(current_user.id, db)
+    logout(current_user.ID, db)
     return LogoutResponse(message="Logged out successfully")
 
 
@@ -185,11 +185,11 @@ async def get_me(
         UserResponse with user information
     """
     return UserResponse(
-        id=current_user.id,
-        email=current_user.email,
-        nickname=current_user.nickname,
-        provider=current_user.provider,
-        created_at=current_user.created_at
+        id=current_user.ID,
+        email=current_user.EMAIL,
+        nickname=current_user.NICKNAME,
+        provider=current_user.PROVIDER,
+        created_at=current_user.CREATED_AT
     )
 
 
