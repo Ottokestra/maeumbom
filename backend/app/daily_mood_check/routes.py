@@ -95,7 +95,8 @@ async def get_daily_images(
 
     # If user has selected and we have stored images, return them
     if existing and existing.DISPLAYED_IMAGES:
-        images = existing.DISPLAYED_IMAGES
+        import json
+        images = json.loads(existing.DISPLAYED_IMAGES)
     else:
         # Otherwise return new random images
         images = get_daily_random_images()
@@ -148,7 +149,8 @@ async def select_image(
         ).first()
 
         if existing and existing.DISPLAYED_IMAGES:
-            daily_images = existing.DISPLAYED_IMAGES
+            import json
+            daily_images = json.loads(existing.DISPLAYED_IMAGES)
         else:
             # Fallback to new images if stored images not found
             daily_images = get_daily_random_images()
