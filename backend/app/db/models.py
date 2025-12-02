@@ -418,6 +418,7 @@ class Scenario(Base):
     
     Attributes:
         ID: Primary key
+        USER_ID: User ID for personalized scenarios (NULL for public scenarios)
         TITLE: Scenario title
         TARGET_TYPE: Target relationship type (e.g., 'parent', 'friend', 'partner')
         CATEGORY: Scenario category ('TRAINING' or 'DRAMA')
@@ -428,6 +429,7 @@ class Scenario(Base):
     __tablename__ = "TB_SCENARIOS"
     
     ID = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    USER_ID = Column(Integer, ForeignKey("TB_USERS.ID"), nullable=True, index=True)  # NULL for public scenarios
     TITLE = Column(String(255), nullable=False)
     TARGET_TYPE = Column(String(50), nullable=False)
     CATEGORY = Column(String(20), nullable=False)  # 'TRAINING' or 'DRAMA'
@@ -436,12 +438,13 @@ class Scenario(Base):
     UPDATED_AT = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
     
     # Relationships
+    user = relationship("User", foreign_keys=[USER_ID])
     nodes = relationship("ScenarioNode", back_populates="scenario", cascade="all, delete-orphan")
     results = relationship("ScenarioResult", back_populates="scenario", cascade="all, delete-orphan")
     play_logs = relationship("PlayLog", back_populates="scenario")
     
     def __repr__(self):
-        return f"<Scenario(ID={self.ID}, TITLE={self.TITLE}, CATEGORY={self.CATEGORY})>"
+        return f"<Scenario(ID={self.ID}, TITLE={self.TITLE}, CATEGORY={self.CATEGORY}, USER_ID={self.USER_ID})>"
 
 
 class ScenarioNode(Base):
