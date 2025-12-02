@@ -797,6 +797,33 @@ async def agent_websocket(websocket: WebSocket):
                 pass
 
 # ============================================================
+# Menopause Onboarding Survey API
+# ============================================================
+
+class MenopauseSurveyRequest(BaseModel):
+    gender: str
+    answers: dict
+    yes_count: Optional[int] = None
+    risk_level: Optional[str] = None
+
+
+@app.post("/api/onboarding/menopause-survey")
+async def save_menopause_survey(payload: MenopauseSurveyRequest, request: Request):
+    """
+    갱년기 온보딩 설문 완료 시 호출하는 엔드포인트.
+
+    지금 버전은 DB를 직접 건드리지는 않고,
+    추후 User 모델에 menopause_survey_completed 필드를 추가한 뒤
+    여기에서 해당 값을 True 로 업데이트하면 된다.
+    """
+    try:
+        user_agent = request.headers.get("user-agent", "")
+        print("[MENOPAUSE SURVEY] payload:", payload.dict(), "| UA:", user_agent)
+        return {"status": "ok"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"설문 저장 실패: {e}")
+
+# ============================================================
 # 루틴 추천 엔진 API
 # ============================================================
 
