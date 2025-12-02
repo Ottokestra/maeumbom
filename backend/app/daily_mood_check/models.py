@@ -21,6 +21,7 @@ class ImageSelectionRequest(BaseModel):
     image_id: int = Field(..., description="선택한 이미지 ID")
     filename: Optional[str] = Field(None, description="선택한 이미지 파일명 (선택사항, 정확한 이미지 식별용)")
     sentiment: Optional[str] = Field(None, description="선택한 이미지 감정 분류 (선택사항, 정확한 이미지 식별용)")
+    displayed_images: Optional[List[dict]] = Field(None, description="현재 표시된 3개 이미지 배열 (프론트엔드가 전송)")
 
 
 class ImageSelectionResponse(BaseModel):
@@ -29,6 +30,7 @@ class ImageSelectionResponse(BaseModel):
     selected_image: ImageInfo = Field(..., description="선택한 이미지 정보")
     emotion_result: Optional[dict] = Field(None, description="감정 분석 결과")
     message: str = Field(..., description="응답 메시지")
+    is_update: bool = Field(False, description="기존 선택 변경 여부 (True면 UPDATE, False면 INSERT)")
 
 
 class DailyCheckStatus(BaseModel):
