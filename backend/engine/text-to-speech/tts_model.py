@@ -182,8 +182,11 @@ def synthesize_to_wav(
     # 감정/톤 + 속도에 따라 최종 파라미터 구성
     cfg = _resolve_preset(tone=tone, speed=speed)
 
-    # 출력 폴더 (backend 실행 기준으로 backend/outputs/)
-    out_dir = Path("outputs")
+    # 출력 폴더 (backend/engine/text-to-speech/outputs/ 로 고정)
+    # 현재 파일 위치: backend/engine/text-to-speech/tts_model.py
+    # parent -> backend/engine/text-to-speech 디렉토리
+    current_dir = Path(__file__).resolve().parent
+    out_dir = current_dir / "outputs"
     out_dir.mkdir(parents=True, exist_ok=True)
     out_path = out_dir / f"{uuid4().hex}.wav"
 
