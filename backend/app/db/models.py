@@ -294,6 +294,54 @@ class GlobalMemory(Base):
         return f"<GlobalMemory(ID={self.ID}, USER_ID={self.USER_ID}, CATEGORY={self.CATEGORY}, IMPORTANCE={self.IMPORTANCE})>"
 
 
+class SpeakerProfile(Base):
+    """
+    Speaker Profile model for voice verification
+    Stores speaker embeddings and verification scores
+    
+    Attributes:
+        ID: Primary key
+        USER_ID: Foreign key to TB_USERS (owner of this profile)
+        SPEAKER_TYPE: Speaker identifier (e.g., 'user-A', 'user-B')
+        CURRENT_SCORE: Current confidence score (0.0-1.0)
+        USER_NAME: User's real name (optional, for future use)
+        IS_DELETED: Soft delete flag ('Y'/'N')
+        EMBEDDING: Speaker embedding vector (JSON array of floats)
+        CREATED_AT: Creation timestamp
+        CREATED_BY: User who created this record
+        UPDATED_AT: Last update timestamp
+        UPDATED_BY: User who last updated this record
+    """
+    __tablename__ = "TB_SPEAKER_PROFILES"
+    
+    ID = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    USER_ID = Column(Integer, ForeignKey("TB_USERS.ID"), nullable=False, index=True)
+    SPEAKER_TYPE = Column(String(50), nullable=False)
+    CURRENT_SCORE = Column(Float, nullable=False, default=0.0)
+    USER_NAME = Column(String(255), nullable=True)
+    IS_DELETED = Column(String(1), nullable=False, default='N', server_default='N')
+    EMBEDDING = Column(JSON, nullable=False)  # 256-dim float vector
+    
+    CREATED_AT = Column(DateTime(timezone=True), server_default=func.now())
+    CREATED_BY = Column(Integer, ForeignKey("TB_USERS.ID"), nullable=False)
+    UPDATED_AT = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    UPDATED_BY = Column(Integer, ForeignKey("TB_USERS.ID"), nullable=True)
+    
+    # Composite indexes
+    __table_args__ = (
+        Index('idx_user_speaker', 'USER_ID', 'SPEAKER_TYPE'),
+        Index('idx_user_deleted_spk', 'USER_ID', 'IS_DELETED'),
+    )
+    
+    # Relationships
+    user = relationship("User", foreign_keys=[USER_ID], backref="speaker_profiles")
+    creator = relationship("User", foreign_keys=[CREATED_BY])
+    updater = relationship("User", foreign_keys=[UPDATED_BY])
+    
+    def __repr__(self):
+        return f"<SpeakerProfile(ID={self.ID}, USER_ID={self.USER_ID}, SPEAKER_TYPE={self.SPEAKER_TYPE}, SCORE={self.CURRENT_SCORE})>"
+
+
 # ============================================================================
 # 신규 모델 (사용자 Phase 및 건강 데이터) - User Phase Service
 # ============================================================================

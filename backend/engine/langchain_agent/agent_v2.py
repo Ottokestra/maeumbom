@@ -158,7 +158,7 @@ async def run_ai_bomi_from_text_v2(
     store = get_conversation_store()
     
     # 1. 사용자 메시지 저장 (DB에 저장)
-    store.add_message(user_id, session_id, "user", user_text)
+    store.add_message(user_id, session_id, "user", user_text, speaker_id=speaker_id)
     
     # 2. Tool Routing (감정 분석 등)
     tool_results = await route_tools(user_text)
