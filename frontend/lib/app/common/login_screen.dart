@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../ui/app_ui.dart';
+import '../../providers/auth_provider.dart';
 
 /// 로그인 화면
 ///
@@ -173,43 +175,124 @@ class _Slide3 extends StatelessWidget {
 }
 
 /// 소셜 로그인 버튼 그룹
-class _SocialLoginButtons extends StatelessWidget {
+class _SocialLoginButtons extends ConsumerWidget {
   const _SocialLoginButtons();
 
+  /// 로그인 에러 핸들링 (사용자 취소는 무시)
+  void _handleLoginError(BuildContext context, Object error) {
+    final errorMsg = error.toString();
+
+    // 사용자 취소는 무시 (정상 동작)
+    if (errorMsg.contains('CANCELED') || errorMsg.contains('User canceled')) {
+      return;
+    }
+
+    // 실제 에러만 다이얼로그 표시
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('로그인 실패'),
+        content: Text(errorMsg),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('확인'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final authState = ref.watch(authProvider);
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         // 카카오
         _SocialButton(
           color: const Color(0xFFFEE500),
-          text: 'K',
+          text: authState.isLoading ? '...' : 'K',
           textColor: const Color(0xFF3C1E1E),
-          onTap: () {
-            print('Kakao Login Tapped');
-          },
+          onTap: authState.isLoading
+              ? () {} // 로딩 중 비활성화
+              : () async {
+                  // Kakao 로그인 실행
+                  await ref.read(authProvider.notifier).loginWithKakao();
+
+                  // 결과 확인
+                  final result = ref.read(authProvider);
+                  if (!context.mounted) return;
+
+                  result.when(
+                    data: (user) {
+                      if (user != null) {
+                        // 성공 - 홈으로 이동
+                        Navigator.pushReplacementNamed(context, '/');
+                      }
+                    },
+                    error: (error, stack) => _handleLoginError(context, error),
+                    loading: () {},
+                  );
+                },
         ),
         const SizedBox(width: 40),
         // 네이버
         _SocialButton(
           color: const Color(0xFF03C75A),
-          text: 'N',
+          text: authState.isLoading ? '...' : 'N',
           textColor: Colors.white,
-          onTap: () {
-            print('Naver Login Tapped');
-          },
+          onTap: authState.isLoading
+              ? () {} // 로딩 중 비활성화
+              : () async {
+                  // Naver 로그인 실행
+                  await ref.read(authProvider.notifier).loginWithNaver();
+
+                  // 결과 확인
+                  final result = ref.read(authProvider);
+                  if (!context.mounted) return;
+
+                  result.when(
+                    data: (user) {
+                      if (user != null) {
+                        // 성공 - 홈으로 이동
+                        Navigator.pushReplacementNamed(context, '/');
+                      }
+                    },
+                    error: (error, stack) => _handleLoginError(context, error),
+                    loading: () {},
+                  );
+                },
         ),
         const SizedBox(width: 40),
         // 구글
         _SocialButton(
           color: Colors.white,
-          text: 'G',
+          text: authState.isLoading ? '...' : 'G',
           textColor: const Color(0xFF5F6368),
           hasBorder: true,
-          onTap: () {
-            print('Google Login Tapped');
-          },
+          onTap: authState.isLoading
+              ? () {} // 로딩 중 비활성화
+              : () async {
+                  // Google 로그인 실행
+                  await ref.read(authProvider.notifier).loginWithGoogle();
+
+                  // 결과 확인
+                  final result = ref.read(authProvider);
+                  if (!context.mounted) return;
+
+                  result.when(
+                    data: (user) {
+                      if (user != null) {
+                        // 성공 - 홈으로 이동
+                        Navigator.pushReplacementNamed(context, '/');
+                      }
+                    },
+                    error: (error, stack) => _handleLoginError(context, error),
+                    loading: () {},
+                  );
+                },
         ),
       ],
     );
