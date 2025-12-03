@@ -72,7 +72,7 @@ class DailyMoodSelection(Base):
     FILENAME = Column(String(255), nullable=False)
     DESCRIPTION = Column(Text, nullable=True)
     EMOTION_RESULT = Column(JSON, nullable=True)  # Store emotion analysis result as JSON
-    DISPLAYED_IMAGES = Column(JSON, nullable=True)  # Store the 3 images shown during selection
+    DISPLAYED_IMAGES = Column(Text, nullable=True)  # Store the 3 images shown during selection (JSON string)
     CREATED_AT = Column(DateTime(timezone=True), server_default=func.now())
     
     # Create composite index for faster lookups (USER_ID + SELECTED_DATE)

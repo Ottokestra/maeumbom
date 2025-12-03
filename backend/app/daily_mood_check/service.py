@@ -317,7 +317,7 @@ def save_daily_selection(
         existing.EMOTION_RESULT = emotion_result
         # Only update displayed_images if provided (first selection stores them, updates don't change them)
         if displayed_images and not existing.DISPLAYED_IMAGES:
-            existing.DISPLAYED_IMAGES = displayed_images
+            existing.DISPLAYED_IMAGES = json.dumps(displayed_images, ensure_ascii=False)
     else:
         # Create new record
         selection = DailyMoodSelection(
@@ -328,7 +328,7 @@ def save_daily_selection(
             FILENAME=filename,
             DESCRIPTION=description,
             EMOTION_RESULT=emotion_result,
-            DISPLAYED_IMAGES=displayed_images
+            DISPLAYED_IMAGES=json.dumps(displayed_images, ensure_ascii=False) if displayed_images else None
         )
         db.add(selection)
     
