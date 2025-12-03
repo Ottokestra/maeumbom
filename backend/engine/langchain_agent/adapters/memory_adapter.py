@@ -17,7 +17,7 @@ from collections import defaultdict
 import re
 
 from app.db.database import SessionLocal
-from app.db.models import SessionMemory, GlobalMemory, Conversation
+from app.db.models import GlobalMemory, Conversation
 from sqlalchemy import and_, or_, func
 
 
@@ -65,17 +65,12 @@ class MemoryLayer:
     
     저장 조건:
     - 위험 수준이 'watch' 이상
-    - 반복되는 감정 패턴 (14일간 3회 이상)
     - 사용자가 명시적으로 언급한 장기 고민
     - 명시적 기억 요청 (즉시 Global로 승격)
     """
     
     def __init__(self):
         """초기화"""
-        # 빈도 기반 승격 설정
-        self.frequency_days_window = 14  # 최근 N일간
-        self.frequency_threshold = 3  # M회 이상 언급
-        
         # 감정 강도 승격 설정
         self.emotion_polarity_threshold = -0.7  # 이 값보다 낮으면 (부정적)
         self.risk_levels_for_promotion = ["watch", "alert", "critical"]
@@ -103,8 +98,6 @@ class MemoryLayer:
             return None
         
         # 간단한 패턴 매칭으로 삭제 대상 추출
-        # 예: "오이는 잊어버려" -> "오이"
-        # 예: "김치찌개 기억 안해도 돼" -> "김치찌개"
         patterns = [
             r"(\S+)(?:는|은|이|가|을|를)?\s*(?:잊어|지워|삭제)",
             r"(\S+)\s+기억\s*(?:안|하지)",
@@ -124,15 +117,7 @@ class MemoryLayer:
         session_history: List[Dict] = None
     ) -> bool:
         """
-        세션 기억 저장 여부 판단 (Session Memory에 저장할지)
-        
-        Args:
-            user_text: 사용자 입력
-            emotion_result: 감정 분석 결과
-            session_history: 세션 히스토리 (선택)
-            
-        Returns:
-            저장 여부
+        세션 기억 저장 여부 판단 (Legacy - Not used in new flow)
         """
         # 1. 위험 수준 체크
         risk_level = emotion_result.get("service_signals", {}).get("risk_level", "low")
@@ -169,9 +154,6 @@ class MemoryLayer:
     ) -> Tuple[bool, str, int]:
         """
         승격 규칙 체크
-        
-        Returns:
-            (should_promote, reason, importance)
         """
         db = self._get_db()
         try:
@@ -186,25 +168,6 @@ class MemoryLayer:
             if polarity < self.emotion_polarity_threshold or risk_level in self.risk_levels_for_promotion:
                 importance = 8 if risk_level in ["alert", "critical"] else 6
                 return (True, f"high_emotion_intensity (polarity={polarity}, risk={risk_level})", importance)
-            
-            # 규칙 3: 빈도 기반
-            # 최근 14일간 동일 카테고리의 서로 다른 세션에서의 언급 횟수 확인
-            cutoff_date = datetime.now() - timedelta(days=self.frequency_days_window)
-            
-            session_mems = db.query(SessionMemory).filter(
-                and_(
-                    SessionMemory.USER_ID == user_id,
-                    SessionMemory.MEMORY_TYPE == category,
-                    SessionMemory.IS_DELETED == 'N',
-                    SessionMemory.CREATED_AT >= cutoff_date
-                )
-            ).all()
-            
-            # 서로 다른 세션 개수 계산
-            unique_sessions = set(mem.SESSION_ID for mem in session_mems)
-            
-            if len(unique_sessions) >= self.frequency_threshold:
-                return (True, f"frequency_based ({len(unique_sessions)} sessions in {self.frequency_days_window} days)", 5)
             
             return (False, "no_promotion_criteria_met", 1)
             
@@ -223,18 +186,6 @@ class MemoryLayer:
     ) -> bool:
         """
         세션 메모리를 전역 메모리로 승격
-        
-        Args:
-            user_id: 사용자 ID
-            session_id: 세션 ID
-            category: 카테고리
-            content: 기억할 내용
-            emotion_result: 감정 분석 결과
-            importance: 중요도 (1-10)
-            reason: 승격 이유
-            
-        Returns:
-            성공 여부
         """
         db = self._get_db()
         try:
@@ -267,13 +218,6 @@ class MemoryLayer:
     ) -> int:
         """
         특정 주제의 기억 삭제 (Soft Delete)
-        
-        Args:
-            user_id: 사용자 ID
-            subject: 삭제할 주제/키워드
-            
-        Returns:
-            삭제된 기억 개수
         """
         db = self._get_db()
         try:
@@ -292,24 +236,6 @@ class MemoryLayer:
             ).all()
             
             for mem in global_mems:
-                mem.IS_DELETED = 'Y'
-                mem.UPDATED_BY = user_id
-                mem.UPDATED_AT = datetime.now()
-                deleted_count += 1
-            
-            # Session Memory에서도 검색 및 삭제
-            session_mems = db.query(SessionMemory).filter(
-                and_(
-                    SessionMemory.USER_ID == user_id,
-                    SessionMemory.IS_DELETED == 'N',
-                    or_(
-                        SessionMemory.KEY_CONTENT.contains(subject),
-                        SessionMemory.MEMORY_TYPE.contains(subject)
-                    )
-                )
-            ).all()
-            
-            for mem in session_mems:
                 mem.IS_DELETED = 'Y'
                 mem.UPDATED_BY = user_id
                 mem.UPDATED_AT = datetime.now()
@@ -335,15 +261,7 @@ class MemoryLayer:
     ) -> Dict[str, Any]:
         """
         기억 저장 (DB) - V2 with Promotion Logic
-        
-        Args:
-            content: 기억할 내용 (사용자 발화)
-            emotion_result: 감정 분석 결과
-            session_id: 세션 ID
-            user_id: 사용자 ID
-            
-        Returns:
-            저장된 메모리 정보
+        (Legacy: Direct add_memory call, mostly replaced by Agent V2 logic)
         """
         # 1. 삭제 요청 먼저 확인
         delete_subject = self.detect_explicit_memory_deletion(content)
@@ -359,24 +277,12 @@ class MemoryLayer:
         category = self._classify_category(content, emotion_result)
         memory_type = self._determine_memory_type(content, emotion_result)
         
-        # 3. 메타데이터 구성
-        metadata = {
-            "emotion": emotion_result.get("emotion", "neutral"),
-            "polarity": emotion_result.get("polarity", 0.0),
-            "risk_level": emotion_result.get("service_signals", {}).get("risk_level", "low"),
-            "timestamp": datetime.now().isoformat(),
-            "memory_type": memory_type
-        }
-        
-        # 4. Session Memory 저장
-        self._save_to_session_memory(user_id, session_id, category, content, metadata)
-        
-        # 5. 승격 규칙 체크
+        # 3. 승격 규칙 체크
         should_promote, reason, importance = self.check_promotion_rules(
             user_id, session_id, category, emotion_result, content
         )
         
-        # 6. 승격 처리
+        # 4. 승격 처리 (Global Memory Only)
         if should_promote:
             self.promote_memory(
                 user_id, session_id, category, content, emotion_result, importance, reason
@@ -391,45 +297,9 @@ class MemoryLayer:
             "importance": importance if should_promote else None
         }
 
-    def _save_to_session_memory(
-        self, 
-        user_id: int, 
-        session_id: str, 
-        category: str, 
-        content: str,
-        metadata: Dict
-    ):
-        """Session Memory에만 저장 (Upsert)"""
-        db = self._get_db()
-        try:
-            # 항상 새로 생성 (누적 저장)
-            new_mem = SessionMemory(
-                USER_ID=user_id,
-                SESSION_ID=session_id,
-                MEMORY_TYPE=category,
-                KEY_CONTENT=content,
-                VALUE_DATA=metadata,
-                CREATED_BY=user_id
-            )
-            db.add(new_mem)
-                
-            db.commit()
-        except Exception as e:
-            print(f"[MemoryLayer] ⚠️ Session Memory Save Failed: {e}")
-            db.rollback()
-        finally:
-            db.close()
-
     def get_memories_for_prompt(self, session_id: str, user_id: int) -> str:
         """
         프롬프트 주입용 메모리 문자열 생성 (DB 조회)
-        
-        Args:
-            session_id: 세션 ID
-            user_id: 사용자 ID
-            
-        Returns:
-            프롬프트용 문자열
         """
         db = self._get_db()
         try:
@@ -448,23 +318,6 @@ class MemoryLayer:
                 for mem in global_mems:
                     importance_marker = "⭐" * min(mem.IMPORTANCE // 2, 5)  # 중요도 시각화
                     memories.append(f"{importance_marker} [{mem.CATEGORY}] {mem.MEMORY_TEXT}")
-            
-            # 2. Session Memories (현재 세션 기억)
-            session_mems = db.query(SessionMemory).filter(
-                and_(
-                    SessionMemory.USER_ID == user_id,
-                    SessionMemory.SESSION_ID == session_id,
-                    SessionMemory.IS_DELETED == 'N'
-                )
-            ).all()
-            
-            if session_mems:
-                memories.append("\n=== 현재 세션 주요 사항 ===")
-                for mem in session_mems:
-                    metadata = mem.VALUE_DATA or {}
-                    emotion = metadata.get('emotion', '')
-                    emotion_str = f" (감정: {emotion})" if emotion else ""
-                    memories.append(f"- [{mem.MEMORY_TYPE}] {mem.KEY_CONTENT}{emotion_str}")
             
             return "\n".join(memories)
         finally:
@@ -525,3 +378,90 @@ def add_memory(content: str, emotion_result: Dict[str, Any], session_id: str, us
 
 def get_memories_for_prompt(session_id: str, user_id: int) -> str:
     return _memory_layer.get_memories_for_prompt(session_id, user_id)
+
+def promote_memory(
+    user_id: int,
+    session_id: str,
+    category: str,
+    content: str,
+    emotion_result: Dict[str, Any],
+    importance: int,
+    reason: str
+) -> bool:
+    return _memory_layer.promote_memory(
+        user_id, session_id, category, content, emotion_result, importance, reason
+    )
+
+def delete_memory(user_id: int, subject: str) -> int:
+    return _memory_layer.delete_memory(user_id, subject)    
+    def _classify_category(self, content: str, emotion_result: Dict) -> str:
+        """내용 기반 카테고리 분류"""
+        # 알러지는 최우선 분류
+        if any(w in content for w in ["알러지", "알레르기", "알러지가", "알레르기가"]):
+            return MemoryCategory.ALLERGY
+        
+        if any(w in content for w in ["잠", "수면", "불면"]):
+            return MemoryCategory.SLEEP_ISSUE
+        if any(w in content for w in ["건강", "아파", "통증", "약"]):
+            return MemoryCategory.HEALTH_CONCERN
+        if any(w in content for w in ["남편", "자식", "친구", "사람", "가족"]):
+            return MemoryCategory.RELATIONSHIP
+        if any(w in content for w in ["좋아", "싫어", "취미", "즐겨"]):
+            return MemoryCategory.PERSONAL_PREFERENCE
+        
+        # 감정 기반
+        emotion = emotion_result.get("emotion", "")
+        if emotion in ["anxiety", "fear"]:
+            return MemoryCategory.ANXIETY_PATTERN
+        if emotion in ["sadness", "depression"]:
+            return MemoryCategory.MOOD_PATTERN
+            
+        return MemoryCategory.OTHER
+        
+    def _determine_memory_type(self, content: str, emotion_result: Dict) -> str:
+        """기억 타입 결정"""
+        # 명시적 요청은 중요 정보
+        if self.detect_explicit_memory_request(content):
+            return MemoryType.CRITICAL_INFO
+        
+        risk_level = emotion_result.get("service_signals", {}).get("risk_level", "low")
+        
+        if risk_level in ["watch", "alert", "critical"]:
+            return MemoryType.PERSISTENT_CONCERN
+        
+        if any(w in content for w in ["매번", "항상", "자꾸", "계속"]):
+            return MemoryType.LONG_TERM_PATTERN
+            
+        return MemoryType.USER_PREFERENCE
+
+
+# ============================================================================
+# Standalone Functions for Backward Compatibility
+# ============================================================================
+
+_memory_layer = MemoryLayer()
+
+def should_store_memory(user_text: str, emotion_result: Dict[str, Any], session_history: List[Dict] = None) -> bool:
+    return _memory_layer.should_store_in_memory(user_text, emotion_result, session_history)
+
+def add_memory(content: str, emotion_result: Dict[str, Any], session_id: str, user_id: int) -> Dict[str, Any]:
+    return _memory_layer.add_memory(content, emotion_result, session_id, user_id)
+
+def get_memories_for_prompt(session_id: str, user_id: int) -> str:
+    return _memory_layer.get_memories_for_prompt(session_id, user_id)
+
+def promote_memory(
+    user_id: int,
+    session_id: str,
+    category: str,
+    content: str,
+    emotion_result: Dict[str, Any],
+    importance: int,
+    reason: str
+) -> bool:
+    return _memory_layer.promote_memory(
+        user_id, session_id, category, content, emotion_result, importance, reason
+    )
+
+def delete_memory(user_id: int, subject: str) -> int:
+    return _memory_layer.delete_memory(user_id, subject)

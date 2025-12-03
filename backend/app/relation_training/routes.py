@@ -52,7 +52,7 @@ async def list_scenarios(
         GET /api/service/relation-training/scenarios?category=TRAINING
     """
     try:
-        scenarios = get_scenario_list(db, category)
+        scenarios = get_scenario_list(db, category, user_id=current_user.ID)
         return ScenarioListResponse(
             scenarios=scenarios,
             total=len(scenarios)

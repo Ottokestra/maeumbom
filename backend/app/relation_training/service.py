@@ -21,18 +21,35 @@ from .schemas import (
 # Scenario List Functions
 # ============================================================================
 
-def get_scenario_list(db: Session, category: Optional[str] = None) -> List[Dict[str, Any]]:
+def get_scenario_list(db: Session, category: Optional[str] = None, user_id: Optional[int] = None) -> List[Dict[str, Any]]:
     """
     Get list of scenarios
+    
+    Returns public scenarios (USER_ID IS NULL) and user's personalized scenarios (USER_ID = user_id)
     
     Args:
         db: Database session
         category: Optional category filter ('TRAINING' or 'DRAMA')
+        user_id: Optional user ID for filtering personalized scenarios
         
     Returns:
         List of scenario dictionaries
     """
+    from sqlalchemy import or_
+    
     query = db.query(Scenario)
+    
+    # 공용 시나리오(USER_ID IS NULL) + 사용자 개인 시나리오(USER_ID = user_id)
+    if user_id is not None:
+        query = query.filter(
+            or_(
+                Scenario.USER_ID.is_(None),  # Public scenarios
+                Scenario.USER_ID == user_id    # User's personalized scenarios
+            )
+        )
+    else:
+        # user_id가 없으면 공용 시나리오만 조회
+        query = query.filter(Scenario.USER_ID.is_(None))
     
     if category:
         query = query.filter(Scenario.CATEGORY == category.upper())
@@ -42,14 +59,14 @@ def get_scenario_list(db: Session, category: Optional[str] = None) -> List[Dict[
     # 디버깅 로그 (개발 모드)
     import os
     if os.getenv("DEBUG", "false").lower() == "true" or len(scenarios) == 0:
-        print(f"[DEBUG] get_scenario_list: category={category}, found {len(scenarios)} scenarios")
+        print(f"[DEBUG] get_scenario_list: category={category}, user_id={user_id}, found {len(scenarios)} scenarios")
         if len(scenarios) == 0:
             # 시나리오가 없을 때 전체 시나리오 개수 확인
             total_count = db.query(Scenario).count()
             print(f"[DEBUG] Total scenarios in DB: {total_count}")
             if total_count > 0:
                 all_scenarios = db.query(Scenario).all()
-                print(f"[DEBUG] All scenarios: {[(s.ID, s.TITLE, s.CATEGORY) for s in all_scenarios]}")
+                print(f"[DEBUG] All scenarios: {[(s.ID, s.TITLE, s.CATEGORY, s.USER_ID) for s in all_scenarios]}")
     
     return [
         {
