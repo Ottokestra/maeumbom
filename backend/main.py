@@ -199,7 +199,6 @@ try:
             from app.relation_training.import_data import import_all
             from pathlib import Path as _Path
 
-<<<<<<< HEAD
             data_dir = (
                 _Path(__file__).parent
                 / "app"
@@ -232,16 +231,6 @@ try:
                         traceback.print_exc()
                 else:
                     print("[INFO] No scenario files found in data folder.")
-=======
-            if excel_files or json_files:
-                print(f"[INFO] Importing scenario files (Excel: {len(excel_files)}, JSON: {len(json_files)})...")
-                try:
-                    import_all(data_dir, update=True, clear=False)
-                except Exception as import_error:
-                    import traceback
-                    print(f"[ERROR] Scenario import 실행 중 에러 발생: {import_error}")
-                    traceback.print_exc()
->>>>>>> dev
             else:
                 print(f"[WARN] Scenario data directory not found: {data_dir}")
         except Exception as e:
@@ -511,7 +500,6 @@ async def cleanup_conversations(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-<<<<<<< HEAD
 @app.delete("/api/agent/cleanup/session-memories")
 async def cleanup_session_memories(
     current_user: User = Depends(get_current_user),
@@ -542,8 +530,6 @@ async def cleanup_session_memories(
 
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
-=======
->>>>>>> dev
 
 
 @app.delete("/api/agent/cleanup/global-memories")
@@ -665,27 +651,6 @@ async def stt_websocket(websocket: WebSocket):
                     )
 
                 if is_speech_end and speech_audio is not None:
-<<<<<<< HEAD
-                    print(
-                        f"[STT] 발화 종료 감지, STT 처리 시작 (오디오 길이: {len(speech_audio)} 샘플)"
-                    )
-
-                    await websocket.send_json(
-                        {
-                            "status": "processing",
-                            "message": "듣고 생각하는 중...",
-                        }
-                    )
-
-                    transcript, quality = engine.whisper.transcribe(
-                        speech_audio, callback=None
-                    )
-                    print(
-                        f"[STT] STT 결과: text='{transcript}', quality={quality}"
-                    )
-
-                    # 화자 검증 (필요 시)
-=======
                     print(f"[STT] 발화 종료 감지, STT 처리 시작 (오디오 길이: {len(speech_audio)} 샘플)")
                     
                     # 클라이언트에게 처리 중 알림
@@ -700,7 +665,6 @@ async def stt_websocket(websocket: WebSocket):
                     # ========================================================================
                     # 🆕 화자 검증 로직 (DB 기반)
                     # ========================================================================
->>>>>>> dev
                     speaker_id = None
                     user_id = 1  # Default user ID for now (until auth is added to websocket)
                     
@@ -749,78 +713,19 @@ async def stt_websocket(websocket: WebSocket):
                                         "quality": "success" # DB에는 품질 저장 안하므로 기본값
                                     }
 
-<<<<<<< HEAD
-                                speaker_id, similarity = (
-                                    verifier.identify_speaker(
-                                        current_embedding,
-                                        existing_profiles,
-                                    )
-                                )
-                                print(
-                                    f"[Speaker] 화자 식별: {speaker_id} (유사도: {similarity:.3f})"
-=======
                                 # 3. 화자 식별
                                 speaker_id, similarity = verifier.identify_speaker(
                                     current_embedding, existing_profiles
->>>>>>> dev
                                 )
+                                print(f"[Speaker] 화자 식별: {speaker_id} (유사도: {similarity:.3f})")
 
                                 if speaker_id not in existing_profiles:
-<<<<<<< HEAD
-                                    store.add_speaker_profile(
-                                        speaker_id,
-                                        current_embedding,
-                                        quality,
-                                        session_id=None,
-                                    )
-                                    print(
-                                        f"[Speaker] 신규 등록: {speaker_id}"
-=======
                                     # 4. 신규 등록
                                     store.save_speaker_profile(
                                         user_id, speaker_id, current_embedding.tolist(), similarity
->>>>>>> dev
                                     )
+                                    print(f"[Speaker] 신규 등록: {speaker_id}")
                                 else:
-<<<<<<< HEAD
-                                    old_quality = existing_profiles[speaker_id][
-                                        "quality"
-                                    ]
-                                    if verifier.should_update_profile(
-                                        quality, old_quality
-                                    ):
-                                        old_embedding = (
-                                            existing_profiles[speaker_id][
-                                                "embedding"
-                                            ]
-                                        )
-                                        updated_embedding = (
-                                            verifier.update_embedding(
-                                                old_embedding,
-                                                current_embedding,
-                                                speaker_id=speaker_id,
-                                            )
-                                        )
-                                        store.update_speaker_embedding(
-                                            speaker_id,
-                                            updated_embedding,
-                                            quality,
-                                        )
-                                        print(
-                                            f"[Speaker] 프로필 업데이트: {speaker_id}"
-                                        )
-                                    else:
-                                        print(
-                                            f"[Speaker] 기존 사용자: {speaker_id} (업데이트 불필요)"
-                                        )
-
-                                all_speaker_ids = (
-                                    store.get_all_speaker_ids()
-                                )
-                                print(
-                                    f"[Speaker Debug] 현재 등록된 화자: {all_speaker_ids}"
-                                )
-=======
                                     # 5. 기존 화자 업데이트 (점수가 더 높을 때만)
                                     current_score = existing_profiles[speaker_id]["current_score"]
                                     if similarity > current_score:
@@ -842,20 +747,13 @@ async def stt_websocket(websocket: WebSocket):
                                 # 디버깅용 출력
                                 all_speaker_ids = [p["speaker_type"] for p in store.get_speaker_profiles(user_id)]
                                 print(f"[Speaker Debug] 현재 등록된 화자: {all_speaker_ids}")
->>>>>>> dev
                             else:
                                 print(
                                     "[Speaker] 임베딩 추출 실패 (화자 검증 생략)"
                                 )
                         except Exception as e:
                             import traceback
-<<<<<<< HEAD
-
-                            print(
-                                f"[Speaker] 화자 검증 오류: {e}"
-                            )
-=======
->>>>>>> dev
+                            print(f"[Speaker] 화자 검증 오류: {e}")
                             traceback.print_exc()
                     else:
                         print(
@@ -1027,12 +925,9 @@ async def agent_websocket(websocket: WebSocket):
                         f"[Agent WebSocket] STT 결과: text='{transcript}', quality={quality}"
                     )
 
-<<<<<<< HEAD
-=======
                     # ========================================================================
                     # 🆕 화자 검증 로직 (DB 기반)
                     # ========================================================================
->>>>>>> dev
                     speaker_id = None
                     user_id = 1  # Default user ID for now
                     
@@ -1081,67 +976,19 @@ async def agent_websocket(websocket: WebSocket):
                                         "quality": "success"
                                     }
 
-<<<<<<< HEAD
-                                speaker_id, similarity = (
-                                    verifier.identify_speaker(
-                                        current_embedding,
-                                        existing_profiles,
-                                    )
-                                )
-                                print(
-                                    f"[Speaker] 화자 식별: {speaker_id} (유사도: {similarity:.3f})"
-=======
                                 # 3. 화자 식별
                                 speaker_id, similarity = verifier.identify_speaker(
                                     current_embedding, existing_profiles
->>>>>>> dev
                                 )
+                                print(f"[Speaker] 화자 식별: {speaker_id} (유사도: {similarity:.3f})")
 
                                 if speaker_id not in existing_profiles:
-<<<<<<< HEAD
-                                    store.add_speaker_profile(
-                                        speaker_id,
-                                        current_embedding,
-                                        quality,
-                                        session_id=session_id,
-                                    )
-                                    print(
-                                        f"[Speaker] 신규 등록: {speaker_id}"
-=======
                                     # 4. 신규 등록
                                     store.save_speaker_profile(
                                         user_id, speaker_id, current_embedding.tolist(), similarity
->>>>>>> dev
                                     )
+                                    print(f"[Speaker] 신규 등록: {speaker_id}")
                                 else:
-<<<<<<< HEAD
-                                    old_quality = existing_profiles[speaker_id][
-                                        "quality"
-                                    ]
-                                    if verifier.should_update_profile(
-                                        quality, old_quality
-                                    ):
-                                        old_embedding = (
-                                            existing_profiles[speaker_id][
-                                                "embedding"
-                                            ]
-                                        )
-                                        updated_embedding = (
-                                            verifier.update_embedding(
-                                                old_embedding,
-                                                current_embedding,
-                                                speaker_id=speaker_id,
-                                            )
-                                        )
-                                        store.update_speaker_embedding(
-                                            speaker_id,
-                                            updated_embedding,
-                                            quality,
-                                        )
-                                        print(
-                                            f"[Speaker] 프로필 업데이트: {speaker_id}"
-                                        )
-=======
                                     # 5. 기존 화자 업데이트
                                     current_score = existing_profiles[speaker_id]["current_score"]
                                     if similarity > current_score:
@@ -1155,32 +1002,16 @@ async def agent_websocket(websocket: WebSocket):
                                             profile_id, updated_embedding.tolist(), similarity, user_id
                                         )
                                         print(f"[Speaker] 🔄 프로필 업데이트: {speaker_id} (Score: {current_score:.3f} -> {similarity:.3f})")
->>>>>>> dev
                                     else:
-                                        print(
-                                            f"[Speaker] 기존 사용자: {speaker_id} (업데이트 불필요)"
-                                        )
+                                        print(f"[Speaker] ✓ 기존 사용자: {speaker_id} (업데이트 불필요, Score: {current_score:.3f} >= {similarity:.3f})")
 
-<<<<<<< HEAD
-                                all_speaker_ids = (
-                                    store.get_all_speaker_ids()
-                                )
-                                print(
-                                    f"[Speaker Debug] 현재 등록된 화자: {all_speaker_ids}"
-                                )
-=======
                                 all_speaker_ids = [p["speaker_type"] for p in store.get_speaker_profiles(user_id)]
                                 print(f"[Speaker Debug] 현재 등록된 화자: {all_speaker_ids}")
->>>>>>> dev
                             else:
                                 print("[Speaker] 임베딩 추출 실패")
                         except Exception as e:
                             import traceback
-<<<<<<< HEAD
-
                             print(f"[Speaker] 화자 검증 오류: {e}")
-=======
->>>>>>> dev
                             traceback.print_exc()
                     else:
                         print(
@@ -1200,13 +1031,7 @@ async def agent_websocket(websocket: WebSocket):
 
                     if quality in ["success", "medium"] and transcript:
                         try:
-<<<<<<< HEAD
-                            from engine.langchain_agent import (
-                                run_ai_bomi_from_text,
-                            )
-=======
                             from engine.langchain_agent import run_ai_bomi_from_text_v2
->>>>>>> dev
 
                             await websocket.send_json(
                                 {
@@ -1218,13 +1043,8 @@ async def agent_websocket(websocket: WebSocket):
 
                             result = await run_ai_bomi_from_text_v2(
                                 user_text=transcript,
-<<<<<<< HEAD
-                                session_id=session_id
-                                or "websocket_default",
-=======
                                 user_id=user_id,
                                 session_id=session_id or "websocket_default",
->>>>>>> dev
                                 stt_quality=quality,
                                 speaker_id=speaker_id,
                             )
