@@ -194,54 +194,6 @@ class Conversation(Base):
         return f"<Conversation(ID={self.ID}, USER_ID={self.USER_ID}, SESSION_ID={self.SESSION_ID}, SPEAKER={self.SPEAKER_TYPE})>"
 
 
-class SessionMemory(Base):
-    """
-    Session-specific short-term memory model
-    Stores temporary memory data per session
-    
-    Attributes:
-        ID: Primary key
-        USER_ID: Foreign key to TB_USERS (data isolation)
-        SESSION_ID: Session identifier
-        MEMORY_TYPE: Memory type (summary, context, emotion_flow, etc.)
-        KEY_CONTENT: Memory content (text)
-        VALUE_DATA: Structured data (JSON, optional)
-        IS_DELETED: Soft delete flag ('Y'/'N')
-        EXPIRES_AT: Expiration timestamp (optional)
-        CREATED_AT: Creation timestamp
-        CREATED_BY: User who created this record
-        UPDATED_AT: Last update timestamp
-        UPDATED_BY: User who last updated this record
-    """
-    __tablename__ = "TB_SESSION_MEMORIES"
-    
-    ID = Column(Integer, primary_key=True, index=True, autoincrement=True)
-    USER_ID = Column(Integer, ForeignKey("TB_USERS.ID"), nullable=False, index=True)
-    SESSION_ID = Column(String(255), nullable=False, index=True)
-    MEMORY_TYPE = Column(String(50), nullable=False)
-    KEY_CONTENT = Column(Text, nullable=False)
-    VALUE_DATA = Column(JSON, nullable=True)
-    IS_DELETED = Column(String(1), nullable=False, default='N', server_default='N')
-    EXPIRES_AT = Column(DateTime(timezone=True), nullable=True)
-    CREATED_AT = Column(DateTime(timezone=True), server_default=func.now())
-    CREATED_BY = Column(Integer, ForeignKey("TB_USERS.ID"), nullable=False)
-    UPDATED_AT = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
-    UPDATED_BY = Column(Integer, ForeignKey("TB_USERS.ID"), nullable=True)
-    
-    # Composite indexes
-    __table_args__ = (
-        Index('idx_user_session_mem', 'USER_ID', 'SESSION_ID'),
-        Index('idx_user_deleted_smem', 'USER_ID', 'IS_DELETED'),
-        Index('idx_user_type', 'USER_ID', 'MEMORY_TYPE'),
-    )
-    
-    # Relationships
-    user = relationship("User", foreign_keys=[USER_ID], backref="session_memories")
-    creator = relationship("User", foreign_keys=[CREATED_BY])
-    updater = relationship("User", foreign_keys=[UPDATED_BY])
-    
-    def __repr__(self):
-        return f"<SessionMemory(ID={self.ID}, USER_ID={self.USER_ID}, SESSION_ID={self.SESSION_ID}, TYPE={self.MEMORY_TYPE})>"
 
 
 class GlobalMemory(Base):
@@ -292,6 +244,54 @@ class GlobalMemory(Base):
     
     def __repr__(self):
         return f"<GlobalMemory(ID={self.ID}, USER_ID={self.USER_ID}, CATEGORY={self.CATEGORY}, IMPORTANCE={self.IMPORTANCE})>"
+
+
+class SpeakerProfile(Base):
+    """
+    Speaker Profile model for voice verification
+    Stores speaker embeddings and verification scores
+    
+    Attributes:
+        ID: Primary key
+        USER_ID: Foreign key to TB_USERS (owner of this profile)
+        SPEAKER_TYPE: Speaker identifier (e.g., 'user-A', 'user-B')
+        CURRENT_SCORE: Current confidence score (0.0-1.0)
+        USER_NAME: User's real name (optional, for future use)
+        IS_DELETED: Soft delete flag ('Y'/'N')
+        EMBEDDING: Speaker embedding vector (JSON array of floats)
+        CREATED_AT: Creation timestamp
+        CREATED_BY: User who created this record
+        UPDATED_AT: Last update timestamp
+        UPDATED_BY: User who last updated this record
+    """
+    __tablename__ = "TB_SPEAKER_PROFILES"
+    
+    ID = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    USER_ID = Column(Integer, ForeignKey("TB_USERS.ID"), nullable=False, index=True)
+    SPEAKER_TYPE = Column(String(50), nullable=False)
+    CURRENT_SCORE = Column(Float, nullable=False, default=0.0)
+    USER_NAME = Column(String(255), nullable=True)
+    IS_DELETED = Column(String(1), nullable=False, default='N', server_default='N')
+    EMBEDDING = Column(JSON, nullable=False)  # 256-dim float vector
+    
+    CREATED_AT = Column(DateTime(timezone=True), server_default=func.now())
+    CREATED_BY = Column(Integer, ForeignKey("TB_USERS.ID"), nullable=False)
+    UPDATED_AT = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    UPDATED_BY = Column(Integer, ForeignKey("TB_USERS.ID"), nullable=True)
+    
+    # Composite indexes
+    __table_args__ = (
+        Index('idx_user_speaker', 'USER_ID', 'SPEAKER_TYPE'),
+        Index('idx_user_deleted_spk', 'USER_ID', 'IS_DELETED'),
+    )
+    
+    # Relationships
+    user = relationship("User", foreign_keys=[USER_ID], backref="speaker_profiles")
+    creator = relationship("User", foreign_keys=[CREATED_BY])
+    updater = relationship("User", foreign_keys=[UPDATED_BY])
+    
+    def __repr__(self):
+        return f"<SpeakerProfile(ID={self.ID}, USER_ID={self.USER_ID}, SPEAKER_TYPE={self.SPEAKER_TYPE}, SCORE={self.CURRENT_SCORE})>"
 
 
 # ============================================================================
@@ -588,3 +588,45 @@ class PlayLog(Base):
     
     def __repr__(self):
         return f"<PlayLog(ID={self.ID}, USER_ID={self.USER_ID}, SCENARIO_ID={self.SCENARIO_ID}, RESULT_ID={self.RESULT_ID})>"
+
+
+class AgentPlan(Base):
+    """
+    Agent Plan model
+    Stores future plans or scheduled actions generated by the agent
+    
+    Attributes:
+        ID: Primary key
+        USER_ID: Foreign key to TB_USERS
+        PLAN_TYPE: Type of plan (e.g., 'routine', 'reminder', 'suggestion')
+        TARGET_DATE: Scheduled date/time for the plan
+        CONTENT: Plan details (JSON or Text)
+        STATUS: Current status (e.g., 'pending', 'completed', 'cancelled')
+        SOURCE_SESSION_ID: Session ID where this plan was created
+        CREATED_AT: Creation timestamp
+        UPDATED_AT: Last update timestamp
+    """
+    __tablename__ = "TB_AGENT_PLANS"
+    
+    ID = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    USER_ID = Column(Integer, ForeignKey("TB_USERS.ID"), nullable=False, index=True)
+    PLAN_TYPE = Column(String(50), nullable=False)
+    TARGET_DATE = Column(DateTime(timezone=True), nullable=True)
+    CONTENT = Column(Text, nullable=False)
+    STATUS = Column(String(20), nullable=False, default='pending')
+    SOURCE_SESSION_ID = Column(String(255), nullable=True)
+    
+    CREATED_AT = Column(DateTime(timezone=True), server_default=func.now())
+    UPDATED_AT = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    
+    # Composite indexes
+    __table_args__ = (
+        Index('idx_user_plan_date', 'USER_ID', 'TARGET_DATE'),
+        Index('idx_user_plan_status', 'USER_ID', 'STATUS'),
+    )
+    
+    # Relationships
+    user = relationship("User", backref="agent_plans")
+    
+    def __repr__(self):
+        return f"<AgentPlan(ID={self.ID}, USER_ID={self.USER_ID}, TYPE={self.PLAN_TYPE}, STATUS={self.STATUS})>"

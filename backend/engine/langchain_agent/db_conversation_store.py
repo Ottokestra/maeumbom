@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import desc, and_, func
 
 from app.db.database import SessionLocal
-from app.db.models import Conversation, User, EmotionAnalysis
+from app.db.models import Conversation, User, EmotionAnalysis, SpeakerProfile
 
 # Import vectorstore for RAG sync
 # Note: Using local import inside methods to avoid circular import if necessary, 
@@ -111,7 +111,8 @@ class DBConversationStore:
         session_id: str,
         role: str,
         content: str,
-        metadata: Optional[Dict] = None
+        metadata: Optional[Dict] = None,
+        speaker_id: Optional[str] = None
     ) -> None:
         """
         Add a message to the conversation history
@@ -122,12 +123,16 @@ class DBConversationStore:
             role: Message role ("user" or "assistant")
             content: Message content
             metadata: Additional metadata (optional, not stored currently)
+            speaker_id: Specific speaker identifier (e.g., "user-A")
         """
         db = self._get_db()
         try:
             # Map role to SPEAKER_TYPE
-            # For now, we use "user-A" for all users and "assistant" for AI
-            speaker_type = "assistant" if role == "assistant" else "user-A"
+            if role == "assistant":
+                speaker_type = "assistant"
+            else:
+                # Use provided speaker_id or default to "user-A"
+                speaker_type = speaker_id if speaker_id else "user-A"
             
             # Create conversation record
             conversation = Conversation(
@@ -436,6 +441,121 @@ class DBConversationStore:
             ).delete()
             db.commit()
             return count
+        finally:
+            db.close()
+
+    # ============================================================================
+    # Speaker Verification Methods
+    # ============================================================================
+
+    def get_speaker_profiles(self, user_id: int) -> List[Dict[str, Any]]:
+        """
+        Get all active speaker profiles for a user
+        
+        Args:
+            user_id: User ID
+            
+        Returns:
+            List of profile dictionaries
+        """
+        db = self._get_db()
+        try:
+            profiles = db.query(SpeakerProfile).filter(
+                and_(
+                    SpeakerProfile.USER_ID == user_id,
+                    SpeakerProfile.IS_DELETED == 'N'
+                )
+            ).all()
+            
+            return [
+                {
+                    "id": p.ID,
+                    "speaker_type": p.SPEAKER_TYPE,
+                    "embedding": p.EMBEDDING,  # JSON array
+                    "current_score": p.CURRENT_SCORE,
+                    "user_name": p.USER_NAME
+                }
+                for p in profiles
+            ]
+        finally:
+            db.close()
+
+    def save_speaker_profile(
+        self,
+        user_id: int,
+        speaker_type: str,
+        embedding: List[float],
+        score: float
+    ) -> int:
+        """
+        Save a new speaker profile
+        
+        Args:
+            user_id: User ID
+            speaker_type: Speaker identifier (e.g., 'user-A')
+            embedding: Speaker embedding vector (list of floats)
+            score: Confidence score
+            
+        Returns:
+            ID of created profile
+        """
+        db = self._get_db()
+        try:
+            profile = SpeakerProfile(
+                USER_ID=user_id,
+                SPEAKER_TYPE=speaker_type,
+                EMBEDDING=embedding,
+                CURRENT_SCORE=score,
+                CREATED_BY=user_id,
+                UPDATED_BY=user_id
+            )
+            db.add(profile)
+            db.commit()
+            db.refresh(profile)
+            return profile.ID
+        except Exception as e:
+            print(f"[DBConversationStore] ⚠️ Failed to save speaker profile: {e}")
+            db.rollback()
+            return -1
+        finally:
+            db.close()
+
+    def update_speaker_profile(
+        self,
+        profile_id: int,
+        embedding: List[float],
+        score: float,
+        user_id: int
+    ) -> bool:
+        """
+        Update an existing speaker profile
+        
+        Args:
+            profile_id: Profile ID
+            embedding: New embedding vector
+            score: New confidence score
+            user_id: User ID (for audit)
+            
+        Returns:
+            True if successful, False otherwise
+        """
+        db = self._get_db()
+        try:
+            profile = db.query(SpeakerProfile).filter(SpeakerProfile.ID == profile_id).first()
+            if not profile:
+                return False
+                
+            profile.EMBEDDING = embedding
+            profile.CURRENT_SCORE = score
+            profile.UPDATED_BY = user_id
+            profile.UPDATED_AT = datetime.now()
+            
+            db.commit()
+            return True
+        except Exception as e:
+            print(f"[DBConversationStore] ⚠️ Failed to update speaker profile: {e}")
+            db.rollback()
+            return False
         finally:
             db.close()
 

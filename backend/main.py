@@ -437,32 +437,6 @@ async def cleanup_conversations(current_user: User = Depends(get_current_user)):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.delete("/api/agent/cleanup/session-memories")
-async def cleanup_session_memories(current_user: User = Depends(get_current_user)):
-    """테스트용: 현재 유저의 모든 세션 메모리 완전 삭제"""
-    try:
-        from app.db.database import SessionLocal
-        from app.db.models import SessionMemory
-
-        user_id = current_user.ID
-        db = SessionLocal()
-        try:
-            count = db.query(SessionMemory).filter(
-                SessionMemory.USER_ID == user_id
-            ).delete()
-            db.commit()
-
-            return {
-                "status": "success",
-                "message": f"Deleted {count} session memory records",
-                "user_id": user_id
-            }
-        finally:
-            db.close()
-    except Exception as e:
-        import traceback
-        traceback.print_exc()
-        raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.delete("/api/agent/cleanup/global-memories")
@@ -569,10 +543,11 @@ async def stt_websocket(websocket: WebSocket):
                     print(f"[STT] STT 결과: text='{transcript}', quality={quality}")
                     
                     # ========================================================================
-                    # 🆕 화자 검증 로직 (품질 게이트 + 점진적 프로필 완성)
-                    # [DISABLED] Legacy V1 Memory dependency removed.
+                    # 🆕 화자 검증 로직 (DB 기반)
                     # ========================================================================
                     speaker_id = None
+                    user_id = 1  # Default user ID for now (until auth is added to websocket)
+                    
                     if quality in ["success", "medium"]:
                         try:
                             stt_config_path = (
@@ -589,40 +564,58 @@ async def stt_websocket(websocket: WebSocket):
 
                             if current_embedding is not None:
                                 store = get_conversation_store()
-                                existing_profiles = store._speaker_profiles
+                                
+                                # 1. DB에서 프로필 조회
+                                db_profiles = store.get_speaker_profiles(user_id)
+                                
+                                # 2. Verifier 포맷으로 변환
+                                existing_profiles = {}
+                                for p in db_profiles:
+                                    existing_profiles[p["speaker_type"]] = {
+                                        "embedding": np.array(p["embedding"]),
+                                        "current_score": p["current_score"],
+                                        "quality": "success" # DB에는 품질 저장 안하므로 기본값
+                                    }
 
+                                # 3. 화자 식별
                                 speaker_id, similarity = verifier.identify_speaker(
                                     current_embedding, existing_profiles
                                 )
                                 print(f"[Speaker] 화자 식별: {speaker_id} (유사도: {similarity:.3f})")
 
                                 if speaker_id not in existing_profiles:
-                                    store.add_speaker_profile(
-                                        speaker_id, current_embedding, quality, session_id=None
+                                    # 4. 신규 등록
+                                    store.save_speaker_profile(
+                                        user_id, speaker_id, current_embedding.tolist(), similarity
                                     )
                                     print(f"[Speaker] 🆕 신규 등록: {speaker_id}")
                                 else:
-                                    old_quality = existing_profiles[speaker_id]["quality"]
-                                    if verifier.should_update_profile(quality, old_quality):
+                                    # 5. 기존 화자 업데이트 (점수가 더 높을 때만)
+                                    current_score = existing_profiles[speaker_id]["current_score"]
+                                    if similarity > current_score:
+                                        # 임베딩 업데이트 (가중 평균)
                                         old_embedding = existing_profiles[speaker_id]["embedding"]
                                         updated_embedding = verifier.update_embedding(
                                             old_embedding, current_embedding, speaker_id=speaker_id
                                         )
-                                        store.update_speaker_embedding(
-                                            speaker_id, updated_embedding, quality
+                                        
+                                        # DB 업데이트
+                                        profile_id = next(p["id"] for p in db_profiles if p["speaker_type"] == speaker_id)
+                                        store.update_speaker_profile(
+                                            profile_id, updated_embedding.tolist(), similarity, user_id
                                         )
-                                        print(f"[Speaker] 🔄 프로필 업데이트: {speaker_id}")
+                                        print(f"[Speaker] 🔄 프로필 업데이트: {speaker_id} (Score: {current_score:.3f} -> {similarity:.3f})")
                                     else:
-                                        print(f"[Speaker] ✓ 기존 사용자: {speaker_id} (업데이트 불필요)")
+                                        print(f"[Speaker] ✓ 기존 사용자: {speaker_id} (업데이트 불필요, Score: {current_score:.3f} >= {similarity:.3f})")
 
-                                all_speaker_ids = store.get_all_speaker_ids()
+                                # 디버깅용 출력
+                                all_speaker_ids = [p["speaker_type"] for p in store.get_speaker_profiles(user_id)]
                                 print(f"[Speaker Debug] 현재 등록된 화자: {all_speaker_ids}")
                             else:
                                 print("[Speaker] ⚠️ 임베딩 추출 실패")
                         except Exception as e:
                             print(f"[Speaker] ❌ 화자 검증 오류: {e}")
                             import traceback
-
                             traceback.print_exc()
                     else:
                         print(f"[Speaker] ⚠️ 품질 부족으로 화자 검증 skip (quality={quality})")
@@ -775,8 +768,12 @@ async def agent_websocket(websocket: WebSocket):
                     )
                     print(f"[Agent WebSocket] STT 결과: text='{transcript}', quality={quality}")
 
-                    # 화자 검증
+                    # ========================================================================
+                    # 🆕 화자 검증 로직 (DB 기반)
+                    # ========================================================================
                     speaker_id = None
+                    user_id = 1  # Default user ID for now
+                    
                     if quality in ["success", "medium"]:
                         try:
                             stt_config_path = (
@@ -793,40 +790,55 @@ async def agent_websocket(websocket: WebSocket):
 
                             if current_embedding is not None:
                                 store = get_conversation_store()
-                                existing_profiles = store._speaker_profiles
+                                
+                                # 1. DB에서 프로필 조회
+                                db_profiles = store.get_speaker_profiles(user_id)
+                                
+                                # 2. Verifier 포맷으로 변환
+                                existing_profiles = {}
+                                for p in db_profiles:
+                                    existing_profiles[p["speaker_type"]] = {
+                                        "embedding": np.array(p["embedding"]),
+                                        "current_score": p["current_score"],
+                                        "quality": "success"
+                                    }
 
+                                # 3. 화자 식별
                                 speaker_id, similarity = verifier.identify_speaker(
                                     current_embedding, existing_profiles
                                 )
                                 print(f"[Speaker] 화자 식별: {speaker_id} (유사도: {similarity:.3f})")
 
                                 if speaker_id not in existing_profiles:
-                                    store.add_speaker_profile(
-                                        speaker_id, current_embedding, quality, session_id=session_id
+                                    # 4. 신규 등록
+                                    store.save_speaker_profile(
+                                        user_id, speaker_id, current_embedding.tolist(), similarity
                                     )
                                     print(f"[Speaker] 🆕 신규 등록: {speaker_id}")
                                 else:
-                                    old_quality = existing_profiles[speaker_id]["quality"]
-                                    if verifier.should_update_profile(quality, old_quality):
+                                    # 5. 기존 화자 업데이트
+                                    current_score = existing_profiles[speaker_id]["current_score"]
+                                    if similarity > current_score:
                                         old_embedding = existing_profiles[speaker_id]["embedding"]
                                         updated_embedding = verifier.update_embedding(
                                             old_embedding, current_embedding, speaker_id=speaker_id
                                         )
-                                        store.update_speaker_embedding(
-                                            speaker_id, updated_embedding, quality
+                                        
+                                        profile_id = next(p["id"] for p in db_profiles if p["speaker_type"] == speaker_id)
+                                        store.update_speaker_profile(
+                                            profile_id, updated_embedding.tolist(), similarity, user_id
                                         )
-                                        print(f"[Speaker] 🔄 프로필 업데이트: {speaker_id}")
+                                        print(f"[Speaker] 🔄 프로필 업데이트: {speaker_id} (Score: {current_score:.3f} -> {similarity:.3f})")
                                     else:
                                         print(f"[Speaker] ✓ 기존 사용자: {speaker_id} (업데이트 불필요)")
 
-                                all_speaker_ids = store.get_all_speaker_ids()
+                                all_speaker_ids = [p["speaker_type"] for p in store.get_speaker_profiles(user_id)]
                                 print(f"[Speaker Debug] 현재 등록된 화자: {all_speaker_ids}")
                             else:
                                 print("[Speaker] ⚠️ 임베딩 추출 실패")
                         except Exception as e:
                             print(f"[Speaker] ❌ 화자 검증 오류: {e}")
                             import traceback
-
                             traceback.print_exc()
                     else:
                         print(f"[Speaker] ⚠️ 품질 부족으로 화자 검증 skip (quality={quality})")
@@ -842,7 +854,7 @@ async def agent_websocket(websocket: WebSocket):
 
                     if quality in ["success", "medium"] and transcript:
                         try:
-                            from engine.langchain_agent import run_ai_bomi_from_text
+                            from engine.langchain_agent import run_ai_bomi_from_text_v2
 
                             await websocket.send_json(
                                 {
@@ -852,8 +864,9 @@ async def agent_websocket(websocket: WebSocket):
                                 }
                             )
 
-                            result = run_ai_bomi_from_text(
+                            result = await run_ai_bomi_from_text_v2(
                                 user_text=transcript,
+                                user_id=user_id,
                                 session_id=session_id or "websocket_default",
                                 stt_quality=quality,
                                 speaker_id=speaker_id,
