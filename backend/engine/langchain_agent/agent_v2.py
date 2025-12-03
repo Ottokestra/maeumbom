@@ -2,6 +2,8 @@ import os
 import uuid
 import logging
 import json
+import asyncio
+import time
 from typing import Any, Optional, List, Dict
 from openai import OpenAI
 
@@ -41,51 +43,208 @@ except ImportError as e:
     logger.error(f"Failed to import RoutineRecommendFromEmotionEngine or schemas: {e}")
     raise
 
-async def route_tools(user_text: str) -> Dict[str, Any]:
+# ============================================================================
+# DeepAgents Components
+# ============================================================================
+
+async def run_fast_track(user_text: str) -> Dict[str, Any]:
     """
-    Analyze text and route to appropriate tools (Emotion, Routine)
+    Fast Track: Emotion Analysis only
     """
-    # 1. Emotion Analysis
+    start_time = time.time()
     analyzer = EmotionAnalyzer()
+    
+    # Run emotion analysis (blocking call wrapped in thread if needed, but here just direct)
+    # In a real async setup, this might be offloaded to a thread pool
     emotion_result_dict = analyzer.analyze_emotion(user_text)
     
+    elapsed = time.time() - start_time
+    logger.info(f"⚡ [Fast Track] Emotion Analysis took {elapsed:.4f}s")
+    
+    return emotion_result_dict
+
+async def run_slow_track(
+    user_text: str, 
+    emotion_result: Dict[str, Any], 
+    user_id: int, 
+    session_id: str
+):
+    """
+    Slow Track (Background): Routine Recommendation & Memory Promotion
+    """
+    start_time = time.time()
+    logger.info(f"🐢 [Slow Track] Started for user {user_id}")
+    
+    # 1. Memory Promotion (Memory Manager Agent) - Run FIRST
+    try:
+        # Import memory adapter
+        # Use absolute imports based on backend root being in sys.path
+        try:
+            from engine.langchain_agent.adapters.memory_adapter import promote_memory, get_memories_for_prompt, delete_memory
+            from engine.langchain_agent.db_conversation_store import get_conversation_store
+        except ImportError:
+            # Fallback for relative imports if running as package
+            from .adapters.memory_adapter import promote_memory, get_memories_for_prompt, delete_memory
+            from .db_conversation_store import get_conversation_store
+
+        store = get_conversation_store()
+        # Get recent history for context
+        history = store.get_history(user_id, session_id, limit=5)
+        
+        # Get existing memories to check for conflicts
+        existing_memories = get_memories_for_prompt(session_id, user_id)
+        
+        # Define Memory Manager Prompt
+        memory_prompt = f"""당신은 '기억 관리자(Memory Manager)' 에이전트입니다.
+사용자와의 대화 내용을 분석하여 장기 기억으로 저장할 가치가 있는 중요한 정보를 추출하세요.
+특히, **기존 기억과 상충되는 새로운 정보**가 있다면 이를 수정(update)해야 합니다.
+
+[기존 기억]
+{existing_memories}
+
+[분석 기준]
+1. **건강/신체 변화**: 증상, 통증, 수면 상태, 식욕 등
+2. **정서적 사건**: 강한 감정을 유발한 사건, 스트레스 요인, 기쁜 일
+3. **취향/선호**: 좋아하는 음식, 활동, 싫어하는 것 등
+4. **중요 정보 갱신**: 가족 관계, 직업, 거주지 등 신상 정보의 변화
+
+[입력 데이터]
+사용자 발화: "{user_text}"
+감정 분석 결과: {json.dumps(emotion_result, ensure_ascii=False)}
+
+[지침]
+- 저장할 가치가 있는 정보가 없다면 "NONE"이라고만 응답하세요.
+- 정보가 있다면 다음 JSON 형식으로 응답하세요:
+{{
+    "action": "create" 또는 "update",
+    "category": "health|emotion|preference|info",
+    "content": "기억할 내용 요약 (한국어). **중요: update 시에는 반드시 '기존 기억'의 내용과 '새로운 정보'를 모두 포함하여 하나의 완벽한 문장으로 통합하세요.** (예: 기존 '동생은 일본에 산다' + 신규 '이름은 홍길동' -> '동생 홍길동은 일본에 살며, 3살 아래이다')",
+    "importance": 1~5 (5가 가장 중요),
+    "old_content_keyword": "수정(update) 또는 삭제(delete)할 경우, 대상이 되는 기존 기억의 핵심 키워드. (예: '된장찌개' -> '김치찌개'로 정정 시 '된장찌개' 반환)" 
+}}
+"""
+        # [DEBUG] Log the final prompt
+        logger.info(f"📝 [Memory Manager Prompt]\n{memory_prompt}")
+
+        client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": memory_prompt}
+            ],
+            temperature=0.3
+        )
+        
+        result_text = response.choices[0].message.content.strip()
+        
+        if result_text != "NONE":
+            try:
+                # Parse JSON (handle potential markdown code blocks)
+                if result_text.startswith("```json"):
+                    result_text = result_text.replace("```json", "").replace("```", "").strip()
+                elif result_text.startswith("```"):
+                    result_text = result_text.replace("```", "").strip()
+                    
+                memory_data = json.loads(result_text)
+                action = memory_data.get("action", "create")
+                
+                # 1. Delete Action
+                if action == "delete":
+                    keyword = memory_data.get("old_content_keyword")
+                    if keyword:
+                        deleted = delete_memory(user_id, keyword)
+                        logger.info(f"💾 [Memory Manager] Deleted {deleted} memories (keyword: {keyword})")
+                    else:
+                        logger.warning("💾 [Memory Manager] Delete action requested but no keyword provided")
+
+                # 2. Update Action (Delete old + Create new)
+                elif action == "update":
+                    keyword = memory_data.get("old_content_keyword")
+                    if keyword:
+                        deleted = delete_memory(user_id, keyword)
+                        logger.info(f"💾 [Memory Manager] Deleted {deleted} old memories for update (keyword: {keyword})")
+                    
+                    # Promote new content
+                    promote_memory(
+                        user_id=user_id,
+                        session_id=session_id,
+                        category=memory_data["category"],
+                        content=memory_data["content"],
+                        emotion_result=emotion_result,
+                        importance=memory_data["importance"],
+                        reason="Memory Manager Agent Extraction"
+                    )
+                    logger.info(f"💾 [Memory Manager] Promoted memory (update): {memory_data['content']}")
+
+                # 3. Create Action
+                elif action == "create":
+                    promote_memory(
+                        user_id=user_id,
+                        session_id=session_id,
+                        category=memory_data["category"],
+                        content=memory_data["content"],
+                        emotion_result=emotion_result,
+                        importance=memory_data["importance"],
+                        reason="Memory Manager Agent Extraction"
+                    )
+                    logger.info(f"💾 [Memory Manager] Promoted memory (create): {memory_data['content']}")
+                    
+            except json.JSONDecodeError:
+                logger.warning(f"Memory Manager output not JSON: {result_text}")
+        else:
+            logger.info("💾 [Memory Manager] No important memory found")
+            
+    except Exception as e:
+        logger.error(f"Memory Manager failed: {e}")
+
     # 2. Routine Recommendation
     routine_engine = RoutineRecommendFromEmotionEngine()
-    
-    # Convert dict to Pydantic model for Routine Engine
+    routine_result = []
     try:
-        emotion_model = EmotionAnalysisResult(**emotion_result_dict)
-        # recommend is async
+        emotion_model = EmotionAnalysisResult(**emotion_result)
         routine_result = await routine_engine.recommend(emotion_model)
+        logger.info(f"🐢 [Slow Track] Routine Recommendation completed: {len(routine_result)} items")
     except Exception as e:
         logger.error(f"Routine recommendation failed: {e}")
-        routine_result = []
+
+    elapsed = time.time() - start_time
+    logger.info(f"🐢 [Slow Track] Completed in {elapsed:.4f}s")
     
+    # Return results if needed for logging/storage, though they won't be used in the current response
     return {
-        "emotion_result": emotion_result_dict,
-        "routine_result": routine_result,
-        "used_tools": ["emotion_analysis", "routine_recommend"]
+        "routine_result": routine_result
     }
 
 def generate_llm_response(
     user_text: str,
     emotion_result: Dict[str, Any],
-    routine_result: List[Any],
     conversation_history: List[Dict],
     memory_context: str,
     rag_context: str
 ) -> str:
     """
-    Generate response using GPT-4o-mini with all context
+    Generate response using GPT-4o-mini with Emotion & Context (No Routine)
     """
     client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
     
     # Construct System Prompt
-    # 감정 분석 결과 요약
     emotion_summary = f"{emotion_result.get('polarity', 'neutral')} ({emotion_result.get('cluster_label', 'unknown')})"
     
-    system_prompt = f"""당신은 갱년기 여성을 위한 공감형 AI 친구 '봄이'입니다.
-사용자의 감정에 깊이 공감하고, 따뜻한 위로와 실질적인 조언을 제공하세요.
+    system_prompt = f"""당신은 갱년기 여성을 위한 공감형 AI 친구 '봄이'의 "오케스트레이터(Orchestrator)"입니다.
+당신의 목표는 대화 흐름을 관리하고, 사용자의 의도를 파악하며, 전문 하위 에이전트나 도구에 작업을 효율적으로 위임하는 것입니다.
+
+[핵심 책임]
+1. **의도 분류**: 사용자의 입력(텍스트/음성)을 분석하여 주된 목표를 결정합니다.
+2. **흐름 제어**:
+   - **패스트 트랙 (우선순위)**: 일반적인 대화나 정서적 지지의 경우, 지연 시간을 최소화하기 위해 [감정 분석 -> 답변 생성] 경로를 우선시합니다.
+   - **백그라운드 작업**: [루틴 추천], [심층 기억 분석], [미래 계획 수립]과 같이 시간이 오래 걸리는 작업은 메인 답변을 차단하지 않도록 병렬로 위임합니다.
+3. **컨텍스트 관리**: 즉각적인 답변에 필수적인 컨텍스트와 나중에 처리해도 되는 컨텍스트를 결정합니다.
+
+[지침]
+- **항상** 모든 사용자 입력에 대해 즉시 '감정 분석'을 트리거하세요.
+- **만약** 사용자가 괴로워 보이거나 특정 증상을 언급하면, 백그라운드에서 '루틴 추천'을 트리거하세요.
+- 사용자가 명시적으로 추천을 요청(예: "루틴 추천해줘")하지 않는 한, 대화형 답변을 생성하기 위해 '루틴 추천'이 완료될 때까지 **기다리지 마세요**.
+- **출력**: '감정 분석'과 사용 가능한 컨텍스트를 바탕으로 사용자에게 최종 답변을 생성하세요.
 
 [사용자 프로필]
 - 40~50대 갱년기 여성
@@ -99,19 +258,13 @@ def generate_llm_response(
 - 감정: {emotion_summary}
 - 상세: {json.dumps(emotion_result, ensure_ascii=False)}
 
-[추천 루틴]
-{json.dumps([r.dict() for r in routine_result] if routine_result else [], ensure_ascii=False)}
-
-[지침]
-1. 공감 우선: 사용자의 감정을 읽어주고 공감하는 말을 먼저 하세요.
-2. 루틴 제안: 추천된 루틴이 있다면 자연스럽게 권유하세요. (강요하지 않음)
-3. 짧고 간결하게: 너무 긴 답변보다는 대화하듯 편안하게 작성하세요.
-4. 한국어 사용: 자연스러운 한국어 구어체를 사용하세요.
+[출력 형식]
+중년 여성에게 적합한 자연스럽고 공감적인 한국어로 답변을 제공하세요.
 """
 
     messages = [{"role": "system", "content": system_prompt}]
     
-    # Add history (limit to last 10 messages to save tokens)
+    # Add history (limit to last 10 messages)
     for msg in conversation_history[-10:]:
         role = "assistant" if msg["role"] == "assistant" else "user"
         messages.append({"role": role, "content": msg["content"]})
@@ -119,6 +272,10 @@ def generate_llm_response(
     # Add current user message
     messages.append({"role": "user", "content": user_text})
     
+    # [DEBUG] Log the final system prompt and messages
+    logger.info(f"📝 [Main Agent System Prompt]\n{system_prompt}")
+    logger.info(f"📝 [Main Agent Messages]\n{json.dumps(messages, ensure_ascii=False, indent=2)}")
+
     response = client.chat.completions.create(
         model=os.getenv("OPENAI_MODEL_NAME", "gpt-4o-mini"),
         messages=messages,
@@ -135,129 +292,123 @@ async def run_ai_bomi_from_text_v2(
     speaker_id: Optional[str] = None
 ) -> dict[str, Any]:
     """
-    텍스트 입력 기반 AI 봄이 실행 (V2 - DB 저장)
-    
-    Args:
-        user_text: 사용자 입력 텍스트
-        user_id: User ID (for DB storage and data isolation)
-        session_id: Session identifier
-        stt_quality: STT quality indicator
-        speaker_id: Speaker identifier (optional)
-    
-    Returns:
-        Agent response dictionary
+    텍스트 입력 기반 AI 봄이 실행 (DeepAgents Prototype Implementation)
     """
-    logger.info(f"🚀 [Agent V2] 텍스트 입력 처리 시작 (user_id: {user_id}, session: {session_id})")
+    logger.info(f"🚀 [DeepAgents] Started processing for user_id: {user_id}")
     
-    # DB 기반 저장소 가져오기
+    # DB Store
     try:
         from .db_conversation_store import get_conversation_store
     except ImportError:
         from db_conversation_store import get_conversation_store
-    
     store = get_conversation_store()
     
-    # 1. 사용자 메시지 저장 (DB에 저장)
+    # 1. Save User Message
     store.add_message(user_id, session_id, "user", user_text, speaker_id=speaker_id)
     
-    # 2. Tool Routing (감정 분석 등)
-    tool_results = await route_tools(user_text)
-    emotion_result = tool_results["emotion_result"]
-    routine_result = tool_results["routine_result"]
+    # 2. Fast Track: Emotion Analysis (Required for prompt)
+    # We await this because it's needed for the immediate response
+    emotion_result = await run_fast_track(user_text)
     
-    # 2.5 Save Emotion Analysis
+    # 2.5 Save Emotion Analysis (Fire and forget or await if fast)
     try:
         store.save_emotion_analysis(user_id, user_text, emotion_result, check_root="conversation")
     except Exception as e:
         logger.error(f"Failed to save emotion analysis: {e}")
+        
+    # 3. Slow Track: Trigger Background Tasks (Routine, Memory Promotion)
+    # We create a task and wait with a timeout (Hybrid Approach)
+    slow_track_task = asyncio.create_task(
+        run_slow_track(user_text, emotion_result, user_id, session_id)
+    )
     
-    # 3. Memory Layer & RAG Context Retrieval (기존 로직 재사용)
+    routine_result = []
+    try:
+        # Wait for routine recommendation with a timeout (e.g., 1.0s)
+        # If it finishes, we get the result. If not, we proceed without it.
+        # This balances "Fast Response" with "Rich Content".
+        slow_track_result = await asyncio.wait_for(asyncio.shield(slow_track_task), timeout=1.0)
+        routine_result = slow_track_result.get("routine_result", [])
+        logger.info(f"🐢 [Slow Track] Finished within timeout. Items: {len(routine_result)}")
+    except asyncio.TimeoutError:
+        logger.warning(f"🐢 [Slow Track] Timed out (continuing in background)")
+        # Task continues in background due to asyncio.shield
+    except Exception as e:
+        logger.error(f"🐢 [Slow Track] Error: {e}")
+
+    # 4. Context Retrieval (Memory & RAG) - Kept in Fast Track for now for quality
+    # Optimization: Could be parallelized with Emotion Analysis if refactored further
     memory_context = ""
     rag_context = ""
     
     try:
-        # 3-1. Memory Layer (장기 기억) - 일단 기존 JSON 기반 사용
+        # Memory Layer
         try:
-            from .adapters.memory_adapter import should_store_memory, add_memory, get_memories_for_prompt
+            from .adapters.memory_adapter import get_memories_for_prompt
         except ImportError:
-            from adapters.memory_adapter import should_store_memory, add_memory, get_memories_for_prompt
-        
-        # 저장 여부 판단 및 저장
-        if should_store_memory(user_text, emotion_result):
-            add_memory(user_text, emotion_result, session_id, user_id)
+            from adapters.memory_adapter import get_memories_for_prompt
             
-        # 관련 기억 조회
         memories = get_memories_for_prompt(session_id, user_id)
         if memories:
             memory_context = f"[기억된 정보]\n{memories}\n"
             
-        # 3-2. Conversation RAG (과거 대화) - V2 복구
+        # RAG Layer
         try:
             from .conversation_rag_v2 import get_conversation_rag
             rag_store = get_conversation_rag()
-            
-            # 현재 메시지를 RAG에 저장
             rag_store.add_message(user_id, session_id, "user", user_text)
-            
-            # 관련 대화 조회 (현재 세션 제외)
             similar_msgs = rag_store.search_similar(user_id, user_text, session_id, k=3)
             if similar_msgs:
                 rag_context = "[과거 유사 대화]\n"
                 for msg in similar_msgs:
                     rag_context += f"- {msg['role']}: {msg['content']} (session: {msg['session_id']})\n"
-                rag_context += "\n"
-                logger.info(f"🔍 [RAG] Found {len(similar_msgs)} similar messages")
-                
         except Exception as e:
-            logger.error(f"RAG 처리 중 오류 (무시하고 진행): {e}")
+            logger.error(f"RAG Error: {e}")
             
     except Exception as e:
-        logger.error(f"Memory/RAG 처리 중 오류 (무시하고 진행): {e}")
-    
-    # 4. 대화 히스토리 조회 (DB에서 조회)
+        logger.error(f"Context Retrieval Error: {e}")
+        
+    # 5. Generate Response (Fast Track)
     conversation_history = store.get_history(user_id, session_id, limit=None)
     
-    # 5. LLM 응답 생성
     ai_response_text = generate_llm_response(
         user_text=user_text,
         emotion_result=emotion_result,
-        routine_result=routine_result,
         conversation_history=conversation_history,
         memory_context=memory_context,
         rag_context=rag_context
     )
     
-    # 6. AI 응답 저장 (DB에 저장)
+    # 6. Save AI Response
     store.add_message(user_id, session_id, "assistant", ai_response_text)
     
-    # RAG에도 AI 응답 저장 (V2 복구)
+    # Update RAG with AI response
     try:
         if 'rag_store' in locals():
             rag_store.add_message(user_id, session_id, "assistant", ai_response_text)
     except Exception as e:
-        logger.error(f"RAG 저장 중 오류: {e}")
-    
-    logger.info(f"✅ [Agent V2] 응답 생성 완료 (DB 저장): {ai_response_text[:50]}...")
+        logger.error(f"RAG Save Error: {e}")
+        
+    logger.info(f"✅ [DeepAgents] Response generated: {ai_response_text[:50]}...")
     
     return {
         "reply_text": ai_response_text,
         "input_text": user_text,
         "emotion_result": emotion_result,
-        "routine_result": routine_result,
+        "routine_result": routine_result, # Now populated if within timeout
         "meta": {
             "model": os.getenv("OPENAI_MODEL_NAME", "gpt-4o-mini"),
-            "used_tools": tool_results["used_tools"],
+            "used_tools": ["emotion_analysis"], 
             "session_id": session_id,
             "stt_quality": stt_quality,
             "speaker_id": speaker_id,
             "memory_used": bool(memory_context),
             "rag_used": bool(rag_context),
             "user_id": user_id,
-            "storage": "database",  # V2 구분자
-            "api_version": "v2"
+            "storage": "database",
+            "api_version": "v2_deepagents"
         }
     }
-
 
 async def run_ai_bomi_from_audio_v2(
     audio_bytes: bytes,
@@ -265,16 +416,11 @@ async def run_ai_bomi_from_audio_v2(
     session_id: str = "default"
 ) -> dict[str, Any]:
     """
-    음성 입력 기반 AI 봄이 실행 (V2 - DB 저장)
-    
-    Args:
-        audio_bytes: Audio data
-        user_id: User ID (for DB storage)
-        session_id: Session identifier
+    음성 입력 기반 AI 봄이 실행 (DeepAgents Prototype)
     """
-    logger.info(f"🎤 [Agent V2] 음성 입력 처리 시작 (user_id: {user_id}, session: {session_id})")
+    logger.info(f"🎤 [DeepAgents] Audio processing started (user_id: {user_id})")
     
-    # 1. STT 실행 (기존 로직 재사용)
+    # 1. STT
     try:
         from .adapters import run_speech_to_text
     except ImportError:
@@ -284,7 +430,6 @@ async def run_ai_bomi_from_audio_v2(
     user_text = stt_result["text"]
     stt_quality = stt_result["quality"]
     
-    # 음성 인식 실패 시 조기 종료
     if not user_text:
         return {
             "reply_text": "죄송해요, 잘 들리지 않았어요. 다시 말씀해주시겠어요?",
@@ -296,9 +441,9 @@ async def run_ai_bomi_from_audio_v2(
                 "session_id": session_id,
                 "user_id": user_id,
                 "storage": "database",
-                "api_version": "v2"
+                "api_version": "v2_deepagents"
             }
         }
         
-    # 2. 텍스트 기반 처리로 위임 (V2 함수 사용)
+    # 2. Delegate to Text Handler
     return await run_ai_bomi_from_text_v2(user_text, user_id, session_id, stt_quality)

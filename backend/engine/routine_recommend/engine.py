@@ -78,21 +78,11 @@ class RoutineRecommendFromEmotionEngine:
     ) -> List[RoutineRecommendationItem]:
         """
         감정 분석 결과를 기반으로 루틴을 추천합니다.
-
-        Args:
-            emotion: 감정 분석 결과
-            max_recommend: 한 세트의 추천 개수 (기본 3개)
-            rag_top_k: RAG에서 가져올 후보 수 (15~20 권장)
-            hours_since_wake: 기상 후 경과 시간 (예: 2.5)
-            hours_to_sleep: 예상 취침까지 남은 시간 (선택)
-            city: 날씨 정보를 조회할 도시 이름 (선택, 예: "Seoul")
-            country: 국가 코드 (기본 "KR")
-
-        Returns:
-            추천된 루틴 리스트 (reason, ui_message 포함)
-            - 최대 9개 (3개 × 3세트)
-            - 프론트에서 3개씩 슬라이스해서 사용
+        (Blocking calls are offloaded to a thread pool)
         """
+        import asyncio
+        loop = asyncio.get_running_loop()
+
         # 🌦️ 0) 날씨 정보 조회 (city가 제공된 경우)
         weather_info = None
         weather_tag = None
@@ -126,9 +116,13 @@ class RoutineRecommendFromEmotionEngine:
         )
         print(f"개인화 시간 슬롯: {slot}")
 
-        # 2) RAG로 후보 검색 (15~20개 정도 넉넉하게)
+        # 2) RAG로 후보 검색 (Blocking Call -> Thread Pool)
         print("RAG 검색 중...")
-        candidates = retrieve_candidates(emotion, top_k=rag_top_k)
+        # retrieve_candidates is synchronous and CPU/IO heavy
+        candidates = await loop.run_in_executor(
+            None, 
+            lambda: retrieve_candidates(emotion, top_k=rag_top_k)
+        )
         print(f"후보 {len(candidates)}개 검색 완료")
 
         if not candidates:
@@ -167,11 +161,15 @@ class RoutineRecommendFromEmotionEngine:
             f"LLM 최대 추천 {llm_max_recommend}개)"
         )
 
-        # 4) LLM으로 1차 추천 + reason/ui_message 생성
-        recommendations = select_and_explain_routines(
-            emotion=emotion,
-            candidates=candidates_for_llm,
-            max_recommend=llm_max_recommend,
+        # 4) LLM으로 1차 추천 + reason/ui_message 생성 (Blocking Call -> Thread Pool)
+        # select_and_explain_routines uses synchronous OpenAI client
+        recommendations = await loop.run_in_executor(
+            None,
+            lambda: select_and_explain_routines(
+                emotion=emotion,
+                candidates=candidates_for_llm,
+                max_recommend=llm_max_recommend,
+            )
         )
         print(f"LLM 1차 추천 {len(recommendations)}개 생성 완료")
 

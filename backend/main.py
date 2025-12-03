@@ -437,32 +437,6 @@ async def cleanup_conversations(current_user: User = Depends(get_current_user)):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.delete("/api/agent/cleanup/session-memories")
-async def cleanup_session_memories(current_user: User = Depends(get_current_user)):
-    """테스트용: 현재 유저의 모든 세션 메모리 완전 삭제"""
-    try:
-        from app.db.database import SessionLocal
-        from app.db.models import SessionMemory
-
-        user_id = current_user.ID
-        db = SessionLocal()
-        try:
-            count = db.query(SessionMemory).filter(
-                SessionMemory.USER_ID == user_id
-            ).delete()
-            db.commit()
-
-            return {
-                "status": "success",
-                "message": f"Deleted {count} session memory records",
-                "user_id": user_id
-            }
-        finally:
-            db.close()
-    except Exception as e:
-        import traceback
-        traceback.print_exc()
-        raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.delete("/api/agent/cleanup/global-memories")
