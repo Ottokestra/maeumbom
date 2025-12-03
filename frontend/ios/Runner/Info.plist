@@ -45,5 +45,23 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<!-- Google Sign-In URL Scheme -->
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<!-- Reversed client ID from Google -->
+				<string>com.googleusercontent.apps.758124085502-7so94snakhcj5bj5o1242o6ktg48eqqj</string>
+				<!-- Deep link scheme -->
+				<string>com.maeumbom.app</string>
+			</array>
+		</dict>
+	</array>
+	<!-- Google Sign-In Client ID -->
+	<key>GIDClientID</key>
+	<string>758124085502-7so94snakhcj5bj5o1242o6ktg48eqqj.apps.googleusercontent.com</string>
 </dict>
 </plist>

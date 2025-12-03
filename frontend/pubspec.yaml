@@ -36,6 +36,26 @@ dependencies:
   cupertino_icons: ^1.0.8
   flutter_svg: ^2.2.3
 
+  # State Management
+  flutter_riverpod: ^2.5.1
+
+  # HTTP Client
+  dio: ^5.4.0
+
+  # Secure Storage
+  flutter_secure_storage: ^9.0.0
+
+  # Google Sign In
+  google_sign_in: ^6.2.1
+
+  # Web Auth for Kakao/Naver (WebView OAuth)
+  flutter_web_auth_2: ^3.0.0
+
+  # Utilities
+  freezed_annotation: ^2.4.1
+  json_annotation: ^4.8.1
+  logger: ^2.0.2
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -46,6 +66,11 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^6.0.0
+
+  # Code Generation
+  build_runner: ^2.4.7
+  freezed: ^2.4.6
+  json_serializable: ^6.7.1
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
