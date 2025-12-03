@@ -1,0 +1,464 @@
+/* src/pages/MenopauseSurveyPage.css */
+/* 마음봄 갱년기 온보딩 전용 스타일 (MUKJA / 뤼튼 느낌, 모바일 프레임) */
+
+:root {
+  --mb-primary: #c5535a;
+  --mb-primary-soft: #fbe9eb;
+  --mb-bg: #f7f4f3;
+  --mb-surface: #ffffff;
+  --mb-border-soft: #e3d9d6;
+  --mb-text-main: #222222;
+  --mb-text-sub: #666666;
+  --mb-text-weak: #9a8f8b;
+}
+
+/* 전체 배경 */
+.mb-landing {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 32px 16px;
+  box-sizing: border-box;
+  background: radial-gradient(circle at top left, #fbe9eb 0, #f7f4f3 40%, #f2f0ff 100%);
+}
+
+/* 모바일 프레임 */
+.mb-mobile-frame {
+  width: 100%;
+  max-width: 420px;
+  border-radius: 32px;
+  background-color: var(--mb-surface);
+  box-shadow:
+    0 20px 40px rgba(41, 24, 20, 0.16),
+    0 0 0 1px rgba(255, 255, 255, 0.8);
+  padding: 24px 20px 24px;
+  box-sizing: border-box;
+}
+
+/* 헤더 */
+.mb-header {
+  margin-bottom: 18px;
+}
+
+.mb-header__eyebrow {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--mb-primary);
+  margin: 0 0 4px;
+}
+
+.mb-header__title {
+  font-size: 20px;
+  line-height: 1.45;
+  font-weight: 700;
+  color: var(--mb-text-main);
+  margin: 0 0 6px;
+}
+
+.mb-header__desc {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--mb-text-sub);
+  margin: 0;
+}
+
+/* 카드 공통 */
+.mb-card {
+  border-radius: 24px;
+  background-color: #fdfaf9;
+  border: 1px solid #f0e5e0;
+  padding: 18px 16px 16px;
+  box-sizing: border-box;
+}
+
+.mb-card--result {
+  border-color: transparent;
+}
+
+/* 인트로 카드 */
+.mb-card--intro {
+  margin-top: 4px;
+}
+
+.mb-intro-text {
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--mb-text-sub);
+  margin: 0 0 10px;
+}
+
+.mb-intro-disclaimer {
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--mb-text-weak);
+  margin: 0 0 14px;
+}
+
+/* ===========================
+   성별 선택 카드
+   =========================== */
+
+.mb-card--gender {
+  margin-top: 8px;
+}
+
+.mb-gender-subtitle {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--mb-text-sub);
+  margin: 0 0 10px;
+}
+
+.mb-gender-grid {
+  display: flex;
+  gap: 12px;
+}
+
+.mb-gender-card {
+  flex: 1 1 0;
+  border-radius: 20px;
+  border: 1px solid #f0e1dd;
+  background-color: #ffffff;
+  padding: 14px 10px;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    box-shadow 0.15s ease,
+    transform 0.08s ease;
+}
+
+.mb-gender-card:hover {
+  border-color: var(--mb-primary);
+  box-shadow: 0 8px 18px rgba(197, 83, 90, 0.14);
+  transform: translateY(-1px);
+}
+
+.mb-gender-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.mb-gender-icon--male {
+  background-color: #e1edff;
+  color: #265ea8;
+}
+
+.mb-gender-icon--female {
+  background-color: #ffe6ef;
+  color: #c5535a;
+}
+
+.mb-gender-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--mb-text-main);
+  margin-bottom: 4px;
+}
+
+.mb-gender-desc {
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--mb-text-sub);
+  margin: 0;
+}
+
+/* ===========================
+   진행 바 / 질문 / 선택 칩
+   =========================== */
+
+.mb-progress {
+  margin-bottom: 12px;
+}
+
+.mb-progress__label {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.mb-step {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--mb-text-sub);
+}
+
+.mb-percent {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--mb-text-sub);
+}
+
+.mb-progress__track {
+  width: 100%;
+  height: 4px;
+  border-radius: 999px;
+  background-color: #f0e5ff;
+  overflow: hidden;
+}
+
+.mb-progress__fill {
+  height: 100%;
+  background: linear-gradient(90deg, #c5535a, #f97373);
+  border-radius: 999px;
+}
+
+/* 질문 본문 */
+.mb-question {
+  margin-bottom: 16px;
+}
+
+.mb-question__eyebrow {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--mb-text-weak);
+  margin-bottom: 4px;
+}
+
+.mb-question__text {
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--mb-text-main);
+}
+
+/* 예/아니오 칩 */
+.mb-answer-row,
+.mb-choice-row {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.mb-chip {
+  flex: 1 1 0;
+  border-radius: 999px;
+  padding: 9px 0;
+  border: 1px solid var(--mb-border-soft);
+  background-color: #ffffff;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--mb-text-sub);
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease,
+    box-shadow 0.12s ease;
+}
+
+.mb-chip:hover {
+  border-color: var(--mb-primary);
+}
+
+.mb-chip--active {
+  border-color: var(--mb-primary);
+  background-color: var(--mb-primary-soft);
+  color: #b02e37;
+  box-shadow: 0 0 0 1px rgba(197, 83, 90, 0.15);
+}
+
+/* 네비게이션 버튼 */
+.mb-nav-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.mb-nav-row--intro {
+  margin-top: 12px;
+}
+
+.mb-nav-row--result {
+  margin-top: 14px;
+}
+
+/* 공통 버튼 */
+.mb-btn {
+  flex: 1 1 0;
+  border-radius: 999px;
+  padding: 10px 0;
+  font-size: 13px;
+  font-weight: 600;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease,
+    transform 0.08s ease;
+}
+
+/* primary */
+.mb-btn--primary {
+  background-color: var(--mb-primary);
+  border-color: var(--mb-primary);
+  color: #ffffff;
+}
+
+.mb-btn--primary:hover:not(:disabled) {
+  background-color: #b0464c;
+  border-color: #b0464c;
+  transform: translateY(-1px);
+}
+
+.mb-btn--primary:disabled {
+  background-color: #e0c5c6;
+  border-color: #e0c5c6;
+  cursor: default;
+  transform: none;
+}
+
+/* outline for result */
+.mb-btn--primary-outline {
+  background-color: #ffffff;
+  border-color: var(--mb-primary);
+  color: var(--mb-primary);
+}
+
+.mb-btn--primary-outline:hover {
+  background-color: var(--mb-primary-soft);
+}
+
+/* ghost */
+.mb-btn--ghost {
+  background-color: #ffffff;
+  border-color: var(--mb-border-soft);
+  color: var(--mb-text-sub);
+}
+
+.mb-btn--ghost:hover:not(:disabled) {
+  background-color: #f3ece9;
+}
+
+/* 비활성화 */
+.mb-btn:disabled {
+  opacity: 0.7;
+  cursor: default;
+}
+
+/* 결과 카드 내부 */
+.mb-result-top {
+  margin-bottom: 16px;
+}
+
+.mb-result-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #ffffff;
+  margin-bottom: 8px;
+  background: linear-gradient(90deg, #c5535a, #f97373);
+}
+
+.mb-result-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--mb-text-main);
+  margin: 0 0 4px;
+}
+
+.mb-result-desc {
+  font-size: 13px;
+  color: var(--mb-text-sub);
+  margin: 0;
+}
+
+/* 결과 문항 리스트 (지금은 사용 X지만 남겨둠) */
+.mb-result-list {
+  border-radius: 16px;
+  background-color: #ffffffd0;
+  padding: 10px 8px;
+  box-sizing: border-box;
+  margin-top: 10px;
+  max-height: 260px;
+  overflow-y: auto;
+}
+
+.mb-result-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 4px;
+  border-bottom: 1px solid rgba(227, 217, 214, 0.7);
+}
+
+.mb-result-item:last-child {
+  border-bottom: none;
+}
+
+.mb-result-item__left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.mb-result-number {
+  flex: 0 0 auto;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background-color: #f5e1e4;
+  color: #a63d45;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mb-result-text {
+  font-size: 13px;
+  color: var(--mb-text-main);
+}
+
+/* YES/NO 뱃지 */
+.mb-result-chip {
+  flex: 0 0 auto;
+  min-width: 56px;
+  text-align: center;
+  font-size: 12px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+}
+
+.mb-result-chip--yes {
+  background-color: var(--mb-primary-soft);
+  border-color: var(--mb-primary);
+  color: #a63d45;
+}
+
+.mb-result-chip--no {
+  background-color: #f4f2f1;
+  border-color: #d8cfcc;
+  color: var(--mb-text-sub);
+}
+
+/* 반응형 */
+@media (max-width: 480px) {
+  .mb-mobile-frame {
+    border-radius: 24px;
+    padding: 20px 16px 20px;
+  }
+
+  .mb-header__title {
+    font-size: 18px;
+  }
+
+  .mb-question__text {
+    font-size: 14px;
+  }
+}
