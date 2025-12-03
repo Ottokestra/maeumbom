@@ -7,3 +7,6 @@
 .LSOverride
 # Thumbnails
 ._*
+
+# Test
+frontend-test/
