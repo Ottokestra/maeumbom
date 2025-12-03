@@ -50,6 +50,14 @@ class ExampleContent extends StatelessWidget {
               Navigator.pushNamed(context, '/chat');
             },
           ),
+          const SizedBox(height: AppSpacing.sm),
+          AppButton(
+            text: '로그인',
+            variant: ButtonVariant.secondaryRed,
+            onTap: () {
+              Navigator.pushNamed(context, '/login');
+            },
+          ),
         ],
       ),
     );
