@@ -4,6 +4,23 @@
 
 ---
 
+### 서비스 추가 예시
+
+**기본 서비스 생성 요청 예시:**
+```
+"frontend/FRONTEND_GUIDE.md를 참고하여 
+/app/common 에 example_screen.dart 을 추가할거야
+- topbar에 왼쪽(이전), 타이틀(테스트), 오른쪽(더보기 세로) 버튼 사용하게 하고
+- bottombar는 Input bar 사용해줘"
+```
+
+**테스트 요청 예시:**
+```
+"test는 /frontend/lib/main.dart에 라우팅 추가하고 
+/frontend/lib/app/example/example_screen.dart에 버튼 추가해줘"
+```
+
+
 ## 📚 목차
 
 1. [시작하기](#-시작하기)
