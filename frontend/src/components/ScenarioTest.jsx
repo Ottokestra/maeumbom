@@ -375,12 +375,137 @@ function ScenarioTest() {
     )
   }
 
+  // Deep Agent 테스트 함수
+  const testDeepAgent = async () => {
+    const target = prompt('Target을 입력하세요 (HUSBAND, CHILD, FRIEND, COLLEAGUE):', 'HUSBAND')
+    if (!target) return
+
+    const topic = prompt('Topic을 입력하세요 (예: 남편이 밥투정을 합니다):', '남편이 밥투정을 합니다')
+    if (!topic) return
+
+    setLoading(true)
+    setError(null)
+
+    try {
+      const token = localStorage.getItem('access_token')
+      
+      console.log('🤖 Deep Agent 시나리오 생성 시작...')
+      console.log('Target:', target)
+      console.log('Topic:', topic)
+
+      const response = await fetch(`${API_BASE_URL}/generate-scenario`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          target: target,
+          topic: topic
+        })
+      })
+
+      if (response.status === 401) {
+        setError('로그인이 필요합니다.')
+        setIsLoggedIn(false)
+        return
+      }
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.detail || '시나리오 생성에 실패했습니다.')
+      }
+
+      const result = await response.json()
+      console.log('✅ Deep Agent 결과:', result)
+      
+      alert(`✅ 시나리오 생성 완료!\n\nScenario ID: ${result.scenario_id}\n이미지 수: ${result.image_count}/17\n폴더명: ${result.folder_name}\n\n시나리오 목록을 새로고침합니다.`)
+      
+      // 목록 새로고침
+      loadScenarios()
+    } catch (err) {
+      setError(err.message)
+      console.error('Deep Agent 오류:', err)
+      alert(`❌ 오류: ${err.message}`)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // 시나리오 삭제 함수
+  const deleteScenario = async (scenarioId, scenarioTitle) => {
+    if (!confirm(`"${scenarioTitle}" 시나리오를 삭제하시겠습니까?\n\n이 작업은 되돌릴 수 없습니다.`)) {
+      return
+    }
+
+    setLoading(true)
+    setError(null)
+
+    try {
+      const token = localStorage.getItem('access_token')
+      
+      const response = await fetch(`${API_BASE_URL}/scenarios/${scenarioId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
+
+      if (response.status === 401) {
+        setError('로그인이 필요합니다.')
+        setIsLoggedIn(false)
+        return
+      }
+
+      if (response.status === 404) {
+        alert('시나리오를 찾을 수 없거나 삭제 권한이 없습니다.')
+        return
+      }
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.detail || '시나리오 삭제에 실패했습니다.')
+      }
+
+      const result = await response.json()
+      console.log('✅ 삭제 완료:', result)
+      
+      alert(`✅ "${scenarioTitle}" 시나리오가 삭제되었습니다.`)
+      
+      // 목록 새로고침
+      loadScenarios()
+    } catch (err) {
+      setError(err.message)
+      console.error('삭제 오류:', err)
+      alert(`❌ 오류: ${err.message}`)
+    } finally {
+      setLoading(false)
+    }
+  }
+
   // 시나리오 목록 화면
   return (
     <div className="scenario-test">
       <div className="scenario-list-header">
         <h2>인터랙티브 시나리오</h2>
         <p>관계 개선 훈련과 공감 드라마를 체험해보세요</p>
+        <button 
+          onClick={testDeepAgent} 
+          className="primary-btn"
+          style={{
+            marginTop: '12px',
+            padding: '12px 20px',
+            background: 'linear-gradient(135deg, #7a5af8, #9c6bff)',
+            color: 'white',
+            border: 'none',
+            borderRadius: '12px',
+            fontWeight: '700',
+            cursor: 'pointer',
+            fontSize: '15px'
+          }}
+        >
+          🤖 Deep Agent 시나리오 생성
+        </button>
       </div>
 
       {/* 카테고리 필터 */}
@@ -445,12 +570,26 @@ function ScenarioTest() {
               <div className="scenario-card-body">
                 <p className="target-type">대상: {getTargetTypeLabel(scenario.target_type)}</p>
               </div>
-              <button
-                onClick={() => startScenario(scenario.id)}
-                className="start-button"
-              >
-                시작하기 →
-              </button>
+              <div className="scenario-card-actions">
+                <button
+                  onClick={() => startScenario(scenario.id)}
+                  className="start-button"
+                >
+                  시작하기 →
+                </button>
+                {scenario.user_id !== null && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      deleteScenario(scenario.id, scenario.title)
+                    }}
+                    className="delete-button"
+                    title="시나리오 삭제"
+                  >
+                    🗑️
+                  </button>
+                )}
+              </div>
             </div>
           ))}
         </div>

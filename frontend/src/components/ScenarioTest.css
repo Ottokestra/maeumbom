@@ -136,8 +136,15 @@
   margin: 0;
 }
 
+/* 시나리오 카드 액션 버튼 영역 */
+.scenario-card-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
 .start-button {
-  width: 100%;
+  flex: 1;
   padding: 12px;
   background-color: #6366f1;
   color: white;
@@ -151,6 +158,24 @@
 
 .start-button:hover {
   background-color: #4f46e5;
+}
+
+.delete-button {
+  padding: 10px 14px;
+  background-color: #fee2e2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  font-size: 1.2rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.delete-button:hover {
+  background-color: #fecaca;
+  border-color: #fca5a5;
+  transform: scale(1.05);
 }
 
 /* 시나리오 진행 화면 */

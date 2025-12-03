@@ -43,15 +43,27 @@ function DailyMoodCheck({ user }) {
   }
 
   const loadImages = async () => {
+    if (!user) return
+    
     setLoading(true)
     setError(null)
     try {
+      const accessToken = localStorage.getItem('access_token')
       // 캐시 방지를 위해 타임스탬프 추가
       const response = await fetch(`${API_BASE_URL}/images?t=${Date.now()}`, {
-        cache: 'no-store'
+        cache: 'no-store',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`
+        }
       })
       if (!response.ok) {
-        throw new Error('이미지 로드 실패')
+        if (response.status === 401) {
+          console.error('인증이 필요합니다.')
+          setError('인증이 필요합니다. 다시 로그인해주세요.')
+        } else {
+          throw new Error('이미지 로드 실패')
+        }
+        return
       }
       const data = await response.json()
       setImages(data.images || [])

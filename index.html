@@ -285,6 +285,7 @@
     </div>
     <div class="landing-actions">
       <button class="primary-btn" onclick="startSurvey()">지금 시작하기</button>
+      <button class="secondary-btn" onclick="testDeepAgent()" style="padding: 12px 18px; border-radius: 14px;">🤖 Deep Agent 테스트</button>
     </div>
     <div class="cta-container">
       <button class="pill-btn" data-pill>예/아니오로 간단히 응답</button>
@@ -438,6 +439,61 @@
     window.startSurvey = startSurvey;
     window.goPrev = goPrev;
     window.goNext = goNext;
+
+    // ========================================================================
+    // Deep Agent 테스트 함수
+    // ========================================================================
+    const testDeepAgent = async () => {
+      // 1. 토큰 입력 받기
+      const token = prompt('JWT 토큰을 입력하세요 (로그인 후 받은 access_token):');
+      if (!token) {
+        alert('토큰이 필요합니다!');
+        return;
+      }
+
+      // 2. Target 선택
+      const target = prompt('Target을 입력하세요 (HUSBAND, CHILD, FRIEND, COLLEAGUE):', 'HUSBAND');
+      if (!target) return;
+
+      // 3. Topic 입력
+      const topic = prompt('Topic을 입력하세요 (예: 남편이 밥투정을 합니다):', '남편이 밥투정을 합니다');
+      if (!topic) return;
+
+      // 4. API 호출
+      console.log('Deep Agent 시나리오 생성 시작...');
+      console.log('Target:', target);
+      console.log('Topic:', topic);
+
+      try {
+        const response = await fetch('http://localhost:8000/api/service/relation-training/generate-scenario', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            target: target,
+            topic: topic
+          })
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          console.error('API 오류:', errorData);
+          alert(`API 오류: ${errorData.detail || response.statusText}`);
+          return;
+        }
+
+        const result = await response.json();
+        console.log('✅ Deep Agent 결과:', result);
+        alert(`✅ 시나리오 생성 완료!\n\nScenario ID: ${result.scenario_id}\n이미지 수: ${result.image_count}/17\n폴더명: ${result.folder_name}\n\n콘솔(F12)에서 전체 결과를 확인하세요.`);
+      } catch (error) {
+        console.error('네트워크 오류:', error);
+        alert(`네트워크 오류: ${error.message}\n\n서버가 실행 중인지 확인하세요 (http://localhost:8000)`);
+      }
+    };
+
+    window.testDeepAgent = testDeepAgent;
   </script>
 </body>
 </html>

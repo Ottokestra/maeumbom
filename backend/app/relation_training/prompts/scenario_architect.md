@@ -8,9 +8,9 @@
 - **Target (대상):** 다음 5가지 중 하나 [HUSBAND, CHILD, FRIEND, COLLEAGUE, ETC]
   * **HUSBAND, CHILD, FRIEND, COLLEAGUE:** 지정된 관계에 맞춰 페르소나 설정.
   * **ETC (기타):** 사용자가 선택한 대상이 없는 경우.
-- **Analyzed Topic (분석된 니즈):** [여기에 AI가 분석한 사용자 고민 요약 입력]
-  * 예: "시어머니: 김장할 때마다 와서 도우라고 강요하시는데 허리가 아파서 못 가겠어요."
-	* **지침:** 이 건조한 분석 문장을 바탕으로, 사용자가 "어머, 내 얘기네!"라고 느낄 수 있는 **구체적이고 드라마틱한 '오프닝 상황(Situation)'을 창작**할 것.
+- **Analyzed Topic (분석된 니즈):** [TOPIC]
+  * **지침:** 이 Topic을 바탕으로, 사용자가 "어머, 내 얘기네!"라고 느낄 수 있는 **구체적이고 드라마틱한 '오프닝 상황(Situation)'을 창작**할 것.
+  * Topic은 그대로 사용하되, 시나리오 제목과 내용은 창의적으로 재구성할 것.
 - **카테고리:** TRAINING
 
 # 🚨 Critical Rule: "No More Fixed Patterns" (패턴 파괴)
@@ -36,14 +36,14 @@
 - **Mapping Rule:** - `target_type` 필드는 입력받은 **Target** 값(HUSBAND, CHILD 등)을 사용한다.
   - 단, **ETC**인 경우, AI가 추론한 구체적인 관계(예: mother_in_law, sister_in_law 등)를 적는 것이 아니라, DB 호환성을 위해 **"ETC"**라고 적거나, 혹은 프론트엔드 약속에 따라 **"other"**로 통일한다. (여기서는 "ETC"로 가정)
 
-## 2. Scenario Tree (Binary Tree)
-- **Nodes:** 15개 (`node_1` ~ `node_4_bbb`)
-- **Options:** 30개
-- **Results:** 16개
+## 2. Scenario Tree (Binary Tree) - 🚨 정확한 개수 필수!
+- **Nodes:** 정확히 15개 (`node_1`, `node_2_a`, `node_2_b`, `node_3_aa`, `node_3_ab`, `node_3_ba`, `node_3_bb`, `node_4_aaa`, `node_4_aab`, `node_4_aba`, `node_4_abb`, `node_4_baa`, `node_4_bab`, `node_4_bba`, `node_4_bbb`)
+- **Options:** 정확히 30개 (각 노드마다 2개씩, 단 Level 4는 결과로 연결)
+- **Results:** 정확히 16개 (AAAA, AAAB, AABA, AABB, ABAA, ABAB, ABBA, ABBB, BAAA, BAAB, BABA, BABB, BBAA, BBAB, BBBA, BBBB)
 
 ### A. Nodes (Situation)
 - **내용:** 5060 여성이 겪는 딜레마를 구체적으로 묘사.
-  - 예: "남편이 밥투정을 하는데, 여기서 또 참으면 내가 바보가 되는 기분이다."
+  - Topic에서 제시된 상황을 바탕으로 현실감 있는 대화와 감정을 담을 것.
 
 ### B. Options (The Choice) - **맥락 중심(Context-Driven)**
 - **ID 규칙:** `from_node_id`와 `to_node_id`를 정확히 연결할 것.
@@ -62,7 +62,7 @@
 - **Image URL:** `/api/service/relation-training/images/{topic_summary_eng}/result_{result_code}.png`
 - **Analysis Text:**
   - 사용자가 걸어온 경로(Choices)가 이 상황에서 적절했는지 분석할 것.
-  - 예: "내내 강하게(A) 나가셨네요. 보통은 싸움이 나지만, **이번 시어머니와의 기싸움에서는 그 단호함이 오히려 평화를 가져왔습니다(FLOWER).** 잘하셨어요!"
+  - 선택의 결과와 교훈을 따뜻하지만 뼈 때리는 조언으로 작성할 것.
 
 ## 3. Character Design (Visual Consistency)
 **시나리오의 몰입도를 위해, 이번 상황(Topic)과 대상(Target)에 가장 어울리는 외모 설정을 생성하라.**
@@ -73,11 +73,14 @@
 * **target_visual:** 상대방(Target)의 구체적인 외모 특징. (예: 남편이면 흰 런닝셔츠/안경, 며느리면 세련된 블라우스 등)
 
 # Constraint
-1. **JSON Only:** 코드 블록 외 사족 금지.
+1. **JSON Only:** 마크다운 코드 블록(```json) 없이 순수 JSON만 출력할 것. 사족 금지.
 2. **Language:** 한국어.
 3. **Tone:** 현실적이고 뼈 때리는 조언.
+4. **🚨 개수 엄수:** nodes 15개, options 30개, results 16개를 정확히 생성할 것. 하나라도 빠지면 안 됨!
 
 # Output Format Example
+아래는 형식 예시입니다. 실제 출력 시에는 ```json 코드 블록 없이 { 부터 시작하는 순수 JSON만 출력하세요.
+
 ```json
 {
   "scenario": {

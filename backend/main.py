@@ -76,11 +76,43 @@ from app.routine_survey.models import seed_default_mr_survey
 # DB 세션/초기화
 from app.db.database import SessionLocal, init_db
 
-# Create FastAPI app
+# =========================
+# Lifespan Events
+# =========================
+from contextlib import asynccontextmanager
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """
+    Lifespan event handler for startup and shutdown
+    """
+    # Startup
+    print("[Startup] Initializing Deep Agent Pipeline...")
+    
+    # Load FLUX.1 model if not in skip mode
+    skip_images = os.getenv("USE_SKIP_IMAGES", "false").lower() == "true"
+    if not skip_images:
+        try:
+            from app.relation_training.image_generator import load_flux_model
+            await load_flux_model()
+            print("[Startup] FLUX.1 model loaded successfully")
+        except Exception as e:
+            print(f"[Startup] FLUX.1 model loading failed: {e}")
+            print("[Startup] Continuing without image generation")
+    else:
+        print("[Startup] Image generation skipped (USE_SKIP_IMAGES=true)")
+    
+    yield
+    
+    # Shutdown
+    print("[Shutdown] Cleaning up...")
+
+# Create FastAPI app with lifespan
 app = FastAPI(
     title="Team Project API",
-    description="팀 프로젝트 통합 API 서비스 (Emotion + STT + TTS)",
+    description="팀 프로젝트 통합 API 서비스 (Emotion + STT + TTS + Deep Agent)",
     version="1.0.0",
+    lifespan=lifespan
 )
 
 # Configure CORS

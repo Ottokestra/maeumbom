@@ -1,0 +1,334 @@
+{
+  "scenario": {
+    "title": "남편의 밥투정, 어떻게 대처할까?",
+    "target_type": "HUSBAND",
+    "category": "TRAINING",
+    "start_image_url": "/api/service/relation-training/images/cooking_conflict/start.png"
+  },
+  "character_design": {
+    "protagonist_visual": "Korean woman, 50s, shoulder-length straight hair, wearing a Floral Apron over a White T-Shirt and Comfortable Pants",
+    "target_visual": "Korean man, 60s, graying hair, wearing a Casual Checked Shirt and Relaxed Fit Trousers"
+  },
+  "nodes": [
+    {
+      "id": "node_1",
+      "step_level": 1,
+      "text": "저녁 준비를 하던 중, 남편이 갑자기 식사가 마음에 들지 않는다며 투정을 부리기 시작했습니다. 당신은 어찌할 바를 몰라 잠시 멈칫합니다.",
+      "image_url": ""
+    },
+    {
+      "id": "node_2_a",
+      "step_level": 2,
+      "text": "당신은 분노가 치밀어 오르며, '그렇게 먹고 싶으면 네가 해!'라고 소리칩니다.",
+      "image_url": ""
+    },
+    {
+      "id": "node_2_b",
+      "step_level": 2,
+      "text": "그냥 참으며 '알겠어, 다음에는 더 맛있게 해볼게'라고 대답합니다.",
+      "image_url": ""
+    },
+    {
+      "id": "node_3_aa",
+      "step_level": 3,
+      "text": "남편은 당신의 화에 놀라 잠시 말이 없지만, 분위기는 싸늘해집니다.",
+      "image_url": ""
+    },
+    {
+      "id": "node_3_ab",
+      "step_level": 3,
+      "text": "남편은 '그럼 해줄래?'라고 말하며, 당신의 대답을 기다립니다.",
+      "image_url": ""
+    },
+    {
+      "id": "node_3_ba",
+      "step_level": 3,
+      "text": "남편은 당신의 말에 '그래, 다 잘할 수 있는 사람으로 보여'라고 나무랍니다.",
+      "image_url": ""
+    },
+    {
+      "id": "node_3_bb",
+      "step_level": 3,
+      "text": "남편은 별다른 반응 없이 TV를 켜고 당신의 대답을 무시합니다.",
+      "image_url": ""
+    },
+    {
+      "id": "node_4_aaa",
+      "step_level": 4,
+      "text": "남편과의 대화가 끝나자, 당신은 더 이상 그를 위해 요리하고 싶지 않아집니다.",
+      "image_url": ""
+    },
+    {
+      "id": "node_4_aab",
+      "step_level": 4,
+      "text": "당신은 남편과의 대화가 끝난 후, 주방에서 혼자 눈물을 흘립니다.",
+      "image_url": ""
+    },
+    {
+      "id": "node_4_aba",
+      "step_level": 4,
+      "text": "당신은 그간 참아온 마음을 털어놓기로 결심합니다.",
+      "image_url": ""
+    },
+    {
+      "id": "node_4_abb",
+      "step_level": 4,
+      "text": "당신은 남편의 반응을 무시하고, 자신의 요리를 계속합니다.",
+      "image_url": ""
+    },
+    {
+      "id": "node_4_baa",
+      "step_level": 4,
+      "text": "당신은 그가 더 이상 투정하지 않도록 단호히 대처합니다.",
+      "image_url": ""
+    },
+    {
+      "id": "node_4_bab",
+      "step_level": 4,
+      "text": "당신은 남편의 반응이 무시무시하다는 것을 깨닫게 됩니다.",
+      "image_url": ""
+    },
+    {
+      "id": "node_4_bba",
+      "step_level": 4,
+      "text": "당신은 그가 다른 사람과 결혼했으면 좋겠다고 생각합니다.",
+      "image_url": ""
+    },
+    {
+      "id": "node_4_bbb",
+      "step_level": 4,
+      "text": "당신은 남편에게 요리가 마음에 들지 않으면 외식하자고 제안합니다.",
+      "image_url": ""
+    }
+  ],
+  "options": [
+    {
+      "from_node_id": "node_1",
+      "option_code": "A",
+      "text": "남편에게 그럼 당신이 해보라고 합니다.",
+      "to_node_id": "node_2_a",
+      "result_code": null
+    },
+    {
+      "from_node_id": "node_1",
+      "option_code": "B",
+      "text": "남편의 기분을 상하지 않게 해주려 애쓰며 대답합니다.",
+      "to_node_id": "node_2_b",
+      "result_code": null
+    },
+    {
+      "from_node_id": "node_2_a",
+      "option_code": "A",
+      "text": "이런 식으로 대화가 계속된다면 더 이상 요리를 하지 않겠다고 합니다.",
+      "to_node_id": "node_3_aa",
+      "result_code": null
+    },
+    {
+      "from_node_id": "node_2_a",
+      "option_code": "B",
+      "text": "그냥 무시하고 요리를 계속합니다.",
+      "to_node_id": "node_3_ab",
+      "result_code": null
+    },
+    {
+      "from_node_id": "node_2_b",
+      "option_code": "A",
+      "text": "남편에게 요리에 대한 의견을 물어보지 않겠다고 단호하게 말합니다.",
+      "to_node_id": "node_3_ba",
+      "result_code": null
+    },
+    {
+      "from_node_id": "node_2_b",
+      "option_code": "B",
+      "text": "그의 의견을 수용하며 요리를 계속합니다.",
+      "to_node_id": "node_3_bb",
+      "result_code": null
+    },
+    {
+      "from_node_id": "node_3_aa",
+      "option_code": "A",
+      "text": "더 이상 그와의 대화가 필요 없다고 생각합니다.",
+      "to_node_id": "node_4_aaa",
+      "result_code": null
+    },
+    {
+      "from_node_id": "node_3_aa",
+      "option_code": "B",
+      "text": "그와의 대화를 시도합니다.",
+      "to_node_id": "node_4_aab",
+      "result_code": null
+    },
+    {
+      "from_node_id": "node_3_ab",
+      "option_code": "A",
+      "text": "그가 그렇게 계속할 것이면 나도 그에게 무관심해지겠다고 말합니다.",
+      "to_node_id": "node_4_aba",
+      "result_code": null
+    },
+    {
+      "from_node_id": "node_3_ab",
+      "option_code": "B",
+      "text": "그냥 요리를 계속하며 침묵을 지킵니다.",
+      "to_node_id": "node_4_abb",
+      "result_code": null
+    },
+    {
+      "from_node_id": "node_3_ba",
+      "option_code": "A",
+      "text": "그가 요리에 대해 더 이상 요구하지 않도록 단호한 태도를 취합니다.",
+      "to_node_id": "node_4_baa",
+      "result_code": null
+    },
+    {
+      "from_node_id": "node_3_ba",
+      "option_code": "B",
+      "text": "그의 말을 듣지 않겠다고 말합니다.",
+      "to_node_id": "node_4_bab",
+      "result_code": null
+    },
+    {
+      "from_node_id": "node_3_bb",
+      "option_code": "A",
+      "text": "그의 의견이 듣기 싫다고 솔직히 말합니다.",
+      "to_node_id": "node_4_bba",
+      "result_code": null
+    },
+    {
+      "from_node_id": "node_3_bb",
+      "option_code": "B",
+      "text": "그가 원하는 대로 계속 요리를 하겠다고 대답합니다.",
+      "to_node_id": "node_4_bbb",
+      "result_code": null
+    }
+  ],
+  "results": [
+    {
+      "result_code": "AAAA",
+      "display_title": "갈등의 연속",
+      "analysis_text": "남편에게 직설적으로 대처했지만, 결국 서로의 신뢰가 깨지고 말았습니다. 때로는 단호함이 필요하지만, 그 뒤의 감정도 잊지 말아야 합니다.",
+      "atmosphere_image_type": "STORM",
+      "score": 20,
+      "image_url": "/api/service/relation-training/images/cooking_conflict/result_AAAA.png"
+    },
+    {
+      "result_code": "AAAB",
+      "display_title": "갈등의 시작",
+      "analysis_text": "한 번의 반발이 갈등을 불러왔습니다. 대화와 소통이 필요할 때입니다.",
+      "atmosphere_image_type": "CLOUDY",
+      "score": 30,
+      "image_url": "/api/service/relation-training/images/cooking_conflict/result_AAAB.png"
+    },
+    {
+      "result_code": "AABA",
+      "display_title": "서로의 이해 부족",
+      "analysis_text": "서로의 마음을 이해하려는 노력이 부족했습니다. 다음에는 감정을 함께 나누는 것이 중요할 것입니다.",
+      "atmosphere_image_type": "CLOUDY",
+      "score": 40,
+      "image_url": "/api/service/relation-training/images/cooking_conflict/result_AABA.png"
+    },
+    {
+      "result_code": "AABB",
+      "display_title": "해결을 향한 첫걸음",
+      "analysis_text": "단호한 태도가 서로를 이해하는 첫걸음이 될 수 있습니다. 그러나 감정적인 대화도 필요합니다.",
+      "atmosphere_image_type": "SUNNY",
+      "score": 60,
+      "image_url": "/api/service/relation-training/images/cooking_conflict/result_AABB.png"
+    },
+    {
+      "result_code": "ABAA",
+      "display_title": "감정의 연결",
+      "analysis_text": "서로의 감정을 공유하는 것이 중요하다는 것을 깨달았습니다. 대화를 통해 서로의 마음을 알아가는 시간을 가져야 합니다.",
+      "atmosphere_image_type": "FLOWER",
+      "score": 80,
+      "image_url": "/api/service/relation-training/images/cooking_conflict/result_ABAA.png"
+    },
+    {
+      "result_code": "ABAB",
+      "display_title": "서로의 이해",
+      "analysis_text": "서로의 감정을 이해하는데 한 걸음 더 나아갔습니다. 대화를 통해 이해를 깊이 있는 관계로 발전시킬 수 있습니다.",
+      "atmosphere_image_type": "FLOWER",
+      "score": 90,
+      "image_url": "/api/service/relation-training/images/cooking_conflict/result_ABAB.png"
+    },
+    {
+      "result_code": "ABBA",
+      "display_title": "상호 존중의 시작",
+      "analysis_text": "서로에 대한 존중이 시작되었습니다. 감정적 소통을 통해 더욱 건강한 관계를 형성할 수 있습니다.",
+      "atmosphere_image_type": "FLOWER",
+      "score": 100,
+      "image_url": "/api/service/relation-training/images/cooking_conflict/result_ABBA.png"
+    },
+    {
+      "result_code": "ABBB",
+      "display_title": "상호 존중의 완성",
+      "analysis_text": "서로의 마음을 존중하며 대화하는 것이 건강한 관계의 시작임을 깨달았습니다. 앞으로 더 나은 소통을 기대해봅니다.",
+      "atmosphere_image_type": "FLOWER",
+      "score": 100,
+      "image_url": "/api/service/relation-training/images/cooking_conflict/result_ABBB.png"
+    },
+    {
+      "result_code": "BAAA",
+      "display_title": "반복되는 갈등",
+      "analysis_text": "남편의 불만을 참으려 했지만, 결국 갈등은 반복되었습니다. 갈등을 피하기 위해서는 솔직한 대화가 필요합니다.",
+      "atmosphere_image_type": "CLOUDY",
+      "score": 30,
+      "image_url": "/api/service/relation-training/images/cooking_conflict/result_BAAA.png"
+    },
+    {
+      "result_code": "BAAB",
+      "display_title": "무관심의 늪",
+      "analysis_text": "무관심한 태도가 서로의 감정을 더욱 소외시켰습니다. 대화를 통해 감정의 교류가 필요합니다.",
+      "atmosphere_image_type": "STORM",
+      "score": 20,
+      "image_url": "/api/service/relation-training/images/cooking_conflict/result_BAAB.png"
+    },
+    {
+      "result_code": "BABA",
+      "display_title": "상대방의 마음 읽기",
+      "analysis_text": "상대방의 마음을 읽으려는 노력이 부족했습니다. 서로의 마음을 이해하는 것이 중요합니다.",
+      "atmosphere_image_type": "CLOUDY",
+      "score": 40,
+      "image_url": "/api/service/relation-training/images/cooking_conflict/result_BABA.png"
+    },
+    {
+      "result_code": "BABB",
+      "display_title": "관계를 자극하는 방법",
+      "analysis_text": "관계를 자극할 수 있는 방법으로 대화의 중요성을 깨달았습니다. 건강한 소통이 필요합니다.",
+      "atmosphere_image_type": "SUNNY",
+      "score": 60,
+      "image_url": "/api/service/relation-training/images/cooking_conflict/result_BABB.png"
+    },
+    {
+      "result_code": "BBAA",
+      "display_title": "자신의 주장을 더하기",
+      "analysis_text": "상대방의 감정을 존중하면서도 자신의 주장을 더하는 방법이 필요합니다. 서로의 이해를 위한 대화가 중요합니다.",
+      "atmosphere_image_type": "FLOWER",
+      "score": 80,
+      "image_url": "/api/service/relation-training/images/cooking_conflict/result_BBAA.png"
+    },
+    {
+      "result_code": "BBAB",
+      "display_title": "상대방의 의견 존중",
+      "analysis_text": "상대방의 의견을 존중하며 소통하는 것이 관계의 출발점입니다. 서로의 감정을 인정하는 것이 중요합니다.",
+      "atmosphere_image_type": "FLOWER",
+      "score": 90,
+      "image_url": "/api/service/relation-training/images/cooking_conflict/result_BBAB.png"
+    },
+    {
+      "result_code": "BBBA",
+      "display_title": "건강한 소통의 시작",
+      "analysis_text": "건강한 소통을 통해 서로의 마음을 알아가는 시간이 필요합니다. 대화가 관계를 더욱 깊게 만들어 줄 것입니다.",
+      "atmosphere_image_type": "FLOWER",
+      "score": 100,
+      "image_url": "/api/service/relation-training/images/cooking_conflict/result_BBBA.png"
+    },
+    {
+      "result_code": "BBBB",
+      "display_title": "관계의 위기",
+      "analysis_text": "관계를 더욱 악화시키는 무관심한 태도를 보였습니다. 서로의 감정을 이해하고 소통하는 것이 중요합니다.",
+      "atmosphere_image_type": "STORM",
+      "score": 10,
+      "image_url": "/api/service/relation-training/images/cooking_conflict/result_BBBB.png"
+    }
+  ]
+}
