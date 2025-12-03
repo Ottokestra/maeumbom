@@ -1,6 +1,8 @@
 // src/components/Login.jsx
 import { useState, useEffect } from 'react'
 import './Login.css'
+import { useNavigate } from "react-router-dom";
+import { getMenopauseSurveyStatus } from "../api/menopauseSurvey";
 
 const API_BASE_URL = 'http://localhost:8000'
 
@@ -12,6 +14,36 @@ function Login({ onLoginSuccess }) {
     kakaoClientId: null,
     naverClientId: null
   })
+
+  const navigate = useNavigate();
+
+  const handleLogin = async (e) => {
+    e.preventDefault();
+
+    try {
+      // 1. 기존 로그인 요청
+      // const res = await axios.post("/api/auth/login", { email, password });
+      // 토큰 저장, 유저정보 저장 등 기존 로직 그대로 유지
+
+      // 2. 로그인 성공 후, 갱년기 설문 상태 조회
+      const { done } = await getMenopauseSurveyStatus();
+
+      // 3. 사용자가 '나중에 할게요'를 선택했던 적이 있는지 확인 (브라우저 로컬 기준)
+      const skipped =
+        localStorage.getItem("menopauseSurveySkip") === "true";
+
+      // 4. 아직 설문 안했고, 예전에 스킵도 안 했으면 → 설문 페이지로
+      if (!done && !skipped) {
+        navigate("/menopause-survey");
+      } else {
+        // 이미 했거나, 스킵한 적 있으면 → 기존대로 메인/대시보드로
+        navigate("/dashboard"); // 혹은 "/" 등 네가 쓰던 경로
+      }
+    } catch (err) {
+      console.error(err);
+      alert("로그인에 실패했습니다.");
+    }
+  };
 
   // 컴포넌트 마운트 시 백엔드에서 Client ID들 가져오기
   useEffect(() => {

@@ -1,468 +1,481 @@
 // src/App.jsx
-import { useState, useEffect } from 'react'
+
+// ✅ React 및 Router
+import React, { useEffect, useState } from "react";
 import {
   BrowserRouter as Router,
   Routes,
   Route,
+  Navigate,
   useNavigate,
-} from 'react-router-dom'
+} from "react-router-dom";
 
-import SignupSurveyPage from './pages/SignupSurveyPage'
-import EmotionInput from './components/EmotionInput'
-import EmotionResult from './components/EmotionResult'
-import EmotionChart from './components/EmotionChart'
-import RoutineList from './components/RoutineList'
-import STTTest from './components/STTTest'
-import TTSTest from './components/TTSTest'
-import DailyMoodCheck from './components/DailyMoodCheck'
-import ScenarioTest from './components/ScenarioTest'
-import Login from './components/Login'
-import WeatherCard from './components/WeatherCard'
-import './App.css'
+// ✅ 기존 프로젝트 컴포넌트들
+import EmotionInput from "./components/EmotionInput";
+import EmotionResult from "./components/EmotionResult";
+import EmotionChart from "./components/EmotionChart";
+import RoutineList from "./components/RoutineList";
+import STTTest from "./components/STTTest";
+import TTSTest from "./components/TTSTest";
+import DailyMoodCheck from "./components/DailyMoodCheck";
+import ScenarioTest from "./components/ScenarioTest";
+import Login from "./components/Login";
+import WeatherCard from "./components/WeatherCard";
 
-const API_BASE_URL = 'http://localhost:8000'
+// ✅ 페이지 컴포넌트
+// └ 실제 폴더 구조 기준: pages/onboarding/ 하위에 있음
+import MenopauseSurveyPage from "./pages/MenopauseSurveyPage";
+import LoginPage from "./pages/LoginPage";
+// 아직 별도 회원가입 페이지 파일이 없으므로 주석 처리
+// 나중에 ./pages/SignupPage.jsx 만들면 아래 주석 해제하고 라우트도 다시 추가하면 됨
+// import SignupPage from "./pages/SignupPage";
 
-/**
- * 메인 앱 (감정 분석 / 루틴 / STT/TTS / 시나리오 등)
- * - 라우터 안에서만 동작하도록 설계
- */
+// ✅ 스타일
+import "./App.css";
+
+// ✅ 백엔드 API 기본 URL
+const API_BASE_URL = "http://localhost:8000";
+
+/* ======================= ProtectedRoute ======================= */
+/* ======================= ProtectedRoute ======================= */
+// - 로그인 안 되어 있으면: 주소는 "/" 그대로 두고 LoginPage 화면만 보여줌
+// - 로그인은 되어 있고 first_login === "true" 이고, 갱년기 설문 미완료면
+//   => "/menopause-survey" 로 한 번 보내줌
+function ProtectedRoute({ children }) {
+  const token = localStorage.getItem("access_token");
+  const firstLogin = localStorage.getItem("first_login");
+  const menopauseCompleted = localStorage.getItem(
+    "menopause_survey_completed"
+  );
+
+  // 1) 아예 로그인 안 한 상태 → URL 은 "/" 유지, 화면만 로그인 페이지
+  if (!token) {
+    return <LoginPage />;
+  }
+
+  // 2) 로그인은 했는데, 최초 로그인 + 설문 미완료 → 설문 페이지로 이동
+  if (firstLogin === "true" && menopauseCompleted !== "true") {
+    return <Navigate to="/menopause-survey" replace />;
+  }
+
+  // 3) 그 외에는 정상적으로 메인 앱 렌더링
+  return children;
+}
+
+
+
+/* ========================= MainApp ========================= */
+
 function MainApp() {
-  const navigate = useNavigate()
+  const navigate = useNavigate();
 
   // 로그인 상태
   const [isLoggedIn, setIsLoggedIn] = useState(() => {
-    return !!localStorage.getItem('access_token')
-  })
-  const [user, setUser] = useState(null)
-  const [showLoginModal, setShowLoginModal] = useState(false)
-  const [isProcessingCallback, setIsProcessingCallback] = useState(false)
+    return !!localStorage.getItem("access_token");
+  });
+  const [user, setUser] = useState(null);
+  const [showLoginModal, setShowLoginModal] = useState(false);
+  const [isProcessingCallback, setIsProcessingCallback] = useState(false);
 
-  // 이번 브라우저 세션에서 설문 체크를 이미 했는지 여부
-  const [hasCheckedSurveyInThisSession, setHasCheckedSurveyInThisSession] =
-    useState(false)
 
   // 로그인 성공 핸들러
   const handleLoginSuccess = () => {
-    setIsLoggedIn(true)
-    setShowLoginModal(false)
+    setIsLoggedIn(true);
+    setShowLoginModal(false);
     // 유저 정보 갱신
-    fetchUserInfo()
+    fetchUserInfo();
     // 새로 로그인한 상태이므로, 이번 세션에서는 다시 설문 체크하도록 플래그 리셋
-    setHasCheckedSurveyInThisSession(false)
-  }
+    setHasCheckedSurveyInThisSession(false);
+  };
 
   // 로그아웃
   const handleLogout = async () => {
-    const accessToken = localStorage.getItem('access_token')
+    const accessToken = localStorage.getItem("access_token");
 
     try {
       await fetch(`${API_BASE_URL}/auth/logout`, {
-        method: 'POST',
+        method: "POST",
         headers: {
           Authorization: `Bearer ${accessToken}`,
         },
-      })
+      });
     } catch (err) {
-      console.error('Logout error:', err)
+      console.error("Logout error:", err);
     } finally {
-      localStorage.removeItem('access_token')
-      localStorage.removeItem('refresh_token')
-      setIsLoggedIn(false)
-      setUser(null)
+      localStorage.removeItem("access_token");
+      localStorage.removeItem("refresh_token");
+      setIsLoggedIn(false);
+      setUser(null);
     }
-  }
+  };
 
   // 사용자 정보 조회
   const fetchUserInfo = async () => {
-    const accessToken = localStorage.getItem('access_token')
-    if (!accessToken) return
+    const accessToken = localStorage.getItem("access_token");
+    if (!accessToken) return;
 
     try {
       const response = await fetch(`${API_BASE_URL}/auth/me`, {
         headers: {
           Authorization: `Bearer ${accessToken}`,
         },
-      })
+      });
 
       if (response.status === 401) {
-        await refreshToken()
-        return
+        await refreshToken();
+        return;
       }
 
       if (response.ok) {
-        const userData = await response.json()
-        setUser(userData)
+        const userData = await response.json();
+        setUser(userData);
       }
     } catch (err) {
-      console.error('Failed to fetch user info:', err)
+      console.error("Failed to fetch user info:", err);
     }
-  }
+  };
 
   // 토큰 재발급
   const refreshToken = async () => {
-    const refreshTokenValue = localStorage.getItem('refresh_token')
+    const refreshTokenValue = localStorage.getItem("refresh_token");
     if (!refreshTokenValue) {
-      handleLogout()
-      return
+      handleLogout();
+      return;
     }
 
     try {
       const response = await fetch(`${API_BASE_URL}/auth/refresh`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({ refresh_token: refreshTokenValue }),
-      })
+      });
 
       if (response.ok) {
-        const data = await response.json()
-        localStorage.setItem('access_token', data.access_token)
-        localStorage.setItem('refresh_token', data.refresh_token)
-        fetchUserInfo()
+        const data = await response.json();
+        localStorage.setItem("access_token", data.access_token);
+        localStorage.setItem("refresh_token", data.refresh_token);
+        fetchUserInfo();
       } else {
-        handleLogout()
+        handleLogout();
       }
     } catch (err) {
-      console.error('Token refresh failed:', err)
-      handleLogout()
+      console.error("Token refresh failed:", err);
+      handleLogout();
     }
-  }
+  };
 
   // OAuth callback 처리 (Google / Kakao / Naver)
   useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search)
-    const code = urlParams.get('code')
-    const state = urlParams.get('state')
+    const urlParams = new URLSearchParams(window.location.search);
+    const code = urlParams.get("code");
+    const state = urlParams.get("state");
 
     if (code && !isLoggedIn && !isProcessingCallback) {
-      setIsProcessingCallback(true)
+      setIsProcessingCallback(true);
 
       const handleOAuthCallback = async () => {
         try {
           // URL의 code 제거 (중복 요청 방지)
-          window.history.replaceState({}, document.title, window.location.pathname)
+          window.history.replaceState({}, document.title, window.location.pathname);
 
-          let endpoint = `${API_BASE_URL}/auth/google`
+          let endpoint = `${API_BASE_URL}/auth/google`;
           let requestBody = {
             auth_code: code,
             redirect_uri: `${window.location.origin}/auth/callback`,
-          }
+          };
 
           // Naver
           if (state) {
-            const savedState = sessionStorage.getItem('naver_state')
+            const savedState = sessionStorage.getItem("naver_state");
             if (savedState === state) {
-              endpoint = `${API_BASE_URL}/auth/naver`
-              requestBody.state = state
-              sessionStorage.removeItem('naver_state')
+              endpoint = `${API_BASE_URL}/auth/naver`;
+              requestBody.state = state;
+              sessionStorage.removeItem("naver_state");
             } else {
-              console.error('[OAuth] Naver state mismatch')
-              setIsProcessingCallback(false)
-              return
+              console.error("[OAuth] Naver state mismatch");
+              setIsProcessingCallback(false);
+              return;
             }
           } else {
             // Kakao vs Google
-            const isKakaoLogin = sessionStorage.getItem('kakao_login')
-            if (isKakaoLogin === 'true') {
-              endpoint = `${API_BASE_URL}/auth/kakao`
-              sessionStorage.removeItem('kakao_login')
+            const isKakaoLogin = sessionStorage.getItem("kakao_login");
+            if (isKakaoLogin === "true") {
+              endpoint = `${API_BASE_URL}/auth/kakao`;
+              sessionStorage.removeItem("kakao_login");
             }
           }
 
           const response = await fetch(endpoint, {
-            method: 'POST',
+            method: "POST",
             headers: {
-              'Content-Type': 'application/json',
+              "Content-Type": "application/json",
             },
             body: JSON.stringify(requestBody),
-          })
+          });
 
           if (response.ok) {
-            const data = await response.json()
-            localStorage.setItem('access_token', data.access_token)
-            localStorage.setItem('refresh_token', data.refresh_token)
+            const data = await response.json();
+            localStorage.setItem("access_token", data.access_token);
+            localStorage.setItem("refresh_token", data.refresh_token);
 
-            setIsLoggedIn(true)
-            fetchUserInfo()
+            setIsLoggedIn(true);
+            fetchUserInfo();
             // 새로 로그인한 상태이므로, 설문 체크 플래그 리셋
-            setHasCheckedSurveyInThisSession(false)
+            setHasCheckedSurveyInThisSession(false);
           } else {
             const errorData = await response.json().catch(() => ({
-              detail: '로그인 실패',
-            }))
-            console.error('[OAuth] 로그인 실패:', errorData.detail)
+              detail: "로그인 실패",
+            }));
+            console.error("[OAuth] 로그인 실패:", errorData.detail);
           }
         } catch (err) {
-          console.error('[OAuth] Callback 처리 오류:', err)
+          console.error("[OAuth] Callback 처리 오류:", err);
         } finally {
-          setIsProcessingCallback(false)
+          setIsProcessingCallback(false);
         }
-      }
+      };
 
-      handleOAuthCallback()
+      handleOAuthCallback();
     }
-  }, [isLoggedIn, isProcessingCallback])
+  }, [isLoggedIn, isProcessingCallback]);
 
   // 앱 시작 시 자동 로그인 처리
   useEffect(() => {
     const initializeAuth = async () => {
-      const accessToken = localStorage.getItem('access_token')
-      const refreshTokenValue = localStorage.getItem('refresh_token')
+      const accessToken = localStorage.getItem("access_token");
+      const refreshTokenValue = localStorage.getItem("refresh_token");
 
       if (accessToken) {
-        setIsLoggedIn(true)
-        await fetchUserInfo()
+        setIsLoggedIn(true);
+        await fetchUserInfo();
       } else if (refreshTokenValue) {
-        await refreshToken()
+        await refreshToken();
       } else {
-        setIsLoggedIn(false)
-        setUser(null)
+        setIsLoggedIn(false);
+        setUser(null);
       }
-    }
+    };
 
-    initializeAuth()
-  }, [])
+    initializeAuth();
+  }, []);
 
   // localStorage 변경 감지하여 로그인 상태 동기화
   useEffect(() => {
     const checkLoginStatus = () => {
-      const hasToken = !!localStorage.getItem('access_token')
+      const hasToken = !!localStorage.getItem("access_token");
       if (hasToken !== isLoggedIn) {
-        setIsLoggedIn(hasToken)
+        setIsLoggedIn(hasToken);
         if (hasToken) {
-          fetchUserInfo()
+          fetchUserInfo();
         } else {
-          setUser(null)
+          setUser(null);
         }
       }
-    }
+    };
 
-    window.addEventListener('storage', checkLoginStatus)
-    const interval = setInterval(checkLoginStatus, 1000)
+    window.addEventListener("storage", checkLoginStatus);
+    const interval = setInterval(checkLoginStatus, 1000);
 
     return () => {
-      window.removeEventListener('storage', checkLoginStatus)
-      clearInterval(interval)
-    }
-  }, [isLoggedIn])
+      window.removeEventListener("storage", checkLoginStatus);
+      clearInterval(interval);
+    };
+  }, [isLoggedIn]);
 
   useEffect(() => {
     if (isLoggedIn) {
-      fetchUserInfo()
+      fetchUserInfo();
     }
-  }, [isLoggedIn])
+  }, [isLoggedIn]);
 
-  /**
-   * ✅ 로그인 후, 아직 갱년기 설문을 안 한 사용자에게만
-   *    딱 한 번 설문 온보딩 페이지로 이동시키는 로직
-   *
-   * - 백엔드에서 user.menopause_survey_completed 를 내려주면 그 값을 우선 사용
-   * - 아직 필드가 없다면 localStorage("menopause_survey_completed") 값으로 동작
-   */
-  useEffect(() => {
-    if (!isLoggedIn || !user) return
-    if (hasCheckedSurveyInThisSession) return
-
-    const backendFlag =
-      typeof user.menopause_survey_completed === 'boolean'
-        ? user.menopause_survey_completed
-        : null
-
-    const localFlag =
-      localStorage.getItem('menopause_survey_completed') === 'true'
-
-    const alreadyCompleted =
-      backendFlag === null ? localFlag : backendFlag || localFlag
-
-    if (!alreadyCompleted) {
-      navigate('/signup/survey')
-    }
-
-    setHasCheckedSurveyInThisSession(true)
-  }, [isLoggedIn, user, hasCheckedSurveyInThisSession, navigate])
+  
 
   // 탭 상태 (localStorage 저장)
   const [activeTab, setActiveTab] = useState(() => {
-    const saved = localStorage.getItem('activeTab')
-    return saved || 'emotion'
-  })
+    const saved = localStorage.getItem("activeTab");
+    return saved || "emotion";
+  });
 
   useEffect(() => {
-    localStorage.setItem('activeTab', activeTab)
-  }, [activeTab])
+    localStorage.setItem("activeTab", activeTab);
+  }, [activeTab]);
 
   // 감정 분석 관련 state
-  const [result, setResult] = useState(null)
-  const [routines, setRoutines] = useState([])
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState(null)
+  const [result, setResult] = useState(null);
+  const [routines, setRoutines] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   // 루틴 추천 테스트 관련 state
-  const [testJson, setTestJson] = useState('')
-  const [testRoutines, setTestRoutines] = useState([])
-  const [testLoading, setTestLoading] = useState(false)
-  const [testError, setTestError] = useState(null)
+  const [testJson, setTestJson] = useState("");
+  const [testRoutines, setTestRoutines] = useState([]);
+  const [testLoading, setTestLoading] = useState(false);
+  const [testError, setTestError] = useState(null);
 
   const handleAnalyze = async (text) => {
-    setLoading(true)
-    setError(null)
+    setLoading(true);
+    setError(null);
 
     try {
-      const response = await fetch('http://localhost:8000/api/analyze', {
-        method: 'POST',
+      const response = await fetch(`${API_BASE_URL}/api/analyze`, {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({ text }),
-      })
+      });
 
       if (!response.ok) {
-        throw new Error('분석 요청 실패')
+        throw new Error("분석 요청 실패");
       }
 
-      const data = await response.json()
-      setResult(data)
+      const data = await response.json();
+      setResult(data);
 
       try {
         const routineResponse = await fetch(
-          'http://localhost:8000/api/engine/routine-recommend-from-emotion',
+          `${API_BASE_URL}/api/engine/routine-from-emotion`,
           {
-            method: 'POST',
+            method: "POST",
             headers: {
-              'Content-Type': 'application/json',
+              "Content-Type": "application/json",
             },
             body: JSON.stringify({
               user_id: 1,
               emotion_result: data,
-              time_of_day: 'morning',
+              time_of_day: "morning",
             }),
           }
-        )
+        );
 
         if (routineResponse.ok) {
-          const routineData = await routineResponse.json()
-          setRoutines(routineData.recommendations)
+          const routineData = await routineResponse.json();
+          // backend가 List[RoutineRecommendationItem] 을 반환하는 구조면 그대로 세팅
+          setRoutines(
+            routineData.recommendations ? routineData.recommendations : routineData
+          );
         }
       } catch (routineErr) {
-        console.error('Routine recommendation failed:', routineErr)
+        console.error("Routine recommendation failed:", routineErr);
       }
     } catch (err) {
-      setError(err.message)
-      console.error('Error:', err)
+      setError(err.message);
+      console.error("Error:", err);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const handleReset = () => {
-    setResult(null)
-    setRoutines([])
-    setError(null)
-  }
+    setResult(null);
+    setRoutines([]);
+    setError(null);
+  };
 
   // 루틴 추천 테스트용 샘플 JSON
   const loadSampleJson = () => {
     const sample = {
-      text: '아침에 눈을 뜨자 햇살이 방 안을 가득 채우고 있었고, 오랜만에 상쾌한 기분이 들어 따뜻한 커피를 한 잔 들고 여유롭게 집을 나설 수 있었다.',
-      language: 'ko',
+      text: "아침에 눈을 뜨자 햇살이 방 안을 가득 채우고 있었고, 오랜만에 상쾌한 기분이 들어 따뜻한 커피를 한 잔 들고 여유롭게 집을 나설 수 있었다.",
+      language: "ko",
       raw_distribution: [
-        { code: 'joy', name_ko: '기쁨', group: 'positive', score: 0.8 },
-        { code: 'excitement', name_ko: '흥분', group: 'positive', score: 0.6 },
-        { code: 'confidence', name_ko: '자신감', group: 'positive', score: 0.5 },
-        { code: 'relief', name_ko: '안심', group: 'positive', score: 0.4 },
-        { code: 'sadness', name_ko: '슬픔', group: 'negative', score: 0.0 },
-        { code: 'anger', name_ko: '분노', group: 'negative', score: 0.0 },
+        { code: "joy", name_ko: "기쁨", group: "positive", score: 0.8 },
+        { code: "excitement", name_ko: "흥분", group: "positive", score: 0.6 },
+        { code: "confidence", name_ko: "자신감", group: "positive", score: 0.5 },
+        { code: "relief", name_ko: "안심", group: "positive", score: 0.4 },
+        { code: "sadness", name_ko: "슬픔", group: "negative", score: 0.0 },
+        { code: "anger", name_ko: "분노", group: "negative", score: 0.0 },
       ],
       primary_emotion: {
-        code: 'joy',
-        name_ko: '기쁨',
-        group: 'positive',
+        code: "joy",
+        name_ko: "기쁨",
+        group: "positive",
         intensity: 4,
         confidence: 0.85,
       },
       secondary_emotions: [
-        { code: 'excitement', name_ko: '흥분', intensity: 3 },
-        { code: 'confidence', name_ko: '자신감', intensity: 3 },
+        { code: "excitement", name_ko: "흥분", intensity: 3 },
+        { code: "confidence", name_ko: "자신감", intensity: 3 },
       ],
-      sentiment_overall: 'positive',
+      sentiment_overall: "positive",
       service_signals: {
         need_empathy: true,
         need_routine_recommend: true,
         need_health_check: false,
         need_voice_analysis: false,
-        risk_level: 'normal',
+        risk_level: "normal",
       },
-      recommended_response_style: ['cheerful', 'warm'],
-      recommended_routine_tags: ['maintain_positive', 'gratitude', 'social_activity'],
-      report_tags: ['기쁨 경향', '흥분 경향', '자신감 경향'],
-    }
-    setTestJson(JSON.stringify(sample, null, 2))
-  }
+      recommended_response_style: ["cheerful", "warm"],
+      recommended_routine_tags: ["maintain_positive", "gratitude", "social_activity"],
+      report_tags: ["기쁨 경향", "흥분 경향", "자신감 경향"],
+    };
+    setTestJson(JSON.stringify(sample, null, 2));
+  };
 
   const handleTestRoutine = async () => {
-    setTestLoading(true)
-    setTestError(null)
-    setTestRoutines([])
+    setTestLoading(true);
+    setTestError(null);
+    setTestRoutines([]);
 
     try {
-      let emotionData
+      let emotionData;
       try {
-        emotionData = JSON.parse(testJson)
+        emotionData = JSON.parse(testJson);
       } catch (e) {
-        throw new Error('JSON 형식이 올바르지 않습니다.')
+        throw new Error("JSON 형식이 올바르지 않습니다.");
       }
 
       const response = await fetch(
-        'http://localhost:8000/api/engine/routine-from-emotion',
+        `${API_BASE_URL}/api/engine/routine-from-emotion`,
         {
-          method: 'POST',
+          method: "POST",
           headers: {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
           },
           body: JSON.stringify(emotionData),
         }
-      )
+      );
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({
           detail: response.statusText,
-        }))
-        throw new Error(errorData.detail || '루틴 추천 요청 실패')
+        }));
+        throw new Error(errorData.detail || "루틴 추천 요청 실패");
       }
 
-      const data = await response.json()
-      setTestRoutines(data)
+      const data = await response.json();
+      setTestRoutines(data);
     } catch (err) {
-      setTestError(err.message)
-      console.error('Error:', err)
+      setTestError(err.message);
+      console.error("Error:", err);
     } finally {
-      setTestLoading(false)
+      setTestLoading(false);
     }
-  }
+  };
 
   return (
     <div className="app">
       <header className="header">
         <div
           style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            width: '100%',
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            width: "100%",
           }}
         >
           <div>
             <h1>💜 감정 분석 AI</h1>
             <p>갱년기 여성을 위한 감정 공감 서비스</p>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
             {isLoggedIn && user && (
-              <div style={{ textAlign: 'right' }}>
-                <div style={{ fontWeight: '500', color: '#374151' }}>
+              <div style={{ textAlign: "right" }}>
+                <div style={{ fontWeight: "500", color: "#374151" }}>
                   {user.nickname}
                 </div>
-                <div style={{ fontSize: '0.875rem', color: '#6b7280' }}>
+                <div style={{ fontSize: "0.875rem", color: "#6b7280" }}>
                   {user.email}
                 </div>
               </div>
@@ -470,44 +483,44 @@ function MainApp() {
             {isLoggedIn && (
               <button
                 onClick={async () => {
-                  const token = localStorage.getItem('access_token')
+                  const token = localStorage.getItem("access_token");
                   console.log(
-                    '🔐 Access Token:',
-                    token ? `${token.substring(0, 50)}...` : '없음'
-                  )
-                  console.log('📋 Full Token:', token)
+                    "🔐 Access Token:",
+                    token ? `${token.substring(0, 50)}...` : "없음"
+                  );
+                  console.log("📋 Full Token:", token);
 
                   try {
                     const response = await fetch(`${API_BASE_URL}/auth/me`, {
                       headers: {
                         Authorization: `Bearer ${token}`,
                       },
-                    })
-                    console.log('✅ API 응답 상태:', response.status)
+                    });
+                    console.log("✅ API 응답 상태:", response.status);
                     if (response.ok) {
-                      const userData = await response.json()
-                      console.log('✅ 사용자 정보:', userData)
+                      const userData = await response.json();
+                      console.log("✅ 사용자 정보:", userData);
                       alert(
                         `✅ 토큰 정상 전달됨!\n\n사용자: ${userData.nickname}\n이메일: ${userData.email}`
-                      )
+                      );
                     } else {
-                      console.error('❌ API 오류:', response.status)
-                      alert(`❌ 토큰 전달 실패 (${response.status})`)
+                      console.error("❌ API 오류:", response.status);
+                      alert(`❌ 토큰 전달 실패 (${response.status})`);
                     }
                   } catch (err) {
-                    console.error('❌ 요청 오류:', err)
-                    alert('❌ 요청 실패: ' + err.message)
+                    console.error("❌ 요청 오류:", err);
+                    alert("❌ 요청 실패: " + err.message);
                   }
                 }}
                 style={{
-                  padding: '8px 16px',
-                  backgroundColor: '#10b981',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                  fontSize: '0.875rem',
-                  fontWeight: '500',
+                  padding: "8px 16px",
+                  backgroundColor: "#10b981",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "8px",
+                  cursor: "pointer",
+                  fontSize: "0.875rem",
+                  fontWeight: "500",
                 }}
               >
                 토큰 확인
@@ -517,14 +530,14 @@ function MainApp() {
               <button
                 onClick={() => setShowLoginModal(true)}
                 style={{
-                  padding: '8px 16px',
-                  backgroundColor: '#6366f1',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                  fontSize: '0.875rem',
-                  fontWeight: '500',
+                  padding: "8px 16px",
+                  backgroundColor: "#6366f1",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "8px",
+                  cursor: "pointer",
+                  fontSize: "0.875rem",
+                  fontWeight: "500",
                 }}
               >
                 로그인
@@ -533,14 +546,14 @@ function MainApp() {
               <button
                 onClick={handleLogout}
                 style={{
-                  padding: '8px 16px',
-                  backgroundColor: '#ef4444',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                  fontSize: '0.875rem',
-                  fontWeight: '500',
+                  padding: "8px 16px",
+                  backgroundColor: "#ef4444",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "8px",
+                  cursor: "pointer",
+                  fontSize: "0.875rem",
+                  fontWeight: "500",
                 }}
               >
                 로그아웃
@@ -553,93 +566,91 @@ function MainApp() {
       {/* 탭 전환 버튼 */}
       <div
         style={{
-          display: 'flex',
-          justifyContent: 'center',
-          gap: '10px',
-          margin: '20px 0',
-          flexWrap: 'wrap',
+          display: "flex",
+          justifyContent: "center",
+          gap: "10px",
+          margin: "20px 0",
+          flexWrap: "wrap",
         }}
       >
         <button
-          onClick={() => setActiveTab('emotion')}
+          onClick={() => setActiveTab("emotion")}
           style={{
-            padding: '10px 20px',
-            fontSize: '16px',
-            cursor: 'pointer',
-            backgroundColor:
-              activeTab === 'emotion' ? '#6366f1' : '#e5e7eb',
-            color: activeTab === 'emotion' ? 'white' : '#374151',
-            border: 'none',
-            borderRadius: '8px',
-            fontWeight: activeTab === 'emotion' ? 'bold' : 'normal',
+            padding: "10px 20px",
+            fontSize: "16px",
+            cursor: "pointer",
+            backgroundColor: activeTab === "emotion" ? "#6366f1" : "#e5e7eb",
+            color: activeTab === "emotion" ? "white" : "#374151",
+            border: "none",
+            borderRadius: "8px",
+            fontWeight: activeTab === "emotion" ? "bold" : "normal",
           }}
         >
           감정 분석
         </button>
         <button
           onClick={() => {
-            setActiveTab('routine-test')
-            navigate('/signup/survey') // 설문 페이지로 진입
+            setActiveTab("routine-test");
+            // 기존 SignupSurveyPage 대신, 온보딩 설문 페이지로 이동
+            navigate("/menopause-survey");
           }}
           style={{
-            padding: '10px 20px',
-            fontSize: '16px',
-            cursor: 'pointer',
-            backgroundColor:
-              activeTab === 'routine-test' ? '#6366f1' : '#e5e7eb',
-            color: activeTab === 'routine-test' ? 'white' : '#374151',
-            border: 'none',
-            borderRadius: '8px',
-            fontWeight: activeTab === 'routine-test' ? 'bold' : 'normal',
+            padding: "10px 20px",
+            fontSize: "16px",
+            cursor: "pointer",
+            backgroundColor: activeTab === "routine-test" ? "#6366f1" : "#e5e7eb",
+            color: activeTab === "routine-test" ? "white" : "#374151",
+            border: "none",
+            borderRadius: "8px",
+            fontWeight: activeTab === "routine-test" ? "bold" : "normal",
           }}
         >
           루틴 추천 테스트
         </button>
         <button
-          onClick={() => setActiveTab('stt-tts-test')}
+          onClick={() => setActiveTab("stt-tts-test")}
           style={{
-            padding: '10px 20px',
-            fontSize: '16px',
-            cursor: 'pointer',
-            backgroundColor:
-              activeTab === 'stt-tts-test' ? '#6366f1' : '#e5e7eb',
-            color: activeTab === 'stt-tts-test' ? 'white' : '#374151',
-            border: 'none',
-            borderRadius: '8px',
-            fontWeight: activeTab === 'stt-tts-test' ? 'bold' : 'normal',
+            padding: "10px 20px",
+            fontSize: "16px",
+            cursor: "pointer",
+            backgroundColor: activeTab === "stt-tts-test" ? "#6366f1" : "#e5e7eb",
+            color: activeTab === "stt-tts-test" ? "white" : "#374151",
+            border: "none",
+            borderRadius: "8px",
+            fontWeight: activeTab === "stt-tts-test" ? "bold" : "normal",
           }}
         >
           STT/TTS 테스트
         </button>
         <button
-          onClick={() => setActiveTab('daily-mood-check')}
+          onClick={() => setActiveTab("daily-mood-check")}
           style={{
-            padding: '10px 20px',
-            fontSize: '16px',
-            cursor: 'pointer',
+            padding: "10px 20px",
+            fontSize: "16px",
+            cursor: "pointer",
             backgroundColor:
-              activeTab === 'daily-mood-check' ? '#6366f1' : '#e5e7eb',
-            color: activeTab === 'daily-mood-check' ? 'white' : '#374151',
-            border: 'none',
-            borderRadius: '8px',
+              activeTab === "daily-mood-check" ? "#6366f1" : "#e5e7eb",
+            color: activeTab === "daily-mood-check" ? "white" : "#374151",
+            border: "none",
+            borderRadius: "8px",
             fontWeight:
-              activeTab === 'daily-mood-check' ? 'bold' : 'normal',
+              activeTab === "daily-mood-check" ? "bold" : "normal",
           }}
         >
           일일 감정 체크
         </button>
         <button
-          onClick={() => setActiveTab('scenario-test')}
+          onClick={() => setActiveTab("scenario-test")}
           style={{
-            padding: '10px 20px',
-            fontSize: '16px',
-            cursor: 'pointer',
+            padding: "10px 20px",
+            fontSize: "16px",
+            cursor: "pointer",
             backgroundColor:
-              activeTab === 'scenario-test' ? '#6366f1' : '#e5e7eb',
-            color: activeTab === 'scenario-test' ? 'white' : '#374151',
-            border: 'none',
-            borderRadius: '8px',
-            fontWeight: activeTab === 'scenario-test' ? 'bold' : 'normal',
+              activeTab === "scenario-test" ? "#6366f1" : "#e5e7eb",
+            color: activeTab === "scenario-test" ? "white" : "#374151",
+            border: "none",
+            borderRadius: "8px",
+            fontWeight: activeTab === "scenario-test" ? "bold" : "normal",
           }}
         >
           시나리오 테스트
@@ -648,34 +659,34 @@ function MainApp() {
 
       <div className="main-container">
         {/* 루틴 추천 테스트 섹션 */}
-        {activeTab === 'routine-test' && (
+        {activeTab === "routine-test" && (
           <>
             <div className="card">
               <h2>루틴 추천 API 테스트</h2>
-              <div style={{ marginBottom: '15px' }}>
+              <div style={{ marginBottom: "15px" }}>
                 <button
                   onClick={loadSampleJson}
                   style={{
-                    padding: '8px 16px',
-                    backgroundColor: '#10b981',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '6px',
-                    cursor: 'pointer',
-                    marginRight: '10px',
+                    padding: "8px 16px",
+                    backgroundColor: "#10b981",
+                    color: "white",
+                    border: "none",
+                    borderRadius: "6px",
+                    cursor: "pointer",
+                    marginRight: "10px",
                   }}
                 >
                   샘플 JSON 로드
                 </button>
                 <button
-                  onClick={() => setTestJson('')}
+                  onClick={() => setTestJson("")}
                   style={{
-                    padding: '8px 16px',
-                    backgroundColor: '#6b7280',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '6px',
-                    cursor: 'pointer',
+                    padding: "8px 16px",
+                    backgroundColor: "#6b7280",
+                    color: "white",
+                    border: "none",
+                    borderRadius: "6px",
+                    cursor: "pointer",
                   }}
                 >
                   초기화
@@ -686,45 +697,45 @@ function MainApp() {
                 onChange={(e) => setTestJson(e.target.value)}
                 placeholder="감정 분석 결과 JSON을 입력하세요..."
                 style={{
-                  width: '100%',
-                  minHeight: '300px',
-                  padding: '12px',
-                  fontSize: '14px',
-                  fontFamily: 'monospace',
-                  border: '1px solid #d1d5db',
-                  borderRadius: '6px',
-                  marginBottom: '15px',
+                  width: "100%",
+                  minHeight: "300px",
+                  padding: "12px",
+                  fontSize: "14px",
+                  fontFamily: "monospace",
+                  border: "1px solid #d1d5db",
+                  borderRadius: "6px",
+                  marginBottom: "15px",
                 }}
               />
               <button
                 onClick={handleTestRoutine}
                 disabled={testLoading || !testJson.trim()}
                 style={{
-                  padding: '12px 24px',
+                  padding: "12px 24px",
                   backgroundColor:
-                    testLoading || !testJson.trim() ? '#9ca3af' : '#6366f1',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '6px',
+                    testLoading || !testJson.trim() ? "#9ca3af" : "#6366f1",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "6px",
                   cursor:
                     testLoading || !testJson.trim()
-                      ? 'not-allowed'
-                      : 'pointer',
-                  fontSize: '16px',
-                  fontWeight: 'bold',
+                      ? "not-allowed"
+                      : "pointer",
+                  fontSize: "16px",
+                  fontWeight: "bold",
                 }}
               >
-                {testLoading ? '추천 중...' : '루틴 추천 요청'}
+                {testLoading ? "추천 중..." : "루틴 추천 요청"}
               </button>
               {testError && (
                 <div
                   style={{
-                    marginTop: '15px',
-                    padding: '12px',
-                    backgroundColor: '#fee2e2',
-                    color: '#991b1b',
-                    borderRadius: '6px',
-                    border: '1px solid #fecaca',
+                    marginTop: "15px",
+                    padding: "12px",
+                    backgroundColor: "#fee2e2",
+                    color: "#991b1b",
+                    borderRadius: "6px",
+                    border: "1px solid #fecaca",
                   }}
                 >
                   <strong>오류:</strong> {testError}
@@ -742,9 +753,7 @@ function MainApp() {
               <div className="card">
                 <div className="empty-state">
                   <div className="empty-state-icon">📝</div>
-                  <p>
-                    샘플 JSON을 로드하거나 직접 입력한 후 추천 버튼을 눌러주세요
-                  </p>
+                  <p>샘플 JSON을 로드하거나 직접 입력한 후 추천 버튼을 눌러주세요</p>
                 </div>
               </div>
             )}
@@ -752,10 +761,10 @@ function MainApp() {
         )}
 
         {/* 감정 분석 섹션 */}
-        {activeTab === 'emotion' && (
+        {activeTab === "emotion" && (
           <>
-            <div className="card" style={{ marginBottom: '1rem' }}>
-              <h2 style={{ marginBottom: '0.75rem' }}>감정 분석</h2>
+            <div className="card" style={{ marginBottom: "1rem" }}>
+              <h2 style={{ marginBottom: "0.75rem" }}>감정 분석</h2>
               <EmotionInput
                 onAnalyze={handleAnalyze}
                 onReset={handleReset}
@@ -763,14 +772,14 @@ function MainApp() {
               />
 
               {error && (
-                <div className="error" style={{ marginTop: '0.75rem' }}>
+                <div className="error" style={{ marginTop: "0.75rem" }}>
                   <strong>오류:</strong> {error}
                 </div>
               )}
             </div>
 
-            <div className="card" style={{ marginBottom: '1rem' }}>
-              <h2 style={{ marginBottom: '0.75rem' }}>분석 결과</h2>
+            <div className="card" style={{ marginBottom: "1rem" }}>
+              <h2 style={{ marginBottom: "0.75rem" }}>분석 결과</h2>
 
               {loading && (
                 <div className="loading">
@@ -782,17 +791,17 @@ function MainApp() {
               {!loading && result && <EmotionResult result={result} />}
 
               {!loading && !result && !error && (
-                <p style={{ color: '#6b7280', fontSize: '14px' }}>
+                <p style={{ color: "#6b7280", fontSize: "14px" }}>
                   위에 텍스트를 입력하고 분석 버튼을 눌러주세요.
                 </p>
               )}
             </div>
 
-            <div className="card" style={{ marginBottom: '1rem' }}>
-              <h2 style={{ marginBottom: '0.75rem' }}>감정 분포</h2>
+            <div className="card" style={{ marginBottom: "1rem" }}>
+              <h2 style={{ marginBottom: "0.75rem" }}>감정 분포</h2>
 
               {loading && (
-                <p style={{ color: '#6b7280', fontSize: '14px' }}>
+                <p style={{ color: "#6b7280", fontSize: "14px" }}>
                   감정 분포를 계산하는 중입니다...
                 </p>
               )}
@@ -800,9 +809,7 @@ function MainApp() {
               {!loading && result && (
                 <>
                   {result.raw_distribution ? (
-                    <EmotionChart
-                      rawDistribution={result.raw_distribution}
-                    />
+                    <EmotionChart rawDistribution={result.raw_distribution} />
                   ) : (
                     <EmotionChart
                       emotions={result.top_emotions || result.emotions}
@@ -812,14 +819,14 @@ function MainApp() {
               )}
 
               {!loading && !result && !error && (
-                <p style={{ color: '#6b7280', fontSize: '14px' }}>
+                <p style={{ color: "#6b7280", fontSize: "14px" }}>
                   분석이 완료되면 감정 분포가 여기에서 그래프로 보여져요.
                 </p>
               )}
             </div>
 
-            <div className="card" style={{ marginBottom: '1rem' }}>
-              <h2 style={{ marginBottom: '0.75rem' }}>오늘 날씨</h2>
+            <div className="card" style={{ marginBottom: "1rem" }}>
+              <h2 style={{ marginBottom: "0.75rem" }}>오늘 날씨</h2>
               <WeatherCard />
             </div>
 
@@ -829,7 +836,7 @@ function MainApp() {
               result.similar_contexts.length > 0 && (
                 <div
                   className="card contexts-section"
-                  style={{ marginBottom: '1rem' }}
+                  style={{ marginBottom: "1rem" }}
                 >
                   <h2>유사한 감정 표현</h2>
                   {result.similar_contexts.map((context, index) => (
@@ -838,13 +845,10 @@ function MainApp() {
                         &quot;{context.text}&quot;
                       </div>
                       <div className="context-meta">
-                        <span>
-                          감정: {getEmotionLabel(context.emotion)}
-                        </span>
+                        <span>감정: {getEmotionLabel(context.emotion)}</span>
                         <span>강도: {context.intensity}/5</span>
                         <span>
-                          유사도:{' '}
-                          {(context.similarity * 100).toFixed(1)}%
+                          유사도: {(context.similarity * 100).toFixed(1)}%
                         </span>
                       </div>
                     </div>
@@ -861,7 +865,7 @@ function MainApp() {
         )}
 
         {/* STT/TTS 테스트 섹션 */}
-        {activeTab === 'stt-tts-test' && (
+        {activeTab === "stt-tts-test" && (
           <>
             <STTTest />
             <TTSTest />
@@ -869,26 +873,24 @@ function MainApp() {
         )}
 
         {/* 일일 감정 체크 섹션 */}
-        {activeTab === 'daily-mood-check' && (
-          <DailyMoodCheck user={user} />
-        )}
+        {activeTab === "daily-mood-check" && <DailyMoodCheck user={user} />}
 
         {/* 시나리오 테스트 섹션 */}
-        {activeTab === 'scenario-test' && <ScenarioTest />}
+        {activeTab === "scenario-test" && <ScenarioTest />}
       </div>
 
       {showLoginModal && (
         <div
           style={{
-            position: 'fixed',
+            position: "fixed",
             top: 0,
             left: 0,
             right: 0,
             bottom: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.5)',
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
+            backgroundColor: "rgba(0, 0, 0, 0.5)",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
             zIndex: 1000,
           }}
           onClick={() => setShowLoginModal(false)}
@@ -896,11 +898,11 @@ function MainApp() {
           <div
             onClick={(e) => e.stopPropagation()}
             style={{
-              width: '100%',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
+              width: "100%",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
             }}
           >
             <Login onLoginSuccess={handleLoginSuccess} />
@@ -908,16 +910,16 @@ function MainApp() {
             <button
               onClick={() => setShowLoginModal(false)}
               style={{
-                marginTop: '16px',
-                padding: '10px 30px',
-                backgroundColor: 'white',
-                color: '#374151',
-                border: 'none',
-                borderRadius: '8px',
-                cursor: 'pointer',
-                fontSize: '1rem',
-                fontWeight: 'bold',
-                boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+                marginTop: "16px",
+                padding: "10px 30px",
+                backgroundColor: "white",
+                color: "#374151",
+                border: "none",
+                borderRadius: "8px",
+                cursor: "pointer",
+                fontSize: "1rem",
+                fontWeight: "bold",
+                boxShadow: "0 4px 6px rgba(0,0,0,0.1)",
               }}
             >
               닫기
@@ -926,42 +928,59 @@ function MainApp() {
         </div>
       )}
     </div>
-  )
+  );
 }
+
+/* ===================== helper ===================== */
 
 function getEmotionLabel(emotion) {
   const labels = {
-    joy: '기쁨',
-    calmness: '평온',
-    sadness: '슬픔',
-    anger: '분노',
-    anxiety: '불안',
-    loneliness: '외로움',
-    fatigue: '피로',
-    confusion: '혼란',
-    guilt: '죄책감',
-    frustration: '좌절',
-  }
-  return labels[emotion] || emotion
+    joy: "기쁨",
+    calmness: "평온",
+    sadness: "슬픔",
+    anger: "분노",
+    anxiety: "불안",
+    loneliness: "외로움",
+    fatigue: "피로",
+    confusion: "혼란",
+    guilt: "죄책감",
+    frustration: "좌절",
+  };
+  return labels[emotion] || emotion;
 }
 
-/**
- * 최상위 App: 라우터 설정
- */
+/* ========================= App (Router) ========================= */
+
 function App() {
   return (
     <Router>
       <Routes>
-        {/* 회원가입 설문 페이지 */}
+        {/* 로그인 페이지 */}
+        <Route path="/login" element={<LoginPage />} />
+
+        {/* 별도 회원가입 페이지는 아직 없음
+            나중에 ./pages/SignupPage.jsx 만들면 아래 라우트 추가
+        */}
+        {/* <Route path="/signup" element={<SignupPage />} /> */}
+
+        {/* 갱년기 설문 */}
+        <Route path="/menopause-survey" element={<MenopauseSurveyPage />} />
+
+        {/* 보호된 메인 */}
         <Route
-          path="/signup/survey"
-          element={<SignupSurveyPage />}
+          path="/"
+          element={
+            <ProtectedRoute>
+              <MainApp />
+            </ProtectedRoute>
+          }
         />
-        {/* 나머지 모든 경로는 메인 앱 */}
-        <Route path="/*" element={<MainApp />} />
+
+        {/* 나머지 경로는 루트로 */}
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Router>
-  )
+  );
 }
 
-export default App
+export default App;

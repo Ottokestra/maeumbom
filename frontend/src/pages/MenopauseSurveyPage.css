@@ -1,4 +1,4 @@
-/* src/pages/onboarding/SignupSurveyPage.css */
+/* src/pages/MenopauseSurveyPage.css */
 /* 마음봄 갱년기 온보딩 전용 스타일 (MUKJA / 뤼튼 느낌, 모바일 프레임) */
 
 :root {
@@ -74,6 +74,25 @@
 
 .mb-card--result {
   border-color: transparent;
+}
+
+/* 인트로 카드 */
+.mb-card--intro {
+  margin-top: 4px;
+}
+
+.mb-intro-text {
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--mb-text-sub);
+  margin: 0 0 10px;
+}
+
+.mb-intro-disclaimer {
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--mb-text-weak);
+  margin: 0 0 14px;
 }
 
 /* ===========================
@@ -174,6 +193,12 @@
   color: var(--mb-text-sub);
 }
 
+.mb-percent {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--mb-text-sub);
+}
+
 .mb-progress__track {
   width: 100%;
   height: 4px;
@@ -188,54 +213,26 @@
   border-radius: 999px;
 }
 
-/* 질문 상단 메타 */
-.mb-question-meta {
-  display: flex;
-  justify-content: flex-start;
-  margin-bottom: 10px;
-}
-
-.mb-tag {
-  display: inline-flex;
-  align-items: center;
-  padding: 4px 10px;
-  border-radius: 999px;
-  font-size: 11px;
-  font-weight: 500;
-  background-color: #f5e1e4;
-  color: #a63d45;
-}
-
 /* 질문 본문 */
-.mb-question-body {
-  display: flex;
-  gap: 10px;
-  align-items: flex-start;
+.mb-question {
   margin-bottom: 16px;
 }
 
-.mb-question-index {
-  flex: 0 0 auto;
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  background-color: #ffffff;
-  border: 1px solid #f0d0d4;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--mb-primary);
+.mb-question__eyebrow {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--mb-text-weak);
+  margin-bottom: 4px;
 }
 
-.mb-question-text {
+.mb-question__text {
   font-size: 15px;
   line-height: 1.6;
   color: var(--mb-text-main);
 }
 
 /* 예/아니오 칩 */
+.mb-answer-row,
 .mb-choice-row {
   display: flex;
   gap: 10px;
@@ -275,6 +272,10 @@
   display: flex;
   justify-content: space-between;
   gap: 8px;
+}
+
+.mb-nav-row--intro {
+  margin-top: 12px;
 }
 
 .mb-nav-row--result {
@@ -359,6 +360,7 @@
   font-weight: 600;
   color: #ffffff;
   margin-bottom: 8px;
+  background: linear-gradient(90deg, #c5535a, #f97373);
 }
 
 .mb-result-title {
@@ -374,7 +376,7 @@
   margin: 0;
 }
 
-/* 결과 문항 리스트 */
+/* 결과 문항 리스트 (지금은 사용 X지만 남겨둠) */
 .mb-result-list {
   border-radius: 16px;
   background-color: #ffffffd0;
@@ -456,7 +458,7 @@
     font-size: 18px;
   }
 
-  .mb-question-text {
+  .mb-question__text {
     font-size: 14px;
   }
 }
