@@ -95,57 +95,6 @@ async def start_scenario(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.delete("/scenarios/{scenario_id}")
-async def delete_scenario(
-    scenario_id: int,
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
-):
-    """
-    시나리오 삭제 (테스트 데이터 정리용)
-    
-    해당 시나리오와 연관된 모든 데이터를 삭제합니다:
-    - Scenario (시나리오 메타데이터)
-    - ScenarioNodes (노드)
-    - ScenarioOptions (선택지)
-    - ScenarioResults (결과)
-    
-    Args:
-        scenario_id: 삭제할 시나리오 ID
-        current_user: 현재 로그인한 사용자 (인증 필수)
-        db: Database session
-        
-    Returns:
-        삭제 완료 메시지
-        
-    Example:
-        DELETE /api/service/relation-training/scenarios/9
-    """
-    from app.db.models import Scenario
-    
-    # 시나리오 조회 (본인 소유 확인)
-    scenario = db.query(Scenario).filter(
-        Scenario.ID == scenario_id,
-        Scenario.USER_ID == current_user.ID
-    ).first()
-    
-    if not scenario:
-        raise HTTPException(
-            status_code=404,
-            detail="시나리오를 찾을 수 없거나 삭제 권한이 없습니다."
-        )
-    
-    # 시나리오 삭제 (cascade로 연관 데이터 자동 삭제)
-    db.delete(scenario)
-    db.commit()
-    
-    return {
-        "success": True,
-        "message": f"시나리오 ID {scenario_id}가 삭제되었습니다.",
-        "deleted_scenario_id": scenario_id
-    }
-
-
 @router.post("/progress", response_model=ProgressResponse)
 async def progress_scenario(
     request: ProgressRequest,
@@ -342,9 +291,18 @@ async def delete_scenario(
             detail="다른 사용자의 시나리오는 삭제할 수 없습니다."
         )
     
-    # JSON 파일 삭제 (개인 시나리오만)
-    import glob
-    import os
+    # 1. 관련 플레이 로그 삭제 (FK 제약 조건 해결)
+    from app.db.models import PlayLog
+    
+    play_logs = db.query(PlayLog).filter(PlayLog.SCENARIO_ID == scenario_id).all()
+    for log in play_logs:
+        db.delete(log)
+    
+    if play_logs:
+        print(f"[Delete] 플레이 로그 {len(play_logs)}개 삭제")
+    
+    # 2. JSON 파일 삭제 (개인 시나리오만)
+    import json
     
     data_dir = Path(__file__).parent / "data" / str(scenario.USER_ID)
     if data_dir.exists():
@@ -355,7 +313,6 @@ async def delete_scenario(
         # 시나리오 제목으로 매칭되는 파일 찾기 (완벽한 매칭은 어려우므로 모든 파일 검사)
         for json_file in json_files:
             try:
-                import json
                 with open(json_file, 'r', encoding='utf-8') as f:
                     data = json.load(f)
                     # 제목이 일치하는 파일 삭제
@@ -367,7 +324,7 @@ async def delete_scenario(
                 print(f"[Delete] JSON 파일 확인 중 오류: {e}")
                 continue
     
-    # 시나리오 삭제 (cascade로 연관 데이터 자동 삭제)
+    # 3. 시나리오 삭제 (cascade로 연관 데이터 자동 삭제)
     db.delete(scenario)
     db.commit()
     
@@ -426,55 +383,3 @@ async def get_user_image(
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-
-
-@router.delete("/scenarios/{scenario_id}")
-async def delete_scenario(
-    scenario_id: int,
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
-):
-    """
-    시나리오 삭제 (테스트 데이터 정리용)
-    
-    해당 시나리오와 연관된 모든 데이터를 삭제합니다:
-    - Scenario (시나리오 메타데이터)
-    - ScenarioNodes (노드)
-    - ScenarioOptions (선택지)
-    - ScenarioResults (결과)
-    
-    Args:
-        scenario_id: 삭제할 시나리오 ID
-        current_user: 현재 로그인한 사용자 (인증 필수)
-        db: Database session
-        
-    Returns:
-        삭제 완료 메시지
-        
-    Example:
-        DELETE /api/service/relation-training/scenarios/9
-    """
-    from app.db.models import Scenario
-    
-    # 시나리오 조회 (본인 소유 확인)
-    scenario = db.query(Scenario).filter(
-        Scenario.ID == scenario_id,
-        Scenario.USER_ID == current_user.ID
-    ).first()
-    
-    if not scenario:
-        raise HTTPException(
-            status_code=404,
-            detail="시나리오를 찾을 수 없거나 삭제 권한이 없습니다."
-        )
-    
-    # 시나리오 삭제 (cascade로 연관 데이터 자동 삭제)
-    db.delete(scenario)
-    db.commit()
-    
-    return {
-        "success": True,
-        "message": f"시나리오 ID {scenario_id}가 삭제되었습니다.",
-        "deleted_scenario_id": scenario_id
-    }
-

@@ -2,7 +2,7 @@
 Prompt loading and variable substitution utilities for Deep Agent Pipeline
 """
 from pathlib import Path
-from typing import Dict
+from typing import Dict, Tuple
 import re
 
 
@@ -43,9 +43,69 @@ def load_prompt(prompt_file: str, variables: Dict[str, str]) -> str:
     return content
 
 
+def load_prompt_sections(prompt_file: str, variables: Dict[str, str]) -> Tuple[str, str]:
+    """
+    Load a prompt file and extract system/user sections separately.
+    
+    Expects the prompt file to have markers:
+    - # --- SYSTEM_PROMPT_START --- ... # --- SYSTEM_PROMPT_END ---
+    - # --- USER_PROMPT_START --- ... # --- USER_PROMPT_END ---
+    
+    Args:
+        prompt_file: Prompt filename (e.g., 'scenario_architect.md')
+        variables: Dictionary of variables to substitute (applied to user prompt)
+                  e.g., {'target': 'HUSBAND', 'topic': '남편이 밥투정을 합니다'}
+    
+    Returns:
+        Tuple of (system_prompt, user_prompt)
+    
+    Example:
+        >>> system, user = load_prompt_sections(
+        ...     'scenario_architect.md',
+        ...     {'target': 'HUSBAND', 'topic': '남편이 밥투정을 합니다'}
+        ... )
+    """
+    # Get prompts directory
+    prompts_dir = Path(__file__).parent / "prompts"
+    prompt_path = prompts_dir / prompt_file
+    
+    if not prompt_path.exists():
+        raise FileNotFoundError(f"Prompt file not found: {prompt_path}")
+    
+    # Read prompt file
+    with open(prompt_path, 'r', encoding='utf-8') as f:
+        content = f.read()
+    
+    # Extract system prompt
+    system_pattern = r'# --- SYSTEM_PROMPT_START ---\s*(.*?)\s*# --- SYSTEM_PROMPT_END ---'
+    system_match = re.search(system_pattern, content, re.DOTALL)
+    
+    if not system_match:
+        raise ValueError(f"SYSTEM_PROMPT section not found in {prompt_file}")
+    
+    system_prompt = system_match.group(1).strip()
+    
+    # Extract user prompt
+    user_pattern = r'# --- USER_PROMPT_START ---\s*(.*?)\s*# --- USER_PROMPT_END ---'
+    user_match = re.search(user_pattern, content, re.DOTALL)
+    
+    if not user_match:
+        raise ValueError(f"USER_PROMPT section not found in {prompt_file}")
+    
+    user_prompt = user_match.group(1).strip()
+    
+    # Substitute variables in user prompt using .format()
+    user_prompt = user_prompt.format(**variables)
+    
+    return system_prompt, user_prompt
+
+
 def extract_json_from_response(response_text: str) -> str:
     """
-    Extract JSON from LLM response (removes code blocks and extra text).
+    Extract JSON from LLM response.
+    
+    When using response_format={"type":"json_object"}, OpenAI returns pure JSON.
+    This function now simply strips whitespace and returns the content.
     
     Args:
         response_text: Raw LLM response
@@ -54,35 +114,24 @@ def extract_json_from_response(response_text: str) -> str:
         Clean JSON string
     
     Example:
-        >>> text = "```json\\n{...}\\n```"
+        >>> text = '{"key": "value"}'
         >>> json_str = extract_json_from_response(text)
     """
-    # Method 1: Try to extract from markdown code blocks
-    # Pattern: ```json ... ``` or ``` ... ```
-    pattern = r'```(?:json)?\s*(.*?)\s*```'
-    matches = re.findall(pattern, response_text, re.DOTALL)
+    # With JSON mode, response should be pure JSON
+    # Just strip whitespace and return
+    result = response_text.strip()
     
-    print(f"[DEBUG] extract_json_from_response - 매치 개수: {len(matches)}")
+    print(f"[DEBUG] JSON 응답 수신 - 길이: {len(result)} 문자")
     
-    if matches:
-        # Return first JSON block found
-        result = matches[0].strip()
-        print(f"[DEBUG] 코드 블록에서 추출 - 길이: {len(result)}, 시작: {result[:100]}...")
-        return result
+    # Fallback: if response still has code blocks (shouldn't happen with JSON mode)
+    if result.startswith('```'):
+        pattern = r'```(?:json)?\s*(.*?)\s*```'
+        matches = re.findall(pattern, result, re.DOTALL)
+        if matches:
+            result = matches[0].strip()
+            print(f"[DEBUG] 코드 블록 감지 (예상 밖) - 추출 완료")
     
-    # Method 2: Try to find JSON by looking for { ... } pattern
-    # Find the first { and last }
-    first_brace = response_text.find('{')
-    last_brace = response_text.rfind('}')
-    
-    if first_brace != -1 and last_brace != -1 and first_brace < last_brace:
-        result = response_text[first_brace:last_brace + 1].strip()
-        print(f"[DEBUG] 중괄호 패턴에서 추출 - 길이: {len(result)}, 시작: {result[:100]}...")
-        return result
-    
-    # Method 3: If no pattern found, return as is (might be pure JSON)
-    print(f"[DEBUG] 패턴 없음, 원본 반환 - 길이: {len(response_text)}")
-    return response_text.strip()
+    return result
 
 
 def validate_scenario_json(data: dict) -> bool:

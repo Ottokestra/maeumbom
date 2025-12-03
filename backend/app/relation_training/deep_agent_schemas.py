@@ -71,8 +71,10 @@ class ResultData(BaseModel):
     result_code: str = Field(..., description="Result code (AAAA~BBBB)")
     display_title: str = Field(..., description="Result title")
     analysis_text: str = Field(..., description="Analysis text")
-    atmosphere_image_type: str = Field(..., description="Atmosphere type (STORM, CLOUDY, SUNNY, FLOWER)")
-    score: int = Field(..., description="Score (0-100)")
+    atmosphere_image_type: Optional[str] = Field(None, description="Atmosphere type (STORM, CLOUDY, SUNNY, FLOWER) - Auto-calculated by backend")
+    relation_health_level: str = Field(..., description="Relationship health level (GOOD/MIXED/BAD)")
+    boundary_style: str = Field(..., description="Boundary style (HEALTHY_ASSERTIVE/OVER_ADAPTIVE/ASSERTIVE_HARSH/AVOIDANT)")
+    relationship_trend: str = Field(..., description="Relationship trend (IMPROVING/STABLE/WORSENING)")
     image_url: Optional[str] = Field(None, description="Result image URL")
 
 

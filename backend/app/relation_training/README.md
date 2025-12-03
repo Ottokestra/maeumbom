@@ -5,6 +5,7 @@
 ## 📋 목차
 
 - [기능](#기능)
+- [Deep Agent Pipeline (자동 시나리오 생성)](#deep-agent-pipeline-자동-시나리오-생성)
 - [시나리오 데이터 관리](#시나리오-데이터-관리)
 - [API 엔드포인트](#api-엔드포인트)
 - [JSON 파일 형식](#json-파일-형식)
@@ -21,6 +22,131 @@
 - ✅ 플레이 로그 자동 저장
 - ✅ JSON 파일로 시나리오 관리
 - ✅ 자동 Import (서버 시작 시)
+- ✅ **Deep Agent Pipeline (AI 자동 시나리오 생성)**
+
+## 🤖 Deep Agent Pipeline (자동 시나리오 생성)
+
+### 아키텍처
+
+Deep Agent Pipeline은 **Orchestrator-Writer 패턴**을 사용합니다:
+
+```
+GPT-4o-mini (Orchestrator)
+  ↓ 프롬프트 준비 및 변수 설정
+Qwen 2.5 14B (Scenario Writer)
+  ↓ 시나리오 텍스트 생성
+GPT-4o-mini (Validator)
+  ↓ 품질 검증 및 파싱
+DB 저장
+```
+
+- **Orchestrator (GPT-4o-mini)**: 전체 파이프라인 기획, 프롬프트 준비, 결과 검증
+- **Scenario Writer (Qwen 2.5 14B 또는 GPT-4o-mini)**: 시나리오 텍스트 생성
+- **Image Generator (FLUX.1-schnell)**: 이미지 생성 (선택적)
+
+### 환경 변수 설정
+
+`.env` 파일에 다음 환경변수를 추가하세요:
+
+```bash
+# ============================================================================
+# OpenAI API (Orchestrator - GPT-4o-mini)
+# ============================================================================
+OPENAI_API_KEY=your_openai_api_key_here
+OPENAI_MODEL_NAME=gpt-4o-mini
+
+# ============================================================================
+# Scenario Writer Configuration
+# ============================================================================
+# SCENARIO_MODE: Choose the LLM for scenario generation
+# - "qwen" = Qwen 2.5 14B GGUF (로컬, 고품질, 무료, 느림 ~6-7분)
+# - "openai" = GPT-4o-mini (API, 빠름 ~15초, 비용 발생)
+SCENARIO_MODE=qwen
+
+# PROMPT_STYLE: Choose prompt template style
+# - "step" = step0~step3 분리된 프롬프트 (권장, 역할 분리 명확)
+# - "architect" = scenario_architect.md 올인원 프롬프트 (레거시)
+PROMPT_STYLE=step
+
+# ============================================================================
+# Image Generation Configuration
+# ============================================================================
+USE_SKIP_IMAGES=false
+USE_AMD_GPU=false
+USE_NVIDIA_GPU=false
+MAX_PARALLEL_IMAGE_GENERATION=4
+```
+
+### 설치
+
+Qwen 2.5 14B GGUF 모델을 사용하려면 `llama-cpp-python`이 필요합니다:
+
+```bash
+pip install llama-cpp-python==0.2.90
+```
+
+모델은 첫 실행 시 Hugging Face에서 자동으로 다운로드됩니다 (~8GB).
+
+### 사용 방법
+
+**API 호출:**
+
+```bash
+POST /api/service/relation-training/deep-agent/generate
+Authorization: Bearer {access_token}
+Content-Type: application/json
+
+{
+  "target": "CHILD",  # CHILD, HUSBAND, FRIEND, COLLEAGUE, ETC
+  "topic": "스마트폰 사용법 질문"
+}
+```
+
+**응답:**
+
+```json
+{
+  "scenario_id": 123,
+  "status": "completed",
+  "image_count": 17,
+  "folder_name": "child_20231215_143022"
+}
+```
+
+### 성능
+
+| 모드 | 시간 | 비용 | 품질 |
+|------|------|------|------|
+| **Qwen 2.5 14B (로컬)** | ~6-7분 | 무료 | ⭐⭐⭐⭐⭐ |
+| **GPT-4o-mini (API)** | ~15초 | ~$0.15 | ⭐⭐⭐ |
+
+### 4단계 생성 프로세스
+
+1. **STEP 0: Character Design** - 주인공과 타겟의 비주얼 설명 생성
+2. **STEP 1: Nodes (15개)** - 시나리오 노드 생성 (타겟의 말/행동)
+3. **STEP 2: Options (30개)** - 선택지 생성 (주인공의 선택/대사)
+4. **STEP 3: Results (16개)** - 결과 및 분석 생성 (AAAA~BBBB)
+
+### 프롬프트 파일
+
+- `prompts/step0_character_design.md` - 캐릭터 디자인
+- `prompts/step1_nodes.md` - 노드 생성 (역할 분리 규칙 포함)
+- `prompts/step2_options.md` - 옵션 생성 (주인공 대사만)
+- `prompts/step3_results.md` - 결과 생성 (타겟별 관계 표현)
+- `prompts/scenario_architect.md` - 올인원 프롬프트 (레거시)
+
+### 검증 로직
+
+Orchestrator (GPT-4o-mini)는 각 단계에서 품질을 검증합니다:
+
+- **노드 검증**: 개수(15), 필수 필드, 역할 분리 (주인공 대사 포함 여부)
+- **옵션 검증**: 개수(30), 필수 필드, 주인공 대사만 포함
+- **결과 검증**: 개수(16), 필수 필드, 타겟 관계 표현
+
+### 문서
+
+- `DEEP_AGENT_GUIDE.md` - 상세 가이드
+- `LLM_STRUCTURE_ISSUE.md` - 아키텍처 변경 이력
 
 ## 📊 시나리오 데이터 관리
 
