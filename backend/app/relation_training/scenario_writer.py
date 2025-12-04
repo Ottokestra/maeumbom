@@ -37,18 +37,24 @@ async def load_qwen_model():
         
         try:
             from llama_cpp import Llama
-            
-            # Model will be auto-downloaded from Hugging Face
-            # Path format: "username/repo-name/filename"
-            model_path = "Qwen/Qwen2.5-14B-Instruct-GGUF/qwen2.5-14b-instruct-q4_k_m.gguf"
+            from huggingface_hub import hf_hub_download
             
             # Check if model exists locally
             cache_dir = Path.home() / ".cache" / "huggingface" / "hub"
             print(f"[Scenario Writer] Model cache directory: {cache_dir}")
             
-            _qwen_model = Llama.from_pretrained(
-                repo_id="Qwen/Qwen2.5-14B-Instruct-GGUF",
-                filename="qwen2.5-14b-instruct-q4_k_m.gguf",
+            # Download model file (will use cache if already downloaded)
+            print("[Scenario Writer] Downloading/loading model file...")
+            model_path = hf_hub_download(
+                repo_id="SimmonsSongHW/Qwen2.5-14B-Instruct-Q4_K_M-GGUF",
+                filename="qwen2.5-14b-instruct-q4_k_m.gguf"
+            )
+            
+            print(f"[Scenario Writer] Model file path: {model_path}")
+            
+            # Load model directly from file path
+            _qwen_model = Llama(
+                model_path=model_path,
                 n_ctx=4096,  # Context window
                 n_threads=8,  # CPU threads (Ryzen AI 7 = 8 cores)
                 n_gpu_layers=0,  # CPU only
