@@ -1,7 +1,16 @@
+import 'dart:io';
+
 /// API Configuration - Base URLs and endpoints
 class ApiConfig {
-  // Base URL
-  static const String baseUrl = 'http://localhost:8000';
+  // Base URL - 플랫폼별로 다른 URL 사용
+  static String get baseUrl {
+    // Android 에뮬레이터는 10.0.2.2를 사용 (호스트 머신의 localhost)
+    if (Platform.isAndroid) {
+      return 'http://10.0.2.2:8000';
+    }
+    // iOS 시뮬레이터 및 웹은 localhost 사용
+    return 'http://localhost:8000';
+  }
 
   // Auth Endpoints
   static const String authBase = '/auth';
