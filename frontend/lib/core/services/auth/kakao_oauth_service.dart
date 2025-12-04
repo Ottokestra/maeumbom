@@ -1,6 +1,6 @@
 import 'package:flutter_web_auth_2/flutter_web_auth_2.dart';
-import '../config/oauth_config.dart';
-import '../utils/logger.dart';
+import '../../config/oauth_config.dart';
+import '../../utils/logger.dart';
 
 /// Kakao OAuth Service - Handles Kakao Sign-In flow
 class KakaoOAuthService {

@@ -1,9 +1,9 @@
-import '../api/auth_api_client.dart';
-import '../dtos/google_login_request.dart';
-import '../dtos/kakao_login_request.dart';
-import '../dtos/naver_login_request.dart';
-import '../models/user.dart';
-import '../models/token_pair.dart';
+import '../../api/auth/auth_api_client.dart';
+import '../../dtos/auth/google_login_request.dart';
+import '../../dtos/auth/kakao_login_request.dart';
+import '../../dtos/auth/naver_login_request.dart';
+import '../../models/auth/user.dart';
+import '../../models/auth/token_pair.dart';
 
 /// Auth Repository - Abstracts data sources
 class AuthRepository {

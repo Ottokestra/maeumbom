@@ -1,12 +1,12 @@
-import '../../data/repository/auth_repository.dart';
-import '../../data/models/user.dart';
-import '../../data/models/token_pair.dart';
+import '../../../data/repository/auth/auth_repository.dart';
+import '../../../data/models/auth/user.dart';
+import '../../../data/models/auth/token_pair.dart';
 import 'token_storage_service.dart';
 import 'google_oauth_service.dart';
 import 'kakao_oauth_service.dart';
 import 'naver_oauth_service.dart';
-import '../config/oauth_config.dart';
-import '../utils/logger.dart';
+import '../../config/oauth_config.dart';
+import '../../utils/logger.dart';
 
 /// Auth Service - Business logic for authentication
 class AuthService {

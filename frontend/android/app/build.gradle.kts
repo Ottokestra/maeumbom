@@ -24,7 +24,7 @@ android {
         applicationId = "com.maeumbom.frontend"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = 21  // Required for google_sign_in and flutter_secure_storage
+        minSdk = flutter.minSdkVersion  // Required for google_sign_in and flutter_secure_storage
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName

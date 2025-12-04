@@ -1,11 +1,11 @@
 import 'package:dio/dio.dart';
-import '../../core/config/api_config.dart';
-import '../../core/utils/logger.dart';
-import '../dtos/google_login_request.dart';
-import '../dtos/kakao_login_request.dart';
-import '../dtos/naver_login_request.dart';
-import '../dtos/token_response.dart';
-import '../dtos/user_response.dart';
+import '../../../core/config/api_config.dart';
+import '../../../core/utils/logger.dart';
+import '../../dtos/auth/google_login_request.dart';
+import '../../dtos/auth/kakao_login_request.dart';
+import '../../dtos/auth/naver_login_request.dart';
+import '../../dtos/auth/token_response.dart';
+import '../../dtos/auth/user_response.dart';
 
 /// Auth API Client - Handles all authentication API calls
 class AuthApiClient {
