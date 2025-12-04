@@ -7,7 +7,15 @@ class PermissionService {
   /// Returns: (isGranted, isPermanentlyDenied)
   Future<(bool, bool)> requestMicrophonePermission() async {
     try {
+      // Log current status before requesting
+      final currentStatus = await Permission.microphone.status;
+      appLogger.i('Current microphone permission status: $currentStatus');
+      appLogger.i('isGranted: ${currentStatus.isGranted}, isDenied: ${currentStatus.isDenied}, isPermanentlyDenied: ${currentStatus.isPermanentlyDenied}, isLimited: ${currentStatus.isLimited}, isRestricted: ${currentStatus.isRestricted}, isProvisional: ${currentStatus.isProvisional}');
+
+      // Request permission
+      appLogger.i('Requesting microphone permission...');
       final status = await Permission.microphone.request();
+      appLogger.i('Permission request result: $status');
 
       if (status.isGranted) {
         appLogger.i('Microphone permission granted');
@@ -20,6 +28,7 @@ class PermissionService {
         return (false, true);
       }
 
+      appLogger.w('Microphone permission - unknown status: $status');
       return (false, false);
     } catch (e) {
       appLogger.e('Failed to request microphone permission', error: e);

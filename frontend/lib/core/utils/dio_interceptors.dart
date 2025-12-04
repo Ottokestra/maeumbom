@@ -61,9 +61,9 @@ class AuthInterceptor extends Interceptor {
   }
 
   bool _isAuthEndpoint(String path) {
-    return path.contains('/api/auth/google') ||
-        path.contains('/api/auth/kakao') ||
-        path.contains('/api/auth/naver') ||
-        path.contains('/api/auth/refresh');
+    return path.contains('/auth/google') ||
+        path.contains('/auth/kakao') ||
+        path.contains('/auth/naver') ||
+        path.contains('/auth/refresh');
   }
 }
