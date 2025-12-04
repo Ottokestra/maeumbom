@@ -28,22 +28,30 @@ class AuthService {
   /// Login with Google OAuth
   Future<User> loginWithGoogle() async {
     try {
-      appLogger.i('Starting Google login flow...');
+      appLogger.i('Starting Google login flow (DUMMY MODE)...');
 
-      // Step 1: Get authorization code from Google
-      final authCode = await _googleOAuth.signIn();
+      // 더미 모드: 실제 Google OAuth 호출 없이 더미 데이터 생성
+      // TODO: 개발 완료 후 실제 OAuth 플로우로 교체
+      final dummyTokens = TokenPair(
+        accessToken:
+            'dummy-google-access-token-${DateTime.now().millisecondsSinceEpoch}',
+        refreshToken:
+            'dummy-google-refresh-token-${DateTime.now().millisecondsSinceEpoch}',
+      );
 
-      // Step 2: Exchange auth code for tokens via backend
-      final (tokens, user) = await _repository.loginWithGoogle(
-        authCode: authCode,
-        redirectUri: OAuthConfig.googleRedirectUri,
+      final dummyUser = User(
+        id: 1,
+        email: 'google-test@example.com',
+        nickname: '구글테스트',
+        provider: 'google',
+        createdAt: DateTime.now(),
       );
 
       // Step 3: Store tokens securely
-      await _tokenStorage.saveTokens(tokens);
+      await _tokenStorage.saveTokens(dummyTokens);
 
-      appLogger.i('Google login completed: ${user.email}');
-      return user;
+      appLogger.i('Google login completed (DUMMY): ${dummyUser.email}');
+      return dummyUser;
     } catch (e) {
       appLogger.e('Google login failed', error: e);
       // Clean up on failure
