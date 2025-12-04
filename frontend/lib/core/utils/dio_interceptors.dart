@@ -1,5 +1,5 @@
 import 'package:dio/dio.dart';
-import '../services/auth_service.dart';
+import '../services/auth/auth_service.dart';
 import 'logger.dart';
 
 /// Auth Interceptor - Automatically adds access token and handles refresh

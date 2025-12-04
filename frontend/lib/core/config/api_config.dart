@@ -4,7 +4,7 @@ class ApiConfig {
   static const String baseUrl = 'http://localhost:8000';
 
   // Auth Endpoints
-  static const String authBase = '/api/auth';
+  static const String authBase = '/auth';
   static const String googleLogin = '$authBase/google';
   static const String kakaoLogin = '$authBase/kakao';
   static const String naverLogin = '$authBase/naver';
