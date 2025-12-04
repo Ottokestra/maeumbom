@@ -53,20 +53,14 @@ class ChatService {
       // Check permission status first
       final hasPermission = await _permissionService.hasMicrophonePermission();
       if (!hasPermission) {
-        // Check if permanently denied BEFORE requesting
-        final isPermanentlyDenied = await _permissionService.isPermanentlyDenied();
+        // Request permission
+        final (granted, isPermanentlyDenied) =
+            await _permissionService.requestMicrophonePermission();
+
         if (isPermanentlyDenied) {
           throw Exception('PERMANENTLY_DENIED');
         }
-        
-        // Request permission only if not permanently denied
-        final (granted, isPermanentlyDeniedAfterRequest) = 
-            await _permissionService.requestMicrophonePermission();
-        
-        if (isPermanentlyDeniedAfterRequest) {
-          throw Exception('PERMANENTLY_DENIED');
-        }
-        
+
         if (!granted) {
           throw Exception('마이크 권한이 거부되었습니다.');
         }

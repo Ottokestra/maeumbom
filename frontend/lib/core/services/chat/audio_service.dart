@@ -9,18 +9,14 @@ class AudioService {
   StreamSubscription<Uint8List>? _audioStreamSubscription;
 
   /// Start recording audio stream
+  /// Note: Permission should be checked/requested before calling this method
   Future<Stream<Float32List>?> startRecording() async {
     try {
-      // Check if microphone is available
-      if (!await _recorder.hasPermission()) {
-        appLogger.w('No microphone permission');
-        return null;
-      }
-
       // Create stream controller
       final controller = StreamController<Float32List>();
 
       // Start recording with stream
+      // Permission is assumed to be granted (checked by caller)
       final stream = await _recorder.startStream(
         const RecordConfig(
           encoder: AudioEncoder.pcm16bits,
