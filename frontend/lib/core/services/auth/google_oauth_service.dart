@@ -1,6 +1,6 @@
 import 'package:google_sign_in/google_sign_in.dart';
-import '../config/oauth_config.dart';
-import '../utils/logger.dart';
+import '../../config/oauth_config.dart';
+import '../../utils/logger.dart';
 
 /// Google OAuth Service - Handles Google Sign-In flow
 class GoogleOAuthService {

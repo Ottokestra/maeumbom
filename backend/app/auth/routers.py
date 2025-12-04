@@ -1,7 +1,8 @@
 """
 API endpoints for authentication (Controller layer)
 """
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Request
+from starlette.responses import RedirectResponse
 from sqlalchemy.orm import Session
 
 from app.db.database import get_db
@@ -251,4 +252,69 @@ async def health_check():
         Status message
     """
     return {"status": "ok", "service": "authentication"}
+
+
+@router.get(
+    "/callback/google",
+    summary="Google OAuth Callback",
+    description="Receives OAuth callback from Google and redirects to app scheme"
+)
+async def google_callback(request: Request):
+    """Google OAuth Callback - redirects to app scheme"""
+    code = request.query_params.get("code")
+    state = request.query_params.get("state")
+    error = request.query_params.get("error")
+
+    app_scheme_url = "com.maeumbom.app://auth/callback"
+
+    if error:
+        return RedirectResponse(url=f"{app_scheme_url}?error={error}")
+    if not code:
+        return RedirectResponse(url=f"{app_scheme_url}?error=no_code")
+
+    if state:
+        return RedirectResponse(url=f"{app_scheme_url}?code={code}&state={state}&provider=google")
+    else:
+        return RedirectResponse(url=f"{app_scheme_url}?code={code}&provider=google")
+
+
+@router.get(
+    "/callback/kakao",
+    summary="Kakao OAuth Callback",
+    description="Receives OAuth callback from Kakao and redirects to app scheme"
+)
+async def kakao_callback(request: Request):
+    """Kakao OAuth Callback - redirects to app scheme"""
+    code = request.query_params.get("code")
+    error = request.query_params.get("error")
+
+    app_scheme_url = "com.maeumbom.app://auth/callback"
+
+    if error:
+        return RedirectResponse(url=f"{app_scheme_url}?error={error}")
+    if not code:
+        return RedirectResponse(url=f"{app_scheme_url}?error=no_code")
+
+    return RedirectResponse(url=f"{app_scheme_url}?code={code}&provider=kakao")
+
+
+@router.get(
+    "/callback/naver",
+    summary="Naver OAuth Callback",
+    description="Receives OAuth callback from Naver and redirects to app scheme"
+)
+async def naver_callback(request: Request):
+    """Naver OAuth Callback - redirects to app scheme (with state for CSRF)"""
+    code = request.query_params.get("code")
+    state = request.query_params.get("state")
+    error = request.query_params.get("error")
+
+    app_scheme_url = "com.maeumbom.app://auth/callback"
+
+    if error:
+        return RedirectResponse(url=f"{app_scheme_url}?error={error}")
+    if not code or not state:
+        return RedirectResponse(url=f"{app_scheme_url}?error=missing_params")
+
+    return RedirectResponse(url=f"{app_scheme_url}?code={code}&state={state}&provider=naver")
 

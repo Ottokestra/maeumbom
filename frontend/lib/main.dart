@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'ui/app_ui.dart';
 import 'app/home/home_screen.dart';
 import 'app/chat/chat_screen.dart';
-import 'app/common/example_screen.dart';
+import 'app/example/example_screen.dart';
 import 'app/common/login_screen.dart';
 
 void main() {
@@ -25,9 +25,12 @@ class MaeumBomApp extends StatelessWidget {
       darkTheme: AppTheme.dark,
       initialRoute: '/example',
       routes: {
+        //테스트용
+        '/example': (context) => const ExampleScreen(),
+
+        //실제 앱
         '/': (context) => const HomeScreen(),
         '/chat': (context) => const ChatScreen(),
-        '/example': (context) => const ExampleScreen(),
         '/login': (context) => const LoginScreen(),
       },
     );

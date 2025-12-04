@@ -1,6 +1,6 @@
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import '../../data/models/token_pair.dart';
-import '../utils/logger.dart';
+import '../../../data/models/auth/token_pair.dart';
+import '../../utils/logger.dart';
 
 /// Secure Token Storage Service - Encrypted storage for tokens
 class TokenStorageService {
