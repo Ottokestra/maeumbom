@@ -2,8 +2,6 @@
 
 import os
 import sys
-import json
-from io import BytesIO
 from pathlib import Path
 from typing import List, Optional
 
@@ -13,11 +11,10 @@ from fastapi import (
     WebSocket,
     WebSocketDisconnect,
     HTTPException,
-    Request,
 )
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import StreamingResponse
-from pydantic import BaseModel
+from fastapi.responses import FileResponse
+from pydantic import BaseModel, ConfigDict
 
 # ============================================================
 # 경로 설정
@@ -49,8 +46,8 @@ except Exception as e:
     print("[WARN] Emotion analysis module load failed:", e)
     emotion_router = None
 
-# TTS Provider registry
-from provider_registry import get_tts_provider
+# TTS 엔진 레지스트리
+from engine.text_to_speech import get_tts_engine
 
 # 루틴 추천 엔진
 from engine.routine_recommend.engine import RoutineRecommendFromEmotionEngine
@@ -186,6 +183,10 @@ class AgentTextRequest(BaseModel):
     stt_quality: Optional[str] = None  # "success" | "medium" | "low_quality" | "no_speech" | None
 
 
+class AgentTextV2Request(AgentTextRequest):
+    pass
+
+
 class AgentAudioRequest(BaseModel):
     audio_bytes: bytes
     session_id: Optional[str] = None
@@ -231,6 +232,59 @@ async def agent_text_endpoint(request: AgentTextRequest):
         result = run_ai_bomi_from_text(
             user_text=request.user_text,
             session_id=request.session_id,
+            stt_quality=request.stt_quality,
+        )
+        return result
+    except Exception as e:
+        import traceback
+
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/agent/v2/text")
+async def agent_text_v2_endpoint(request: AgentTextV2Request):
+    """LangChain Agent v2 - 텍스트 입력 (캐릭터 정보 포함)"""
+    try:
+        from engine.langchain_agent import run_ai_bomi_from_text_v2
+
+        default_meta = {
+            "model": os.getenv("OPENAI_MODEL_NAME", "gpt-4o-mini"),
+            "used_tools": [],
+            "session_id": request.session_id or "default",
+            "stt_quality": request.stt_quality,
+            "tts_engine_default": "cute_bomi",
+        }
+        default_character = {"id": "cloud_white", "emotion_label": "NEUTRAL"}
+
+        if request.stt_quality == "no_speech":
+            return {
+                "reply_text": "음성이 감지되지 않았어요. 다시 말씀해주시겠어요?",
+                "input_text": request.user_text or "",
+                "emotion_result": None,
+                "routine_result": None,
+                "character": default_character,
+                "meta": {
+                    **default_meta,
+                    "note": "no_speech_detected",
+                },
+            }
+        elif request.stt_quality == "low_quality":
+            return {
+                "reply_text": "소음이 심해서 잘 들리지 않았어요. 조용한 곳에서 다시 말씀해주시겠어요?",
+                "input_text": request.user_text or "",
+                "emotion_result": None,
+                "routine_result": None,
+                "character": default_character,
+                "meta": {
+                    **default_meta,
+                    "note": "low_quality_audio",
+                },
+            }
+
+        result = run_ai_bomi_from_text_v2(
+            user_text=request.user_text,
+            session_id=request.session_id or "default",
             stt_quality=request.stt_quality,
         )
         return result
@@ -775,46 +829,35 @@ async def health():
     return {"status": "ok"}
 
 
+class TTSRequest(BaseModel):
+    model_config = ConfigDict(extra="allow")
+
+    text: str
+    engine: str | None = None
+    character_id: str | None = None
+    emotion_label: str | None = None
+    tone: str | None = None  # backward compatibility
+
+
 @app.post("/api/tts")
-async def tts(request: Request):
-    """
-    텍스트 -> 음성 변환 API (3-7)
-    """
-    raw = await request.body()
+async def tts_endpoint(payload: TTSRequest):
+    """텍스트 -> 음성 변환 API"""
 
-    try:
-        body_str = raw.decode("utf-8")
-    except UnicodeDecodeError:
-        body_str = raw.decode("cp949", errors="replace")
-
-    try:
-        payload = json.loads(body_str)
-    except Exception as e:
-        raise HTTPException(
-            status_code=400,
-            detail=f"json parse error: {e}; body={body_str!r}",
-        )
-
-    text = payload.get("text")
-    speed = payload.get("speed")
-    tone = payload.get("tone", "senior_calm")
-    engine_name = payload.get("engine", "melo")
-    provider_override = request.query_params.get("provider")
-
-    if not text or not str(text).strip():
+    if not payload.text.strip():
         raise HTTPException(status_code=400, detail="text is required")
 
+    emotion_label = payload.emotion_label or payload.tone
+    engine_name = payload.engine
+
+    tts_engine = get_tts_engine(engine_name)
+
     try:
-        provider = get_tts_provider(provider_override or engine_name)
-        audio_bytes = provider.synthesize(
-            text=str(text),
-            speaker=None,
-            emotion=str(tone),
-            speed=speed,
+        wav_path = tts_engine.synthesize_to_wav(
+            text=payload.text,
+            voice_id=payload.character_id,
+            emotion=emotion_label,
         )
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-    except Exception as e:
+    except Exception as e:  # pragma: no cover - runtime logging aid
         import sys as _sys, traceback as _traceback
 
         print("[TTS ERROR]", e, file=_sys.stderr)
