@@ -1,409 +1,297 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import './onboarding/SignupSurveyPage.css'
 
-const RISK_COLORS = {
-  LOW: {
-    background: '#f0f9f4',
-    text: '#146c43',
-    accent: '#22c55e',
-  },
-  MID: {
-    background: '#fff7e6',
-    text: '#92400e',
-    accent: '#f59e0b',
-  },
-  HIGH: {
-    background: '#fff2e7',
-    text: '#9a3412',
-    accent: '#f97316',
-  },
+const FEMALE_QUESTIONS = [
+  { code: 'F1', text: '일의 집중력이나 기억력이 예전 같지 않다고 느낀다.', riskWhenYes: true },
+  { code: 'F2', text: '아무 이유 없이 짜증이 늘고 감정 기복이 심해졌다.', riskWhenYes: true },
+  { code: 'F3', text: '잠을 잘 이루지 못하거나 수면에 문제가 있다.', riskWhenYes: true },
+  { code: 'F4', text: '얼굴이 달아오르거나 갑작스러운 열감(홍조)을 자주 느낀다.', riskWhenYes: true },
+  { code: 'F5', text: '가슴 두근거림, 식은땀, 이유 없는 불안감을 느끼는 편이다.', riskWhenYes: true },
+  { code: 'F6', text: '관절통, 근육통 등 몸 여기저기가 자주 쑤시거나 아프다.', riskWhenYes: true },
+  { code: 'F7', text: '성욕이 감소했거나 성관계가 예전보다 불편하게 느껴진다.', riskWhenYes: true },
+  { code: 'F8', text: '체중 증가나 체형 변화(뱃살 증가 등)가 눈에 띈다.', riskWhenYes: true },
+  { code: 'F9', text: '예전보다 우울하고 의욕이 떨어진 느낌이 자주 든다.', riskWhenYes: true },
+  { code: 'F10', text: '일상생활이 버겁게 느껴지고 작은 일에도 쉽게 지친다.', riskWhenYes: true },
+]
+
+const MALE_QUESTIONS = [
+  { code: 'M1', text: '예전보다 쉽게 피로해지고 회복이 더딘 편이다.', riskWhenYes: true },
+  { code: 'M2', text: '근력이나 체력이 눈에 띄게 떨어졌다고 느낀다.', riskWhenYes: true },
+  { code: 'M3', text: '성욕이나 성 기능이 예전보다 감소했다.', riskWhenYes: true },
+  { code: 'M4', text: '짜증이나 분노가 늘고 사소한 일에도 예민해진다.', riskWhenYes: true },
+  { code: 'M5', text: '웬일인지 의욕이 없고 무기력한 기분이 자주 든다.', riskWhenYes: true },
+  { code: 'M6', text: '집중력 저하나 건망증이 심해진 것 같다.', riskWhenYes: true },
+  { code: 'M7', text: '밤에 자주 깨거나 깊은 잠을 자기 어렵다.', riskWhenYes: true },
+  { code: 'M8', text: '심장 두근거림, 식은땀, 발열 같은 증상을 경험한다.', riskWhenYes: true },
+  { code: 'M9', text: '복부 비만, 체중 증가 등 체형 변화가 눈에 띄게 느껴진다.', riskWhenYes: true },
+  { code: 'M10', text: '삶에 대한 자신감이나 의욕이 예전보다 줄었다.', riskWhenYes: true },
+]
+
+const STEP = {
+  INTRO: 'INTRO',
+  GENDER: 'GENDER',
+  SURVEY: 'SURVEY',
+  RESULT: 'RESULT',
 }
 
-const EMOJI_POOL = ['😌', '🌿', '💭', '☕', '🌤️', '🍃', '🌷', '🍊', '🧡']
-const SKIP_KEY = 'routineSurvey:skipDate'
-
-const getRiskStyle = (level) => RISK_COLORS[level?.toUpperCase()] || RISK_COLORS.MID
-
-const ChoiceChip = ({ label, active, onClick }) => {
-  return (
-    <button
-      className={`survey-chip ${active ? 'active' : ''}`}
-      type="button"
-      onClick={onClick}
-    >
-      {label}
-    </button>
-  )
+function getRiskLevelFromYesCount(yesCount) {
+  if (yesCount >= 7) return 'HIGH'
+  if (yesCount >= 4) return 'MID'
+  return 'LOW'
 }
 
-const SurveyProgress = ({ current, total, answered }) => {
-  const percent = total === 0 ? 0 : Math.round(((current + 1) / total) * 100)
-
-  return (
-    <div className="survey-progress">
-      <div className="survey-progress__label">
-        <span className="survey-progress__step">{current + 1} / {total}</span>
-        <span className="survey-progress__hint">{answered}문항 응답 완료</span>
-      </div>
-      <div className="survey-progress__bar">
-        <div className="survey-progress__bar-fill" style={{ width: `${percent}%` }} />
-      </div>
-    </div>
-  )
+function getRiskCopy(level) {
+  if (level === 'HIGH') return '증상이 자주 느껴지고 있어요. 전문가와 상담하거나 검진을 권해요.'
+  if (level === 'MID') return '몇 가지 변화가 감지돼요. 생활습관을 살피며 몸을 돌봐 주세요.'
+  return '큰 걱정은 없지만 몸과 마음의 신호를 계속 살펴볼게요.'
 }
 
 function SignupSurveyPage({ apiBaseUrl = '' }) {
-  const [step, setStep] = useState('intro')
+  const [step, setStep] = useState(STEP.INTRO)
+  const [gender, setGender] = useState(null)
   const [questions, setQuestions] = useState([])
   const [answers, setAnswers] = useState({})
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState('')
-  const [errorType, setErrorType] = useState(null)
+  const [currentIndex, setCurrentIndex] = useState(0)
   const [submitting, setSubmitting] = useState(false)
   const [result, setResult] = useState(null)
-  const [currentIndex, setCurrentIndex] = useState(0)
-  const [skippedToday, setSkippedToday] = useState(false)
 
-  const answeredCount = useMemo(() => {
-    return questions.reduce((count, q) => (answers[q.question_id] ? count + 1 : count), 0)
-  }, [answers, questions])
+  const navigate = useNavigate()
 
-  const allAnswered = questions.length > 0 && answeredCount === questions.length
+  const answeredCount = useMemo(
+    () => questions.reduce((count, q) => (answers[q.code] ? count + 1 : count), 0),
+    [answers, questions]
+  )
 
-  const authHeader = () => {
-    const token = localStorage.getItem('access_token')
-    if (!token) return {}
-    return {
-      Authorization: `Bearer ${token}`,
+  const yesCount = useMemo(
+    () =>
+      questions.reduce((count, q) => {
+        if (answers[q.code] === 'yes') return count + 1
+        return count
+      }, 0),
+    [answers, questions]
+  )
+
+  const currentQuestion = questions[currentIndex]
+
+  const handleSelectGender = (selectedGender) => {
+    setGender(selectedGender)
+    const list = selectedGender === '여성' ? FEMALE_QUESTIONS : MALE_QUESTIONS
+    setQuestions(list)
+    setCurrentIndex(0)
+    setAnswers({})
+    setStep(STEP.SURVEY)
+  }
+
+  const handleAnswer = (value) => {
+    if (!currentQuestion) return
+    setAnswers((prev) => ({ ...prev, [currentQuestion.code]: value }))
+    if (currentIndex < questions.length - 1) {
+      setCurrentIndex((idx) => idx + 1)
     }
   }
 
-  const fetchQuestions = async () => {
-    setLoading(true)
-    setError('')
-    setErrorType(null)
+  const handlePrev = () => {
+    setCurrentIndex((idx) => Math.max(0, idx - 1))
+  }
+
+  const handleNext = () => {
+    setCurrentIndex((idx) => Math.min(questions.length - 1, idx + 1))
+  }
+
+  const submitSurvey = async (yes) => {
+    const riskLevel = getRiskLevelFromYesCount(yes)
     try {
-      const response = await fetch(`${apiBaseUrl}/api/routine-survey/questions`, {
-        headers: {
-          ...authHeader(),
-        },
-      })
-
-      if (!response.ok) {
-        const detail = await response.json().catch(() => ({}))
-        if (response.status === 404) {
-          setError('준비 중인 설문이에요. 곧 더 재밌는 질문으로 찾아올게요!')
-          setErrorType('inactive')
-          return
-        }
-        throw new Error(detail?.detail || '설문 문항을 불러오지 못했습니다.')
-      }
-
-      const data = await response.json()
-      if (!Array.isArray(data) || data.length === 0) {
-        setError('준비 중인 설문이에요. 곧 더 재밌는 질문으로 찾아올게요!')
-        setErrorType('inactive')
-        setQuestions([])
-        setAnswers({})
-        setStep('intro')
-        return
-      }
-      setQuestions(data)
-      setAnswers({})
-      setCurrentIndex(0)
-      setStep('intro')
-    } catch (err) {
-      setError(err.message || '설문 문항을 불러오지 못했습니다.')
-      setErrorType('network')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  useEffect(() => {
-    fetchQuestions()
-  }, [])
-
-  useEffect(() => {
-    const today = new Date().toISOString().slice(0, 10)
-    const saved = localStorage.getItem(SKIP_KEY)
-    if (saved === today) {
-      setSkippedToday(true)
-    }
-  }, [])
-
-  const handleSelect = (questionId, value) => {
-    setAnswers((prev) => ({
-      ...prev,
-      [questionId]: prev[questionId] === value ? undefined : value,
-    }))
-  }
-
-  const handleSubmit = async () => {
-    if (!allAnswered || submitting) return
-    setSubmitting(true)
-    setError('')
-
-    try {
-      const surveyId = questions[0]?.survey_id
-      const payload = {
-        survey_id: surveyId,
-        answers: questions.map((question) => ({
-          question_id: question.question_id,
-          answer_value: answers[question.question_id] || 'N',
-        })),
-      }
-
-      const response = await fetch(`${apiBaseUrl}/api/routine-survey/submit`, {
+      setSubmitting(true)
+      const token = localStorage.getItem('access_token')
+      await fetch(`${apiBaseUrl}/api/onboarding/menopause-survey`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          ...authHeader(),
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
-        body: JSON.stringify(payload),
+        body: JSON.stringify({
+          gender,
+          answers,
+          yes_count: yes,
+          risk_level: riskLevel,
+        }),
       })
-
-      if (!response.ok) {
-        const detail = await response.json().catch(() => ({}))
-        throw new Error(detail?.detail || '제출에 실패했습니다.')
-      }
-
-      const data = await response.json()
-      setResult(data)
-      setStep('result')
     } catch (err) {
-      setError(err.message || '제출에 실패했습니다.')
-      setErrorType('network')
+      console.error('failed to submit survey', err)
     } finally {
       setSubmitting(false)
     }
   }
 
-  const handleRestart = () => {
+  const handleSubmit = async () => {
+    if (answeredCount !== questions.length) return
+    const riskLevel = getRiskLevelFromYesCount(yesCount)
+    const summary = { yesCount, riskLevel }
+    setResult(summary)
+    setStep(STEP.RESULT)
+    await submitSurvey(yesCount)
+  }
+
+  const handleRetake = () => {
     setAnswers({})
     setResult(null)
-    setError('')
-    setErrorType(null)
     setCurrentIndex(0)
-    setStep('survey')
+    setStep(STEP.SURVEY)
   }
 
-  const handleStart = () => {
-    if (!questions.length) return
-    setSkippedToday(false)
-    setStep('survey')
-    setCurrentIndex(0)
-  }
-
-  const handleSkipToday = () => {
-    const today = new Date().toISOString().slice(0, 10)
-    localStorage.setItem(SKIP_KEY, today)
-    setSkippedToday(true)
-    // TODO: 홈 혹은 다른 경로로 이동이 필요하면 여기에서 navigate를 연결하세요.
-  }
-
-  const handlePrev = () => {
-    setCurrentIndex((prev) => Math.max(prev - 1, 0))
-  }
-
-  const handleNext = () => {
-    setCurrentIndex((prev) => Math.min(prev + 1, questions.length - 1))
-  }
-
-  const currentQuestion = questions[currentIndex]
-  const riskStyle = getRiskStyle(result?.risk_level)
-
-  const renderQuestion = (question, index) => {
-    const emoji = EMOJI_POOL[index % EMOJI_POOL.length]
-    const selected = answers[question.question_id]
-
-    return (
-      <div key={question.question_id} className="survey-card question-card">
-        <SurveyProgress current={index} total={questions.length} answered={answeredCount} />
-        <div className="survey-question__header">
-          <span className="question-emoji" aria-hidden="true">{emoji}</span>
-          <div>
-            <p className="survey-eyebrow">오늘의 질문</p>
-            <p className="survey-question__title">{question.title}</p>
-            {question.description && <p className="survey-question__desc">{question.description}</p>}
-          </div>
-        </div>
-        <div className="survey-chip-row">
-          <ChoiceChip
-            label="예, 그런 편이에요"
-            active={selected === 'Y'}
-            onClick={() => handleSelect(question.question_id, 'Y')}
-          />
-          <ChoiceChip
-            label="아니오 / 해당 없음"
-            active={selected === 'N'}
-            onClick={() => handleSelect(question.question_id, 'N')}
-          />
-        </div>
-      </div>
-    )
+  const handleContinue = () => {
+    localStorage.setItem('menopause_onboarding_done', 'true')
+    localStorage.setItem('menopause_survey_completed', 'true')
+    navigate('/')
   }
 
   return (
-    <div className="survey-page survey-shell">
-      <header className="survey-hero">
+    <div className="mb-page">
+      <header className="mb-hero">
         <div>
-          <p className="survey-eyebrow">마음봄 온보딩 1-4-1</p>
-          <h1>오늘 마음과 루틴, 가볍게 점검해볼까요?</h1>
-          <p className="survey-subtitle">
-            5분 정도면 끝나는 간단한 설문이에요. 결과는 진단이 아니라 오늘의 마음 상태를 돌아보는 참고 정보로만 사용돼요.
-          </p>
+          <p className="mb-eyebrow">마음봄 온보딩</p>
+          <h1 className="mb-title">갱년기 자가테스트</h1>
+          <p className="mb-subtitle">모바일 카드 스타일 설문으로 몸과 마음의 신호를 가볍게 점검해보세요.</p>
         </div>
-        <div className="survey-hero__actions">
-          {step === 'intro' ? (
-            <>
-              <button
-                className={`survey-primary ${skippedToday ? 'ghost' : ''}`}
-                onClick={handleStart}
-                disabled={loading || !!errorType || !questions.length}
-              >
-                지금 시작하기
-              </button>
-              <button className="survey-tertiary" type="button" onClick={handleSkipToday}>
-                다음에 할게요
-              </button>
-            </>
-          ) : (
-            <button className="survey-secondary" onClick={handleRestart}>
-              다시 설문하기
-            </button>
-          )}
+        <div className="mb-hero-actions">
+          <button className="mb-ghost" onClick={() => navigate('/')}>마음봄 홈</button>
         </div>
-        {skippedToday && step === 'intro' && (
-          <p className="survey-skip-hint">오늘은 쉬어가기로 하셨어요. 언제든 다시 시작할 수 있어요.</p>
-        )}
       </header>
 
-      {loading && (
-        <div className="survey-card loading-card">
-          <div className="loader" aria-hidden="true" />
-          <p className="survey-subtitle">오늘의 질문들을 가져오는 중이에요…</p>
-          <div className="skeleton-row">
-            <span className="skeleton-chip" />
-            <span className="skeleton-chip" />
-            <span className="skeleton-chip" />
+      {step === STEP.INTRO && (
+        <section className="mb-card mb-intro">
+          <div className="mb-intro-copy">
+            <p className="mb-badge">4단계 진행</p>
+            <h2>어떤 변화가 느껴지시나요?</h2>
+            <p>
+              간단한 체크리스트로 현재 몸과 마음 상태를 돌아볼 수 있어요. 진단 목적이 아닌 참고용 결과이며,
+              원하실 때 언제든 다시 응답할 수 있어요.
+            </p>
           </div>
-        </div>
+          <div className="mb-intro-actions">
+            <button className="mb-primary" onClick={() => setStep(STEP.GENDER)}>
+              해볼게요
+            </button>
+            <button className="mb-ghost" onClick={() => navigate('/')}>다음에 할게요</button>
+          </div>
+        </section>
       )}
 
-      {error && !loading && errorType === 'inactive' && (
-        <div className="survey-card empty-card">
-          <div className="empty-visual">😴</div>
-          <p className="survey-question__title">현재 활성화된 설문이 없습니다.</p>
-          <p className="survey-subtitle">준비 중인 설문이에요. 곧 더 재밌는 질문으로 찾아올게요!</p>
-          <div className="survey-actions centered">
-            <button className="survey-secondary" onClick={fetchQuestions}>
-              다시 시도하기
+      {step === STEP.GENDER && (
+        <section className="mb-card mb-gender">
+          <p className="mb-badge">STEP 1 · 성별 선택</p>
+          <h2>어떤 성별의 체크리스트를 진행할까요?</h2>
+          <div className="mb-gender-grid">
+            <button className="mb-gender-card" onClick={() => handleSelectGender('여성')}>
+              <span className="mb-gender-emoji" aria-hidden>
+                🌷
+              </span>
+              <strong>여성</strong>
+              <small>여성을 위한 10문항</small>
+            </button>
+            <button className="mb-gender-card" onClick={() => handleSelectGender('남성')}>
+              <span className="mb-gender-emoji" aria-hidden>
+                🌿
+              </span>
+              <strong>남성</strong>
+              <small>남성을 위한 10문항</small>
             </button>
           </div>
-        </div>
+        </section>
       )}
 
-      {error && !loading && errorType && errorType !== 'inactive' && (
-        <div className="survey-card gentle-error">
-          <p className="survey-question__title">잠시 연결이 불안정해요.</p>
-          <p className="survey-subtitle">새로고침 후 다시 시도해 주세요.</p>
-          <div className="survey-actions centered">
-            <button className="survey-secondary" onClick={fetchQuestions}>
-              다시 시도하기
+      {step === STEP.SURVEY && currentQuestion && (
+        <section className="mb-card mb-question-card">
+          <div className="mb-progress">
+            <div
+              className="mb-progress-fill"
+              style={{ width: `${Math.round(((currentIndex + 1) / questions.length) * 100)}%` }}
+            />
+          </div>
+          <div className="mb-progress-label">
+            <span>
+              {currentIndex + 1} / {questions.length}
+            </span>
+            <span>{answeredCount}문항 응답 완료</span>
+          </div>
+
+          <p className="mb-question-eyebrow">오늘의 질문</p>
+          <h3 className="mb-question-text">{currentQuestion.text}</h3>
+
+          <div className="mb-chip-row">
+            <button
+              className={`mb-chip ${answers[currentQuestion.code] === 'yes' ? 'active' : ''}`}
+              onClick={() => handleAnswer('yes')}
+            >
+              그렇다
+            </button>
+            <button
+              className={`mb-chip ${answers[currentQuestion.code] === 'no' ? 'active' : ''}`}
+              onClick={() => handleAnswer('no')}
+            >
+              아니다
             </button>
           </div>
-        </div>
-      )}
 
-      {!loading && !error && step === 'intro' && (
-        <div className="survey-card intro-card">
-          <p>가볍게 체크해보고 싶은 날, 언제든 다시 시작할 수 있어요.</p>
-          <div className="survey-chip-row muted-row">
-            <span className="survey-chip muted">예/아니오로 간단히 응답</span>
-            <span className="survey-chip muted">오늘 컨디션 확인</span>
-            <span className="survey-chip muted">루틴 점검</span>
-          </div>
-        </div>
-      )}
-
-      {!loading && !error && step === 'survey' && currentQuestion && (
-        <>
-          {renderQuestion(currentQuestion, currentIndex)}
-
-          <div className="survey-actions question-actions">
-            <button className="survey-secondary" onClick={handlePrev} disabled={currentIndex === 0}>
+          <div className="mb-question-actions">
+            <button className="mb-ghost" onClick={handlePrev} disabled={currentIndex === 0}>
               이전
             </button>
             {currentIndex < questions.length - 1 && (
-              <button
-                className="survey-primary"
-                onClick={handleNext}
-                disabled={!answers[currentQuestion.question_id]}
-              >
+              <button className="mb-secondary" onClick={handleNext} disabled={!answers[currentQuestion.code]}>
                 다음
               </button>
             )}
             {currentIndex === questions.length - 1 && (
               <button
-                className="survey-primary"
+                className="mb-primary"
                 onClick={handleSubmit}
-                disabled={!allAnswered || submitting}
+                disabled={answeredCount !== questions.length || submitting}
               >
-                {submitting ? '제출 중…' : '결과 보기'}
+                {submitting ? '저장 중...' : '결과 보기'}
               </button>
             )}
           </div>
-        </>
+        </section>
       )}
 
-      {step === 'result' && result && (
-        <div
-          className="survey-card result-card"
-          style={{ backgroundColor: riskStyle.background, borderColor: riskStyle.accent }}
-        >
-          <div className="survey-result__header">
+      {step === STEP.RESULT && result && (
+        <section className="mb-card mb-result">
+          <div className="mb-result-header">
             <div>
-              <p className="survey-eyebrow">오늘의 루틴/마음 상태</p>
-              <h2 style={{ color: riskStyle.text }}>전체 점수 {result.total_score}점</h2>
-              {result.comment && <p className="survey-result__comment">{result.comment}</p>}
+              <p className="mb-badge">설문 결과</p>
+              <h2>
+                체크 {result.yesCount}개 · 위험도 {result.riskLevel}
+              </h2>
+              <p className="mb-result-copy">{getRiskCopy(result.riskLevel)}</p>
             </div>
-            <span
-              className="survey-result__pill"
-              style={{ color: riskStyle.text, backgroundColor: '#ffffffaa', border: `1px solid ${riskStyle.accent}` }}
-            >
-              위험도 {result.risk_level}
-            </span>
+            <div className={`mb-risk-pill ${result.riskLevel.toLowerCase()}`}>{result.riskLevel}</div>
           </div>
 
-          <div className="badge-row">
-            <span className="survey-chip accent" style={{ borderColor: riskStyle.accent, color: riskStyle.text }}>
-              스트레스 지수 · {result.total_score}
-            </span>
-            <span className="survey-chip accent" style={{ borderColor: riskStyle.accent, color: riskStyle.text }}>
-              에너지 상태 · {result.risk_level}
-            </span>
-            <span className="survey-chip accent" style={{ borderColor: riskStyle.accent, color: riskStyle.text }}>
-              오늘의 루틴 힌트
-            </span>
-          </div>
+          <ul className="mb-question-list">
+            {questions.map((q) => (
+              <li key={q.code}>
+                <div className="mb-question-label">
+                  <span className="mb-question-code">{q.code}</span>
+                  <p>{q.text}</p>
+                </div>
+                <span className={`mb-answer-pill ${answers[q.code] === 'yes' ? 'yes' : 'no'}`}>
+                  {answers[q.code] === 'yes' ? '그렇다' : '아니다'}
+                </span>
+              </li>
+            ))}
+          </ul>
 
-          <p className="survey-result__time">측정 시각: {new Date(result.taken_at).toLocaleString('ko-KR')}</p>
-
-          <div className="survey-actions">
-            <button className="survey-secondary" onClick={handleRestart}>
-              다시 설문하기
+          <div className="mb-result-actions">
+            <button className="mb-secondary" onClick={handleRetake}>
+              같은 성별로 다시 해보기
             </button>
-            <button
-              className="survey-primary ghost"
-              onClick={() => {
-                // TODO: 봄이와 대화 페이지 경로가 확정되면 이동하도록 연결합니다.
-                console.log('봄이와 대화 시작하기 클릭')
-              }}
-            >
-              메인으로 돌아가기
+            <button className="mb-primary" onClick={handleContinue}>
+              마음봄 계속 이용하기
             </button>
           </div>
-        </div>
+        </section>
       )}
     </div>
   )

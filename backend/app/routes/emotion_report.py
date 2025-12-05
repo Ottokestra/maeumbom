@@ -1,21 +1,17 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
-from app.dependencies import get_db
-from app.schemas.emotion_report import WeeklyEmotionReport
+from app.database import get_db
+from app.emotion_report.schemas import WeeklyEmotionReport
 from app.services.emotion_report_service import get_weekly_emotion_report
 
 router = APIRouter(prefix="/reports/emotion", tags=["emotion-report"])
 
 
 @router.get("/weekly", response_model=WeeklyEmotionReport)
-def get_weekly_report(user_id: int = 1, db: Session = Depends(get_db)):
+def read_weekly_emotion_report(db: Session = Depends(get_db), user_id: int = 1):
     """
-    현재 로그인 유저의 최근 7일 감정 리포트를 반환.
-    - 데이터가 없으면 404로 응답하여 프론트에서 '오늘은 아직 데이터가 없어요' 화면을 보여줄 수 있도록 한다.
+    임시로 user_id=1 기준의 주간 감정 리포트 반환.
+    나중에 인증 붙이면 JWT에서 user_id 추출하도록 수정.
     """
-    # TODO: 인증 연동 시 current_user.id로 교체
-    report = get_weekly_emotion_report(db=db, user_id=user_id)
-    if report is None or not report.has_data:
-        raise HTTPException(status_code=404, detail="No emotion data for this week")
-    return report
+    return get_weekly_emotion_report(db, user_id=user_id)
