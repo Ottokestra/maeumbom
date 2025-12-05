@@ -1,0 +1,241 @@
+.admin-page {
+  padding: var(--space-xl);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+}
+
+.admin-header {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-lg);
+  align-items: flex-start;
+}
+
+.admin-header h1 {
+  font-size: var(--font-size-xl);
+  margin-bottom: var(--space-xs);
+}
+
+.eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+
+.description {
+  color: var(--color-text-secondary);
+  max-width: 720px;
+  line-height: 1.6;
+}
+
+.header-actions {
+  display: flex;
+  gap: var(--space-sm);
+  align-items: center;
+}
+
+.admin-content {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: var(--space-lg);
+}
+
+.list-panel,
+.form-panel {
+  background: rgba(255, 255, 255, 0.78);
+  border-radius: var(--radius-lg);
+  padding: var(--space-lg);
+  box-shadow: var(--shadow-soft);
+  backdrop-filter: blur(6px);
+}
+
+.filter-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  margin-bottom: var(--space-md);
+}
+
+.filter-group label {
+  display: block;
+  font-size: 13px;
+  color: var(--color-text-muted);
+  margin-bottom: 6px;
+}
+
+.filter-group select {
+  padding: 10px 12px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border-soft);
+  min-width: 140px;
+  background: #fff;
+}
+
+.filter-chip {
+  padding: 10px 14px;
+  border-radius: var(--radius-full);
+  background: var(--color-bg-soft-mint);
+  color: var(--color-nature-green);
+  font-weight: 600;
+}
+
+.table-wrapper {
+  overflow: auto;
+}
+
+.question-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--font-size-md);
+}
+
+.question-table th,
+.question-table td {
+  padding: 12px 10px;
+  border-bottom: 1px solid var(--color-border-soft);
+  text-align: left;
+}
+
+.question-table th {
+  font-weight: 700;
+  color: var(--color-text-secondary);
+}
+
+.question-text {
+  max-width: 360px;
+}
+
+.badge {
+  padding: 6px 10px;
+  border-radius: var(--radius-full);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.badge.on {
+  background: var(--color-bg-soft-mint);
+  color: var(--color-nature-green);
+}
+
+.badge.off {
+  background: var(--color-bg-light-pink);
+  color: var(--color-accent-coral);
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+}
+
+.form-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.form-header h2 {
+  margin-top: 4px;
+  margin-bottom: 4px;
+}
+
+.question-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.form-row {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.form-row input,
+.form-row select,
+.form-row textarea {
+  padding: 12px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border-soft);
+  background: #fff;
+  font-size: var(--font-size-md);
+}
+
+.form-row textarea {
+  min-height: 96px;
+  resize: vertical;
+}
+
+.two-col {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-sm);
+}
+
+.checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.form-actions {
+  display: flex;
+  gap: var(--space-sm);
+  justify-content: flex-end;
+}
+
+.primary-btn,
+.ghost-btn,
+.danger-btn {
+  border: none;
+  border-radius: var(--radius-full);
+  padding: 10px 16px;
+  font-weight: 700;
+  transition: transform 0.1s ease, box-shadow 0.2s ease;
+}
+
+.primary-btn {
+  background: linear-gradient(135deg, var(--color-accent-coral), var(--color-accent-red));
+  color: #fff;
+  box-shadow: var(--shadow-soft);
+}
+
+.primary-btn:disabled {
+  opacity: 0.6;
+}
+
+.ghost-btn {
+  background: #fff;
+  color: var(--color-text-primary);
+  border: 1px solid var(--color-border-soft);
+}
+
+.danger-btn {
+  background: #fff5f5;
+  color: var(--color-accent-red);
+  border: 1px solid #ffd7d7;
+}
+
+.primary-btn:hover,
+.ghost-btn:hover,
+.danger-btn:hover {
+  transform: translateY(-1px);
+}
+
+.muted {
+  color: var(--color-text-muted);
+  text-align: center;
+  padding: var(--space-md);
+}
+
+.error-text {
+  color: var(--color-accent-red);
+  margin-bottom: var(--space-sm);
+}
+
+@media (max-width: 1024px) {
+  .admin-content {
+    grid-template-columns: 1fr;
+  }
+}
