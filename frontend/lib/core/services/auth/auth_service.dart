@@ -69,14 +69,17 @@ class AuthService {
     try {
       appLogger.i('Starting Kakao login flow...');
 
-      // Step 1: Get authorization code from Kakao
-      final authCode = await _kakaoOAuth!.signIn();
+      // Step 1: Get access token from Kakao SDK
+      final accessToken = await _kakaoOAuth!.signIn();
+      appLogger.i('Kakao SDK login successful, exchanging token...');
 
-      // Step 2: Exchange auth code for tokens via backend
+      // Step 2: Send access token to backend for verification and user creation
+      // 백엔드에서 이 토큰으로 카카오 사용자 정보를 가져와서 처리
       final (tokens, user) = await _repository.loginWithKakao(
-        authCode: authCode,
+        authCode: accessToken, // accessToken을 authCode 파라미터로 전달
         redirectUri: OAuthConfig.kakaoRedirectUri,
       );
+      appLogger.i('Token exchange successful');
 
       // Step 3: Store tokens securely
       await _tokenStorage.saveTokens(tokens);
@@ -84,8 +87,21 @@ class AuthService {
       appLogger.i('Kakao login completed: ${user.email}');
       return user;
     } catch (e) {
-      appLogger.e('Kakao login failed', error: e);
-      rethrow;
+      // 상세한 에러 로깅 및 사용자 친화적 메시지 제공
+      final errorMessage = e.toString();
+      
+      if (errorMessage.contains('로그인이 취소되었습니다') || 
+          errorMessage.contains('User canceled') ||
+          errorMessage.contains('CANCELED')) {
+        appLogger.i('Kakao login canceled by user');
+        throw Exception('로그인이 취소되었습니다.');
+      } else if (errorMessage.contains('network') || errorMessage.contains('네트워크')) {
+        appLogger.w('Kakao login network error');
+        throw Exception('네트워크 연결을 확인하고 다시 시도해주세요.');
+      } else {
+        appLogger.e('Kakao login failed', error: e);
+        throw Exception('카카오 로그인에 실패했습니다. 잠시 후 다시 시도해주세요.');
+      }
     }
   }
 
@@ -100,6 +116,7 @@ class AuthService {
 
       // Step 1: Get authorization code and state from Naver
       final (authCode, state) = await _naverOAuth!.signIn();
+      appLogger.i('OAuth authorization successful, exchanging for tokens...');
 
       // Step 2: Exchange auth code for tokens via backend
       final (tokens, user) = await _repository.loginWithNaver(
@@ -107,6 +124,7 @@ class AuthService {
         redirectUri: OAuthConfig.naverRedirectUri,
         state: state,
       );
+      appLogger.i('Token exchange successful');
 
       // Step 3: Store tokens securely
       await _tokenStorage.saveTokens(tokens);
@@ -114,8 +132,27 @@ class AuthService {
       appLogger.i('Naver login completed: ${user.email}');
       return user;
     } catch (e) {
-      appLogger.e('Naver login failed', error: e);
-      rethrow;
+      // 상세한 에러 로깅 및 사용자 친화적 메시지 제공
+      final errorMessage = e.toString();
+      
+      if (errorMessage.contains('로그인이 취소되었습니다') || 
+          errorMessage.contains('User canceled') ||
+          errorMessage.contains('CANCELED')) {
+        appLogger.i('Naver login canceled by user');
+        throw Exception('로그인이 취소되었습니다.');
+      } else if (errorMessage.contains('timeout') || errorMessage.contains('시간이 초과')) {
+        appLogger.w('Naver login timeout');
+        throw Exception('로그인 시간이 초과되었습니다. 다시 시도해주세요.');
+      } else if (errorMessage.contains('network') || errorMessage.contains('네트워크')) {
+        appLogger.w('Naver login network error');
+        throw Exception('네트워크 연결을 확인하고 다시 시도해주세요.');
+      } else if (errorMessage.contains('State mismatch') || errorMessage.contains('CSRF')) {
+        appLogger.e('Naver login CSRF attack detected');
+        throw Exception('보안 오류가 발생했습니다. 다시 시도해주세요.');
+      } else {
+        appLogger.e('Naver login failed', error: e);
+        throw Exception('네이버 로그인에 실패했습니다. 잠시 후 다시 시도해주세요.');
+      }
     }
   }
 

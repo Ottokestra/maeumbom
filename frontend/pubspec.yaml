@@ -48,7 +48,11 @@ dependencies:
   # Google Sign In
   google_sign_in: ^6.2.1
 
-  # Web Auth for Kakao/Naver (WebView OAuth)
+  # Kakao Login SDK (Native)
+  kakao_flutter_sdk_user: ^1.9.6
+
+  # Web Auth for Naver (WebView OAuth)
+  # flutter_web_auth_2: ^3.0.0
   flutter_web_auth_2: ^4.1.0
 
   # Utilities

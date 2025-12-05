@@ -28,6 +28,9 @@ android {
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+        
+        // Kakao SDK
+        manifestPlaceholders["KAKAO_APP_KEY"] = "3dc461684b25108e0f01609418154d4e"
     }
 
     buildTypes {

@@ -63,12 +63,14 @@ class ScenarioListItem(BaseModel):
         target_type: Target relationship type
         category: Scenario category (TRAINING/DRAMA)
         start_image_url: Optional start image URL for thumbnail
+        user_id: User ID (NULL for public scenarios)
     """
     id: int = Field(..., description="Scenario ID")
     title: str = Field(..., description="Scenario title")
     target_type: str = Field(..., description="Target relationship type")
     category: str = Field(..., description="Scenario category")
     start_image_url: Optional[str] = Field(None, description="Start image URL for thumbnail")
+    user_id: Optional[int] = Field(None, description="User ID (NULL for public scenarios)")
     
     class Config:
         from_attributes = True

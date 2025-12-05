@@ -1,12 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:kakao_flutter_sdk_user/kakao_flutter_sdk_user.dart';
 import 'ui/app_ui.dart';
 import 'core/config/app_routes.dart';
 import 'core/services/navigation/route_guard.dart';
 import 'app/common/login_screen.dart';
 import 'app/home/home_screen.dart';
+import 'core/config/oauth_config.dart';
 
 void main() {
+  // Kakao SDK 초기화
+  KakaoSdk.init(
+    nativeAppKey: OAuthConfig.kakaoNativeAppKey,
+  );
+
   runApp(
     const ProviderScope(
       child: MaeumBomApp(),

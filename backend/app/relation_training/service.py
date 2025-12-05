@@ -74,7 +74,8 @@ def get_scenario_list(db: Session, category: Optional[str] = None, user_id: Opti
             "title": s.TITLE,
             "target_type": s.TARGET_TYPE,
             "category": s.CATEGORY,
-            "start_image_url": s.START_IMAGE_URL
+            "start_image_url": s.START_IMAGE_URL,
+            "user_id": s.USER_ID
         }
         for s in scenarios
     ]
