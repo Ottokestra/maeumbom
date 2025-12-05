@@ -3,34 +3,32 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../ui/app_ui.dart';
 import '../../core/services/navigation/navigation_service.dart';
 
-/// Home Screen - 메인 홈 화면
-class HomeScreen extends ConsumerWidget {
-  const HomeScreen({super.key});
+/// Report Screen - 마음리포트 화면
+class ReportScreen extends ConsumerWidget {
+  const ReportScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final navigationService = NavigationService(context, ref);
 
     return AppFrame(
-      // 상단 바와 하단 바를 포함한 기본 레이아웃
       topBar: TopBar(
-        title: '',
+        title: '마음리포트',
       ),
       bottomBar: BottomMenuBar(
-        currentIndex: 0,
+        currentIndex: 3,
         onTap: (index) {
           navigationService.navigateToTab(index);
         },
       ),
-      // body: 홈 화면의 본문 내용
-      body: const HomeContent(),
+      body: const ReportContent(),
     );
   }
 }
 
-/// Home Content
-class HomeContent extends StatelessWidget {
-  const HomeContent({super.key});
+/// Report Content
+class ReportContent extends StatelessWidget {
+  const ReportContent({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -41,7 +39,7 @@ class HomeContent extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: const [
           Text(
-            '오늘 하루 어떠셨나요?',
+            '마음리포트',
             style: AppTypography.h2,
           ),
         ],
@@ -49,3 +47,4 @@ class HomeContent extends StatelessWidget {
     );
   }
 }
+

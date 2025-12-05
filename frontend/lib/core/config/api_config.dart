@@ -22,6 +22,17 @@ class ApiConfig {
   static const String me = '$authBase/me';
   static const String authConfig = '$authBase/config';
 
+  // Chat Endpoints
+  static const String chatBase = '/api/agent/v2';
+  static const String chatText = '$chatBase/text';
+  static const String chatSessions = '$chatBase/sessions';
+  static String chatSession(String sessionId) =>
+      '$chatBase/sessions/$sessionId';
+
+  // WebSocket Endpoints
+  static String get chatWebSocketUrl =>
+      baseUrl.replaceFirst('http', 'ws') + '/agent/stream';
+
   // Timeout Configuration
   static const Duration connectTimeout = Duration(seconds: 30);
   static const Duration receiveTimeout = Duration(seconds: 30);

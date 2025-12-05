@@ -60,6 +60,11 @@ dependencies:
   json_annotation: ^4.8.1
   logger: ^2.0.2
 
+  # Audio & Permissions
+  record: ^5.1.2
+  permission_handler: ^11.0.1
+  web_socket_channel: ^2.4.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -75,6 +80,10 @@ dev_dependencies:
   build_runner: ^2.4.7
   freezed: ^2.4.6
   json_serializable: ^6.7.1
+
+# Override dependencies to fix Linux compatibility issues
+dependency_overrides:
+  record_linux: ^1.0.0
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

@@ -1,9 +1,11 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <!-- Internet permission for API calls -->
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Microphone permission for audio chat -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
 
     <application
-        android:label="frontend"
+        android:label="마음봄"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         

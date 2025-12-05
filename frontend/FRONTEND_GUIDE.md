@@ -141,13 +141,13 @@ frontend/
 │   │
 │   ├── data/                           # 데이터 계층 (도메인별 분리)
 │   │   ├── models/                     # 도메인 모델
-│   │   │   └── auth/                   # 인증 도메인
+│   │   │   └── auth/                   
 │   │   ├── dtos/                       # API DTO
-│   │   │   └── auth/                   # 인증 DTO
+│   │   │   └── auth/                   
 │   │   ├── api/                        # HTTP 클라이언트
-│   │   │   └── auth/                   # 인증 API
+│   │   │   └── auth/                   
 │   │   └── repository/                 # 데이터 저장소
-│   │       └── auth/                   # 인증 레포지토리
+│   │       └── auth/                   
 │   │
 │   └── core/                           # 핵심 기능
 │       ├── config/                     # 앱 설정
@@ -913,17 +913,107 @@ class FeatureContent extends StatelessWidget {
 }
 ```
 
-#### 3. 라우팅 추가 (필요시)
+#### 3. 라우팅 추가
+
+앱의 모든 라우트는 `lib/core/config/app_routes.dart`에서 중앙 관리됩니다. 새로운 페이지를 추가할 때는 이 파일만 수정하면 됩니다.
+
+##### AppRoutes에 라우트 추가
+
+`lib/core/config/app_routes.dart` 파일을 열고:
+
+**공개 경로 (인증 불필요)인 경우:**
 
 ```dart
-// lib/main.dart
-MaterialApp(
-  routes: {
-    '/': (context) => const HomeScreen(),
-    '/feature': (context) => const FeatureScreen(),
-  },
-)
+static const RouteMetadata newScreen = RouteMetadata(
+  routeName: '/new-screen',
+  builder: NewScreen.new,
+  // requiresAuth는 기본값 false이므로 생략 가능
+);
 ```
+
+**보호된 경로 (인증 필요)인 경우:**
+
+```dart
+static const RouteMetadata newScreen = RouteMetadata(
+  routeName: '/new-screen',
+  builder: NewScreen.new,
+  requiresAuth: true, // 인증 필요
+);
+```
+
+**탭 메뉴에 표시되는 경우:**
+
+```dart
+static const RouteMetadata newScreen = RouteMetadata(
+  routeName: '/new-screen',
+  builder: NewScreen.new,
+  requiresAuth: true,
+  tabIndex: 5, // 탭 메뉴 인덱스
+);
+```
+
+**allRoutes에 추가:**
+
+```dart
+static const List<RouteMetadata> allRoutes = [
+  home,
+  alarm,
+  chat,
+  report,
+  mypage,
+  login,
+  example,
+  newScreen, // 여기에 추가
+];
+```
+
+##### 사용하기
+
+**탭 메뉴에서 접근하는 경우:**
+
+`NavigationService`가 자동으로 인증을 체크하고 라우팅합니다:
+
+```dart
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../core/services/navigation/navigation_service.dart';
+
+class FeatureScreen extends ConsumerWidget {
+  const FeatureScreen({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final navigationService = NavigationService(context, ref);
+
+    return AppFrame(
+      bottomBar: BottomMenuBar(
+        currentIndex: 5,
+        onTap: (index) {
+          navigationService.navigateToTab(index); // tabIndex로 접근
+        },
+      ),
+      // ...
+    );
+  }
+}
+```
+
+**직접 경로로 접근하는 경우:**
+
+```dart
+final navigationService = NavigationService(context, ref);
+navigationService.navigateToRoute('/new-screen');
+```
+
+**RouteMetadata 속성:**
+
+- `routeName`: 경로 이름 (예: `/chat`)
+- `builder`: 화면 위젯을 생성하는 함수
+- `requiresAuth`: 인증이 필요한지 여부 (기본값: `false`)
+- `tabIndex`: 탭 메뉴에 표시되는 경우 인덱스 (선택사항)
+
+**참고:** `main.dart`에서 `AppRoutes.toMaterialRoutes()`를 사용하면 자동으로 모든 라우트가 등록됩니다. 별도로 `routes` 맵을 수정할 필요가 없습니다.
+
+
 
 ## 📐 코딩 컨벤션
 
