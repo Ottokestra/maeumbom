@@ -4,7 +4,7 @@ import '../../config/app_routes.dart';
 
 /// Route Guard 서비스
 class RouteGuard {
-  final ProviderRef ref;
+  final Ref ref;
 
   RouteGuard(this.ref);
 
