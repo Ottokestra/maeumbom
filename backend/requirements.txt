@@ -19,6 +19,17 @@ huggingface-hub>=0.20.0
 
 ###########################################################
 # Torch + Torchaudio + Torchvision (호환 버전)
+# ⚠️ 주의: TTS(Text-to-Speech)와 Deep Agent 모두 PyTorch 필요!
+# ⚠️ 절대로 제거하지 마세요!
+#
+# Windows 환경 (권장):
+#   pip install torch torchvision torchaudio
+#
+# Linux + AMD GPU (ROCm):
+#   pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/rocm6.0
+#
+# NVIDIA GPU (CUDA):
+#   pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
 ###########################################################
 torch>=2.0.0
 torchvision>=0.15.0
@@ -105,4 +116,14 @@ cryptography>=41.0.0
 ##########################################################
 openpyxl>=3.0.0
 pandas>=2.0.0
+##########################################################
+
+##########################################################
+# Deep Agent Pipeline
+diffusers>=0.25.0
+tenacity>=8.2.0
+pillow>=10.0.0
+
+# Qwen 2.5 14B GGUF (Local Scenario Writer)
+# llama-cpp-python==0.2.90
 ##########################################################

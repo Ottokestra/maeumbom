@@ -61,7 +61,8 @@ class DBConversationStore:
         user_id: int,
         text: str,
         emotion_result: Dict[str, Any],
-        check_root: str = "conversation"
+        check_root: str = "conversation",
+        input_text_embedding: Optional[str] = None  # NEW: JSON string of embedding
     ) -> int:
         """
         Save emotion analysis result to TB_EMOTION_ANALYSIS
@@ -71,6 +72,7 @@ class DBConversationStore:
             text: Input text
             emotion_result: Emotion analysis result dictionary
             check_root: Source of check (default: "conversation")
+            input_text_embedding: JSON string of embedding vector (optional)
             
         Returns:
             ID of created record, or -1 if failed
@@ -81,6 +83,7 @@ class DBConversationStore:
                 USER_ID=user_id,
                 CHECK_ROOT=check_root,
                 TEXT=text,
+                INPUT_TEXT_EMBEDDING=input_text_embedding,  # NEW
                 LANGUAGE=emotion_result.get("language", "ko"),
                 RAW_DISTRIBUTION=emotion_result.get("raw_distribution"),
                 PRIMARY_EMOTION=emotion_result.get("primary_emotion"),

@@ -85,6 +85,7 @@ outputs/
 
 # ===== local debug script =====
 reproduce_error.py
+scripts/
 
 # ===== LangChain Agent Memory & RAG =====
 engine/langchain_agent/memory_data/

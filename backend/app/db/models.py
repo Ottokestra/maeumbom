@@ -101,6 +101,7 @@ class EmotionAnalysis(Base):
         USER_ID: Foreign key to users table (optional)
         CHECK_ROOT: Source of emotion analysis ("conversation" or "daily_mood_check")
         TEXT: Original input text
+        INPUT_TEXT_EMBEDDING: JSON array of embedding vector for similarity search
         LANGUAGE: Language code (default: "ko")
         RAW_DISTRIBUTION: JSON field (17 emotion distribution)
         PRIMARY_EMOTION: JSON field (primary emotion info)
@@ -119,6 +120,7 @@ class EmotionAnalysis(Base):
     USER_ID = Column(Integer, ForeignKey("TB_USERS.ID"), nullable=True, index=True)
     CHECK_ROOT = Column(String(20), nullable=False, index=True)
     TEXT = Column(Text, nullable=False)
+    INPUT_TEXT_EMBEDDING = Column(Text, nullable=True)  # JSON: "[0.123, -0.456, ...]"
     LANGUAGE = Column(String(10), nullable=False, default="ko")
     RAW_DISTRIBUTION = Column(JSON, nullable=True)
     PRIMARY_EMOTION = Column(JSON, nullable=True)
@@ -520,11 +522,14 @@ class ScenarioResult(Base):
     Attributes:
         ID: Primary key
         SCENARIO_ID: Foreign key to scenarios table
-        RESULT_CODE: Result code for tracking (e.g., 'SUCCESS', 'FAIL', 'NEUTRAL')
+        RESULT_CODE: Result code for tracking (e.g., 'AAAA', 'BBBB')
         DISPLAY_TITLE: Result title displayed to user
         ANALYSIS_TEXT: Detailed analysis text
-        ATMOSPHERE_IMAGE_TYPE: Image type for atmosphere (e.g., 'positive', 'negative', 'neutral')
-        SCORE: Score for this result (0-100)
+        ATMOSPHERE_IMAGE_TYPE: Image type for atmosphere (e.g., 'FLOWER', 'SUNNY', 'CLOUDY', 'STORM')
+        SCORE: Score for this result (0-100) - Legacy field for existing scenarios
+        RELATION_HEALTH_LEVEL: Relationship health level (GOOD/MIXED/BAD) - New field for Deep Agent
+        BOUNDARY_STYLE: Boundary setting style - New field for Deep Agent
+        RELATIONSHIP_TREND: Long-term relationship trend - New field for Deep Agent
         IMAGE_URL: Optional image URL for result (4컷만화 이미지)
         CREATED_AT: Creation timestamp
     """
@@ -536,7 +541,10 @@ class ScenarioResult(Base):
     DISPLAY_TITLE = Column(String(255), nullable=False)
     ANALYSIS_TEXT = Column(Text, nullable=False)
     ATMOSPHERE_IMAGE_TYPE = Column(String(50), nullable=True)
-    SCORE = Column(Integer, nullable=True)
+    SCORE = Column(Integer, nullable=True)  # Legacy: for existing scenarios
+    RELATION_HEALTH_LEVEL = Column(String(20), nullable=True)  # New: GOOD/MIXED/BAD
+    BOUNDARY_STYLE = Column(String(50), nullable=True)  # New: HEALTHY_ASSERTIVE/OVER_ADAPTIVE/ASSERTIVE_HARSH/AVOIDANT
+    RELATIONSHIP_TREND = Column(String(20), nullable=True)  # New: IMPROVING/STABLE/WORSENING
     IMAGE_URL = Column(String(500), nullable=True)
     CREATED_AT = Column(DateTime(timezone=True), server_default=func.now())
     
