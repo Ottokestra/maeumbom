@@ -773,16 +773,16 @@ function MainApp() {
           감정 분석
         </button>
         <button
-          onClick={() => setActiveTab('menopause-test')}
+          onClick={() => navigate('/signup/survey')}
           style={{
             padding: '10px 20px',
             fontSize: '16px',
             cursor: 'pointer',
-            backgroundColor: activeTab === 'menopause-test' ? '#6366f1' : '#e5e7eb',
-            color: activeTab === 'menopause-test' ? 'white' : '#374151',
+            backgroundColor: '#e5e7eb',
+            color: '#374151',
             border: 'none',
             borderRadius: '8px',
-            fontWeight: activeTab === 'menopause-test' ? 'bold' : 'normal'
+            fontWeight: 'bold'
           }}
         >
           갱년기 자가테스트

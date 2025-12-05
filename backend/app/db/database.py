@@ -62,6 +62,8 @@ def init_db():
     Call this function on application startup
     """
     from . import models  # Import models to register them
+    from app.emotion_report import models as emotion_report_models  # noqa: F401
+
     Base.metadata.create_all(bind=engine)
     print("[DB] All tables created successfully")
 
