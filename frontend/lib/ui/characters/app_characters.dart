@@ -19,16 +19,17 @@ enum EmotionId {
   anger,
   fear,
   confusion,
+  test
 }
 
 /// 감정 메타정보
 class EmotionMeta {
   final EmotionId id;
-  final String nameKo;      // 기쁨
-  final String nameEn;      // joy
+  final String nameKo; // 기쁨
+  final String nameEn; // joy
   final String characterKo; // 해바라기
   final String characterEn; // sunflower
-  final String shortDesc;   // 한 줄 설명
+  final String shortDesc; // 한 줄 설명
   final String assetnormal;
   final String assetHigh;
 
@@ -218,6 +219,17 @@ const Map<EmotionId, EmotionMeta> emotionMetaMap = {
     shortDesc: '갈피상실/혼동 → 무엇이 맞는지 모르는 상태',
     assetnormal: 'assets/characters/normal/char_confusion.png',
     assetHigh: 'assets/characters/high/char_confusion.png',
+  ),
+
+  EmotionId.test: EmotionMeta(
+    id: EmotionId.test,
+    nameKo: 'test',
+    nameEn: 'test',
+    characterKo: '테스트',
+    characterEn: 'test',
+    shortDesc: '테스트용 더미 데이터',
+    assetnormal: 'assets/characters/normal/char_test.png',
+    assetHigh: 'assets/characters/high/char_test.png',
   ),
 };
 

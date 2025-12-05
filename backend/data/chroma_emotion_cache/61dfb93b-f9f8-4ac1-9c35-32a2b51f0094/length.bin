@@ -1,0 +1,1 @@
+invalid type: string "{\"text\": \"너무 반갑다!ㅎㅎ 내 이름은 유재석이야\", \"language\": \"ko\", \"raw_distribution\": [{\"code\": \"joy\", \"name_ko\": \"기쁨\", \"group\": \"positive\", \"score\": 0.3999999999999999}, {\"code\": \"excitement\", \"name_ko\": \"흥분\", \"group\": \"positive\", \"score\": 0.19999999999999996}, {\"code\": \"confidence\", \"name_ko\": \"자신감

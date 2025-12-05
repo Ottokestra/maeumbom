@@ -8,45 +8,36 @@ import 'app/common/login_screen.dart';
 import 'app/home/home_screen.dart';
 import 'core/config/oauth_config.dart';
 import 'package:kakao_flutter_sdk_common/kakao_flutter_sdk_common.dart';
-
-
 // void main() {
 //   // Kakao SDK 초기화
 //   KakaoSdk.init(
 //     nativeAppKey: OAuthConfig.kakaoNativeAppKey,
 //   );
-
 //   runApp(
 //     const ProviderScope(
 //       child: MaeumBomApp(),
 //     ),
 //   );
 // }
-
-// ✅ 이렇게 변경
+// :흰색_확인_표시: 이렇게 변경
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
   // Kakao SDK 초기화
   KakaoSdk.init(
     nativeAppKey: OAuthConfig.kakaoNativeAppKey,
     loggingEnabled: true, // 로그 보기 좋게
   );
-
-  // 🔑 여기서 키 해시(origin) 한 번 출력
+  // :열쇠: 여기서 키 해시(origin) 한 번 출력
   final origin = await KakaoSdk.origin;
-  debugPrint('🔑 Kakao origin hash: $origin');
-
+  debugPrint(':열쇠: Kakao origin hash: $origin');
   runApp(
     const ProviderScope(
       child: MaeumBomApp(),
     ),
   );
 }
-
 class MaeumBomApp extends ConsumerWidget {
   const MaeumBomApp({super.key});
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return MaterialApp(
@@ -58,7 +49,6 @@ class MaeumBomApp extends ConsumerWidget {
         // RouteGuard를 사용하여 인증 체크
         final routeGuard = ref.read(routeGuardProvider);
         final routeName = settings.name ?? '/';
-
         // 인증이 필요한 경로인지 확인
         if (routeGuard.requiresAuth(routeName)) {
           // 인증 상태 확인
@@ -71,7 +61,6 @@ class MaeumBomApp extends ConsumerWidget {
             );
           }
         }
-
         // 인증이 필요 없거나 인증된 경우 정상 라우트 반환
         final routeMetadata = AppRoutes.findByRouteName(routeName);
         if (routeMetadata != null) {
@@ -80,7 +69,6 @@ class MaeumBomApp extends ConsumerWidget {
             settings: settings,
           );
         }
-
         // 라우트를 찾을 수 없으면 홈으로 리다이렉트
         return MaterialPageRoute(
           builder: (context) => const HomeScreen(),
@@ -89,4 +77,3 @@ class MaeumBomApp extends ConsumerWidget {
       },
     );
   }
-}

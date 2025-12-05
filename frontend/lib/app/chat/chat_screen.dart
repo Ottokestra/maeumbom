@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../ui/app_ui.dart';
+import '../../ui/components/chat_bubble.dart';
 import '../../providers/chat_provider.dart';
 import '../../data/models/chat/chat_message.dart';
 
@@ -401,78 +402,3 @@ class _LoadingBubble extends StatelessWidget {
   }
 }
 
-/// Chat Bubble - 말풍선 (Updated)
-class ChatBubble extends StatelessWidget {
-  final ChatMessage message;
-
-  const ChatBubble({
-    super.key,
-    required this.message,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final screenWidth = MediaQuery.of(context).size.width;
-    final maxBubbleWidth = screenWidth * 0.85;
-
-    return Padding(
-      padding: const EdgeInsets.only(bottom: AppSpacing.sm),
-      child: Row(
-        mainAxisAlignment:
-            message.isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
-        crossAxisAlignment: CrossAxisAlignment.end,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          ConstrainedBox(
-            constraints: BoxConstraints(
-              maxWidth: maxBubbleWidth,
-            ),
-            child: IntrinsicWidth(
-              child: Column(
-                crossAxisAlignment: message.isUser
-                    ? CrossAxisAlignment.end
-                    : CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // Message bubble
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppSpacing.sm,
-                      vertical: 12,
-                    ),
-                    decoration: BoxDecoration(
-                      color: message.isUser
-                          ? AppColors.accentRed
-                          : AppColors.pureWhite,
-                      borderRadius: BorderRadius.only(
-                        topLeft: const Radius.circular(AppRadius.md),
-                        topRight: const Radius.circular(AppRadius.md),
-                        bottomLeft: message.isUser
-                            ? const Radius.circular(AppRadius.md)
-                            : Radius.zero,
-                        bottomRight: message.isUser
-                            ? Radius.zero
-                            : const Radius.circular(AppRadius.md),
-                      ),
-                      border: message.isUser
-                          ? null
-                          : Border.all(color: AppColors.borderLight, width: 1),
-                    ),
-                    child: Text(
-                      message.text,
-                      style: AppTypography.body.copyWith(
-                        color: message.isUser
-                            ? AppColors.textWhite
-                            : AppColors.textPrimary,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
