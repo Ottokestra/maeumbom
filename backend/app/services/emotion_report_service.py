@@ -1,157 +1,252 @@
-"""Service for building weekly emotion reports."""
+"""Service layer for building weekly emotion reports."""
 from __future__ import annotations
 
-import logging
 from collections import Counter, defaultdict
 from datetime import date, datetime, timedelta
-from typing import Dict, Tuple
+from typing import Dict, Iterable, Optional, Tuple
 
 from sqlalchemy.orm import Session
 
-from app.db.models import EmotionLog
-from app.emotion_report.schemas import DailyEmotionSticker, WeeklyEmotionReport
+from app.db.models import DailyMoodSelection, EmotionAnalysis
+from app.schemas.emotion_report import EmotionDaySummary, WeeklyEmotionReport
 
-logger = logging.getLogger(__name__)
+WEEKDAY_LABELS = ["월", "화", "수", "목", "금", "토", "일"]
 
-DAY_LABELS = ["월", "화", "수", "목", "금", "토", "일"]
-DEFAULT_EMOTION_CODE = "worry"
-DEFAULT_CHARACTER_KEY = "peach_worry"
-DEFAULT_LABEL = "걱정이 복숭아"
-DEFAULT_GAUGE_COLOR = "#f9c6d6"
-
-
-# 감정 코드 → 캐릭터 키/라벨/게이지 컬러 매핑
-EMOTION_CHARACTER_MAP: Dict[str, Tuple[str, str, str]] = {
-    "worry": ("peach_worry", "걱정이 복숭아", "#f9c6d6"),
-    "sad": ("cloud_sad", "슬픈 구름", "#b3c7e6"),
-    "focus": ("book_focus", "집중하는 책", "#c2e0ff"),
-    "sleepy": ("nap_sleepy", "졸린 낮잠", "#e0d1ff"),
-    "brave": ("lion_brave", "용감한 사자", "#ffd580"),
-    "proud": ("star_proud", "뿌듯한 별", "#ffd480"),
-    "happy": ("sun_happy", "기쁜 해", "#ffe89e"),
+# 감정 키를 캐릭터 코드/라벨로 매핑
+EMOTION_CHARACTER_MAP: Dict[str, Tuple[str, str]] = {
+    "worry": ("PEACH_WORRY", "걱정이 복숭아"),
+    "anxiety": ("PEACH_WORRY", "걱정이 복숭아"),
+    "sad": ("CLOUD_SAD", "슬픈 구름"),
+    "sadness": ("CLOUD_SAD", "슬픈 구름"),
+    "joy": ("SUN_JOY", "반짝이는 햇살"),
+    "happy": ("SUN_JOY", "반짝이는 햇살"),
+    "anger": ("VOLCANO_ANGER", "화산 같은 분노"),
+    "fear": ("NIGHT_FEAR", "두려움의 밤"),
 }
 
-
-def _normalize_emotion_code(emotion_code: str | None) -> str:
-    if not emotion_code:
-        return DEFAULT_EMOTION_CODE
-    return str(emotion_code).strip().lower() or DEFAULT_EMOTION_CODE
+DEFAULT_CHARACTER_CODE = "PEACH_WORRY"
+DEFAULT_CHARACTER_LABEL = "걱정이 복숭아"
 
 
-def _pick_character_info(emotion_code: str) -> tuple[str, str, str]:
-    return EMOTION_CHARACTER_MAP.get(
-        emotion_code,
-        (DEFAULT_CHARACTER_KEY, DEFAULT_LABEL, DEFAULT_GAUGE_COLOR),
-    )
+def get_week_range(today: date) -> tuple[date, date]:
+    """Return (start, end) for the last 7 days including today."""
+
+    start = today - timedelta(days=6)
+    return start, today
 
 
-def _format_date(value: date) -> str:
-    return value.strftime("%Y-%m-%d")
+def _clamp_temperature(value: float) -> int:
+    return max(0, min(100, int(round(value))))
 
 
-def _build_sample_report(base_date: date) -> WeeklyEmotionReport:
-    """Return a sample report so the UI is not broken when data is missing."""
+def _normalize_emotion_key(value: Optional[str]) -> Optional[str]:
+    if value is None:
+        return None
+    normalized = str(value).strip().lower()
+    return normalized or None
 
-    logger.info("TODO: 실제 데이터 연동 필요 - returning sample weekly emotion report")
 
-    stickers: list[DailyEmotionSticker] = []
-    for i in range(7):
-        day_date = base_date - timedelta(days=6 - i)
-        character_key, label, _ = _pick_character_info(DEFAULT_EMOTION_CODE)
-        stickers.append(
-            DailyEmotionSticker(
-                day_label=DAY_LABELS[day_date.weekday()],
-                date=_format_date(day_date),
-                emotion_code=DEFAULT_EMOTION_CODE,
-                character_key=character_key,
-                label=label,
-            )
+def resolve_character_code(emotion_key: Optional[str]) -> Tuple[str, str]:
+    """Resolve emotion key to (character_code, label)."""
+
+    if emotion_key:
+        mapped = EMOTION_CHARACTER_MAP.get(emotion_key)
+        if mapped:
+            return mapped
+    return DEFAULT_CHARACTER_CODE, DEFAULT_CHARACTER_LABEL
+
+
+def _extract_emotion_from_analysis(analysis: EmotionAnalysis) -> tuple[Optional[str], Optional[float]]:
+    primary = analysis.PRIMARY_EMOTION or {}
+    emotion_key = None
+    score: Optional[float] = None
+
+    if isinstance(primary, dict):
+        emotion_key = (
+            primary.get("key")
+            or primary.get("emotion")
+            or primary.get("code")
+            or primary.get("label")
         )
+        for candidate in ("score", "probability", "value"):
+            if primary.get(candidate) is not None:
+                try:
+                    score = float(primary.get(candidate))
+                except (TypeError, ValueError):
+                    score = None
+                break
+    elif primary:
+        emotion_key = str(primary)
 
-    _, label, gauge_color = _pick_character_info(DEFAULT_EMOTION_CODE)
-
-    return WeeklyEmotionReport(
-        week_start=_format_date(base_date - timedelta(days=6)),
-        week_end=_format_date(base_date),
-        summary_title=f"금주의 너는 {label}",
-        main_emotion_code=DEFAULT_EMOTION_CODE,
-        main_character_key=DEFAULT_CHARACTER_KEY,
-        temperature=72,
-        temperature_label="따뜻함 72°",
-        gauge_color=gauge_color,
-        daily_stickers=stickers,
-    )
+    return _normalize_emotion_key(emotion_key), score
 
 
-def build_weekly_emotion_report(
-    db: Session, user_id: int, base_date: date | None = None, days: int = 7
-) -> WeeklyEmotionReport:
-    """최근 N일 간 감정 로그를 기반으로 주간 리포트를 생성한다."""
+def _extract_emotion_from_selection(selection: DailyMoodSelection) -> tuple[Optional[str], Optional[float]]:
+    result = selection.EMOTION_RESULT or {}
+    emotion_key = None
+    score: Optional[float] = None
 
-    base = base_date or date.today()
-    end_time = datetime.combine(base, datetime.max.time())
-    start_time = end_time - timedelta(days=days - 1)
+    if isinstance(result, dict):
+        primary = result.get("primary_emotion") or result
+        if isinstance(primary, dict):
+            emotion_key = (
+                primary.get("key")
+                or primary.get("emotion")
+                or primary.get("code")
+                or primary.get("label")
+            )
+            if primary.get("score") is not None:
+                try:
+                    score = float(primary.get("score"))
+                except (TypeError, ValueError):
+                    score = None
+        else:
+            emotion_key = primary
+    elif result:
+        emotion_key = result
 
-    logs = (
-        db.query(EmotionLog)
-        .filter(EmotionLog.IS_DELETED == False)
-        .filter(EmotionLog.USER_ID == user_id)
-        .filter(EmotionLog.CREATED_AT >= start_time)
-        .filter(EmotionLog.CREATED_AT <= end_time)
-        .order_by(EmotionLog.CREATED_AT.asc())
+    return _normalize_emotion_key(emotion_key), score
+
+
+def load_weekly_emotion_data(
+    db: Session, user_id: int, start_date: date, end_date: date
+) -> Dict[date, Dict[str, Optional[float]]]:
+    """Load emotion data from EmotionAnalysis and DailyMoodSelection within the range."""
+
+    data: Dict[date, Dict[str, Optional[float]]] = {}
+
+    start_dt = datetime.combine(start_date, datetime.min.time())
+    end_dt = datetime.combine(end_date, datetime.max.time())
+
+    analyses: Iterable[EmotionAnalysis] = (
+        db.query(EmotionAnalysis)
+        .filter(EmotionAnalysis.USER_ID == user_id)
+        .filter(EmotionAnalysis.CREATED_AT >= start_dt)
+        .filter(EmotionAnalysis.CREATED_AT <= end_dt)
         .all()
     )
 
-    if not logs:
-        return _build_sample_report(base)
-
-    daily_counters: Dict[date, Counter] = defaultdict(Counter)
-    temperature_scores: list[float] = []
-    total_counter: Counter = Counter()
-
-    for log in logs:
-        normalized_code = _normalize_emotion_code(log.EMOTION_CODE)
-        log_date = log.CREATED_AT.date()
-        daily_counters[log_date][normalized_code] += 1
-        total_counter[normalized_code] += 1
-        if log.SCORE is not None:
-            temperature_scores.append(float(log.SCORE))
-
-    stickers: list[DailyEmotionSticker] = []
-    for offset in range(days):
-        day_date = start_time.date() + timedelta(days=offset)
-        if day_date not in daily_counters:
+    for analysis in analyses:
+        emotion_key, score = _extract_emotion_from_analysis(analysis)
+        if not emotion_key:
             continue
-        emotion_code = daily_counters[day_date].most_common(1)[0][0]
-        character_key, label, _ = _pick_character_info(emotion_code)
-        stickers.append(
-            DailyEmotionSticker(
-                day_label=DAY_LABELS[day_date.weekday()],
-                date=_format_date(day_date),
-                emotion_code=emotion_code,
-                character_key=character_key,
-                label=label,
+        day = analysis.CREATED_AT.date()
+        if day not in data or data[day].get("score") is None:
+            data[day] = {"emotion_key": emotion_key, "score": score}
+
+    selections: Iterable[DailyMoodSelection] = (
+        db.query(DailyMoodSelection)
+        .filter(DailyMoodSelection.USER_ID == user_id)
+        .filter(DailyMoodSelection.SELECTED_DATE >= start_date)
+        .filter(DailyMoodSelection.SELECTED_DATE <= end_date)
+        .all()
+    )
+
+    for selection in selections:
+        if selection.SELECTED_DATE in data:
+            continue
+        emotion_key, score = _extract_emotion_from_selection(selection)
+        if emotion_key:
+            data[selection.SELECTED_DATE] = {"emotion_key": emotion_key, "score": score}
+
+    return data
+
+
+def generate_coach_message(main_emotion_key: Optional[str]) -> str:
+    """Generate a simple rule-based coach message.
+
+    TODO: 향후 딥에이전트 LLM 연동 지점
+    """
+
+    if not main_emotion_key:
+        return "이번 주 감정 데이터를 더 모아볼까요? 나중에 함께 돌아볼게요."
+
+    if main_emotion_key in {"worry", "anxiety"}:
+        return (
+            "이번 주에는 걱정과 불안이 조금 느껴졌어요. 어떤 일이 있었는지 천천히 나랑 "
+            "이야기해볼래요?"
+        )
+    if main_emotion_key in {"sad", "sadness"}:
+        return (
+            "조금 무겁고 우울한 마음이 느껴져요. 혼자 끌어안지 말고, 나와 같이 "
+            "나눠볼까요?"
+        )
+    if main_emotion_key in {"joy", "happy"}:
+        return (
+            "기분 좋은 순간들이 많았네요! 그 행복을 어떻게 더 이어갈 수 있을지 같이 이야기해봐요."
+        )
+    return "이번 주의 마음을 잘 들여다봤어요. 다음 주에는 어떤 기분을 만나게 될까요?"
+
+
+def build_weekly_report(
+    db: Session, user_id: int, today: Optional[date] = None
+) -> Optional[WeeklyEmotionReport]:
+    """Build a WeeklyEmotionReport from available data."""
+
+    base_date = today or date.today()
+    start_date, end_date = get_week_range(base_date)
+
+    weekly_data = load_weekly_emotion_data(db, user_id, start_date, end_date)
+    if not weekly_data:
+        return None
+
+    emotion_counts: Counter[str] = Counter()
+    scores_by_emotion: Dict[str, list[float]] = defaultdict(list)
+
+    for payload in weekly_data.values():
+        emotion_key = payload.get("emotion_key")
+        if not emotion_key:
+            continue
+        emotion_counts[emotion_key] += 1
+        if payload.get("score") is not None:
+            scores_by_emotion[emotion_key].append(float(payload["score"]))
+
+    main_emotion_key = None
+    if scores_by_emotion:
+        avg_scores = {k: sum(v) / len(v) for k, v in scores_by_emotion.items()}
+        main_emotion_key = max(avg_scores, key=lambda k: (avg_scores[k], emotion_counts[k]))
+    elif emotion_counts:
+        main_emotion_key = emotion_counts.most_common(1)[0][0]
+
+    character_code, character_label = resolve_character_code(main_emotion_key)
+
+    flat_scores = [score for payload in weekly_data.values() for score in [payload.get("score")] if score is not None]
+    if flat_scores:
+        avg_score = sum(flat_scores) / len(flat_scores)
+        temperature = _clamp_temperature(avg_score * 100 if avg_score <= 1 else avg_score)
+    else:
+        temperature = 72
+
+    days: list[EmotionDaySummary] = []
+    day_count = (end_date - start_date).days + 1
+    for offset in range(day_count):
+        day = start_date + timedelta(days=offset)
+        payload = weekly_data.get(day)
+        emotion_key = payload.get("emotion_key") if payload else None
+        resolved_code, _ = resolve_character_code(emotion_key) if emotion_key else (character_code, character_label)
+        days.append(
+            EmotionDaySummary(
+                date=day,
+                weekday_label=WEEKDAY_LABELS[day.weekday()],
+                character_code=resolved_code,
+                main_emotion=emotion_key,
             )
         )
 
-    main_emotion = total_counter.most_common(1)[0][0]
-    main_character_key, main_label, gauge_color = _pick_character_info(main_emotion)
-
-    if temperature_scores:
-        avg_temperature = sum(temperature_scores) / len(temperature_scores)
-    else:
-        avg_temperature = min(100, max(0, total_counter[main_emotion] * 10))
-
-    temperature_label = f"온도 {int(round(avg_temperature))}°"
-
     return WeeklyEmotionReport(
-        week_start=_format_date(start_time.date()),
-        week_end=_format_date(end_time.date()),
-        summary_title=f"금주의 너는 {main_label}",
-        main_emotion_code=main_emotion,
-        main_character_key=main_character_key,
-        temperature=int(round(avg_temperature)),
-        temperature_label=temperature_label,
-        gauge_color=gauge_color,
-        daily_stickers=stickers,
+        has_data=True,
+        start_date=start_date,
+        end_date=end_date,
+        title=f"금주의 너는 '{character_label}'",
+        temperature=temperature,
+        main_character_code=character_code,
+        main_emotion=main_emotion_key,
+        coach_message=generate_coach_message(main_emotion_key),
+        days=days,
     )
+
+
+def get_weekly_emotion_report(db: Session, user_id: int) -> Optional[WeeklyEmotionReport]:
+    """High-level API to fetch the weekly emotion report for a user."""
+
+    return build_weekly_report(db=db, user_id=user_id)
