@@ -2,7 +2,7 @@
 SQLAlchemy models for all database tables
 Centralized model management
 """
-from sqlalchemy import Column, Integer, String, Text, DateTime, Date, Index, ForeignKey, JSON
+from sqlalchemy import Column, Integer, String, Text, DateTime, Date, Index, ForeignKey, JSON, Boolean, Float
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 from .database import Base
@@ -140,4 +140,61 @@ class EmotionAnalysis(Base):
     
     def __repr__(self):
         return f"<EmotionAnalysis(ID={self.ID}, SESSION_ID={self.SESSION_ID}, SENTIMENT_OVERALL={self.SENTIMENT_OVERALL})>"
+
+
+class EmotionLog(Base):
+    """
+    감정 분석 결과 로그
+
+    Attributes:
+        ID: Primary key
+        USER_ID: Foreign key to users table
+        EMOTION_CODE: 분석 결과 감정 코드
+        SCORE: 감정 점수 (선택 값)
+        CREATED_AT: 로그 생성 시각
+        IS_DELETED: 소프트 삭제 여부
+    """
+
+    __tablename__ = "TB_EMOTION_LOG"
+
+    ID = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    USER_ID = Column(Integer, ForeignKey("TB_USERS.ID"), nullable=True, index=True)
+    EMOTION_CODE = Column(String(50), nullable=False)
+    SCORE = Column(Float, nullable=True)
+    CREATED_AT = Column(DateTime(timezone=True), server_default=func.now(), index=True)
+    IS_DELETED = Column(Boolean, default=False)
+
+
+class MenopauseQuestion(Base):
+    """
+    갱년기 자가테스트 설문 문항
+    """
+
+    __tablename__ = "TB_MENOPAUSE_QUESTION"
+
+    ID = Column(Integer, primary_key=True, autoincrement=True, index=True)
+    ORDER_NO = Column(Integer, nullable=False, index=True)
+    CATEGORY = Column(String(50), nullable=True)
+    QUESTION_TEXT = Column(String(500), nullable=False)
+    POSITIVE_LABEL = Column(String(50), nullable=False, default="예")
+    NEGATIVE_LABEL = Column(String(50), nullable=False, default="아니오")
+    CHARACTER_KEY = Column(String(50), nullable=True)
+    IS_ACTIVE = Column(Boolean, default=True)
+    IS_DELETED = Column(Boolean, default=False)
+    CREATED_AT = Column(DateTime(timezone=True), server_default=func.now())
+    UPDATED_AT = Column(DateTime(timezone=True), onupdate=func.now())
+
+
+class MenopauseAnswer(Base):
+    """
+    갱년기 자가테스트 설문 응답
+    """
+
+    __tablename__ = "TB_MENOPAUSE_ANSWER"
+
+    ID = Column(Integer, primary_key=True, autoincrement=True)
+    USER_ID = Column(Integer, ForeignKey("TB_USERS.ID"), nullable=True, index=True)
+    QUESTION_ID = Column(Integer, ForeignKey("TB_MENOPAUSE_QUESTION.ID"), nullable=False)
+    ANSWER_VALUE = Column(String(10), nullable=False)
+    CREATED_AT = Column(DateTime(timezone=True), server_default=func.now())
 
