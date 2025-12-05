@@ -12,8 +12,7 @@ import DailyMoodCheck from './components/DailyMoodCheck'
 import Login from './components/Login'
 import WeatherCard from './components/WeatherCard'
 import './App.css'
-
-const API_BASE_URL = 'http://localhost:8000'
+import { API_BASE_URL } from './config/api'
 
 function MainApp() {
   const navigate = useNavigate()

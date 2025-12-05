@@ -17,6 +17,7 @@ export default function EmotionReportPage() {
       setError('')
       try {
         const data = await fetchWeeklyEmotionReport()
+        // TODO: 실제 감정 데이터 연동 완료 시 검증 필요
         setReport(data)
       } catch (err) {
         setError(err.message || '데이터를 불러오지 못했어요')
