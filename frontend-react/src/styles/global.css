@@ -1,0 +1,28 @@
+@font-face {
+  font-family: "Pretendard";
+  font-weight: 400;
+  src: local("Pretendard Regular"), local("Pretendard-Regular");
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-family);
+  background: linear-gradient(135deg, var(--color-bg-warm), var(--color-bg-light-pink));
+  color: var(--color-text-primary);
+  line-height: var(--line-height-base);
+  min-height: 100vh;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+}
+
+input {
+  font-family: inherit;
+}

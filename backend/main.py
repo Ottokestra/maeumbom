@@ -1,6 +1,4 @@
-"""
-팀 프로젝트 메인 FastAPI 애플리케이션
-"""
+"""팀 프로젝트 메인 FastAPI 애플리케이션"""
 
 import os
 import sys
@@ -61,6 +59,7 @@ from engine.routine_recommend.models.schemas import (
 # 날씨 / 루틴 설문 라우터
 from app.weather.routes import router as weather_router
 from app.routine_survey.routers import router as routine_survey_router
+from app.emotion_report.router import router as emotion_report_router
 
 # 루틴 설문 기본 seed
 from app.routine_survey.models import seed_default_mr_survey
@@ -157,6 +156,7 @@ except Exception as e:
 # ============================================================
 
 app.include_router(routine_survey_router, prefix="/api", tags=["routine-survey"])
+app.include_router(emotion_report_router)
 
 # ============================================================
 # Authentication (Google OAuth + JWT)
@@ -864,10 +864,11 @@ async def tts_endpoint(payload: TTSRequest):
         _traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"TTS error: {e}")
 
-    return FileResponse(
-        path=str(wav_path),
-        filename=wav_path.name,
+    filename = f"tts_{tone or 'neutral'}.wav"
+    return StreamingResponse(
+        BytesIO(audio_bytes),
         media_type="audio/wav",
+        headers={"Content-Disposition": f"attachment; filename=\"{filename}\""},
     )
 
 # ============================================================

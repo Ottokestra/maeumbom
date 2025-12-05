@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import SignupSurveyPage from './pages/SignupSurveyPage'
+import EmotionReportPage from './pages/EmotionReportPage'
 import EmotionInput from './components/EmotionInput'
 import EmotionResult from './components/EmotionResult'
 import EmotionChart from './components/EmotionChart'
@@ -13,7 +14,23 @@ import './App.css'
 
 const API_BASE_URL = 'http://localhost:8000'
 
+const mockEmotionReport = {
+  summaryTitle: "금주의 너는 '걱정이 복숭아'",
+  mainCharacterEmoji: '🍑',
+  temperature: 72,
+  weeklyEmotions: [
+    { day: '월', emoji: '🍑' },
+    { day: '화', emoji: '🌧️' },
+    { day: '수', emoji: '📚' },
+    { day: '목', emoji: '😴' },
+    { day: '금', emoji: '🦁' },
+    { day: '토', emoji: '😊' },
+    { day: '일', emoji: '☁️' }
+  ]
+}
+
 function MainApp() {
+  const isEmotionReportRoute = window.location.pathname.startsWith('/emotion-report')
   // 로그인 상태 관리 (선택사항 - 테스트 중)
   const [isLoggedIn, setIsLoggedIn] = useState(() => {
     return !!localStorage.getItem('access_token')
@@ -245,13 +262,18 @@ function MainApp() {
   // localStorage에서 activeTab 복원 또는 기본값 사용
   const [activeTab, setActiveTab] = useState(() => {
     const saved = localStorage.getItem('activeTab')
-    return saved || 'emotion' // 'emotion', 'routine-test', 'stt-tts-test', 'daily-mood-check'
+    if (saved === 'routine-test') return 'menopause-test'
+    return saved || 'emotion' // 'emotion', 'menopause-test', 'stt-tts-test', 'daily-mood-check', 'emotion-report'
   })
 
   // activeTab이 변경될 때마다 localStorage에 저장
   useEffect(() => {
     localStorage.setItem('activeTab', activeTab)
   }, [activeTab])
+
+  if (isEmotionReportRoute) {
+    return <EmotionReportPage />
+  }
 
   // 감정 분석 관련 state
   const [result, setResult] = useState(null)
@@ -264,6 +286,34 @@ function MainApp() {
   const [testRoutines, setTestRoutines] = useState([])
   const [testLoading, setTestLoading] = useState(false)
   const [testError, setTestError] = useState(null)
+  const [emotionReport, setEmotionReport] = useState(null)
+
+  const renderEmotionReport = (report) => {
+    if (!report) return
+    setEmotionReport(report)
+  }
+
+  const loadEmotionReportFromApi = async () => {
+    try {
+      const response = await fetch('/api/reports/emotion/weekly') // TODO: 실제 엔드포인트로 교체
+      if (!response.ok) return
+      const data = await response.json()
+      renderEmotionReport(data)
+    } catch (err) {
+      console.error('Failed to load emotion report from API', err)
+    }
+  }
+
+  const loadMockEmotionReport = () => {
+    renderEmotionReport(mockEmotionReport)
+  }
+
+  useEffect(() => {
+    if (activeTab === 'emotion-report') {
+      // TODO: 나중에 실제 백엔드 API 연결 시 loadEmotionReportFromApi로 교체
+      loadMockEmotionReport()
+    }
+  }, [activeTab])
 
   const handleAnalyze = async (text) => {
     setLoading(true)
@@ -397,6 +447,13 @@ function MainApp() {
     }
   }
 
+  const mainEmotionLabel = emotionReport
+    ? emotionReport.summaryTitle.replace('금주의 너는 ', '').replace(/['"]/g, '')
+    : ''
+  const gaugeValue = emotionReport?.temperature ?? 0
+  const clampedGaugeValue = Math.min(Math.max(gaugeValue, 0), 100)
+  const gaugeAngle = (clampedGaugeValue / 100) * 360
+
   return (
     <div className="app">
       <header className="header">
@@ -406,6 +463,22 @@ function MainApp() {
             <p>갱년기 여성을 위한 감정 공감 서비스</p>
           </div>
            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+             <button
+               onClick={() => (window.location.href = '/emotion-report')}
+               style={{
+                 padding: '8px 16px',
+                 backgroundColor: '#f3f4f6',
+                 color: '#111827',
+                 border: 'none',
+                 borderRadius: '8px',
+                 cursor: 'pointer',
+                 fontSize: '0.875rem',
+                 fontWeight: '600',
+                 boxShadow: '0 6px 20px rgba(0,0,0,0.06)'
+               }}
+             >
+               리포트 보기
+             </button>
              {isLoggedIn && user && (
                <div style={{ textAlign: 'right' }}>
                  <div style={{ fontWeight: '500', color: '#374151' }}>{user.nickname}</div>
@@ -510,21 +583,21 @@ function MainApp() {
         </button>
         <button
           onClick={() => {
-            setActiveTab('routine-test')
+            setActiveTab('menopause-test')
             window.location.href = '/signup/survey'
           }}
           style={{
             padding: '10px 20px',
             fontSize: '16px',
             cursor: 'pointer',
-            backgroundColor: activeTab === 'routine-test' ? '#6366f1' : '#e5e7eb',
-            color: activeTab === 'routine-test' ? 'white' : '#374151',
+            backgroundColor: activeTab === 'menopause-test' ? '#6366f1' : '#e5e7eb',
+            color: activeTab === 'menopause-test' ? 'white' : '#374151',
             border: 'none',
             borderRadius: '8px',
-            fontWeight: activeTab === 'routine-test' ? 'bold' : 'normal'
+            fontWeight: activeTab === 'menopause-test' ? 'bold' : 'normal'
           }}
         >
-          루틴 추천 테스트
+          갱년기 자가테스트
         </button>
         <button
           onClick={() => setActiveTab('stt-tts-test')}
@@ -556,11 +629,26 @@ function MainApp() {
         >
           일일 감정 체크
         </button>
+        <button
+          onClick={() => setActiveTab('emotion-report')}
+          style={{
+            padding: '10px 20px',
+            fontSize: '16px',
+            cursor: 'pointer',
+            backgroundColor: activeTab === 'emotion-report' ? '#6366f1' : '#e5e7eb',
+            color: activeTab === 'emotion-report' ? 'white' : '#374151',
+            border: 'none',
+            borderRadius: '8px',
+            fontWeight: activeTab === 'emotion-report' ? 'bold' : 'normal'
+          }}
+        >
+          나의 감정 리포트
+        </button>
       </div>
 
       <div className="main-container">
-        {/* 루틴 추천 테스트 섹션 */}
-        {activeTab === 'routine-test' && (
+        {/* 갱년기 자가테스트 섹션 */}
+        {activeTab === 'menopause-test' && (
           <>
             <div className="card">
               <h2>루틴 추천 API 테스트</h2>
@@ -770,6 +858,66 @@ function MainApp() {
         {activeTab === 'daily-mood-check' && (
           <DailyMoodCheck user={user} />
         )}
+
+        {/* 나의 감정 리포트 섹션 */}
+        {activeTab === 'emotion-report' && (
+          <section className="tab-content report-tab" data-tab="emotion-report">
+            <div className="report-container">
+              <div className="report-card">
+                <h2 className="report-title">
+                  🧡 금주의 너는 <span id="report-main-emotion-label">{mainEmotionLabel || '걱정이 복숭아'}</span> 🍑
+                </h2>
+
+                <div className="report-temperature">
+                  <span>온도:</span>
+                  <span id="report-temperature-value">{clampedGaugeValue}°</span>
+                </div>
+
+                <div className="report-gauge">
+                  <div className="gauge-circle">
+                    <div
+                      className="gauge-fill"
+                      id="report-gauge-fill"
+                      style={{
+                        background: `conic-gradient(from -90deg, #ff6b6b 0deg ${gaugeAngle}deg, rgba(255, 255, 255, 0.08) ${gaugeAngle}deg 360deg)`
+                      }}
+                    ></div>
+                    <div className="gauge-center">
+                      <span id="report-gauge-label">{Math.round(clampedGaugeValue)}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <hr className="report-divider" />
+
+                <div className="report-weekly">
+                  <h3>요일별 감정 캐릭터</h3>
+                  <div className="report-week-row" id="report-week-row">
+                    {(emotionReport?.weeklyEmotions || mockEmotionReport.weeklyEmotions).map((item, index) => (
+                      <div className="day-emotion" key={`${item.day}-${index}`}>
+                        <span>{item.day}</span>
+                        <span>{item.emoji}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div className="report-character-panel">
+                <div className="character-preview">
+                  <div className="character-emoji" id="report-main-character-emoji">
+                    {emotionReport?.mainCharacterEmoji || '🍑'}
+                  </div>
+                </div>
+
+                <div className="character-caption">
+                  최근 대화의 감정을 바탕으로<br />
+                  너와 가장 닮은 감정 캐릭터야.
+                </div>
+              </div>
+            </div>
+          </section>
+        )}
       </div>
 
       {showLoginModal && (
@@ -843,10 +991,16 @@ function getEmotionLabel(emotion) {
 }
 
 function App() {
-  const isSurveyRoute = window.location.pathname.startsWith('/signup/survey')
+  const pathName = window.location.pathname
+  const isSurveyRoute = pathName.startsWith('/signup/survey')
+  const isEmotionReportRoute = pathName.startsWith('/emotion-report')
 
   if (isSurveyRoute) {
     return <SignupSurveyPage apiBaseUrl={API_BASE_URL} />
+  }
+
+  if (isEmotionReportRoute) {
+    return <EmotionReportPage />
   }
 
   return <MainApp />
