@@ -7,7 +7,7 @@ export async function fetchTtsAudio(
   engine?: string
 ): Promise<string> {
   const resp = await apiClient.post(
-    "/api/tts",
+    "/tts",
     {
       text,
       character_id: characterId,

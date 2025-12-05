@@ -15,7 +15,7 @@ export interface AgentResponse {
 }
 
 export async function callAgentText(userText: string, sessionId: string) {
-  const resp = await apiClient.post<AgentResponse>("/api/agent/v2/text", {
+  const resp = await apiClient.post<AgentResponse>("/agent/v2/text", {
     user_text: userText,
     session_id: sessionId,
   });

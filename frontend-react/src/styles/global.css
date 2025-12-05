@@ -18,6 +18,48 @@ body {
   min-height: 100vh;
 }
 
+.app-shell {
+  min-height: 100vh;
+}
+
+.app-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 32px;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: rgba(255, 251, 250, 0.8);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--color-border-soft);
+}
+
+.brand {
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  color: var(--color-accent-red);
+  text-decoration: none;
+  font-size: 18px;
+}
+
+.nav-links {
+  display: flex;
+  gap: 16px;
+}
+
+.nav-links a {
+  text-decoration: none;
+  color: var(--color-text-primary);
+  font-weight: 700;
+  padding: 8px 12px;
+  border-radius: var(--radius-full);
+}
+
+.nav-links a:hover {
+  background: rgba(255, 255, 255, 0.6);
+}
+
 button {
   font-family: inherit;
   cursor: pointer;
