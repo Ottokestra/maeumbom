@@ -1,10 +1,9 @@
-"""
-팀 프로젝트 메인 FastAPI 애플리케이션
-"""
+"""팀 프로젝트 메인 FastAPI 애플리케이션"""
 
 import os
 import sys
 import json
+from io import BytesIO
 from pathlib import Path
 from typing import List, Optional
 
@@ -17,7 +16,7 @@ from fastapi import (
     Request,
 )
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
 # ============================================================
@@ -50,8 +49,8 @@ except Exception as e:
     print("[WARN] Emotion analysis module load failed:", e)
     emotion_router = None
 
-# TTS 모델
-from tts_model import synthesize_to_wav
+# TTS Provider registry
+from provider_registry import get_tts_provider
 
 # 루틴 추천 엔진
 from engine.routine_recommend.engine import RoutineRecommendFromEmotionEngine
@@ -63,6 +62,7 @@ from engine.routine_recommend.models.schemas import (
 # 날씨 / 루틴 설문 라우터
 from app.weather.routes import router as weather_router
 from app.routine_survey.routers import router as routine_survey_router
+from app.emotion_report.router import router as emotion_report_router
 
 # 루틴 설문 기본 seed
 from app.routine_survey.models import seed_default_mr_survey
@@ -159,6 +159,7 @@ except Exception as e:
 # ============================================================
 
 app.include_router(routine_survey_router, prefix="/api", tags=["routine-survey"])
+app.include_router(emotion_report_router)
 
 # ============================================================
 # Authentication (Google OAuth + JWT)
@@ -798,17 +799,21 @@ async def tts(request: Request):
     speed = payload.get("speed")
     tone = payload.get("tone", "senior_calm")
     engine_name = payload.get("engine", "melo")
+    provider_override = request.query_params.get("provider")
 
     if not text or not str(text).strip():
         raise HTTPException(status_code=400, detail="text is required")
 
     try:
-        wav_path = synthesize_to_wav(
+        provider = get_tts_provider(provider_override or engine_name)
+        audio_bytes = provider.synthesize(
             text=str(text),
+            speaker=None,
+            emotion=str(tone),
             speed=speed,
-            tone=str(tone),
-            engine=str(engine_name),
         )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         import sys as _sys, traceback as _traceback
 
@@ -816,10 +821,11 @@ async def tts(request: Request):
         _traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"TTS error: {e}")
 
-    return FileResponse(
-        path=str(wav_path),
-        filename=wav_path.name,
+    filename = f"tts_{tone or 'neutral'}.wav"
+    return StreamingResponse(
+        BytesIO(audio_bytes),
         media_type="audio/wav",
+        headers={"Content-Disposition": f"attachment; filename=\"{filename}\""},
     )
 
 # ============================================================
