@@ -101,6 +101,7 @@ class EmotionAnalysis(Base):
         USER_ID: Foreign key to users table (optional)
         CHECK_ROOT: Source of emotion analysis ("conversation" or "daily_mood_check")
         TEXT: Original input text
+        INPUT_TEXT_EMBEDDING: JSON array of embedding vector for similarity search
         LANGUAGE: Language code (default: "ko")
         RAW_DISTRIBUTION: JSON field (17 emotion distribution)
         PRIMARY_EMOTION: JSON field (primary emotion info)
@@ -119,6 +120,7 @@ class EmotionAnalysis(Base):
     USER_ID = Column(Integer, ForeignKey("TB_USERS.ID"), nullable=True, index=True)
     CHECK_ROOT = Column(String(20), nullable=False, index=True)
     TEXT = Column(Text, nullable=False)
+    INPUT_TEXT_EMBEDDING = Column(Text, nullable=True)  # JSON: "[0.123, -0.456, ...]"
     LANGUAGE = Column(String(10), nullable=False, default="ko")
     RAW_DISTRIBUTION = Column(JSON, nullable=True)
     PRIMARY_EMOTION = Column(JSON, nullable=True)

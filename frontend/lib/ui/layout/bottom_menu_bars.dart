@@ -2,7 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../tokens/app_tokens.dart';
 
-/// Bottom Bar - Menu Bar (네비게이션)
+/// Bottom Menu Bar - 3개 아이콘 네비게이션
+///
+/// DESIGN_GUIDE.md Option A 구조:
+/// [홈]  [🎙️ 중앙 플로팅]  [더보기]
+///
+/// - 홈: 메인 홈 화면 (index 0)
+/// - 마이크: 음성 대화 (index 1)
+/// - 더보기: MoreMenuSheet 표시 (index 2)
 class BottomMenuBar extends StatelessWidget {
   const BottomMenuBar({
     super.key,
@@ -47,18 +54,19 @@ class BottomMenuBar extends StatelessWidget {
               ),
             ),
           ),
-          // 2. 메뉴 아이콘들 (100px 높이로 중앙 버튼 포함)
+          // 2. 3개 아이콘 (홈 - 마이크 - 더보기)
           Positioned(
             left: 0,
             right: 0,
             top: 0,
             height: 100,
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
+              padding: const EdgeInsets.symmetric(horizontal: 40),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
+                  // 홈 아이콘
                   _MenuItem(
                     index: 0,
                     label: '홈',
@@ -68,33 +76,17 @@ class BottomMenuBar extends StatelessWidget {
                     foregroundColor: foregroundColor,
                     accentColor: accentColor,
                   ),
-                  _MenuItem(
-                    index: 1,
-                    label: '알람',
-                    isSelected: currentIndex == 1,
-                    iconAsset: 'assets/images/icons/icon-alarm.svg',
-                    onTap: onTap,
-                    foregroundColor: foregroundColor,
+                  // 중앙 마이크 버튼 (강조, 크게)
+                  _CenterVoiceButton(
+                    onTap: () => onTap?.call(1),
                     accentColor: accentColor,
                   ),
-                  _CenterRecordButton(
-                    onTap: () => onTap?.call(2),
-                    accentColor: accentColor,
-                  ),
+                  // 더보기 아이콘
                   _MenuItem(
-                    index: 3,
-                    label: '리포트',
-                    isSelected: currentIndex == 3,
-                    iconAsset: 'assets/images/icons/icon-report.svg',
-                    onTap: onTap,
-                    foregroundColor: foregroundColor,
-                    accentColor: accentColor,
-                  ),
-                  _MenuItem(
-                    index: 4,
-                    label: '마이페이지',
-                    isSelected: currentIndex == 4,
-                    iconAsset: 'assets/images/icons/icon-mypage.svg',
+                    index: 2,
+                    label: '더보기',
+                    isSelected: currentIndex == 2,
+                    iconAsset: 'assets/images/icons/icon-more.svg',
                     onTap: onTap,
                     foregroundColor: foregroundColor,
                     accentColor: accentColor,
@@ -109,6 +101,7 @@ class BottomMenuBar extends StatelessWidget {
   }
 }
 
+/// BottomMenuBar용 메뉴 아이템
 class _MenuItem extends StatelessWidget {
   const _MenuItem({
     required this.index,
@@ -130,32 +123,34 @@ class _MenuItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final Color color =
-        isSelected ? accentColor : foregroundColor;
+    final Color color = isSelected ? accentColor : foregroundColor;
 
     return GestureDetector(
       onTap: () => onTap?.call(index),
       child: SizedBox(
-        width: 52,
-        height: 80,
+        width: 72,
+        height: 100,
         child: Padding(
           padding: const EdgeInsets.only(top: 20, bottom: 0),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               SizedBox.fromSize(
-                size: AppIconSizes.xlSize,
+                size: AppIconSizes.mdSize,
                 child: SvgPicture.asset(
                   iconAsset,
                   fit: BoxFit.contain,
                   colorFilter: ColorFilter.mode(color, BlendMode.srcIn),
                 ),
               ),
-              const SizedBox(height: 5),
+              const SizedBox(height: 8),
               Text(
                 label,
                 textAlign: TextAlign.center,
-                style: AppTypography.label.copyWith(color: color),
+                style: AppTypography.label.copyWith(
+                  color: color,
+                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                ),
               ),
             ],
           ),
@@ -165,8 +160,9 @@ class _MenuItem extends StatelessWidget {
   }
 }
 
-class _CenterRecordButton extends StatelessWidget {
-  const _CenterRecordButton({
+/// BottomMenuBar용 중앙 음성 버튼 (크고 강조)
+class _CenterVoiceButton extends StatelessWidget {
+  const _CenterVoiceButton({
     this.onTap,
     required this.accentColor,
   });
@@ -179,30 +175,29 @@ class _CenterRecordButton extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: SizedBox(
-        width: 80,
+        width: 96,
         height: 100,
         child: Align(
           alignment: Alignment.topCenter,
-          child: Padding(
-            padding: const EdgeInsets.only(left: 12, right: 12, bottom: 19),
-            child: Container(
-              width: 56,
-              height: 56,
-              decoration: BoxDecoration(
-                color: accentColor,
-                shape: BoxShape.circle,
-              ),
-              child: Center(
-                child: SizedBox.fromSize(
-                  size: AppIconSizes.xxlSize,
-                  child: SvgPicture.asset(
-                    'assets/images/icons/icon-mic.svg',
-                    colorFilter: const ColorFilter.mode(
-                      AppColors.pureWhite,
-                      BlendMode.srcIn,
-                    ),
-                  ),
+          child: Container(
+            width: 72,
+            height: 72,
+            decoration: BoxDecoration(
+              color: accentColor,
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: accentColor.withOpacity(0.3),
+                  blurRadius: 12,
+                  offset: const Offset(0, 4),
                 ),
+              ],
+            ),
+            child: Center(
+              child: Icon(
+                Icons.mic,
+                color: AppColors.pureWhite,
+                size: 36,
               ),
             ),
           ),

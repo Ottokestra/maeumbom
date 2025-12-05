@@ -500,6 +500,66 @@ async def cleanup_conversations(
         raise HTTPException(status_code=500, detail=str(e))
 
 
+# ============================================================================
+# Debug/Cleanup Endpoints (for agent.html cleanup buttons)
+# ============================================================================
+
+@app.delete("/api/debug/cleanup/history")
+async def debug_cleanup_history(
+    current_user: User = Depends(get_current_user),
+):
+    """디버그: 현재 유저의 모든 대화 기록 삭제"""
+    try:
+        from engine.langchain_agent.db_conversation_store import get_conversation_store
+        
+        user_id = current_user.ID
+        store = get_conversation_store()
+        count = store.hard_delete_all_conversations(user_id)
+        
+        return {
+            "status": "success",
+            "message": f"Deleted {count} conversation records",
+            "user_id": user_id,
+        }
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.delete("/api/debug/cleanup/memories")
+async def debug_cleanup_memories(
+    current_user: User = Depends(get_current_user),
+):
+    """디버그: 현재 유저의 모든 메모리 삭제 (전역 메모리만)"""
+    import logging
+    logger = logging.getLogger(__name__)
+    
+    try:
+        from app.db.models import GlobalMemory
+        
+        user_id = current_user.ID
+        db = SessionLocal()
+        
+        try:
+            # GlobalMemory만 삭제 (SessionMemory는 존재하지 않음)
+            global_count = db.query(GlobalMemory).filter(GlobalMemory.USER_ID == user_id).delete()
+            db.commit()
+            
+            return {
+                "status": "success",
+                "message": f"Deleted {global_count} global memories",
+                "user_id": user_id,
+            }
+        finally:
+            db.close()
+    except Exception as e:
+        import traceback
+        logger.error(f"Memory cleanup failed: {e}")
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @app.delete("/api/agent/cleanup/session-memories")
 async def cleanup_session_memories(
     current_user: User = Depends(get_current_user),
