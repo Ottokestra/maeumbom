@@ -1,10 +1,19 @@
+import 'dart:io';
+
 /// API Configuration - Base URLs and endpoints
 class ApiConfig {
-  // Base URL
-  static const String baseUrl = 'http://localhost:8000';
+  // Base URL - 플랫폼별로 다른 URL 사용
+  static String get baseUrl {
+    // Android 에뮬레이터는 10.0.2.2를 사용 (호스트 머신의 localhost)
+    if (Platform.isAndroid) {
+      return 'http://10.0.2.2:8000';
+    }
+    // iOS 시뮬레이터 및 웹은 localhost 사용
+    return 'http://localhost:8000';
+  }
 
   // Auth Endpoints
-  static const String authBase = '/api/auth';
+  static const String authBase = '/auth';
   static const String googleLogin = '$authBase/google';
   static const String kakaoLogin = '$authBase/kakao';
   static const String naverLogin = '$authBase/naver';
@@ -12,6 +21,17 @@ class ApiConfig {
   static const String logout = '$authBase/logout';
   static const String me = '$authBase/me';
   static const String authConfig = '$authBase/config';
+
+  // Chat Endpoints
+  static const String chatBase = '/api/agent/v2';
+  static const String chatText = '$chatBase/text';
+  static const String chatSessions = '$chatBase/sessions';
+  static String chatSession(String sessionId) =>
+      '$chatBase/sessions/$sessionId';
+
+  // WebSocket Endpoints
+  static String get chatWebSocketUrl =>
+      baseUrl.replaceFirst('http', 'ws') + '/agent/stream';
 
   // Timeout Configuration
   static const Duration connectTimeout = Duration(seconds: 30);

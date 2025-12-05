@@ -4,14 +4,32 @@
 
 ---
 
+### 서비스 추가 예시
+
+**기본 서비스 생성 요청 예시:**
+```
+"frontend/FRONTEND_GUIDE.md를 참고하여 
+/app/common 에 example_screen.dart 을 추가할거야
+- topbar에 왼쪽(이전), 타이틀(테스트), 오른쪽(더보기 세로) 버튼 사용하게 하고
+- bottombar는 Input bar 사용해줘"
+```
+
+**테스트 요청 예시:**
+```
+"test는 /frontend/lib/main.dart에 라우팅 추가하고 
+/frontend/lib/app/example/example_screen.dart에 버튼 추가해줘"
+```
+
+
 ## 📚 목차
 
 1. [시작하기](#-시작하기)
 2. [프로젝트 구조](#-프로젝트-구조)
 3. [디자인 시스템](#-디자인-시스템)
-4. [개발 워크플로우](#-개발-워크플로우)
-5. [코딩 컨벤션](#-코딩-컨벤션)
-6. [문제 해결](#-문제-해결)
+4. [API 및 상태 관리](#-api-및-상태-관리)
+5. [개발 워크플로우](#-개발-워크플로우)
+6. [코딩 컨벤션](#-코딩-컨벤션)
+7. [문제 해결](#-문제-해결)
 
 ---
 
@@ -118,16 +136,28 @@ frontend/
 │   │   └── characters/                 # 감정 캐릭터
 │   │       └── app_characters.dart
 │   │
-│   ├── data/                           # 데이터 계층
+│   ├── providers/                      # Riverpod 상태 관리
+│   │   └── auth_provider.dart          # 인증 provider
+│   │
+│   ├── data/                           # 데이터 계층 (도메인별 분리)
 │   │   ├── models/                     # 도메인 모델
+│   │   │   └── auth/                   
 │   │   ├── dtos/                       # API DTO
+│   │   │   └── auth/                   
 │   │   ├── api/                        # HTTP 클라이언트
+│   │   │   └── auth/                   
 │   │   └── repository/                 # 데이터 저장소
+│   │       └── auth/                   
 │   │
 │   └── core/                           # 핵심 기능
 │       ├── config/                     # 앱 설정
+│       │   ├── api_config.dart         # API 엔드포인트
+│       │   └── oauth_config.dart       # OAuth 설정
 │       ├── utils/                      # 유틸리티
-│       └── services/                   # 서비스 (네트워크, 저장소 등)
+│       │   ├── logger.dart
+│       │   └── dio_interceptors.dart
+│       └── services/                   # 서비스 (도메인별 분리)
+│           └── auth/                   # 인증 서비스
 │
 ├── DESIGN_GUIDE.md                     
 └── FRONTEND_GUIDE.md                   
@@ -240,6 +270,584 @@ AppSpacing.xl    // 40px
 
 ---
 
+## 🔌 API 및 상태 관리
+
+### 아키텍처 개요
+
+마음봄 앱은 **Clean Architecture** 원칙을 따르며, 다음과 같은 계층으로 구성됩니다:
+
+```
+UI Layer (Widgets)
+    ↓
+State Management (Riverpod Providers)
+    ↓
+Service Layer (Business Logic)
+    ↓
+Repository Layer (Data Abstraction)
+    ↓
+API Client Layer (HTTP Calls)
+    ↓
+Backend API (FastAPI)
+```
+
+### 프로젝트 구조 (도메인별 분리)
+
+```
+lib/
+├── providers/                    # Riverpod 상태 관리
+│   └── auth_provider.dart       # 인증 관련 provider
+│
+├── core/
+│   ├── config/
+│   │   ├── api_config.dart      # API 엔드포인트 설정
+│   │   └── oauth_config.dart    # OAuth 설정
+│   ├── services/
+│   │   └── auth/                # 도메인별 서비스
+│   │       ├── auth_service.dart
+│   │       ├── token_storage_service.dart
+│   │       ├── google_oauth_service.dart
+│   │       ├── kakao_oauth_service.dart
+│   │       └── naver_oauth_service.dart
+│   └── utils/
+│       ├── logger.dart
+│       └── dio_interceptors.dart
+│
+└── data/
+    ├── api/
+    │   └── auth/                # 도메인별 API 클라이언트
+    │       └── auth_api_client.dart
+    ├── repository/
+    │   └── auth/                # 도메인별 레포지토리
+    │       └── auth_repository.dart
+    ├── dtos/
+    │   └── auth/                # 도메인별 DTO
+    │       ├── google_login_request.dart
+    │       ├── kakao_login_request.dart
+    │       ├── naver_login_request.dart
+    │       ├── token_response.dart
+    │       └── user_response.dart
+    └── models/
+        └── auth/                # 도메인별 도메인 모델
+            ├── user.dart
+            └── token_pair.dart
+```
+
+### 1. 상태 관리 (Riverpod)
+
+#### Provider 작성 예시
+
+```dart
+// lib/providers/auth_provider.dart
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../core/services/auth/auth_service.dart';
+import '../data/models/auth/user.dart';
+
+// Infrastructure Providers
+final secureStorageProvider = Provider<FlutterSecureStorage>((ref) {
+  return const FlutterSecureStorage();
+});
+
+// Service Providers
+final authServiceProvider = Provider<AuthService>((ref) {
+  final repository = ref.watch(authRepositoryProvider);
+  final tokenStorage = ref.watch(tokenStorageServiceProvider);
+  final googleOAuth = ref.watch(googleOAuthServiceProvider);
+
+  return AuthService(repository, tokenStorage, googleOAuth);
+});
+
+// State Providers
+class AuthNotifier extends StateNotifier<AsyncValue<User?>> {
+  final AuthService _authService;
+
+  AuthNotifier(this._authService) : super(const AsyncValue.loading()) {
+    _checkAuthStatus();
+  }
+
+  Future<void> loginWithGoogle() async {
+    state = const AsyncValue.loading();
+    try {
+      final user = await _authService.loginWithGoogle();
+      state = AsyncValue.data(user);
+    } catch (e, stack) {
+      state = AsyncValue.error(e, stack);
+    }
+  }
+
+  Future<void> logout() async {
+    await _authService.logout();
+    state = const AsyncValue.data(null);
+  }
+}
+
+final authProvider = StateNotifierProvider<AuthNotifier, AsyncValue<User?>>((ref) {
+  return AuthNotifier(ref.watch(authServiceProvider));
+});
+
+// Convenience Providers
+final currentUserProvider = Provider<User?>((ref) {
+  return ref.watch(authProvider).value;
+});
+
+final isAuthenticatedProvider = Provider<bool>((ref) {
+  return ref.watch(currentUserProvider) != null;
+});
+```
+
+#### UI에서 Provider 사용
+
+```dart
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../providers/auth_provider.dart';
+
+class LoginScreen extends ConsumerWidget {
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final authState = ref.watch(authProvider);
+
+    return authState.when(
+      data: (user) {
+        if (user != null) {
+          // 로그인 성공
+          return HomeScreen();
+        }
+        // 로그인 화면
+        return _buildLoginUI(ref);
+      },
+      loading: () => CircularProgressIndicator(),
+      error: (error, stack) => Text('Error: $error'),
+    );
+  }
+
+  Widget _buildLoginUI(WidgetRef ref) {
+    return AppButton(
+      text: 'Google 로그인',
+      onTap: () async {
+        await ref.read(authProvider.notifier).loginWithGoogle();
+      },
+    );
+  }
+}
+```
+
+### 2. Service Layer
+
+서비스는 비즈니스 로직을 담당하며, Repository와 OAuth 서비스를 조율합니다.
+
+```dart
+// lib/core/services/auth/auth_service.dart
+class AuthService {
+  final AuthRepository _repository;
+  final TokenStorageService _tokenStorage;
+  final GoogleOAuthService _googleOAuth;
+
+  Future<User> loginWithGoogle() async {
+    // 1. OAuth로 authCode 획득
+    final authCode = await _googleOAuth.signIn();
+
+    // 2. Backend API로 authCode 전송하여 토큰 받기
+    final (tokens, user) = await _repository.loginWithGoogle(
+      authCode: authCode,
+      redirectUri: OAuthConfig.googleRedirectUri,
+    );
+
+    // 3. 토큰 안전하게 저장
+    await _tokenStorage.saveTokens(tokens);
+
+    return user;
+  }
+
+  Future<void> logout() async {
+    final accessToken = await _tokenStorage.getAccessToken();
+    if (accessToken != null) {
+      await _repository.logout(accessToken);
+    }
+    await _tokenStorage.clearTokens();
+    await _googleOAuth.signOut();
+  }
+}
+```
+
+### 3. Repository Layer
+
+Repository는 데이터 소스를 추상화하며, API Client를 래핑합니다.
+
+```dart
+// lib/data/repository/auth/auth_repository.dart
+class AuthRepository {
+  final AuthApiClient _apiClient;
+
+  Future<(TokenPair, User)> loginWithGoogle({
+    required String authCode,
+    required String redirectUri,
+  }) async {
+    final request = GoogleLoginRequest(
+      authCode: authCode,
+      redirectUri: redirectUri,
+    );
+
+    final tokenResponse = await _apiClient.googleLogin(request);
+
+    final tokenPair = TokenPair(
+      accessToken: tokenResponse.accessToken,
+      refreshToken: tokenResponse.refreshToken,
+    );
+
+    final userResponse = await _apiClient.getCurrentUser(
+      tokenResponse.accessToken,
+    );
+
+    final user = User(
+      id: userResponse.id,
+      email: userResponse.email,
+      nickname: userResponse.nickname,
+    );
+
+    return (tokenPair, user);
+  }
+}
+```
+
+### 4. API Client Layer
+
+API Client는 실제 HTTP 요청을 처리합니다.
+
+```dart
+// lib/data/api/auth/auth_api_client.dart
+import 'package:dio/dio.dart';
+import '../../../core/config/api_config.dart';
+import '../../dtos/auth/google_login_request.dart';
+import '../../dtos/auth/token_response.dart';
+
+class AuthApiClient {
+  final Dio _dio;
+
+  Future<TokenResponse> googleLogin(GoogleLoginRequest request) async {
+    try {
+      final response = await _dio.post(
+        ApiConfig.googleLogin,
+        data: request.toJson(),
+      );
+      return TokenResponse.fromJson(response.data);
+    } on DioException catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  Exception _handleError(DioException e) {
+    if (e.response != null) {
+      final message = e.response!.data?['detail'] ?? 'Unknown error';
+      return Exception('API Error: $message');
+    }
+    return Exception('Network error: ${e.message}');
+  }
+}
+```
+
+### 5. DTO (Data Transfer Objects)
+
+DTO는 API 요청/응답 데이터를 직렬화/역직렬화합니다.
+
+```dart
+// lib/data/dtos/auth/google_login_request.dart
+import 'package:freezed_annotation/freezed_annotation.dart';
+
+part 'google_login_request.freezed.dart';
+part 'google_login_request.g.dart';
+
+@freezed
+class GoogleLoginRequest with _$GoogleLoginRequest {
+  const factory GoogleLoginRequest({
+    required String authCode,
+    required String redirectUri,
+  }) = _GoogleLoginRequest;
+
+  factory GoogleLoginRequest.fromJson(Map<String, dynamic> json) =>
+      _$GoogleLoginRequestFromJson(json);
+}
+```
+
+**코드 생성:**
+```bash
+dart run build_runner build --delete-conflicting-outputs
+```
+
+### 6. Domain Models
+
+도메인 모델은 앱 내부에서 사용하는 비즈니스 객체입니다.
+
+```dart
+// lib/data/models/auth/user.dart
+import 'package:freezed_annotation/freezed_annotation.dart';
+
+part 'user.freezed.dart';
+
+@freezed
+class User with _$User {
+  const factory User({
+    required int id,
+    required String email,
+    required String nickname,
+    required String provider,
+    required DateTime createdAt,
+  }) = _User;
+}
+```
+
+### 새로운 기능 추가 가이드
+
+#### 예시: Survey 기능 추가
+
+**1. 폴더 구조 생성**
+```bash
+lib/
+├── providers/
+│   └── survey_provider.dart
+├── core/services/
+│   └── survey/
+│       └── survey_service.dart
+└── data/
+    ├── api/survey/
+    │   └── survey_api_client.dart
+    ├── repository/survey/
+    │   └── survey_repository.dart
+    ├── dtos/survey/
+    │   ├── survey_request.dart
+    │   └── survey_response.dart
+    └── models/survey/
+        └── survey.dart
+```
+
+**2. API Config 추가**
+```dart
+// lib/core/config/api_config.dart
+class ApiConfig {
+  static const String baseUrl = 'http://localhost:8000';
+
+  // Survey Endpoints
+  static const String surveyBase = '/survey';
+  static const String submitSurvey = '$surveyBase/submit';
+  static const String getSurveys = '$surveyBase/list';
+}
+```
+
+**3. DTO 작성**
+```dart
+// lib/data/dtos/survey/survey_request.dart
+@freezed
+class SurveyRequest with _$SurveyRequest {
+  const factory SurveyRequest({
+    required List<Answer> answers,
+  }) = _SurveyRequest;
+
+  factory SurveyRequest.fromJson(Map<String, dynamic> json) =>
+      _$SurveyRequestFromJson(json);
+}
+```
+
+**4. API Client 작성**
+```dart
+// lib/data/api/survey/survey_api_client.dart
+class SurveyApiClient {
+  final Dio _dio;
+
+  Future<SurveyResponse> submitSurvey(SurveyRequest request) async {
+    final response = await _dio.post(
+      ApiConfig.submitSurvey,
+      data: request.toJson(),
+    );
+    return SurveyResponse.fromJson(response.data);
+  }
+}
+```
+
+**5. Repository 작성**
+```dart
+// lib/data/repository/survey/survey_repository.dart
+class SurveyRepository {
+  final SurveyApiClient _apiClient;
+
+  Future<Survey> submitSurvey(List<Answer> answers) async {
+    final request = SurveyRequest(answers: answers);
+    final response = await _apiClient.submitSurvey(request);
+
+    return Survey(
+      id: response.id,
+      result: response.result,
+    );
+  }
+}
+```
+
+**6. Service 작성**
+```dart
+// lib/core/services/survey/survey_service.dart
+class SurveyService {
+  final SurveyRepository _repository;
+
+  Future<Survey> submitSurvey(List<Answer> answers) async {
+    // 비즈니스 로직
+    if (answers.isEmpty) {
+      throw Exception('답변이 없습니다');
+    }
+
+    return await _repository.submitSurvey(answers);
+  }
+}
+```
+
+**7. Provider 작성**
+```dart
+// lib/providers/survey_provider.dart
+final surveyServiceProvider = Provider<SurveyService>((ref) {
+  final repository = ref.watch(surveyRepositoryProvider);
+  return SurveyService(repository);
+});
+
+class SurveyNotifier extends StateNotifier<AsyncValue<Survey?>> {
+  final SurveyService _service;
+
+  SurveyNotifier(this._service) : super(const AsyncValue.data(null));
+
+  Future<void> submitSurvey(List<Answer> answers) async {
+    state = const AsyncValue.loading();
+    try {
+      final survey = await _service.submitSurvey(answers);
+      state = AsyncValue.data(survey);
+    } catch (e, stack) {
+      state = AsyncValue.error(e, stack);
+    }
+  }
+}
+
+final surveyProvider = StateNotifierProvider<SurveyNotifier, AsyncValue<Survey?>>((ref) {
+  return SurveyNotifier(ref.watch(surveyServiceProvider));
+});
+```
+
+**8. UI에서 사용**
+```dart
+class SurveyScreen extends ConsumerWidget {
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final surveyState = ref.watch(surveyProvider);
+
+    return surveyState.when(
+      data: (survey) => _buildContent(ref, survey),
+      loading: () => CircularProgressIndicator(),
+      error: (error, stack) => Text('Error: $error'),
+    );
+  }
+
+  Widget _buildContent(WidgetRef ref, Survey? survey) {
+    return AppButton(
+      text: '제출',
+      onTap: () async {
+        final answers = _getAnswers();
+        await ref.read(surveyProvider.notifier).submitSurvey(answers);
+      },
+    );
+  }
+}
+```
+
+### 자동 토큰 관리 (Dio Interceptor)
+
+Dio Interceptor를 통해 자동으로 토큰을 추가하고 갱신합니다:
+
+```dart
+// lib/core/utils/dio_interceptors.dart
+class AuthInterceptor extends Interceptor {
+  final AuthService _authService;
+
+  @override
+  void onRequest(RequestOptions options, RequestInterceptorHandler handler) async {
+    // 자동으로 Authorization 헤더 추가
+    final accessToken = await _authService.getAccessToken();
+    if (accessToken != null) {
+      options.headers['Authorization'] = 'Bearer $accessToken';
+    }
+    handler.next(options);
+  }
+
+  @override
+  void onError(DioException err, ErrorInterceptorHandler handler) async {
+    // 401 에러 시 자동 토큰 갱신
+    if (err.response?.statusCode == 401) {
+      try {
+        await _authService.refreshToken();
+
+        // 재시도
+        final accessToken = await _authService.getAccessToken();
+        err.requestOptions.headers['Authorization'] = 'Bearer $accessToken';
+
+        final response = await _dio.fetch(err.requestOptions);
+        return handler.resolve(response);
+      } catch (e) {
+        // 갱신 실패 시 로그아웃
+        await _authService.logout();
+      }
+    }
+    handler.next(err);
+  }
+}
+```
+
+### Best Practices
+
+#### ✅ 권장
+
+```dart
+// 1. Provider는 providers/ 폴더에
+final authProvider = StateNotifierProvider...
+
+// 2. 도메인별로 폴더 분리
+lib/core/services/auth/
+lib/data/api/auth/
+lib/data/repository/auth/
+
+// 3. Freezed 사용 (불변 객체)
+@freezed
+class User with _$User { ... }
+
+// 4. AsyncValue로 로딩/에러 상태 관리
+state.when(
+  data: (data) => ...,
+  loading: () => ...,
+  error: (error, stack) => ...,
+)
+
+// 5. 에러 핸들링
+try {
+  await apiClient.getData();
+} on DioException catch (e) {
+  throw _handleError(e);
+}
+```
+
+#### ❌ 비권장
+
+```dart
+// 1. UI에서 직접 API 호출 ❌
+final response = await http.get('http://localhost:8000/api/data');
+
+// 2. 하드코딩된 URL ❌
+await dio.get('http://localhost:8000/api/data');
+
+// 3. 토큰 수동 관리 ❌
+final token = await storage.read('token');
+headers['Authorization'] = 'Bearer $token';
+
+// 4. 에러 무시 ❌
+try {
+  await apiCall();
+} catch (e) {
+  // 아무것도 안 함
+}
+```
+
+---
+
 ## 🔨 개발 워크플로우
 
 ### 새로운 화면 추가
@@ -305,17 +913,107 @@ class FeatureContent extends StatelessWidget {
 }
 ```
 
-#### 3. 라우팅 추가 (필요시)
+#### 3. 라우팅 추가
+
+앱의 모든 라우트는 `lib/core/config/app_routes.dart`에서 중앙 관리됩니다. 새로운 페이지를 추가할 때는 이 파일만 수정하면 됩니다.
+
+##### AppRoutes에 라우트 추가
+
+`lib/core/config/app_routes.dart` 파일을 열고:
+
+**공개 경로 (인증 불필요)인 경우:**
 
 ```dart
-// lib/main.dart
-MaterialApp(
-  routes: {
-    '/': (context) => const HomeScreen(),
-    '/feature': (context) => const FeatureScreen(),
-  },
-)
+static const RouteMetadata newScreen = RouteMetadata(
+  routeName: '/new-screen',
+  builder: NewScreen.new,
+  // requiresAuth는 기본값 false이므로 생략 가능
+);
 ```
+
+**보호된 경로 (인증 필요)인 경우:**
+
+```dart
+static const RouteMetadata newScreen = RouteMetadata(
+  routeName: '/new-screen',
+  builder: NewScreen.new,
+  requiresAuth: true, // 인증 필요
+);
+```
+
+**탭 메뉴에 표시되는 경우:**
+
+```dart
+static const RouteMetadata newScreen = RouteMetadata(
+  routeName: '/new-screen',
+  builder: NewScreen.new,
+  requiresAuth: true,
+  tabIndex: 5, // 탭 메뉴 인덱스
+);
+```
+
+**allRoutes에 추가:**
+
+```dart
+static const List<RouteMetadata> allRoutes = [
+  home,
+  alarm,
+  chat,
+  report,
+  mypage,
+  login,
+  example,
+  newScreen, // 여기에 추가
+];
+```
+
+##### 사용하기
+
+**탭 메뉴에서 접근하는 경우:**
+
+`NavigationService`가 자동으로 인증을 체크하고 라우팅합니다:
+
+```dart
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../core/services/navigation/navigation_service.dart';
+
+class FeatureScreen extends ConsumerWidget {
+  const FeatureScreen({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final navigationService = NavigationService(context, ref);
+
+    return AppFrame(
+      bottomBar: BottomMenuBar(
+        currentIndex: 5,
+        onTap: (index) {
+          navigationService.navigateToTab(index); // tabIndex로 접근
+        },
+      ),
+      // ...
+    );
+  }
+}
+```
+
+**직접 경로로 접근하는 경우:**
+
+```dart
+final navigationService = NavigationService(context, ref);
+navigationService.navigateToRoute('/new-screen');
+```
+
+**RouteMetadata 속성:**
+
+- `routeName`: 경로 이름 (예: `/chat`)
+- `builder`: 화면 위젯을 생성하는 함수
+- `requiresAuth`: 인증이 필요한지 여부 (기본값: `false`)
+- `tabIndex`: 탭 메뉴에 표시되는 경우 인덱스 (선택사항)
+
+**참고:** `main.dart`에서 `AppRoutes.toMaterialRoutes()`를 사용하면 자동으로 모든 라우트가 등록됩니다. 별도로 `routes` 맵을 수정할 필요가 없습니다.
+
+
 
 ## 📐 코딩 컨벤션
 
@@ -585,6 +1283,6 @@ flutter run
 
 ---
 
-**마지막 업데이트**: 2025-12-03
+**마지막 업데이트**: 2025-12-04
 
 **문의**: 개발팀 채널

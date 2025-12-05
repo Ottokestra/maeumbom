@@ -1,7 +1,8 @@
 """
 API endpoints for authentication (Controller layer)
 """
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Request
+from starlette.responses import RedirectResponse
 from sqlalchemy.orm import Session
 
 from app.db.database import get_db
@@ -251,4 +252,124 @@ async def health_check():
         Status message
     """
     return {"status": "ok", "service": "authentication"}
+
+
+@router.get(
+    "/callback/google",
+    summary="Google OAuth Callback",
+    description="Receives OAuth callback from Google and redirects to app scheme"
+)
+async def google_callback(request: Request):
+    """Google OAuth Callback - redirects to app scheme"""
+    code = request.query_params.get("code")
+    state = request.query_params.get("state")
+    error = request.query_params.get("error")
+
+    app_scheme_url = "com.maeumbom.app://auth/callback"
+
+    if error:
+        return RedirectResponse(url=f"{app_scheme_url}?error={error}")
+    if not code:
+        return RedirectResponse(url=f"{app_scheme_url}?error=no_code")
+
+    if state:
+        return RedirectResponse(url=f"{app_scheme_url}?code={code}&state={state}&provider=google")
+    else:
+        return RedirectResponse(url=f"{app_scheme_url}?code={code}&provider=google")
+
+
+@router.get(
+    "/callback/kakao",
+    summary="Kakao OAuth Callback",
+    description="Receives OAuth callback from Kakao and redirects to app scheme"
+)
+async def kakao_callback(request: Request):
+    """Kakao OAuth Callback - redirects to app scheme"""
+    code = request.query_params.get("code")
+    error = request.query_params.get("error")
+
+    app_scheme_url = "com.maeumbom.app://auth/callback"
+
+    if error:
+        return RedirectResponse(url=f"{app_scheme_url}?error={error}")
+    if not code:
+        return RedirectResponse(url=f"{app_scheme_url}?error=no_code")
+
+    return RedirectResponse(url=f"{app_scheme_url}?code={code}&provider=kakao")
+
+
+@router.get(
+    "/callback/naver",
+    summary="Naver OAuth Callback",
+    description="Receives OAuth callback from Naver and redirects to app scheme"
+)
+async def naver_callback(request: Request):
+    """Naver OAuth Callback - redirects to app scheme (with state for CSRF)"""
+    import logging
+    from fastapi.responses import HTMLResponse
+    
+    logger = logging.getLogger(__name__)
+    
+    code = request.query_params.get("code")
+    state = request.query_params.get("state")
+    error = request.query_params.get("error")
+
+    app_scheme_url = "com.maeumbom.app://auth/callback"
+    
+    # 로깅 추가
+    logger.info(f"Naver callback received - code: {'present' if code else 'missing'}, "
+                f"state: {'present' if state else 'missing'}, error: {error}")
+
+    # 리다이렉트 URL 생성
+    if error:
+        redirect_url = f"{app_scheme_url}?error={error}"
+        logger.warning(f"Naver OAuth error: {error}")
+    elif not code or not state:
+        redirect_url = f"{app_scheme_url}?error=missing_params"
+        logger.error("Missing code or state in Naver callback")
+    else:
+        redirect_url = f"{app_scheme_url}?code={code}&state={state}&provider=naver"
+        logger.info(f"Naver callback successful, redirecting to: {redirect_url}")
+
+    # HTML 페이지로 앱 스킴 리다이렉트 (FlutterWebAuth2 호환)
+    html_content = f"""<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>로그인 처리중</title>
+    <style>
+        body {{ font-family: sans-serif; text-align: center; padding: 50px; }}
+        .spinner {{ border: 4px solid #f3f3f3; border-top: 4px solid #3498db; 
+                    border-radius: 50%; width: 40px; height: 40px; 
+                    animation: spin 1s linear infinite; margin: 20px auto; }}
+        @keyframes spin {{ 0% {{ transform: rotate(0deg); }} 100% {{ transform: rotate(360deg); }} }}
+    </style>
+</head>
+<body>
+    <div class="spinner"></div>
+    <h2>로그인 처리 중...</h2>
+    <p>잠시만 기다려주세요</p>
+    <script>
+        // 즉시 리다이렉트 시도
+        setTimeout(function() {{
+            window.location.href = "{redirect_url}";
+        }}, 100);
+        
+        // 백업: 1초 후에도 시도
+        setTimeout(function() {{
+            window.location.replace("{redirect_url}");
+        }}, 1000);
+        
+        // 최종 백업: 2초 후
+        setTimeout(function() {{
+            window.location = "{redirect_url}";
+        }}, 2000);
+    </script>
+    <p style="margin-top: 30px; font-size: 12px; color: #666;">
+        자동으로 이동하지 않으면 <a href="{redirect_url}" style="color: #3498db;">여기를 클릭</a>하세요
+    </p>
+</body>
+</html>"""
+    
+    return HTMLResponse(content=html_content)
 

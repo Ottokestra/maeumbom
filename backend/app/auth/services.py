@@ -370,14 +370,15 @@ async def kakao_login(auth_code: str, redirect_uri: str, db: Session) -> TokenRe
     Handle Kakao OAuth login
     
     Process:
-    1. Exchange auth_code for Kakao access token
-    2. Get user info from Kakao
-    3. Find or create user in database
-    4. Generate JWT tokens
-    5. Store refresh token in database (Whitelist)
+    1. Check if auth_code is actually an access_token (from Kakao SDK)
+    2. If not, exchange auth_code for Kakao access token
+    3. Get user info from Kakao
+    4. Find or create user in database
+    5. Generate JWT tokens
+    6. Store refresh token in database (Whitelist)
     
     Args:
-        auth_code: Authorization code from Kakao
+        auth_code: Authorization code from Kakao (or access_token from Kakao SDK)
         redirect_uri: Redirect URI for OAuth callback
         db: Database session
         
@@ -387,8 +388,14 @@ async def kakao_login(auth_code: str, redirect_uri: str, db: Session) -> TokenRe
     Raises:
         HTTPException: If login process fails
     """
-    # Step 1: Get Kakao access token
-    kakao_access_token = await get_kakao_access_token(auth_code, redirect_uri)
+    # Step 1: Check if auth_code is actually an access_token (from Kakao SDK)
+    # Kakao SDK에서 직접 access_token을 받은 경우, 토큰 교환 과정을 건너뜀
+    # Access token은 일반적으로 길이가 길고 특정 형식을 가짐
+    if len(auth_code) > 50:  # Access token은 보통 50자 이상, authCode는 30-40자
+        kakao_access_token = auth_code
+    else:
+        # Authorization code인 경우 토큰 교환
+        kakao_access_token = await get_kakao_access_token(auth_code, redirect_uri)
     
     # Step 2: Get user info from Kakao
     user_info = await get_kakao_user_info(kakao_access_token)

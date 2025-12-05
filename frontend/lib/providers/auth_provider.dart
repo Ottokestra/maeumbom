@@ -2,15 +2,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../core/config/api_config.dart';
-import '../core/services/auth_service.dart';
-import '../core/services/token_storage_service.dart';
-import '../core/services/google_oauth_service.dart';
-import '../core/services/kakao_oauth_service.dart';
-import '../core/services/naver_oauth_service.dart';
+import '../core/services/auth/auth_service.dart';
+import '../core/services/auth/token_storage_service.dart';
+import '../core/services/auth/google_oauth_service.dart';
+import '../core/services/auth/kakao_oauth_service.dart';
+import '../core/services/auth/naver_oauth_service.dart';
 import '../core/utils/dio_interceptors.dart';
-import '../data/api/auth_api_client.dart';
-import '../data/repository/auth_repository.dart';
-import '../data/models/user.dart';
+import '../data/api/auth/auth_api_client.dart';
+import '../data/repository/auth/auth_repository.dart';
+import '../data/models/auth/user.dart';
 
 // ----- Infrastructure Providers -----
 

@@ -1,5 +1,5 @@
 import 'package:dio/dio.dart';
-import '../services/auth_service.dart';
+import '../services/auth/auth_service.dart';
 import 'logger.dart';
 
 /// Auth Interceptor - Automatically adds access token and handles refresh
@@ -61,9 +61,9 @@ class AuthInterceptor extends Interceptor {
   }
 
   bool _isAuthEndpoint(String path) {
-    return path.contains('/api/auth/google') ||
-        path.contains('/api/auth/kakao') ||
-        path.contains('/api/auth/naver') ||
-        path.contains('/api/auth/refresh');
+    return path.contains('/auth/google') ||
+        path.contains('/auth/kakao') ||
+        path.contains('/auth/naver') ||
+        path.contains('/auth/refresh');
   }
 }
