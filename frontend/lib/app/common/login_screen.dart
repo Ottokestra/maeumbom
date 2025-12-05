@@ -228,8 +228,8 @@ class _SocialLoginButtons extends ConsumerWidget {
                   result.when(
                     data: (user) {
                       if (user != null) {
-                        // 성공 - 홈으로 이동
-                        Navigator.pushReplacementNamed(context, '/');
+                        // 성공 - 회원가입 슬라이드로 이동
+                        Navigator.pushReplacementNamed(context, '/sign_up_slide');
                       }
                     },
                     error: (error, stack) => _handleLoginError(context, error),
@@ -256,8 +256,8 @@ class _SocialLoginButtons extends ConsumerWidget {
                   result.when(
                     data: (user) {
                       if (user != null) {
-                        // 성공 - 홈으로 이동
-                        Navigator.pushReplacementNamed(context, '/');
+                        // 성공 - 회원가입 슬라이드로 이동
+                        Navigator.pushReplacementNamed(context, '/sign_up_slide');
                       }
                     },
                     error: (error, stack) => _handleLoginError(context, error),
@@ -285,8 +285,8 @@ class _SocialLoginButtons extends ConsumerWidget {
                   result.when(
                     data: (user) {
                       if (user != null) {
-                        // 성공 - 홈으로 이동
-                        Navigator.pushReplacementNamed(context, '/');
+                        // 성공 - 회원가입 슬라이드로 이동
+                        Navigator.pushReplacementNamed(context, '/sign_up_slide');
                       }
                     },
                     error: (error, stack) => _handleLoginError(context, error),
