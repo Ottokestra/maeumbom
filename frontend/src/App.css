@@ -1047,3 +1047,208 @@ body {
   color: #444;
   line-height: 1.4;
 }
+
+.report-loading {
+  width: 100%;
+  padding: 40px;
+  text-align: center;
+  color: #f9fafb;
+  font-weight: 600;
+}
+
+.report-empty-wrapper {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 24px;
+}
+
+.report-empty-card {
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 18px;
+  padding: 24px;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.12);
+  max-width: 520px;
+  width: 100%;
+  text-align: center;
+  color: #1f2937;
+}
+
+.report-empty-card .empty-title {
+  font-weight: 700;
+  font-size: 18px;
+  margin-bottom: 8px;
+  color: #4c1d95;
+}
+
+.report-empty-card .empty-body {
+  font-size: 15px;
+  color: #374151;
+  margin-bottom: 16px;
+  line-height: 1.5;
+}
+
+.primary-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 20px;
+  background: linear-gradient(135deg, #7c3aed, #a855f7);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 8px 20px rgba(124, 58, 237, 0.3);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.primary-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 24px rgba(124, 58, 237, 0.35);
+}
+
+.primary-button:active {
+  transform: translateY(0);
+}
+
+.report-temp-value {
+  font-weight: 700;
+}
+
+.survey-cut-card {
+  background: linear-gradient(145deg, rgba(124, 58, 237, 0.12), rgba(236, 72, 153, 0.1));
+  padding: 28px;
+}
+
+.survey-loading,
+.survey-error-card,
+.survey-empty-card,
+.survey-complete-card {
+  background: white;
+  border-radius: 16px;
+  padding: 20px;
+  text-align: center;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+  color: #1f2937;
+}
+
+.survey-cut-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.survey-header {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.survey-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.survey-progress {
+  font-weight: 600;
+  color: #4b5563;
+}
+
+.survey-progress-bar {
+  width: 100%;
+  height: 10px;
+  background: rgba(255, 255, 255, 0.5);
+  border-radius: 999px;
+  overflow: hidden;
+  border: 1px solid rgba(124, 58, 237, 0.15);
+}
+
+.survey-progress-fill {
+  height: 100%;
+  background: linear-gradient(135deg, #7c3aed, #ec4899);
+  border-radius: 999px;
+  transition: width 0.3s ease;
+}
+
+.survey-character-card {
+  background: white;
+  border-radius: 16px;
+  padding: 16px 18px;
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.08);
+}
+
+.survey-character-emoji {
+  width: 64px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  border-radius: 16px;
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.9), rgba(244, 238, 255, 0.9));
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.04);
+}
+
+.survey-bubble {
+  flex: 1;
+  background: linear-gradient(145deg, rgba(124, 58, 237, 0.08), rgba(236, 72, 153, 0.08));
+  border-radius: 14px;
+  padding: 14px 16px;
+  color: #1f2937;
+  font-weight: 600;
+  line-height: 1.5;
+  position: relative;
+}
+
+.survey-answer-buttons {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+}
+
+.survey-answer-button {
+  padding: 14px;
+  border-radius: 12px;
+  border: 2px solid transparent;
+  background: white;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
+}
+
+.survey-answer-button.yes {
+  color: #047857;
+  border-color: rgba(16, 185, 129, 0.2);
+}
+
+.survey-answer-button.no {
+  color: #b91c1c;
+  border-color: rgba(239, 68, 68, 0.2);
+}
+
+.survey-answer-button.active {
+  background: linear-gradient(145deg, rgba(124, 58, 237, 0.12), rgba(236, 72, 153, 0.12));
+  box-shadow: 0 10px 24px rgba(124, 58, 237, 0.14);
+}
+
+.survey-answer-button:hover {
+  transform: translateY(-2px);
+}
+
+@media (max-width: 640px) {
+  .survey-answer-buttons {
+    grid-template-columns: 1fr;
+  }
+
+  .survey-character-card {
+    flex-direction: column;
+  }
+}
