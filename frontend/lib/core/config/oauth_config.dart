@@ -32,11 +32,8 @@ class OAuthConfig {
     return 'http://localhost:8000/auth/callback/kakao';
   }
 
-  // Naver OAuth: 네이버 개발자 콘솔에 등록된 실제 서비스 IP 사용
-  // 네이버 OAuth 서버는 실제 네트워크 IP(192.168.0.66)로만 콜백을 전달할 수 있음
-  // 플랫폼 구분 없이 동일한 URL 사용
   static String get naverRedirectUri {
-    return 'http://192.168.0.66:8000/auth/callback/naver';
+    return 'http://localhost:8000/auth/callback/naver';
   }
 
   // App Scheme (앱이 받을 deep link)

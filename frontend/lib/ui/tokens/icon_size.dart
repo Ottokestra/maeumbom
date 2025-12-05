@@ -6,11 +6,11 @@ class AppIconSizes {
   AppIconSizes._(); // 인스턴스화 방지
 
   static const double xs = 16; // 16x16
-  static const double sm = 24; // 24x24
-  static const double md = 28; // 28x28 (기본)
-  static const double lg = 32; // 32x32
-  static const double xl = 36; // 36x36
-  static const double xxl = 42; // 42x42
+  static const double sm = 32; // 32x32
+  static const double md = 48; // 48x48 (기본)
+  static const double lg = 64; // 64x64
+  static const double xl = 80; // 80x80
+  static const double xxl = 96; // 96x96
 
   static const Size xsSize = Size(xs, xs);
   static const Size smSize = Size(sm, sm);
