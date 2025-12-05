@@ -2,7 +2,20 @@
 SQLAlchemy models for all database tables
 Centralized model management
 """
-from sqlalchemy import Column, Integer, String, Text, DateTime, Date, Index, ForeignKey, JSON, Boolean, Float
+from sqlalchemy import (
+    Boolean,
+    Column,
+    Date,
+    DateTime,
+    Float,
+    ForeignKey,
+    Index,
+    Integer,
+    JSON,
+    String,
+    Text,
+    UniqueConstraint,
+)
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 from .database import Base
@@ -163,6 +176,50 @@ class EmotionLog(Base):
     SCORE = Column(Float, nullable=True)
     CREATED_AT = Column(DateTime(timezone=True), server_default=func.now(), index=True)
     IS_DELETED = Column(Boolean, default=False)
+
+
+class MenopauseSurveyQuestion(Base):
+    """
+    갱년기 자가테스트 설문 문항 (성별/코드 기반)
+
+    Attributes:
+        ID: Primary key
+        GENDER: 성별 구분 (FEMALE / MALE)
+        CODE: 문항 코드 (예: F1~F10, M1~M10)
+        ORDER_NO: 성별 내 표시 순서
+        QUESTION_TEXT: 질문 텍스트
+        RISK_WHEN_YES: "예" 응답 시 위험 여부
+        POSITIVE_LABEL: 긍정 선택지 라벨 (기본값 "예")
+        NEGATIVE_LABEL: 부정 선택지 라벨 (기본값 "아니오")
+        CHARACTER_KEY: 프론트 캐릭터 매핑 키
+        IS_ACTIVE: 활성화 여부
+        IS_DELETED: 소프트 삭제 여부
+        CREATED_AT/UPDATED_AT: 생성/수정 시각
+        CREATED_BY/UPDATED_BY: 생성/수정자 정보
+    """
+
+    __tablename__ = "TB_MENOPAUSE_SURVEY_QUESTION"
+
+    ID = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    GENDER = Column(String(10), nullable=False, index=True)
+    CODE = Column(String(10), nullable=False, index=True)
+    ORDER_NO = Column(Integer, nullable=False, index=True)
+    QUESTION_TEXT = Column(Text, nullable=False)
+    RISK_WHEN_YES = Column(Boolean, nullable=False, default=False)
+    POSITIVE_LABEL = Column(String(20), nullable=False, default="예")
+    NEGATIVE_LABEL = Column(String(20), nullable=False, default="아니오")
+    CHARACTER_KEY = Column(String(50), nullable=True)
+    IS_ACTIVE = Column(Boolean, default=True)
+    IS_DELETED = Column(Boolean, default=False)
+    CREATED_AT = Column(DateTime(timezone=True), server_default=func.now())
+    UPDATED_AT = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    CREATED_BY = Column(String(50), nullable=True)
+    UPDATED_BY = Column(String(50), nullable=True)
+
+    __table_args__ = (
+        UniqueConstraint("CODE", name="uq_menopause_survey_question_code"),
+        Index("idx_menopause_gender_order", "GENDER", "ORDER_NO"),
+    )
 
 
 class MenopauseQuestion(Base):
