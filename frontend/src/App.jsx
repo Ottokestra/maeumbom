@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react'
-import { BrowserRouter, useLocation, useNavigate } from 'react-router-dom'
+import { BrowserRouter, Navigate, Route, Routes, useNavigate } from 'react-router-dom'
 import SignupSurveyPage from './pages/SignupSurveyPage'
 import EmotionReportPage from './pages/EmotionReportPage'
+import ChatPage from './pages/ChatPage'
 import EmotionInput from './components/EmotionInput'
 import EmotionResult from './components/EmotionResult'
 import EmotionChart from './components/EmotionChart'
@@ -13,6 +14,8 @@ import Login from './components/Login'
 import WeatherCard from './components/WeatherCard'
 import './App.css'
 import { API_BASE_URL } from './config/api'
+import { fetchWeeklyEmotionReport } from './api/emotionReportApi'
+import { resolveCharacterMeta } from './config/emotionCharacters'
 
 function MainApp() {
   const navigate = useNavigate()
@@ -248,7 +251,8 @@ function MainApp() {
   const [activeTab, setActiveTab] = useState(() => {
     const saved = localStorage.getItem('activeTab')
     if (saved === 'routine-test') return 'menopause-test'
-    return saved || 'emotion' // 'emotion', 'menopause-test', 'stt-tts-test', 'daily-mood-check', 'emotion-report'
+    if (saved === 'emotion-report') return 'emotion'
+    return saved || 'emotion' // 'emotion', 'menopause-test', 'stt-tts-test', 'daily-mood-check'
   })
 
   // activeTab이 변경될 때마다 localStorage에 저장
@@ -285,9 +289,7 @@ function MainApp() {
     setEmotionReportLoading(true)
     setEmotionReportError(null)
     try {
-      const res = await fetch(`${API_BASE_URL}/reports/emotion/weekly`)
-      if (!res.ok) throw new Error('Failed to load')
-      const data = await res.json()
+      const data = await fetchWeeklyEmotionReport()
       setEmotionReport(data)
     } catch (err) {
       setEmotionReportError(err.message || '에러가 발생했어요.')
@@ -297,10 +299,8 @@ function MainApp() {
   }
 
   useEffect(() => {
-    if (activeTab === 'emotion-report') {
-      loadEmotionReport()
-    }
-  }, [activeTab])
+    loadEmotionReport()
+  }, [])
 
   const loadMenopauseQuestions = async () => {
     setMenopauseLoading(true)
@@ -462,14 +462,12 @@ function MainApp() {
       )
     }
 
-    if (!emotionReport || !emotionReport.hasData) {
+    if (!emotionReport) {
       return (
-        <div className="report-empty-wrapper">
-          <div className="report-empty-card">
-            <div className="empty-title">이번 주 감정 리포트</div>
-            <div className="empty-body">
-              오늘은 아직 데이터가 없어요. 봄이랑 먼저 이야기해볼래?
-            </div>
+        <div className="report-empty-card">
+          <div className="empty-title">이번 주 감정 리포트</div>
+          <div className="empty-body">오늘은 아직 데이터가 없어요. 봄이랑 먼저 이야기해볼래?</div>
+          <div className="report-preview-actions">
             <button className="primary-button" onClick={handleGoToChat}>
               대화하러 가기
             </button>
@@ -478,61 +476,38 @@ function MainApp() {
       )
     }
 
-    const { summaryTitle, mainCharacterEmoji, temperature, weeklyEmotions } = emotionReport
-    const clampedGaugeValue = Math.max(0, Math.min(100, temperature || 0))
-    const gaugeAngle = (clampedGaugeValue / 100) * 360
+    const mainCharacter = resolveCharacterMeta(emotionReport.main_character_code)
+    const temperature = Math.round(Math.max(0, Math.min(100, emotionReport.temperature || 0)))
 
     return (
-      <div className="report-container">
-        <div className="report-card">
-          <h2 className="report-title">
-            🧡 {summaryTitle} {mainCharacterEmoji}
-          </h2>
-
-          <div className="report-temperature">
-            <span>온도:</span>
-            <span className="report-temp-value">{clampedGaugeValue}°</span>
+      <div className="report-preview-card">
+        <div className="report-preview-head">
+          <div>
+            <p className="empty-title">이번 주 감정 리포트</p>
+            <p className="report-preview-period">
+              {emotionReport.start_date} ~ {emotionReport.end_date}
+            </p>
           </div>
-
-          <div className="report-gauge">
-            <div className="gauge-circle">
-              <div
-                className="gauge-fill"
-                style={{
-                  background: `conic-gradient(from -90deg, #ff6b6b 0deg ${gaugeAngle}deg, rgba(255, 255, 255, 0.08) ${gaugeAngle}deg 360deg)`
-                }}
-              ></div>
-              <div className="gauge-center">
-                <span>{Math.round(clampedGaugeValue)}</span>
-              </div>
-            </div>
+          <button className="ghost-button" onClick={() => navigate('/report')}>
+            리포트 보기
+          </button>
+        </div>
+        <div className="report-preview-body">
+          <div className="preview-emoji" aria-hidden>
+            {mainCharacter.emoji}
           </div>
-
-          <hr className="report-divider" />
-
-          <div className="report-weekly">
-            <h3>요일별 감정 캐릭터</h3>
-            <div className="report-week-row">
-              {weeklyEmotions.map((item, index) => (
-                <div className="day-emotion" key={`${item.day}-${index}`}>
-                  <span>{item.day}</span>
-                  <span>{item.emoji}</span>
-                </div>
-              ))}
-            </div>
+          <div className="preview-copy">
+            <p className="preview-title">금주의 너는 '{mainCharacter.label}'</p>
+            <p className="preview-temp">감정 온도 {temperature}°</p>
           </div>
         </div>
-
-        <div className="report-character-panel">
-          <div className="character-preview">
-            <div className="character-emoji">{mainCharacterEmoji || '🍑'}</div>
-          </div>
-
-          <div className="character-caption">
-            최근 대화의 감정을 바탕으로
-            <br />
-            너와 가장 닮은 감정 캐릭터야.
-          </div>
+        <div className="report-preview-actions">
+          <button className="primary-button" onClick={() => navigate('/report')}>
+            리포트 자세히 보기
+          </button>
+          <button className="ghost-button" onClick={handleGoToChat}>
+            대화하러 가기
+          </button>
         </div>
       </div>
     )
@@ -679,8 +654,8 @@ function MainApp() {
             <p>갱년기 여성을 위한 감정 공감 서비스</p>
           </div>
            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-             <button
-               onClick={() => navigate('/emotion-report')}
+               <button
+                 onClick={() => navigate('/report')}
                style={{
                  padding: '8px 16px',
                  backgroundColor: '#f3f4f6',
@@ -843,16 +818,16 @@ function MainApp() {
           일일 감정 체크
         </button>
         <button
-          onClick={() => setActiveTab('emotion-report')}
+          onClick={() => navigate('/report')}
           style={{
             padding: '10px 20px',
             fontSize: '16px',
             cursor: 'pointer',
-            backgroundColor: activeTab === 'emotion-report' ? '#6366f1' : '#e5e7eb',
-            color: activeTab === 'emotion-report' ? 'white' : '#374151',
+            backgroundColor: '#e5e7eb',
+            color: '#374151',
             border: 'none',
             borderRadius: '8px',
-            fontWeight: activeTab === 'emotion-report' ? 'bold' : 'normal'
+            fontWeight: 'bold'
           }}
         >
           나의 감정 리포트
@@ -938,11 +913,15 @@ function MainApp() {
             </div>
 
             {/* 4. 오늘 날씨 (항상 표시) */}
-            <div className="card" style={{ marginBottom: '1rem' }}>
-              <h2 style={{ marginBottom: '0.75rem' }}>오늘 날씨</h2>
-              {/* 현재 위치 기반 WeatherCard (city prop 없이) */}
-              <WeatherCard />
-            </div>
+              <div className="card" style={{ marginBottom: '1rem' }}>
+                <h2 style={{ marginBottom: '0.75rem' }}>오늘 날씨</h2>
+                {/* 현재 위치 기반 WeatherCard (city prop 없이) */}
+                <WeatherCard />
+              </div>
+
+              <div className="card" style={{ marginBottom: '1rem' }}>
+                {renderEmotionReportSection()}
+              </div>
 
             {/* 부가: 유사 문맥 */}
             {!loading && result && result.similar_contexts && result.similar_contexts.length > 0 && (
@@ -981,13 +960,6 @@ function MainApp() {
         {/* 일일 감정 체크 섹션 */}
         {activeTab === 'daily-mood-check' && (
           <DailyMoodCheck user={user} />
-        )}
-
-        {/* 나의 감정 리포트 섹션 */}
-        {activeTab === 'emotion-report' && (
-          <section className="tab-content report-tab" data-tab="emotion-report">
-            {renderEmotionReportSection()}
-          </section>
         )}
       </div>
 
@@ -1061,27 +1033,19 @@ function getEmotionLabel(emotion) {
   return labels[emotion] || emotion
 }
 
-function AppContent() {
-  const location = useLocation()
-  const pathName = location.pathname
-  const isSurveyRoute = pathName.startsWith('/signup/survey')
-  const isEmotionReportRoute = pathName.startsWith('/emotion-report')
-
-  if (isSurveyRoute) {
-    return <SignupSurveyPage apiBaseUrl={API_BASE_URL} />
-  }
-
-  if (isEmotionReportRoute) {
-    return <EmotionReportPage />
-  }
-
-  return <MainApp />
-}
-
 function App() {
   return (
     <BrowserRouter>
-      <AppContent />
+      <Routes>
+        <Route path="/signup/survey/*" element={<SignupSurveyPage apiBaseUrl={API_BASE_URL} />} />
+        <Route path="/report" element={<EmotionReportPage />} />
+        <Route path="/reports/emotion" element={<EmotionReportPage />} />
+        <Route path="/emotion-report" element={<Navigate to="/report" replace />} />
+        <Route path="/chat" element={<ChatPage />} />
+        <Route path="/home" element={<MainApp />} />
+        <Route path="/" element={<MainApp />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
     </BrowserRouter>
   )
 }
