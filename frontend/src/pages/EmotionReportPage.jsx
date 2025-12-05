@@ -1,106 +1,200 @@
 import { useEffect, useMemo, useState } from 'react'
-import { fetchWeeklyEmotionReport } from '../api/emotionReportApi'
+import { useNavigate } from 'react-router-dom'
 import CircularGauge from '../components/emotion-report/CircularGauge'
-import { getCharacterEmoji } from '../utils/characterMap'
+import { API_BASE_URL } from '../config/api'
+import { resolveCharacterMeta } from '../config/emotionCharacters'
 import './EmotionReportPage.css'
 
-const emojiFallback = '🤍'
+const clamp = (value, min = 0, max = 100) => Math.min(Math.max(value ?? 0, min), max)
+
+function EmptyStateCard({ title, description, ctaLabel, onClickCta }) {
+  return (
+    <div className="report-state report-state--empty">
+      <div className="state-text-group">
+        <p className="state-title">{title}</p>
+        <p className="state-subtext">{description}</p>
+      </div>
+      <button className="primary-button" onClick={onClickCta}>
+        {ctaLabel}
+      </button>
+    </div>
+  )
+}
+
+function ReportDays({ days = [] }) {
+  if (!days.length) return null
+
+  return (
+    <div className="report-weekly-row">
+      {days.map((day) => {
+        const meta = resolveCharacterMeta(day.character_code)
+        return (
+          <div className="weekly-day" key={day.date || day.day}>
+            <span className="weekly-day__label">{day.day_label || day.day}</span>
+            <span className="weekly-day__emoji">{meta.emoji}</span>
+            <span className="weekly-day__name">{meta.label}</span>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
+function CoachMessage({ message, character, onClickGoChat }) {
+  if (!message) return null
+
+  return (
+    <section className="coach-message">
+      <div className="coach-avatar" aria-hidden>
+        {character.emoji}
+      </div>
+      <div className="coach-copy">
+        <p className="coach-label">봄이의 메모</p>
+        <p className="coach-text">{message}</p>
+        <button className="ghost-button" onClick={onClickGoChat}>
+          봄이랑 더 이야기하기
+        </button>
+      </div>
+    </section>
+  )
+}
+
+function ReportLayout({ report, mainCharacter, onClickGoChat }) {
+  const gaugeValue = useMemo(() => clamp(report.temperature), [report.temperature])
+
+  return (
+    <div className="report-body">
+      <section className="report-hero">
+        <div className="report-gauge-card">
+          <CircularGauge
+            value={gaugeValue}
+            label={report.temperature_label || '감정 온도'}
+            color="#f472b6"
+            centerContent={<div className="report-main-emoji">{mainCharacter.emoji}</div>}
+          />
+          <div className="report-gauge-meta">
+            <p className="gauge-caption">{mainCharacter.label}</p>
+            <p className="gauge-description">{mainCharacter.description}</p>
+          </div>
+        </div>
+
+        <div className="report-character-card">
+          <p className="character-chip">대표 감정 캐릭터</p>
+          <div className="character-emoji">{mainCharacter.emoji}</div>
+          <p className="character-name">{mainCharacter.label}</p>
+          <p className="character-description">{mainCharacter.description}</p>
+        </div>
+      </section>
+
+      <section className="report-weekly">
+        <div className="section-heading">
+          <div>
+            <p className="section-caption">요일별 감정 캐릭터</p>
+            <h2 className="section-title">한 주를 채운 감정 스티커</h2>
+          </div>
+          <span className="period-chip">
+            {report.start_date} ~ {report.end_date}
+          </span>
+        </div>
+        <ReportDays days={report.days} />
+      </section>
+
+      <CoachMessage message={report.coach_message} character={mainCharacter} onClickGoChat={onClickGoChat} />
+    </div>
+  )
+}
 
 export default function EmotionReportPage() {
-  const [report, setReport] = useState(null)
-  const [isLoading, setIsLoading] = useState(false)
+  const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [report, setReport] = useState(null)
+  const navigate = useNavigate()
+
+  const loadReport = async () => {
+    setLoading(true)
+    setError('')
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/reports/emotion/weekly`)
+
+      if (response.status === 404) {
+        setReport(null)
+        return
+      }
+
+      if (!response.ok) {
+        throw new Error('failed to load weekly emotion report')
+      }
+
+      const data = await response.json()
+      setReport(data)
+    } catch (err) {
+      console.error(err)
+      setError('리포트를 불러오지 못했어요. 네트워크를 확인한 뒤 다시 시도해주세요.')
+    } finally {
+      setLoading(false)
+    }
+  }
 
   useEffect(() => {
-    const loadReport = async () => {
-      setIsLoading(true)
-      setError('')
-      try {
-        const data = await fetchWeeklyEmotionReport()
-        // TODO: 실제 감정 데이터 연동 완료 시 검증 필요
-        setReport(data)
-      } catch (err) {
-        setError(err.message || '데이터를 불러오지 못했어요')
-      } finally {
-        setIsLoading(false)
-      }
-    }
-
     loadReport()
   }, [])
 
-  const mainCharacterEmoji = useMemo(() => {
-    return getCharacterEmoji(report?.main_character_key) || emojiFallback
-  }, [report?.main_character_key])
+  const handleGoHome = () => navigate('/')
+  const handleGoChat = () => navigate('/chat')
 
-  const gaugeColor = report?.gauge_color || '#f9c6d6'
-
-  const renderDailyStickers = () => {
-    if (!report?.daily_stickers?.length) return null
-    return (
-      <div className="daily-sticker-row">
-        {report.daily_stickers.map((item) => (
-          <div key={item.date} className="daily-sticker" title={item.label}>
-            <div className="daily-sticker__day">{item.day_label}</div>
-            <div className="daily-sticker__emoji">{getCharacterEmoji(item.character_key)}</div>
-          </div>
-        ))}
-      </div>
-    )
-  }
+  const mainCharacter = useMemo(() => resolveCharacterMeta(report?.main_character_code), [report?.main_character_code])
 
   return (
     <div className="emotion-report-page">
-      <div className="emotion-report-card">
-        <header className="emotion-report-header">
-          <div className="report-meta">
-            <p className="report-meta__caption">이번 주 정리 · {report?.week_start} ~ {report?.week_end}</p>
-            <h1 className="report-title">{report?.summary_title || '이번 주 감정 리포트'}</h1>
+      <div className="emotion-report-surface">
+        <header className="report-header">
+          <div>
+            <p className="report-period">이번 주 정리 · {report?.start_date} ~ {report?.end_date}</p>
+            <h1 className="report-title">금주의 너는 '{mainCharacter.label}'</h1>
           </div>
-          <button className="nav-button" onClick={() => (window.location.href = '/')}>봄이 홈으로</button>
+          <div className="report-actions">
+            <button className="ghost-button" onClick={handleGoHome}>
+              봄이 홈으로
+            </button>
+            <button className="primary-button" onClick={handleGoChat}>
+              대화하러 가기
+            </button>
+          </div>
         </header>
 
-        {isLoading && (
+        {loading && (
           <div className="report-state">
             <div className="spinner" aria-label="로딩 중" />
             <p className="state-text">이번 주 감정을 정리하고 있어요...</p>
           </div>
         )}
 
-        {!isLoading && error && (
+        {!loading && error && (
           <div className="report-state report-state--error">
-            <p className="state-text">오늘은 아직 데이터가 없어요. 봄이랑 먼저 이야기해볼래?</p>
-            <button className="primary-button" onClick={() => (window.location.href = '/')}>대화하러 가기</button>
+            <p className="state-text">잠시 연결이 불안정해요. 다시 시도해볼까요?</p>
+            <div className="state-actions">
+              <button className="ghost-button" onClick={loadReport}>
+                다시 시도하기
+              </button>
+              <button className="primary-button" onClick={handleGoChat}>
+                대화하러 가기
+              </button>
+            </div>
           </div>
         )}
 
-        {!isLoading && !error && report && (
-          <>
-            <section className="main-emotion">
-              <div className="main-emotion__copy">🧡 금주의 너는 '{report.summary_title}'</div>
-              <div className="main-emotion__visual">
-                <CircularGauge
-                  value={report.temperature}
-                  label={report.temperature_label}
-                  color={gaugeColor}
-                  centerContent={<div className="main-character">{mainCharacterEmoji}</div>}
-                />
-                <div className="main-emotion__info">
-                  <p className="main-emotion__badge">대표 감정 캐릭터</p>
-                  <div className="main-emotion__emoji">{mainCharacterEmoji}</div>
-                  <p className="main-emotion__temperature">온도 {report.temperature}°</p>
-                </div>
-              </div>
-            </section>
+        {!loading && !error && !report && (
+          <EmptyStateCard
+            title="이번 주 감정 리포트"
+            description="오늘은 아직 데이터가 없어요. 봄이랑 먼저 이야기해볼래?"
+            ctaLabel="대화하러 가기"
+            onClickCta={handleGoChat}
+          />
+        )}
 
-            <section className="daily-section">
-              <div className="section-heading">
-                <h2>요일별 감정 캐릭터</h2>
-                <p className="section-subtext">매일의 감정을 스티커처럼 모았어요</p>
-              </div>
-              {renderDailyStickers()}
-            </section>
-          </>
+        {!loading && !error && report && (
+          <ReportLayout report={report} mainCharacter={mainCharacter} onClickGoChat={handleGoChat} />
         )}
       </div>
     </div>
