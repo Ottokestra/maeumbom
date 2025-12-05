@@ -6,20 +6,28 @@ from typing import List, Optional
 from pydantic import BaseModel, Field
 
 
-class WeeklyEmotionItem(BaseModel):
-    """Single day emotion summary for the weekly report."""
+class DailyEmotionSticker(BaseModel):
+    """Single day emotion sticker information for the report."""
 
-    day: str  # 요일 라벨 ("월", "화" ...)
-    emoji: str  # 캐릭터 이모지
-    emotion_code: str  # 내부 감정 코드 (예: "worry")
+    day_label: str
+    date: str
+    emotion_code: str
+    character_key: str
+    label: str
 
 
 class WeeklyEmotionReport(BaseModel):
-    """Weekly emotion report response schema."""
+    """Weekly emotion report response schema aligned with the frontend."""
 
-    hasData: bool
-    summaryTitle: Optional[str] = None
-    mainCharacterEmoji: Optional[str] = None
-    temperature: Optional[int] = None
-    weeklyEmotions: List[WeeklyEmotionItem] = Field(default_factory=list)
+    week_start: str
+    week_end: str
+    summary_title: str
+    main_emotion_code: str
+    main_character_key: str
+    temperature: int
+    temperature_label: str
+    gauge_color: Optional[str] = None
+    daily_stickers: List[DailyEmotionSticker] = Field(default_factory=list)
+    badges: List[str] = Field(default_factory=list)
+    decorations: List[str] = Field(default_factory=list)
 
