@@ -125,5 +125,5 @@ tenacity>=8.2.0
 pillow>=10.0.0
 
 # Qwen 2.5 14B GGUF (Local Scenario Writer)
-llama-cpp-python==0.2.90
+# llama-cpp-python==0.2.90
 ##########################################################
