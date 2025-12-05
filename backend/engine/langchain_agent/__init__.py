@@ -11,13 +11,17 @@ from .agent import (
     InMemoryConversationStore,
     route_tools,
 )
+from .agent_v2 import run_ai_bomi_from_text_v2, select_character_from_emotion, CharacterInfo
 
 __all__ = [
     "run_ai_bomi_from_text",
     "run_ai_bomi_from_audio",
+    "run_ai_bomi_from_text_v2",
     "get_conversation_store",
     "get_all_sessions",
     "InMemoryConversationStore",
     "route_tools",
+    "select_character_from_emotion",
+    "CharacterInfo",
 ]
 
