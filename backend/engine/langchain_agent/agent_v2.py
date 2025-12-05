@@ -10,6 +10,11 @@ from openai import OpenAI
 # 로깅 설정
 logger = logging.getLogger(__name__)
 
+# 🔥 MODULE LOAD 확인
+logger.warning("=" * 60)
+logger.warning("🔥 agent_v2.py MODULE LOADED - Phase 2 VERSION")
+logger.warning("=" * 60)
+
 # Tool Imports
 import sys
 from pathlib import Path
@@ -44,24 +49,86 @@ except ImportError as e:
     raise
 
 # ============================================================================
-# DeepAgents Components
+# DeepAgents Components with Emotion Caching (Phase 1)
 # ============================================================================
 
-async def run_fast_track(user_text: str) -> Dict[str, Any]:
+# Import caching components
+try:
+    from .emotion_cache import get_emotion_cache
+    from .emotion_classifier import get_emotion_classifier
+except ImportError:
+    from emotion_cache import get_emotion_cache
+    from emotion_classifier import get_emotion_classifier
+
+async def run_fast_track(user_text: str, user_id: int = None) -> Dict[str, Any]:
     """
-    Fast Track: Emotion Analysis only
+    Fast Track: Emotion Analysis with Caching
+    
+    Flow:
+    1. Lightweight Classifier → "필요" / "불필요" / "애매"
+    2. If needed → Check ChromaDB cache (0.85 similarity, 30 days)
+    3. Cache miss → Run EmotionAnalyzer
+    4. Save to cache for future use
+    
+    Returns:
+        {
+            "cached": True/False,
+            "skipped": True/False,
+            "result": {...},
+            "similarity": 0.92 (if cached),
+            "age_days": 5 (if cached)
+        }
     """
     start_time = time.time()
-    analyzer = EmotionAnalyzer()
     
-    # Run emotion analysis (blocking call wrapped in thread if needed, but here just direct)
-    # In a real async setup, this might be offloaded to a thread pool
+    # Step 1: Lightweight classifier (hybrid approach)
+    classifier = get_emotion_classifier()
+    need_emotion = classifier.predict(user_text)
+    logger.info(f"🔍 [Classifier] Emotion needed: {need_emotion}")
+    
+    if need_emotion == "불필요":
+        # Skip emotion analysis for neutral content
+        elapsed = time.time() - start_time
+        logger.info(f"⚡ [Fast Track] Skipped emotion analysis ({elapsed:.4f}s)")
+        return {
+            "skipped": True,
+            "reason": "neutral_content",
+            "classifier_hint": need_emotion
+        }
+    
+    # Step 2: Try cache (if user_id provided)
+    if user_id and need_emotion == "필요":  # Only cache for clear emotions
+        cache = get_emotion_cache()
+        cache_result = cache.search(
+            query_text=user_text,
+            user_id=user_id,
+            threshold=0.85,
+            freshness_days=30
+        )
+        
+        if cache_result:
+            # Cache hit!
+            elapsed = time.time() - start_time
+            logger.info(
+                f"💾 [Fast Track] Cache hit! "
+                f"Similarity: {cache_result['similarity']:.2%}, "
+                f"Time: {elapsed:.4f}s"
+            )
+            return cache_result
+    
+    # Step 3: Cache miss or ambiguous → Run analyzer
+    logger.info("🔄 [Fast Track] Running emotion analysis...")
+    analyzer = EmotionAnalyzer()
     emotion_result_dict = analyzer.analyze_emotion(user_text)
     
-    elapsed = time.time() - start_time
+    elapsed = time.time() - start_time  
     logger.info(f"⚡ [Fast Track] Emotion Analysis took {elapsed:.4f}s")
     
-    return emotion_result_dict
+    return {
+        "cached": False,
+        "result": emotion_result_dict,
+        "classifier_hint": need_emotion
+    }
 
 async def run_slow_track(
     user_text: str, 
@@ -228,7 +295,12 @@ def generate_llm_response(
     client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
     
     # Construct System Prompt
-    emotion_summary = f"{emotion_result.get('polarity', 'neutral')} ({emotion_result.get('cluster_label', 'unknown')})"
+    # Handle None emotion_result (when analysis is skipped)
+    if emotion_result:
+        emotion_summary = f"{emotion_result.get('polarity', 'neutral')} ({emotion_result.get('cluster_label', 'unknown')})"
+    else:
+        emotion_summary = "neutral (분석 생략됨)"
+        emotion_result = {}  # Empty dict to avoid None errors below
     
     system_prompt = f"""당신은 갱년기 여성을 위한 공감형 AI 친구 '봄이'의 "오케스트레이터(Orchestrator)"입니다.
 당신의 목표는 대화 흐름을 관리하고, 사용자의 의도를 파악하며, 전문 하위 에이전트나 도구에 작업을 효율적으로 위임하는 것입니다.
@@ -282,7 +354,12 @@ def generate_llm_response(
         temperature=0.7
     )
     
-    return response.choices[0].message.content
+    reply_text = response.choices[0].message.content
+    
+    # [DEBUG] Log GPT-4o-mini raw response (before any text processing/splitting)
+    logger.info(f"🤖 [GPT-4o-mini Raw Response]\n{reply_text}")
+    
+    return reply_text
 
 async def run_ai_bomi_from_text_v2(
     user_text: str,
@@ -294,6 +371,7 @@ async def run_ai_bomi_from_text_v2(
     """
     텍스트 입력 기반 AI 봄이 실행 (DeepAgents Prototype Implementation)
     """
+    logger.warning("🔥🔥🔥 run_ai_bomi_from_text_v2 CALLED - Phase 2 VERSION")
     logger.info(f"🚀 [DeepAgents] Started processing for user_id: {user_id}")
     
     # DB Store
@@ -306,15 +384,115 @@ async def run_ai_bomi_from_text_v2(
     # 1. Save User Message
     store.add_message(user_id, session_id, "user", user_text, speaker_id=speaker_id)
     
-    # 2. Fast Track: Emotion Analysis (Required for prompt)
+    # 2. Fast Track: Emotion Analysis with Caching (Required for prompt)
     # We await this because it's needed for the immediate response
-    emotion_result = await run_fast_track(user_text)
+    emotion_response = await run_fast_track(user_text, user_id=user_id)
     
-    # 2.5 Save Emotion Analysis (Fire and forget or await if fast)
+    # Extract actual emotion result (handle caching wrapper)
+    if emotion_response.get("skipped"):
+        # Emotion analysis skipped (neutral content)
+        emotion_result = None
+        logger.info("ℹ️  Emotion analysis skipped (neutral content)")
+    elif emotion_response.get("cached"):
+        # Cache hit - use cached result
+        emotion_result = emotion_response["result"]
+        logger.info(
+            f"💾 Cache hit: {emotion_response.get('similarity', 0):.2%} similarity, "
+            f"{emotion_response.get('age_days', 0)} days old"
+        )
+    else:
+        # Fresh analysis
+        emotion_result = emotion_response["result"]
+    
+    logger.warning(f"🔥 After Fast Track - emotion_result: {type(emotion_result)}")
+    logger.warning(f"🔥 About to enter Orchestrator section...")
+    # ========================================
+    # [PHASE 2] Orchestrator LLM 통합
+    # ========================================
+    orchestrator_tools = []
+    orchestrator_results = {}
+
+    # 디버깅: 이 코드가 실행되는지 확인
+    logger.info("🔍 [DEBUG] Orchestrator section reached")
+    
     try:
-        store.save_emotion_analysis(user_id, user_text, emotion_result, check_root="conversation")
+        from .orchestrator import orchestrator_llm, execute_tools
+        from app.db.database import SessionLocal
+        
+        logger.info("=" * 60)
+        logger.info("🎯 [PHASE 2] Orchestrator Starting...")
+        logger.info("=" * 60)
+        
+        # Context for orchestrator
+        context = {
+            "session_id": session_id,
+            "user_id": user_id,
+            "memory": "",  # 필요시 추가
+            "history": store.get_history(user_id, session_id, limit=3)
+        }
+        
+        # Call orchestrator LLM
+        tool_calls = await orchestrator_llm(
+            user_text=user_text,
+            context=context,
+            classifier_hint=emotion_response.get("classifier_hint", "애매")
+        )
+        
+        orchestrator_tools = [tc.function.name for tc in tool_calls]
+        logger.warning(f"🎯 [PHASE 2] Tools selected: {orchestrator_tools}")
+        
+        # Execute tools (optional - 현재는 테스트만)
+        if tool_calls:
+            db_session = SessionLocal()
+            try:
+                orchestrator_results = await execute_tools(
+                    tool_calls, user_id, session_id, user_text, db_session
+                )
+                logger.warning(f"🎯 [PHASE 2] Tool results: {list(orchestrator_results.keys())}")
+            finally:
+                db_session.close()
+        
+        logger.warning("=" * 60)
+        logger.warning("🎯 [PHASE 2] Orchestrator Complete")
+        logger.warning("=" * 60)
+        
     except Exception as e:
-        logger.error(f"Failed to save emotion analysis: {e}")
+        logger.error(f"❌ [PHASE 2] Orchestrator failed: {e}", exc_info=True)
+        import traceback
+        logger.error(f"Full traceback:\n{traceback.format_exc()}")
+    
+    # 2.5 Save Emotion Analysis + ChromaDB Cache (if fresh analysis)
+    if emotion_result and not emotion_response.get("cached") and not emotion_response.get("skipped"):
+        try:
+            # Generate embedding for DB storage
+            from sentence_transformers import SentenceTransformer
+            import json
+            
+            embedder = SentenceTransformer('jhgan/ko-sroberta-multitask')
+            embedding = embedder.encode(user_text).tolist()
+            embedding_json = json.dumps(embedding)  # JSON string for DB
+            
+            # Save to DB WITH embedding
+            analysis_id = store.save_emotion_analysis(
+                user_id, 
+                user_text, 
+                emotion_result, 
+                check_root="conversation",
+                input_text_embedding=embedding_json  # 추가!
+            )
+            
+            # Save to ChromaDB cache for future use
+            if analysis_id:
+                cache = get_emotion_cache()
+                cache.save(
+                    user_id=user_id,
+                    input_text=user_text,
+                    emotion_result=emotion_result,
+                    analysis_id=analysis_id
+                )
+                logger.info(f"💾 Saved to cache: Analysis ID {analysis_id}")
+        except Exception as e:
+            logger.error(f"Failed to save emotion analysis: {e}")
         
     # 3. Slow Track: Trigger Background Tasks (Routine, Memory Promotion)
     # We create a task and wait with a timeout (Hybrid Approach)
@@ -395,18 +573,17 @@ async def run_ai_bomi_from_text_v2(
         "reply_text": ai_response_text,
         "input_text": user_text,
         "emotion_result": emotion_result,
-        "routine_result": routine_result, # Now populated if within timeout
+        "routine_result": routine_result,
         "meta": {
             "model": os.getenv("OPENAI_MODEL_NAME", "gpt-4o-mini"),
-            "used_tools": ["emotion_analysis"], 
             "session_id": session_id,
-            "stt_quality": stt_quality,
             "speaker_id": speaker_id,
             "memory_used": bool(memory_context),
             "rag_used": bool(rag_context),
-            "user_id": user_id,
-            "storage": "database",
-            "api_version": "v2_deepagents"
+            "stt_quality": stt_quality,
+            "cache_hit": emotion_response.get("cached", False),
+            "cache_similarity": emotion_response.get("similarity"),
+            "emotion_skipped": emotion_response.get("skipped", False)
         }
     }
 
