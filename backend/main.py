@@ -60,7 +60,7 @@ from engine.routine_recommend.models.schemas import (
 from app.weather.routes import router as weather_router
 from app.routine_survey.routers import router as routine_survey_router
 from app.emotion_report.router import router as emotion_report_router
-from app.routes import menopause_router
+from app.menopause_survey.router import router as menopause_survey_router
 
 # 루틴 설문 기본 seed
 from app.routine_survey.models import seed_default_mr_survey
@@ -158,7 +158,7 @@ except Exception as e:
 
 app.include_router(routine_survey_router, prefix="/api", tags=["routine-survey"])
 app.include_router(emotion_report_router)
-app.include_router(menopause_router)
+app.include_router(menopause_survey_router, prefix="/api", tags=["menopause-survey"])
 
 # ============================================================
 # Authentication (Google OAuth + JWT)

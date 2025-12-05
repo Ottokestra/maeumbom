@@ -7,6 +7,7 @@ from .models import (
     DailyMoodSelection,
     EmotionAnalysis,
     EmotionLog,
+    MenopauseSurveyQuestion,
     MenopauseQuestion,
     MenopauseAnswer,
 )
@@ -21,6 +22,7 @@ __all__ = [
     "DailyMoodSelection",
     "EmotionAnalysis",
     "EmotionLog",
+    "MenopauseSurveyQuestion",
     "MenopauseQuestion",
     "MenopauseAnswer",
 ]
