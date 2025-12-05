@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import SignupSurveyPage from './pages/SignupSurveyPage'
+import EmotionReportPage from './pages/EmotionReportPage'
 import EmotionInput from './components/EmotionInput'
 import EmotionResult from './components/EmotionResult'
 import EmotionChart from './components/EmotionChart'
@@ -29,6 +30,7 @@ const mockEmotionReport = {
 }
 
 function MainApp() {
+  const isEmotionReportRoute = window.location.pathname.startsWith('/emotion-report')
   // 로그인 상태 관리 (선택사항 - 테스트 중)
   const [isLoggedIn, setIsLoggedIn] = useState(() => {
     return !!localStorage.getItem('access_token')
@@ -269,6 +271,10 @@ function MainApp() {
     localStorage.setItem('activeTab', activeTab)
   }, [activeTab])
 
+  if (isEmotionReportRoute) {
+    return <EmotionReportPage />
+  }
+
   // 감정 분석 관련 state
   const [result, setResult] = useState(null)
   const [routines, setRoutines] = useState([])
@@ -457,6 +463,22 @@ function MainApp() {
             <p>갱년기 여성을 위한 감정 공감 서비스</p>
           </div>
            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+             <button
+               onClick={() => (window.location.href = '/emotion-report')}
+               style={{
+                 padding: '8px 16px',
+                 backgroundColor: '#f3f4f6',
+                 color: '#111827',
+                 border: 'none',
+                 borderRadius: '8px',
+                 cursor: 'pointer',
+                 fontSize: '0.875rem',
+                 fontWeight: '600',
+                 boxShadow: '0 6px 20px rgba(0,0,0,0.06)'
+               }}
+             >
+               리포트 보기
+             </button>
              {isLoggedIn && user && (
                <div style={{ textAlign: 'right' }}>
                  <div style={{ fontWeight: '500', color: '#374151' }}>{user.nickname}</div>
@@ -969,10 +991,16 @@ function getEmotionLabel(emotion) {
 }
 
 function App() {
-  const isSurveyRoute = window.location.pathname.startsWith('/signup/survey')
+  const pathName = window.location.pathname
+  const isSurveyRoute = pathName.startsWith('/signup/survey')
+  const isEmotionReportRoute = pathName.startsWith('/emotion-report')
 
   if (isSurveyRoute) {
     return <SignupSurveyPage apiBaseUrl={API_BASE_URL} />
+  }
+
+  if (isEmotionReportRoute) {
+    return <EmotionReportPage />
   }
 
   return <MainApp />
