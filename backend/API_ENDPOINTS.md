@@ -2,6 +2,7 @@
 
 ## 목차 (Table of Contents)
 - [인증 (Authentication)](#인증-authentication)
+- [온보딩 설문 (Onboarding Survey)](#온보딩-설문-onboarding-survey)
 - [AI 에이전트 (Agent)](#ai-에이전트-agent)
 - [감정 분석 (Emotion Analysis)](#감정-분석-emotion-analysis)
 - [루틴 추천 (Routine Recommendation)](#루틴-추천-routine-recommendation)
@@ -214,6 +215,136 @@
 - `state` (string): State 값
 
 **응답**: HTML 페이지로 앱 스킴 리다이렉트 (`com.maeumbom.app://auth/callback`)
+
+---
+
+## 온보딩 설문 (Onboarding Survey)
+
+### 1. 설문 제출/수정
+**경로**: `POST /api/onboarding-survey/submit`  
+**인증**: 필요 (Bearer Token)  
+**설명**: 온보딩 설문 제출 또는 수정 (Upsert 방식)  
+
+**요청 Body**:
+```json
+{
+  "nickname": "봄이",
+  "age_group": "50대",
+  "gender": "여성",
+  "marital_status": "기혼",
+  "children_yn": "있음",
+  "living_with": ["배우자와", "자녀와"],
+  "personality_type": "외향적",
+  "activity_style": "활동적인게 좋아요",
+  "stress_relief": ["산책을 해요", "누군가와 대화를 나눠요", "취미 활동을 해요"],
+  "hobbies": ["산책", "음악감상", "독서"],
+  "atmosphere": []
+}
+```
+
+**필드 설명**:
+- `nickname`: 닉네임 (Q1)
+- `age_group`: 연령대 (Q2) - '40대', '50대', '60대', '70대 이상'
+- `gender`: 성별 (Q3) - '여성', '남성'
+- `marital_status`: 결혼 여부 (Q4) - '미혼', '기혼', '이혼/사별', '말하고 싶지 않음'
+- `children_yn`: 자녀 유무 (Q5) - '있음', '없음'
+- `living_with`: 동거인 (Q6, 다중선택) - ["혼자", "배우자와", "자녀와", "부모님과", "가족과 함께", "기타"]
+- `personality_type`: 성향 (Q7) - '내향적', '외향적', '상황에따라'
+- `activity_style`: 활동 스타일 (Q8) - '조용한 활동이 좋아요', '활동적인게 좋아요', '상황에 따라 달라요'
+- `stress_relief`: 스트레스 해소법 (Q9, 다중선택) - ["혼자 조용히 해결해요", "누군가와 대화를 나눠요", "산책을 해요", "운동을 해요", "취미 활동을 해요", "그냥 잊고 넘어가요", "바로 감정이 격해져요", "기타"]
+- `hobbies`: 취미 (Q10, 다중선택) - ["등산", "산책", "음악감상", "독서", "영화/드라마", "요리", "정원/식물", "반려동물", "여행", "정리정돈", "공예/DIY", "기타"]
+- `atmosphere`: 선호 분위기 (Q11, 다중선택, optional) - ["잔잔한 분위기", "밝고 명랑한 분위기", "감성적인 스타일", "차분함", "활발함", "따뜻하고 부드러운 느낌"] (현재 프론트엔드 미구현, 빈 배열로 전송)
+
+**응답**:
+```json
+{
+  "id": 1,
+  "user_id": 123,
+  "nickname": "봄이",
+  "age_group": "50대",
+  "gender": "여성",
+  "marital_status": "기혼",
+  "children_yn": "있음",
+  "living_with": ["배우자와", "자녀와"],
+  "personality_type": "외향적",
+  "activity_style": "활동적인게 좋아요",
+  "stress_relief": ["산책을 해요", "누군가와 대화를 나눠요", "취미 활동을 해요"],
+  "hobbies": ["산책", "음악감상", "독서"],
+  "atmosphere": [],
+  "created_at": "2024-01-01T00:00:00Z",
+  "updated_at": "2024-01-01T00:00:00Z"
+}
+```
+
+### 2. 내 프로필 조회
+**경로**: `GET /api/onboarding-survey/me`  
+**인증**: 필요 (Bearer Token)  
+**설명**: 현재 로그인한 사용자의 온보딩 설문 프로필 조회  
+
+**응답**:
+```json
+{
+  "id": 1,
+  "user_id": 123,
+  "nickname": "봄이",
+  "age_group": "50대",
+  "gender": "여성",
+  "marital_status": "기혼",
+  "children_yn": "있음",
+  "living_with": ["배우자와", "자녀와"],
+  "personality_type": "외향적",
+  "activity_style": "활동적인게 좋아요",
+  "stress_relief": ["산책을 해요", "누군가와 대화를 나눠요", "취미 활동을 해요"],
+  "hobbies": ["산책", "음악감상", "독서"],
+  "atmosphere": [],
+  "created_at": "2024-01-01T00:00:00Z",
+  "updated_at": "2024-01-01T00:00:00Z"
+}
+```
+
+**에러 응답** (404):
+```json
+{
+  "detail": "Profile not found. Please complete the onboarding survey."
+}
+```
+
+### 3. 프로필 완료 여부 확인
+**경로**: `GET /api/onboarding-survey/status`  
+**인증**: 필요 (Bearer Token)  
+**설명**: 사용자가 온보딩 설문을 완료했는지 확인  
+
+**응답** (완료된 경우):
+```json
+{
+  "has_profile": true,
+  "profile": {
+    "id": 1,
+    "user_id": 123,
+    "nickname": "봄이",
+    "age_group": "50대",
+    "gender": "여성",
+    "marital_status": "기혼",
+    "children_yn": "있음",
+    "living_with": ["배우자와", "자녀와"],
+    "personality_type": "외향적",
+    "activity_style": "활동적인게 좋아요",
+    "stress_relief": ["산책을 해요", "누군가와 대화를 나눠요", "취미 활동을 해요"],
+    "hobbies": ["산책", "음악감상", "독서"],
+    "atmosphere": [],
+    "created_at": "2024-01-01T00:00:00Z",
+    "updated_at": "2024-01-01T00:00:00Z"
+  }
+}
+```
+
+**응답** (미완료된 경우):
+```json
+{
+  "has_profile": false,
+  "profile": null
+}
+```
 
 ---
 
@@ -1207,6 +1338,14 @@ HTTP 상태 코드:
 | GET | `/auth/callback/kakao` | ❌ | Kakao OAuth 콜백 |
 | GET | `/auth/callback/naver` | ❌ | Naver OAuth 콜백 |
 
+### 온보딩 설문 (Onboarding Survey)
+
+| HTTP 메서드 | 경로 | 인증 필요 | 설명 |
+|------------|------|----------|------|
+| POST | `/api/onboarding-survey/submit` | ✅ | 설문 제출/수정 (Upsert) |
+| GET | `/api/onboarding-survey/me` | ✅ | 내 프로필 조회 |
+| GET | `/api/onboarding-survey/status` | ✅ | 프로필 완료 여부 확인 |
+
 ### AI 에이전트 (Agent)
 
 | HTTP 메서드 | 경로 | 인증 필요 | 설명 |
@@ -1324,5 +1463,5 @@ HTTP 상태 코드:
 
 ---
 
-**총 엔드포인트 수**: 60개  
-**인증 필요**: 33개 | **인증 불필요**: 27개
+**총 엔드포인트 수**: 63개  
+**인증 필요**: 36개 | **인증 불필요**: 27개

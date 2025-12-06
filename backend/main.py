@@ -258,6 +258,25 @@ except Exception as e:
     traceback.print_exc()
 
 # =========================
+# Onboarding Survey Service
+# =========================
+
+try:
+    from app.onboarding_survey.routes import router as onboarding_survey_router
+
+    app.include_router(
+        onboarding_survey_router,
+        prefix="/api/onboarding-survey",
+        tags=["onboarding-survey"]
+    )
+    print("[INFO] Onboarding survey router loaded successfully.")
+except Exception as e:
+    import traceback
+
+    print(f"[WARN] Onboarding survey module load failed: {e}")
+    traceback.print_exc()
+
+# =========================
 # User Phase Service
 # =========================
 
