@@ -1,18 +1,26 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:dio/dio.dart';
+import 'survey_data_holder.dart';
+import '../../data/api/onboarding/onboarding_survey_api_client.dart';
+import '../../data/dtos/onboarding/onboarding_survey_request.dart';
+import '../../core/utils/logger.dart';
+import '../../providers/auth_provider.dart';
+import '../../core/config/api_config.dart';
 
 /// 회원가입 화면 5단계
 ///
 /// 스트레스 해소법과 취미를 입력받는 화면입니다.
-class SignUp5Screen extends StatefulWidget {
+class SignUp5Screen extends ConsumerStatefulWidget {
   final VoidCallback? onNext;
   
   const SignUp5Screen({super.key, this.onNext});
 
   @override
-  State<SignUp5Screen> createState() => _SignUp5ScreenState();
+  ConsumerState<SignUp5Screen> createState() => _SignUp5ScreenState();
 }
 
-class _SignUp5ScreenState extends State<SignUp5Screen> {
+class _SignUp5ScreenState extends ConsumerState<SignUp5Screen> {
   // Q9: 스트레스 해소법 (다중 선택 가능)
   final Set<String> _stressReliefMethods = {};
   
@@ -20,6 +28,7 @@ class _SignUp5ScreenState extends State<SignUp5Screen> {
   final Set<String> _hobbies = {};
   
   final TextEditingController _otherHobbyController = TextEditingController();
+  final _surveyData = SurveyDataHolder();
 
   final List<String> _stressReliefOptions = [
     '혼자 조용히 해결해요',
@@ -54,6 +63,111 @@ class _SignUp5ScreenState extends State<SignUp5Screen> {
   void dispose() {
     _otherHobbyController.dispose();
     super.dispose();
+  }
+
+  /// 설문 데이터 제출
+  Future<void> _submitSurvey() async {
+    try {
+      // 현재 페이지 데이터 저장
+      _surveyData.stressRelief = _stressReliefMethods.toList();
+      _surveyData.hobbies = _hobbies.toList();
+
+      // 데이터 유효성 검사
+      if (!_surveyData.isComplete) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('모든 항목을 입력해주세요.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
+
+      // 로딩 표시
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+
+      // 토큰 가져오기
+      final authService = ref.read(authServiceProvider);
+      final accessToken = await authService.getAccessToken();
+
+      if (accessToken == null) {
+        throw Exception('로그인이 필요합니다.');
+      }
+
+      // API 클라이언트 생성
+      final dio = Dio(
+        BaseOptions(
+          baseUrl: ApiConfig.baseUrl,
+          connectTimeout: ApiConfig.connectTimeout,
+          receiveTimeout: ApiConfig.receiveTimeout,
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+          },
+        ),
+      );
+      final apiClient = OnboardingSurveyApiClient(dio);
+
+      // 요청 데이터 생성
+      final request = OnboardingSurveyRequest(
+        nickname: _surveyData.nickname!,
+        ageGroup: _surveyData.ageGroup!,
+        gender: _surveyData.gender!,
+        maritalStatus: _surveyData.maritalStatus!,
+        childrenYn: _surveyData.childrenYn!,
+        livingWith: [_surveyData.livingWith!], // 단일 선택이지만 배열로 전송
+        personalityType: _surveyData.personalityType!,
+        activityStyle: _surveyData.activityStyle!,
+        stressRelief: _surveyData.stressRelief!,
+        hobbies: _surveyData.hobbies!,
+        atmosphere: [], // Q11은 아직 구현 안됨
+      );
+
+      // API 호출
+      await apiClient.submitSurvey(request, accessToken);
+
+      // 데이터 초기화
+      _surveyData.clear();
+
+      // 로딩 닫기
+      if (mounted) Navigator.pop(context);
+
+      // 성공 메시지
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('회원가입이 완료되었습니다!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+
+      // 홈 화면으로 이동
+      if (mounted) {
+        Navigator.pushReplacementNamed(context, '/');
+      }
+    } catch (e) {
+      appLogger.e('설문 제출 실패', error: e);
+      
+      // 로딩 닫기
+      if (mounted) Navigator.pop(context);
+
+      // 에러 메시지 표시
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('설문 제출에 실패했습니다: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   @override
@@ -200,19 +314,7 @@ class _SignUp5ScreenState extends State<SignUp5Screen> {
                 width: double.infinity,
                 height: 56,
                 child: ElevatedButton(
-                  onPressed: _canProceed
-                      ? () {
-                          if (widget.onNext != null) {
-                            widget.onNext!();
-                          } else {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('회원가입이 완료되었습니다!'),
-                              ),
-                            );
-                          }
-                        }
-                      : null,
+                  onPressed: _canProceed ? _submitSurvey : null,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: _canProceed
                         ? const Color(0xFFC03846)

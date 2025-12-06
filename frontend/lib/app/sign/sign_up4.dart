@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'survey_data_holder.dart';
 
 /// 회원가입 화면 4단계
 ///
@@ -15,6 +16,7 @@ class SignUp4Screen extends StatefulWidget {
 class _SignUp4ScreenState extends State<SignUp4Screen> {
   String? _personality; // Q7: 내향적, 외향적, 상황에따라
   String? _activityPreference; // Q8: 조용한 활동, 활동적인게, 상황에 따라
+  final _surveyData = SurveyDataHolder();
 
   final List<String> _personalityOptions = ['내향적', '외향적', '상황에따라'];
   final List<String> _activityOptions = ['조용한 활동이 좋아요', '활동적인게 좋아요', '상황에 따라 달라요'];
@@ -109,6 +111,10 @@ class _SignUp4ScreenState extends State<SignUp4Screen> {
                 child: ElevatedButton(
                   onPressed: _canProceed
                       ? () {
+                          // 데이터 저장
+                          _surveyData.personalityType = _personality;
+                          _surveyData.activityStyle = _activityPreference;
+                          
                           if (widget.onNext != null) {
                             widget.onNext!();
                           } else {
