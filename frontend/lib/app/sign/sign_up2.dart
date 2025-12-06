@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../ui/app_ui.dart';
+import 'survey_data_holder.dart';
 
 /// 회원가입 화면 2단계
 ///
@@ -17,9 +18,10 @@ class _SignUp2ScreenState extends State<SignUp2Screen> {
   final TextEditingController _nicknameController = TextEditingController();
   String? _selectedGender;
   String? _selectedAge;
+  final _surveyData = SurveyDataHolder();
 
-  final List<String> _genderOptions = ['여자', '남자', '기타'];
-  final List<String> _ageOptions = ['10대', '20대', '30대', '40대', '50대', '60대', '70대 이상'];
+  final List<String> _genderOptions = ['여성', '남성'];
+  final List<String> _ageOptions = ['40대', '50대', '60대', '70대 이상'];
 
   bool get _canProceed {
     return _nicknameController.text.isNotEmpty &&
@@ -173,6 +175,11 @@ class _SignUp2ScreenState extends State<SignUp2Screen> {
                 variant: ButtonVariant.primaryRed,
                 onTap: _canProceed
                     ? () {
+                        // 데이터 저장
+                        _surveyData.nickname = _nicknameController.text;
+                        _surveyData.gender = _selectedGender;
+                        _surveyData.ageGroup = _selectedAge;
+                        
                         if (widget.onNext != null) {
                           widget.onNext!();
                         } else {
