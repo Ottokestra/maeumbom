@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { BrowserRouter, Navigate, Route, Routes, useNavigate } from 'react-router-dom'
 import SignupSurveyPage from './pages/SignupSurveyPage'
 import EmotionReportPage from './pages/EmotionReportPage'
@@ -580,6 +580,11 @@ function MainApp() {
       </div>
     )
   }
+
+  const dialogCharactersById = useMemo(
+    () => new Map((weeklyEmotionReport?.characters || []).map((c) => [c.id, c])),
+    [weeklyEmotionReport?.characters]
+  )
 
   const renderEmotionReportSection = () => {
     return <WeeklyEmotionReportCard onClickCta={handleGoToChat} />
