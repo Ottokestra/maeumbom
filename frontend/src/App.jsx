@@ -14,8 +14,161 @@ import Login from './components/Login'
 import WeatherCard from './components/WeatherCard'
 import './App.css'
 import { API_BASE_URL } from './config/api'
-import { fetchWeeklyEmotionReport } from './api/emotionReportApi'
-import { resolveCharacterMeta } from './config/emotionCharacters'
+
+const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000'
+
+/**
+ * @typedef {Object} ReportCharacter
+ * @property {string} id
+ * @property {string} name
+ * @property {string} [avatar_url]
+ * @property {string} [color]
+ * @property {string} [role]
+ */
+
+/**
+ * @typedef {Object} EmotionMetrics
+ * @property {number} mood_score
+ * @property {number} stress_score
+ * @property {number} stability_score
+ * @property {number} talk_count
+ * @property {number} positive_ratio
+ * @property {number} negative_ratio
+ * @property {number} neutral_ratio
+ * @property {string} main_emotion
+ * @property {string} [secondary_emotion]
+ */
+
+/**
+ * @typedef {Object} DialogLine
+ * @property {string} speaker_id
+ * @property {('opening' | 'analysis' | 'warning' | 'tip' | 'closing')} type
+ * @property {string} emotion
+ * @property {string} text
+ */
+
+/**
+ * @typedef {Object} WeeklyEmotionReport
+ * @property {boolean} has_data
+ * @property {"WEEKLY"} period
+ * @property {{ start: string, end: string }} date_range
+ * @property {string} [title]
+ * @property {string} [summary]
+ * @property {ReportCharacter[]} characters
+ * @property {EmotionMetrics} [metrics]
+ * @property {DialogLine[]} dialog
+ */
+
+function WeeklyEmotionReportCard({ onClickCta }) {
+  const [report, setReport] = useState(null)
+  const [loading, setLoading] = useState(false)
+  const [visibleCount, setVisibleCount] = useState(0)
+
+  useEffect(() => {
+    let timer
+
+    async function fetchReport() {
+      try {
+        setLoading(true)
+        const res = await fetch(`${API_BASE}/api/reports/emotion/weekly`, {
+          credentials: 'include',
+        })
+        if (!res.ok) {
+          throw new Error(`Server error: ${res.status}`)
+        }
+        const data = await res.json()
+        setReport(data)
+
+        if (data.dialog && data.dialog.length > 0) {
+          setVisibleCount(1)
+          timer = window.setInterval(() => {
+            setVisibleCount((prev) => {
+              if (prev >= data.dialog.length) {
+                if (timer) window.clearInterval(timer)
+                return prev
+              }
+              return prev + 1
+            })
+          }, 700)
+        }
+      } catch (e) {
+        console.error('weekly report error', e)
+        setReport(null)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchReport()
+    return () => {
+      if (timer) window.clearInterval(timer)
+    }
+  }, [])
+
+  if (loading) {
+    return (
+      <div className="report-card">
+        <p>이번 주 감정 리포트를 불러오는 중이에요...</p>
+      </div>
+    )
+  }
+
+  if (!report || !report.has_data) {
+    return (
+      <div className="report-card">
+        <h3>이번 주 감정 리포트</h3>
+        <p>오늘은 아직 데이터가 없어요. 봄이랑 먼저 이야기해볼래?</p>
+        {onClickCta && (
+          <button className="primary-button" onClick={onClickCta}>
+            대화하러 가기
+          </button>
+        )}
+      </div>
+    )
+  }
+
+  const charactersById = new Map(report.characters.map((c) => [c.id, c]))
+  const dialogLines = report.dialog ?? []
+
+  return (
+    <div className="report-card">
+      <div className="report-header">
+        <span className="report-subtitle">이번 주 정리 · {report.date_range?.start} ~ {report.date_range?.end}</span>
+        <h3>{report.title ?? '이번 주 감정 리포트'}</h3>
+      </div>
+
+      {report.summary && <p className="report-summary">{report.summary}</p>}
+
+      <div className="report-dialog-list">
+        {dialogLines.slice(0, visibleCount).map((line, idx) => {
+          const char = charactersById.get(line.speaker_id)
+          const isMain = line.speaker_id === 'bomi'
+
+          return (
+            <div key={idx} className={`dialog-row ${isMain ? 'left' : 'right'}`}>
+              {isMain && (
+                <div className="avatar">
+                  <div className="avatar-circle">{char?.name?.[0] ?? '?'}</div>
+                </div>
+              )}
+
+              <div className="bubble">
+                <div className="bubble-name">{char?.name}</div>
+                <div className="bubble-text">{line.text}</div>
+              </div>
+
+              {!isMain && (
+                <div className="avatar">
+                  <div className="avatar-circle">{char?.name?.[0] ?? '?'}</div>
+                </div>
+              )}
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
 
 function MainApp() {
   const navigate = useNavigate()
@@ -271,9 +424,6 @@ function MainApp() {
   const [testRoutines, setTestRoutines] = useState([])
   const [testLoading, setTestLoading] = useState(false)
   const [testError, setTestError] = useState(null)
-  const [emotionReport, setEmotionReport] = useState(null)
-  const [emotionReportLoading, setEmotionReportLoading] = useState(false)
-  const [emotionReportError, setEmotionReportError] = useState(null)
   const [menopauseQuestions, setMenopauseQuestions] = useState([])
   const [menopauseLoading, setMenopauseLoading] = useState(false)
   const [menopauseError, setMenopauseError] = useState(null)
@@ -284,23 +434,6 @@ function MainApp() {
   const handleGoToChat = () => {
     navigate('/chat')
   }
-
-  const loadEmotionReport = async () => {
-    setEmotionReportLoading(true)
-    setEmotionReportError(null)
-    try {
-      const data = await fetchWeeklyEmotionReport()
-      setEmotionReport(data)
-    } catch (err) {
-      setEmotionReportError(err.message || '에러가 발생했어요.')
-    } finally {
-      setEmotionReportLoading(false)
-    }
-  }
-
-  useEffect(() => {
-    loadEmotionReport()
-  }, [])
 
   const loadMenopauseQuestions = async () => {
     setMenopauseLoading(true)
@@ -449,68 +582,7 @@ function MainApp() {
   }
 
   const renderEmotionReportSection = () => {
-    if (emotionReportLoading) {
-      return <div className="report-loading">불러오는 중...</div>
-    }
-
-    if (emotionReportError) {
-      return (
-        <div className="report-empty-card">
-          <p>잠시 연결이 불안정해요.</p>
-          <button onClick={loadEmotionReport}>다시 시도하기</button>
-        </div>
-      )
-    }
-
-    if (!emotionReport) {
-      return (
-        <div className="report-empty-card">
-          <div className="empty-title">이번 주 감정 리포트</div>
-          <div className="empty-body">오늘은 아직 데이터가 없어요. 봄이랑 먼저 이야기해볼래?</div>
-          <div className="report-preview-actions">
-            <button className="primary-button" onClick={handleGoToChat}>
-              대화하러 가기
-            </button>
-          </div>
-        </div>
-      )
-    }
-
-    const mainCharacter = resolveCharacterMeta(emotionReport.main_character_code)
-    const temperature = Math.round(Math.max(0, Math.min(100, emotionReport.temperature || 0)))
-
-    return (
-      <div className="report-preview-card">
-        <div className="report-preview-head">
-          <div>
-            <p className="empty-title">이번 주 감정 리포트</p>
-            <p className="report-preview-period">
-              {emotionReport.start_date} ~ {emotionReport.end_date}
-            </p>
-          </div>
-          <button className="ghost-button" onClick={() => navigate('/report')}>
-            리포트 보기
-          </button>
-        </div>
-        <div className="report-preview-body">
-          <div className="preview-emoji" aria-hidden>
-            {mainCharacter.emoji}
-          </div>
-          <div className="preview-copy">
-            <p className="preview-title">금주의 너는 '{mainCharacter.label}'</p>
-            <p className="preview-temp">감정 온도 {temperature}°</p>
-          </div>
-        </div>
-        <div className="report-preview-actions">
-          <button className="primary-button" onClick={() => navigate('/report')}>
-            리포트 자세히 보기
-          </button>
-          <button className="ghost-button" onClick={handleGoToChat}>
-            대화하러 가기
-          </button>
-        </div>
-      </div>
-    )
+    return <WeeklyEmotionReportCard onClickCta={handleGoToChat} />
   }
 
   const handleAnalyze = async (text) => {
