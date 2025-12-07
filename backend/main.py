@@ -319,9 +319,18 @@ async def agent_text_v2_endpoint(
         from engine.langchain_agent.agent_v2 import (
             run_ai_bomi_from_text_v2,
         )
+        import time
 
         user_id = current_user.ID
-        session_id = request.session_id or f"user_{user_id}_default"
+        
+        # Generate unique session_id if not provided by frontend
+        if request.session_id:
+            session_id = request.session_id
+        else:
+            # Create unique session_id: user_{user_id}_{timestamp}
+            timestamp = int(time.time() * 1000)  # milliseconds
+            session_id = f"user_{user_id}_{timestamp}"
+            logger.info(f"🔐 Generated new session_id: {session_id}")
 
         # STT Quality 전처리
         if request.stt_quality == "no_speech":
@@ -1101,10 +1110,17 @@ async def agent_websocket(websocket: WebSocket):
                                 }
                             )
 
+                            # Generate unique session_id if not provided (same logic as REST API)
+                            import time
+                            if not session_id:
+                                timestamp = int(time.time() * 1000)
+                                session_id = f"user_{user_id}_{timestamp}"
+                                print(f"🔐 [WebSocket] Generated session_id: {session_id}")
+
                             result = await run_ai_bomi_from_text_v2(
                                 user_text=transcript,
                                 user_id=user_id,
-                                session_id=session_id or "websocket_default",
+                                session_id=session_id,
                                 stt_quality=quality,
                                 speaker_id=speaker_id,
                             )
