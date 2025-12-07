@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { BrowserRouter, Navigate, Route, Routes, useNavigate } from 'react-router-dom'
 import SignupSurveyPage from './pages/SignupSurveyPage'
 import EmotionReportPage from './pages/EmotionReportPage'
@@ -14,8 +14,48 @@ import Login from './components/Login'
 import WeatherCard from './components/WeatherCard'
 import './App.css'
 import { API_BASE_URL } from './config/api'
-import { fetchWeeklyEmotionReport } from './api/emotionReportApi'
-import { resolveCharacterMeta } from './config/emotionCharacters'
+
+/**
+ * @typedef {Object} ReportCharacter
+ * @property {string} id
+ * @property {string} name
+ * @property {string} [avatarUrl]
+ * @property {string} [color]
+ * @property {string} [role]
+ */
+
+/**
+ * @typedef {Object} EmotionMetrics
+ * @property {number} moodScore
+ * @property {number} stressScore
+ * @property {number} stabilityScore
+ * @property {number} talkCount
+ * @property {number} positiveRatio
+ * @property {number} negativeRatio
+ * @property {number} neutralRatio
+ * @property {string} mainEmotion
+ * @property {string} [secondaryEmotion]
+ */
+
+/**
+ * @typedef {Object} DialogLine
+ * @property {string} speakerId
+ * @property {"opening" | "analysis" | "warning" | "tip" | "closing"} type
+ * @property {string} emotion
+ * @property {string} text
+ */
+
+/**
+ * @typedef {Object} WeeklyEmotionReport
+ * @property {boolean} hasData
+ * @property {"WEEKLY"} period
+ * @property {{ start: string, end: string }} dateRange
+ * @property {string} [title]
+ * @property {string} [summary]
+ * @property {ReportCharacter[]} characters
+ * @property {EmotionMetrics} [metrics]
+ * @property {DialogLine[]} dialog
+ */
 
 function MainApp() {
   const navigate = useNavigate()
@@ -271,9 +311,10 @@ function MainApp() {
   const [testRoutines, setTestRoutines] = useState([])
   const [testLoading, setTestLoading] = useState(false)
   const [testError, setTestError] = useState(null)
-  const [emotionReport, setEmotionReport] = useState(null)
-  const [emotionReportLoading, setEmotionReportLoading] = useState(false)
-  const [emotionReportError, setEmotionReportError] = useState(null)
+  const [weeklyEmotionReport, setWeeklyEmotionReport] = useState(/** @type {WeeklyEmotionReport | null} */ (null))
+  const [weeklyEmotionReportLoading, setWeeklyEmotionReportLoading] = useState(false)
+  const [weeklyEmotionReportError, setWeeklyEmotionReportError] = useState(null)
+  const [visibleDialogCount, setVisibleDialogCount] = useState(0)
   const [menopauseQuestions, setMenopauseQuestions] = useState([])
   const [menopauseLoading, setMenopauseLoading] = useState(false)
   const [menopauseError, setMenopauseError] = useState(null)
@@ -285,22 +326,99 @@ function MainApp() {
     navigate('/chat')
   }
 
-  const loadEmotionReport = async () => {
-    setEmotionReportLoading(true)
-    setEmotionReportError(null)
-    try {
-      const data = await fetchWeeklyEmotionReport()
-      setEmotionReport(data)
-    } catch (err) {
-      setEmotionReportError(err.message || '에러가 발생했어요.')
-    } finally {
-      setEmotionReportLoading(false)
+  const dialogTimerRef = useRef(null)
+
+  const clearDialogTimer = () => {
+    if (dialogTimerRef.current) {
+      window.clearInterval(dialogTimerRef.current)
+      dialogTimerRef.current = null
     }
   }
 
-  useEffect(() => {
-    loadEmotionReport()
+  const loadWeeklyEmotionReport = useCallback(async () => {
+    setWeeklyEmotionReportLoading(true)
+    setWeeklyEmotionReportError(null)
+    clearDialogTimer()
+    setVisibleDialogCount(0)
+
+    try {
+      const resp = await fetch(
+        `${import.meta.env.VITE_API_BASE_URL}/api/reports/emotion/weekly?mock=true`,
+        {
+          credentials: 'include'
+        }
+      )
+
+      if (!resp.ok) {
+        throw new Error(`Server error: ${resp.status}`)
+      }
+
+      const data = await resp.json()
+      const mappedReport = {
+        hasData: data.has_data,
+        period: data.period,
+        dateRange: data.date_range,
+        title: data.title,
+        summary: data.summary,
+        characters:
+          data.characters?.map((c) => ({
+            id: c.id,
+            name: c.name,
+            avatarUrl: c.avatar_url,
+            color: c.color,
+            role: c.role
+          })) || [],
+        metrics: data.metrics
+          ? {
+              moodScore: data.metrics.mood_score,
+              stressScore: data.metrics.stress_score,
+              stabilityScore: data.metrics.stability_score,
+              talkCount: data.metrics.talk_count,
+              positiveRatio: data.metrics.positive_ratio,
+              negativeRatio: data.metrics.negative_ratio,
+              neutralRatio: data.metrics.neutral_ratio,
+              mainEmotion: data.metrics.main_emotion,
+              secondaryEmotion: data.metrics.secondary_emotion
+            }
+          : undefined,
+        dialog:
+          data.dialog?.map((line) => ({
+            speakerId: line.speaker_id,
+            type: line.type,
+            emotion: line.emotion,
+            text: line.text
+          })) || []
+      }
+
+      setWeeklyEmotionReport(mappedReport)
+
+      if (mappedReport.dialog && mappedReport.dialog.length > 0) {
+        setVisibleDialogCount(1)
+        dialogTimerRef.current = window.setInterval(() => {
+          setVisibleDialogCount((prev) => {
+            if (prev >= mappedReport.dialog.length) {
+              clearDialogTimer()
+              return prev
+            }
+            return prev + 1
+          })
+        }, 700)
+      }
+    } catch (err) {
+      setWeeklyEmotionReportError(err.message || 'failed to load report')
+      setWeeklyEmotionReport(null)
+    } finally {
+      setWeeklyEmotionReportLoading(false)
+    }
   }, [])
+
+  useEffect(() => {
+    loadWeeklyEmotionReport()
+
+    return () => {
+      clearDialogTimer()
+    }
+  }, [loadWeeklyEmotionReport])
 
   const loadMenopauseQuestions = async () => {
     setMenopauseLoading(true)
@@ -448,21 +566,26 @@ function MainApp() {
     )
   }
 
+  const dialogCharactersById = useMemo(
+    () => new Map((weeklyEmotionReport?.characters || []).map((c) => [c.id, c])),
+    [weeklyEmotionReport?.characters]
+  )
+
   const renderEmotionReportSection = () => {
-    if (emotionReportLoading) {
+    if (weeklyEmotionReportLoading) {
       return <div className="report-loading">불러오는 중...</div>
     }
 
-    if (emotionReportError) {
+    if (weeklyEmotionReportError) {
       return (
         <div className="report-empty-card">
           <p>잠시 연결이 불안정해요.</p>
-          <button onClick={loadEmotionReport}>다시 시도하기</button>
+          <button onClick={loadWeeklyEmotionReport}>다시 시도하기</button>
         </div>
       )
     }
 
-    if (!emotionReport) {
+    if (!weeklyEmotionReport || !weeklyEmotionReport.hasData) {
       return (
         <div className="report-empty-card">
           <div className="empty-title">이번 주 감정 리포트</div>
@@ -476,31 +599,61 @@ function MainApp() {
       )
     }
 
-    const mainCharacter = resolveCharacterMeta(emotionReport.main_character_code)
-    const temperature = Math.round(Math.max(0, Math.min(100, emotionReport.temperature || 0)))
+    const visibleDialogLines = weeklyEmotionReport.dialog.slice(0, visibleDialogCount)
 
     return (
       <div className="report-preview-card">
         <div className="report-preview-head">
           <div>
             <p className="empty-title">이번 주 감정 리포트</p>
-            <p className="report-preview-period">
-              {emotionReport.start_date} ~ {emotionReport.end_date}
-            </p>
+            {weeklyEmotionReport.dateRange && (
+              <p className="report-preview-period">
+                {weeklyEmotionReport.dateRange.start} ~ {weeklyEmotionReport.dateRange.end}
+              </p>
+            )}
           </div>
           <button className="ghost-button" onClick={() => navigate('/report')}>
             리포트 보기
           </button>
         </div>
-        <div className="report-preview-body">
-          <div className="preview-emoji" aria-hidden>
-            {mainCharacter.emoji}
-          </div>
-          <div className="preview-copy">
-            <p className="preview-title">금주의 너는 '{mainCharacter.label}'</p>
-            <p className="preview-temp">감정 온도 {temperature}°</p>
-          </div>
+
+        {weeklyEmotionReport.summary && <p className="report-preview-summary">{weeklyEmotionReport.summary}</p>}
+
+        <div className="weekly-report-dialog-list">
+          {visibleDialogLines.map((line, index) => {
+            const char = dialogCharactersById.get(line.speakerId)
+            const isMain = line.speakerId === 'bomi'
+            return (
+              <div
+                key={`${line.speakerId}-${index}`}
+                className={`dialog-row ${isMain ? 'left' : 'right'}`}
+                style={{
+                  animation: 'fadeInUp 0.3s ease-out'
+                }}
+              >
+                {isMain && (
+                  <div className="avatar">
+                    <div className="avatar-circle" style={char?.color ? { background: char.color } : undefined}>
+                      {char?.name?.[0] ?? '?'}
+                    </div>
+                  </div>
+                )}
+                <div className="bubble">
+                  <div className="bubble-name">{char?.name || '봄이'}</div>
+                  <div className="bubble-text">{line.text}</div>
+                </div>
+                {!isMain && (
+                  <div className="avatar">
+                    <div className="avatar-circle" style={char?.color ? { background: char.color } : undefined}>
+                      {char?.name?.[0] ?? '?'}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )
+          })}
         </div>
+
         <div className="report-preview-actions">
           <button className="primary-button" onClick={() => navigate('/report')}>
             리포트 자세히 보기
