@@ -7,8 +7,10 @@ class OAuthConfig {
       '758124085502-7so94snakhcj5bj5o1242o6ktg48eqqj.apps.googleusercontent.com';
 
   // Kakao OAuth
-  static const String kakaoClientId = '40b5bd386c4fe10fbf08723bf52a4487'; // REST API 키
-  static const String kakaoNativeAppKey = '3dc461684b25108e0f01609418154d4e'; // 네이티브 앱 키
+  static const String kakaoClientId =
+      '40b5bd386c4fe10fbf08723bf52a4487'; // REST API 키
+  static const String kakaoNativeAppKey =
+      '3dc461684b25108e0f01609418154d4e'; // 네이티브 앱 키
 
   // Naver OAuth
   static const String naverClientId = 'Y4gXSib6V678m2gYoa9C';

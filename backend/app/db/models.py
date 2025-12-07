@@ -638,3 +638,70 @@ class AgentPlan(Base):
     
     def __repr__(self):
         return f"<AgentPlan(ID={self.ID}, USER_ID={self.USER_ID}, TYPE={self.PLAN_TYPE}, STATUS={self.STATUS})>"
+
+
+# ============================================================================
+# 신규 모델 (온보딩 설문) - Onboarding Survey
+# ============================================================================
+
+class UserProfile(Base):
+    """
+    User Profile model for onboarding survey
+    Stores user profile data from onboarding survey (Q1-Q11)
+    
+    Attributes:
+        ID: Primary key
+        USER_ID: Foreign key to TB_USERS (unique, one profile per user)
+        NICKNAME: User nickname (Q1)
+        AGE_GROUP: Age group (Q2) - '40대', '50대', '60대', '70대 이상'
+        GENDER: Gender (Q3) - '여성', '남성'
+        MARITAL_STATUS: Marital status (Q4) - '미혼', '기혼', '이혼/사별', '말하고 싶지 않음'
+        CHILDREN_YN: Children existence (Q5) - '있음', '없음'
+        LIVING_WITH: Living with (Q6, multi-select) - JSON array of Korean text
+        PERSONALITY_TYPE: Personality type (Q7) - '내향적', '외향적', '상황에따라'
+        ACTIVITY_STYLE: Activity style (Q8) - '조용한 활동이 좋아요', '활동적인게 좋아요', '상황에 따라 달라요'
+        STRESS_RELIEF: Stress relief methods (Q9, multi-select) - JSON array of Korean text
+        HOBBIES: Hobbies (Q10, multi-select) - JSON array of Korean text
+        ATMOSPHERE: Preferred atmosphere (Q11, multi-select, optional) - JSON array of Korean text
+        IS_DELETED: Soft delete flag
+        CREATED_AT: Creation timestamp
+        CREATED_BY: Creator user ID
+        UPDATED_AT: Last update timestamp
+        UPDATED_BY: Last updater user ID
+    """
+    __tablename__ = "TB_USER_PROFILE"
+    
+    ID = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    USER_ID = Column(Integer, ForeignKey("TB_USERS.ID"), nullable=False, unique=True, index=True)
+    
+    # Q1: Nickname (text input)
+    NICKNAME = Column(String(100), nullable=False)
+    
+    # Q2-Q8: Single selection (Korean text values)
+    AGE_GROUP = Column(String(50), nullable=False)  # '40대', '50대', '60대', '70대 이상'
+    GENDER = Column(String(50), nullable=False)  # '여성', '남성'
+    MARITAL_STATUS = Column(String(50), nullable=False)  # '미혼', '기혼', '이혼/사별', '말하고 싶지 않음'
+    CHILDREN_YN = Column(String(50), nullable=False)  # '있음', '없음'
+    PERSONALITY_TYPE = Column(String(100), nullable=False)  # '내향적', '외향적', '상황에따라'
+    ACTIVITY_STYLE = Column(String(100), nullable=False)  # '조용한 활동이 좋아요', '활동적인게 좋아요', '상황에 따라 달라요'
+    
+    # Q6, Q9, Q10, Q11: Multi-select (JSON arrays of Korean text)
+    LIVING_WITH = Column(JSON, nullable=False)  # ["혼자", "배우자와", "자녀와", ...]
+    STRESS_RELIEF = Column(JSON, nullable=False)  # ["산책을 해요", "운동을 해요", ...]
+    HOBBIES = Column(JSON, nullable=False)  # ["독서", "음악감상", ...]
+    ATMOSPHERE = Column(JSON, nullable=True)  # ["잔잔한 분위기", "밝고 명랑한 분위기", ...] - Optional for future use
+    
+    # Standard fields
+    IS_DELETED = Column(Boolean, default=False, nullable=False, index=True)
+    CREATED_AT = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    CREATED_BY = Column(Integer, ForeignKey("TB_USERS.ID"), nullable=True, index=True)
+    UPDATED_AT = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
+    UPDATED_BY = Column(Integer, ForeignKey("TB_USERS.ID"), nullable=True, index=True)
+    
+    # Relationships
+    user = relationship("User", foreign_keys=[USER_ID], backref="profile")
+    creator = relationship("User", foreign_keys=[CREATED_BY], backref="created_profiles")
+    updater = relationship("User", foreign_keys=[UPDATED_BY], backref="updated_profiles")
+    
+    def __repr__(self):
+        return f"<UserProfile(ID={self.ID}, USER_ID={self.USER_ID}, NICKNAME={self.NICKNAME})>"

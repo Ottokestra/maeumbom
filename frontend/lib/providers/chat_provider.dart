@@ -251,7 +251,7 @@ class ChatNotifier extends StateNotifier<ChatState> {
   void dispose() {
     _audioSubscription?.cancel();
     _chatService.dispose();
-    super.dispose();
+    // super.dispose();
   }
 }
 

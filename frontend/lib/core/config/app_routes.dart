@@ -6,6 +6,8 @@ import '../../app/report/report_screen.dart';
 import '../../app/settings/mypage_screen.dart';
 import '../../app/common/login_screen.dart';
 import '../../app/example/example_screen.dart';
+import '../../app/sign/sign_up_slide_screen.dart';
+import '../../app/example/bubble_screen.dart';
 
 /// 라우트 메타데이터
 class RouteMetadata {
@@ -47,6 +49,11 @@ class AppRoutes {
     builder: ExampleScreen.new,
   );
 
+  static const RouteMetadata bubbleTest = RouteMetadata(
+    routeName: '/bubble-test',
+    builder: BubbleScreen.new,
+  );
+
   // 보호된 경로 (인증 필요)
   static const RouteMetadata chat = RouteMetadata(
     routeName: '/chat',
@@ -69,6 +76,12 @@ class AppRoutes {
     tabIndex: 4,
   );
 
+  static const RouteMetadata signUpSlide = RouteMetadata(
+    routeName: '/sign_up_slide',
+    builder: SignUpSlideScreen.new,
+    requiresAuth: true, // 로그인 직후 진입하므로 인증 필요
+  );
+
   /// 모든 라우트 목록
   static const List<RouteMetadata> allRoutes = [
     home,
@@ -78,6 +91,8 @@ class AppRoutes {
     mypage,
     login,
     example,
+    signUpSlide,
+    bubbleTest,
   ];
 
   /// 경로 이름으로 라우트 찾기

@@ -10,14 +10,13 @@
 ```
 "frontend/FRONTEND_GUIDE.md를 참고하여 
 /app/common 에 example_screen.dart 을 추가할거야
-- topbar에 왼쪽(이전), 타이틀(테스트), 오른쪽(더보기 세로) 버튼 사용하게 하고
-- bottombar는 Input bar 사용해줘"
+- 하위 명시
 ```
 
 **테스트 요청 예시:**
 ```
-"test는 /frontend/lib/main.dart에 라우팅 추가하고 
-/frontend/lib/app/example/example_screen.dart에 버튼 추가해줘"
+"test는 /frontend/lib/app/example/example_screen.dart에 버튼 추가하고
+test_screen.dart 파일로 생성해서 구현해줘"
 ```
 
 
@@ -106,7 +105,10 @@ frontend/
 │   │   ├── training/                   # 마음연습실
 │   │   ├── onboarding/                 # 온보딩
 │   │   ├── settings/                   # 설정
-│   │   └── common/                     # 공통 기능
+│   │   ├── common/                     # 공통 기능 (login)
+│   │   └── example/                    # 예시/테스트 화면
+│   │       ├── example_screen.dart
+│   │       └── bubble_screen.dart      # Bubble 컴포넌트 테스트
 │   │
 │   ├── ui/                             # UI 시스템
 │   │   ├── app_ui.dart                 # UI 시스템 통합 export
@@ -122,6 +124,12 @@ frontend/
 │   │   │   ├── app_component.dart      # 컴포넌트 통합 export
 │   │   │   ├── app_button.dart         # 버튼 (4가지 variant)
 │   │   │   ├── app_input.dart          # 입력 필드 (3가지 state)
+│   │   │   ├── chat_bubble.dart        # 채팅 말풍선 (사용자/봇)
+│   │   │   ├── system_bubble.dart      # 시스템 말풍선
+│   │   │   ├── emotion_bubble.dart     # 감정 말풍선 (캐릭터 + 메시지)
+│   │   │   ├── voice_waveform.dart     # 음성 파동 애니메이션
+│   │   │   ├── circular_ripple.dart    # 원형 파동 효과
+│   │   │   ├── more_menu_sheet.dart    # 더보기 메뉴 시트
 │   │   │   └── buttons.dart
 │   │   │
 │   │   ├── tokens/                     # 디자인 토큰
@@ -130,7 +138,8 @@ frontend/
 │   │   │   ├── typography.dart         # 타이포그래피 (10가지)
 │   │   │   ├── spacing.dart            # 여백 (8단계)
 │   │   │   ├── radius.dart             # 둥근 모서리 (4가지)
-│   │   │   ├── icon.dart               # 아이콘 사이즈 (6단계)
+│   │   │   ├── icon_size.dart          # 아이콘 사이즈
+│   │   │   ├── bubbles.dart            # 말풍선 토큰 (chat/system/emotion)
 │   │   │   └── app_theme.dart          # 테마 설정
 │   │   │
 │   │   └── characters/                 # 감정 캐릭터
@@ -172,11 +181,19 @@ frontend/
 **모든 UI 개발 시 [DESIGN_GUIDE.md](./DESIGN_GUIDE.md)를 필수로 참고하세요.**
 
 디자인 가이드에는 다음 내용이 포함되어 있습니다:
-- ✅ 디자인 토큰 (Colors, Typography, Spacing, Radius, Icons)
-- ✅ Layout 시스템 (AppFrame, Top Bar, Bottom Bar)
-- ✅ 컴포넌트 사용법 (AppButton, AppInput)
+- ✅ 디자인 토큰 (Colors, Typography, Spacing, Radius, Icons, Bubbles)
+- ✅ Layout 시스템 (AppFrame, Top Bar, 3가지 Bottom Bar)
+- ✅ 컴포넌트 사용법 (AppButton, AppInput, Bubbles, Voice, Ripple)
 - ✅ 실제 사용 예시 (홈, 폼, 채팅 화면)
 - ✅ Best Practices
+
+** 컴포넌트 **:
+- ✅ ChatBubble - 사용자/봇 채팅 말풍선
+- ✅ SystemBubble - 시스템 메시지 (info/success/warning)
+- ✅ EmotionBubble - 감정 캐릭터 + 메시지
+- ✅ VoiceWaveform - 음성 녹음 파동 애니메이션
+- ✅ CircularRipple - 캐릭터 원형 파동 효과
+- ✅ MoreMenuSheet - 더보기 메뉴 바텀시트
 
 ### 빠른 시작
 
@@ -189,7 +206,7 @@ import 'package:frontend/ui/app_ui.dart';
 이 한 줄로 모든 디자인 시스템 요소 사용 가능:
 - Layout (AppFrame, TopBar, BottomBar)
 - Tokens (Colors, Typography, Spacing, Radius, Icons)
-- Components (AppButton, AppInput)
+- Components (AppButton, AppInput 등)
 
 #### 2. 화면 구성
 
@@ -237,35 +254,6 @@ Container(
     borderRadius: BorderRadius.circular(12),  // 하드코딩 ❌
   ),
 )
-```
-
-### 주요 디자인 토큰 요약
-
-#### Colors
-```dart
-AppColors.accentRed         // #D8454D (주 액센트)
-AppColors.natureGreen       // #2F6A53 (성공, 자연)
-AppColors.pureWhite         // #FFFFFF (기본 배경)
-AppColors.textPrimary       // #233446 (기본 텍스트)
-AppColors.textSecondary     // #6B6B6B (보조 텍스트)
-```
-
-#### Typography
-```dart
-AppTypography.display       // 56px, 700 (대형 제목)
-AppTypography.h1            // 40px, 700 (페이지 제목)
-AppTypography.h2            // 32px, 600 (섹션 제목)
-AppTypography.body          // 16px, 400 (본문)
-AppTypography.caption       // 14px, 400 (캡션)
-```
-
-#### Spacing
-```dart
-AppSpacing.xs    // 8px
-AppSpacing.sm    // 16px
-AppSpacing.md    // 24px (기본)
-AppSpacing.lg    // 32px
-AppSpacing.xl    // 40px
 ```
 
 ---
@@ -1283,6 +1271,18 @@ flutter run
 
 ---
 
-**마지막 업데이트**: 2025-12-04
+### 테스트 화면
+
+Bubble 컴포넌트 동작을 확인하려면:
+```bash
+flutter run
+
+# 앱에서: Example 화면 → "Bubble 테스트" 버튼
+# 경로: /bubble-test
+```
+
+---
+
+**마지막 업데이트**: 2025-01-15
 
 **문의**: 개발팀 채널
