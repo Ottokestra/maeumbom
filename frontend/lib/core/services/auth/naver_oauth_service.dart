@@ -17,6 +17,8 @@ class NaverOAuthService {
   /// Sign in with Naver and get authorization code + state
   Future<(String code, String state)> signIn() async {
     try {
+      appLogger.i('네이버 로그인 요청');
+
       // Generate state for CSRF protection
       _currentState = _generateState();
 
@@ -26,8 +28,6 @@ class NaverOAuthService {
           'redirect_uri=${Uri.encodeComponent(OAuthConfig.naverRedirectUri)}&'
           'response_type=code&'
           'state=${Uri.encodeComponent(_currentState!)}';
-
-      appLogger.i('Starting Naver OAuth with URL: $authUrl');
 
       // Open WebView for OAuth with enhanced configuration
       // 백엔드에서 com.maeumbom.app://auth/callback 으로 리다이렉트됨
@@ -40,8 +40,6 @@ class NaverOAuthService {
         ),
       );
 
-      appLogger.i('OAuth callback received: $result');
-
       // Extract authorization code and state from callback URL
       final uri = Uri.parse(result);
       final code = uri.queryParameters['code'];
@@ -50,38 +48,37 @@ class NaverOAuthService {
 
       // 에러 체크
       if (error != null) {
-        appLogger.e('OAuth error received: $error');
+        appLogger.e('네이버 OAuth 에러', error: error);
         throw Exception('OAuth error: $error');
       }
 
       if (code == null || state == null) {
-        appLogger.e('Missing code or state in callback. Code: $code, State: $state');
-        throw Exception('Failed to get authorization code from Naver - missing parameters');
+        throw Exception(
+            'Failed to get authorization code from Naver - missing parameters');
       }
 
       // Verify state (CSRF protection)
       if (state != _currentState) {
-        appLogger.e('State mismatch. Expected: $_currentState, Received: $state');
+        appLogger.e('네이버 로그인 보안 오류 (State mismatch)');
         throw Exception('State mismatch - potential CSRF attack');
       }
 
-      appLogger.i('Naver Sign-In successful - code and state verified');
+      appLogger.i('네이버 로그인 완료');
       return (code, state);
     } catch (e) {
       // 상세한 에러 분류 및 처리
       final errorMessage = e.toString().toLowerCase();
-      
-      if (errorMessage.contains('canceled') || errorMessage.contains('user canceled')) {
-        appLogger.i('Naver Sign-In canceled by user');
+
+      if (errorMessage.contains('canceled') ||
+          errorMessage.contains('user canceled')) {
         throw Exception('로그인이 취소되었습니다.');
       } else if (errorMessage.contains('timeout')) {
-        appLogger.w('Naver Sign-In timeout');
         throw Exception('로그인 시간이 초과되었습니다. 다시 시도해주세요.');
-      } else if (errorMessage.contains('network') || errorMessage.contains('connection')) {
-        appLogger.w('Naver Sign-In network error');
+      } else if (errorMessage.contains('network') ||
+          errorMessage.contains('connection')) {
         throw Exception('네트워크 연결을 확인하고 다시 시도해주세요.');
       } else {
-        appLogger.e('Naver Sign-In failed', error: e);
+        appLogger.e('네이버 로그인 실패', error: e);
         throw Exception('네이버 로그인에 실패했습니다: ${e.toString()}');
       }
     }

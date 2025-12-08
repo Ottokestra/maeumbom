@@ -18,6 +18,8 @@ class GoogleOAuthService {
   /// Sign in with Google and get authorization code
   Future<String> signIn() async {
     try {
+      appLogger.i('구글 로그인 요청');
+
       // Sign in
       final account = await _googleSignIn.signIn();
 
@@ -35,10 +37,10 @@ class GoogleOAuthService {
         throw Exception('Failed to get authorization code from Google');
       }
 
-      appLogger.i('Google Sign-In successful: ${account.email}');
+      appLogger.i('구글 로그인 완료: ${account.email}');
       return serverAuthCode;
     } catch (e) {
-      appLogger.e('Google Sign-In failed', error: e);
+      appLogger.e('구글 로그인 실패', error: e);
       rethrow;
     }
   }
@@ -47,9 +49,8 @@ class GoogleOAuthService {
   Future<void> signOut() async {
     try {
       await _googleSignIn.signOut();
-      appLogger.i('Google Sign-Out successful');
     } catch (e) {
-      appLogger.e('Google Sign-Out failed', error: e);
+      appLogger.e('구글 로그아웃 실패', error: e);
       // Don't rethrow - sign out errors are not critical
     }
   }
@@ -58,9 +59,8 @@ class GoogleOAuthService {
   Future<void> disconnect() async {
     try {
       await _googleSignIn.disconnect();
-      appLogger.i('Google disconnect successful');
     } catch (e) {
-      appLogger.e('Google disconnect failed', error: e);
+      appLogger.e('구글 연결 해제 실패', error: e);
       // Don't rethrow - disconnect errors are not critical
     }
   }

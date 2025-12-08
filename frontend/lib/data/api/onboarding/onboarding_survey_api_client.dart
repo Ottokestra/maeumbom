@@ -14,13 +14,15 @@ class OnboardingSurveyApiClient {
   }
 
   void _setupInterceptors() {
-    _dio.interceptors.add(
-      LogInterceptor(
-        requestBody: true,
-        responseBody: true,
-        logPrint: (obj) => appLogger.d(obj),
-      ),
-    );
+    // HTTP 로그는 에러 발생시에만 출력하도록 비활성화
+    // 필요시 주석 해제하여 디버깅 가능
+    // _dio.interceptors.add(
+    //   LogInterceptor(
+    //     requestBody: true,
+    //     responseBody: true,
+    //     logPrint: (obj) => appLogger.d(obj),
+    //   ),
+    // );
   }
 
   /// Submit onboarding survey
@@ -64,7 +66,8 @@ class OnboardingSurveyApiClient {
   }
 
   /// Get profile status (check if user has completed onboarding survey)
-  Future<OnboardingSurveyStatusResponse> getProfileStatus(String accessToken) async {
+  Future<OnboardingSurveyStatusResponse> getProfileStatus(
+      String accessToken) async {
     try {
       final response = await _dio.get(
         ApiConfig.onboardingSurveyStatus,
@@ -85,7 +88,7 @@ class OnboardingSurveyApiClient {
     if (e.response != null) {
       final statusCode = e.response!.statusCode;
       final message = e.response!.data['detail'] ?? 'Unknown error';
-      
+
       switch (statusCode) {
         case 401:
           return Exception('인증이 필요합니다. 다시 로그인해주세요.');
@@ -101,4 +104,3 @@ class OnboardingSurveyApiClient {
     }
   }
 }
-
