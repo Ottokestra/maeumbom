@@ -26,19 +26,25 @@ class OnboardingSurveyApiClient {
   }
 
   /// Submit onboarding survey
+  /// accessToken은 dioWithAuthProvider를 사용할 때는 빈 문자열로 전달 가능
+  /// (AuthInterceptor가 자동으로 토큰을 추가함)
   Future<OnboardingSurveyResponse> submitSurvey(
     OnboardingSurveyRequest request,
     String accessToken,
   ) async {
     try {
+      final options = accessToken.isNotEmpty
+          ? Options(
+              headers: {
+                'Authorization': 'Bearer $accessToken',
+              },
+            )
+          : null;
+      
       final response = await _dio.post(
         ApiConfig.onboardingSurveySubmit,
         data: request.toJson(),
-        options: Options(
-          headers: {
-            'Authorization': 'Bearer $accessToken',
-          },
-        ),
+        options: options,
       );
       return OnboardingSurveyResponse.fromJson(response.data);
     } on DioException catch (e) {
@@ -48,15 +54,21 @@ class OnboardingSurveyApiClient {
   }
 
   /// Get my profile
+  /// accessToken은 dioWithAuthProvider를 사용할 때는 빈 문자열로 전달 가능
+  /// (AuthInterceptor가 자동으로 토큰을 추가함)
   Future<OnboardingSurveyResponse> getMyProfile(String accessToken) async {
     try {
+      final options = accessToken.isNotEmpty
+          ? Options(
+              headers: {
+                'Authorization': 'Bearer $accessToken',
+              },
+            )
+          : null;
+      
       final response = await _dio.get(
         ApiConfig.onboardingSurveyMe,
-        options: Options(
-          headers: {
-            'Authorization': 'Bearer $accessToken',
-          },
-        ),
+        options: options,
       );
       return OnboardingSurveyResponse.fromJson(response.data);
     } on DioException catch (e) {
@@ -66,16 +78,22 @@ class OnboardingSurveyApiClient {
   }
 
   /// Get profile status (check if user has completed onboarding survey)
+  /// accessToken은 dioWithAuthProvider를 사용할 때는 빈 문자열로 전달 가능
+  /// (AuthInterceptor가 자동으로 토큰을 추가함)
   Future<OnboardingSurveyStatusResponse> getProfileStatus(
       String accessToken) async {
     try {
+      final options = accessToken.isNotEmpty
+          ? Options(
+              headers: {
+                'Authorization': 'Bearer $accessToken',
+              },
+            )
+          : null;
+      
       final response = await _dio.get(
         ApiConfig.onboardingSurveyStatus,
-        options: Options(
-          headers: {
-            'Authorization': 'Bearer $accessToken',
-          },
-        ),
+        options: options,
       );
       return OnboardingSurveyStatusResponse.fromJson(response.data);
     } on DioException catch (e) {

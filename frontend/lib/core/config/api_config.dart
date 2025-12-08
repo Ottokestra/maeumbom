@@ -39,6 +39,14 @@ class ApiConfig {
   static const String onboardingSurveyMe = '$onboardingSurveyBase/me';
   static const String onboardingSurveyStatus = '$onboardingSurveyBase/status';
 
+  // User Phase Endpoints
+  static const String userPhaseBase = '/api/service/user-phase';
+  static const String userPhaseSync = '$userPhaseBase/sync';
+  static const String userPhaseCurrent = '$userPhaseBase/current';
+  static const String userPhaseSettings = '$userPhaseBase/settings';
+  static const String userPhaseAnalyze = '$userPhaseBase/analyze';
+  static const String userPhasePattern = '$userPhaseBase/pattern';
+
   // Timeout Configuration
   static const Duration connectTimeout = Duration(seconds: 30);
   static const Duration receiveTimeout = Duration(seconds: 30);

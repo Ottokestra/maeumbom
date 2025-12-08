@@ -9,6 +9,7 @@ import '../core/services/auth/kakao_oauth_service.dart';
 import '../core/services/auth/naver_oauth_service.dart';
 import '../core/utils/dio_interceptors.dart';
 import '../data/api/auth/auth_api_client.dart';
+import '../data/api/user_phase/user_phase_api_client.dart';
 import '../data/repository/auth/auth_repository.dart';
 import '../data/models/auth/user.dart';
 
@@ -209,4 +210,12 @@ final dioWithAuthProvider = Provider<Dio>((ref) {
   dio.interceptors.add(AuthInterceptor(authService, dio));
 
   return dio;
+});
+
+// ----- User Phase API Client Provider -----
+
+/// User Phase API Client provider
+final userPhaseApiClientProvider = Provider<UserPhaseApiClient>((ref) {
+  final dio = ref.watch(dioWithAuthProvider);
+  return UserPhaseApiClient(dio);
 });
