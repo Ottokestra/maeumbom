@@ -96,3 +96,6 @@ engine/langchain_agent/chroma_db/
 engine/speech-to-speech/.env
 engine/speech-to-speech/*.env
 engine/speech-to-speech/env_backup.txt
+
+
+/data/
