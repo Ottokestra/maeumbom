@@ -48,4 +48,9 @@ class AppColors {
   static const textSecondaryRed = accentRed; // #D7454D
   static const textSecondaryGreen = natureGreen; // #2E6A52
   static const textDisabledVariant = Color(0xFF98A2B3); // Disabled variant text
+
+  // Mood Category Theme Colors
+  static const moodGoodYellow = Color(0xFFFFF9C4); // 좋음 - 연한 노란색
+  static const moodNeutralPink = Color(0xFFFCE4EC); // 보통 - 연한 분홍색
+  static const moodBadBlue = Color(0xFFE3F2FD); // 나쁨 - 연한 파란색
 }

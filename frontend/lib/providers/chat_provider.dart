@@ -50,33 +50,44 @@ final chatServiceProvider = Provider<ChatService>((ref) {
 
 // ----- State Providers -----
 
+/// Voice Interface State
+enum VoiceInterfaceState {
+  idle,       // 대기 중
+  listening,  // 사용자가 말하는 중
+  processing, // AI가 생각하는 중
+  replying,   // 봄이가 대답하는 중
+}
+
 /// Chat state
 class ChatState {
   final List<ChatMessage> messages;
   final bool isLoading;
-  final bool isRecording;
+  final VoiceInterfaceState voiceState; // isRecording 대체 및 고도화
   final String? error;
   final String sessionId;
 
   ChatState({
     required this.messages,
     required this.isLoading,
-    required this.isRecording,
+    this.voiceState = VoiceInterfaceState.idle,
     this.error,
     required this.sessionId,
   });
 
+  // 하위 호환성을 위한 getter
+  bool get isRecording => voiceState == VoiceInterfaceState.listening;
+
   ChatState copyWith({
     List<ChatMessage>? messages,
     bool? isLoading,
-    bool? isRecording,
+    VoiceInterfaceState? voiceState,
     String? error,
     String? sessionId,
   }) {
     return ChatState(
       messages: messages ?? this.messages,
       isLoading: isLoading ?? this.isLoading,
-      isRecording: isRecording ?? this.isRecording,
+      voiceState: voiceState ?? this.voiceState,
       error: error,
       sessionId: sessionId ?? this.sessionId,
     );
@@ -97,7 +108,7 @@ class ChatNotifier extends StateNotifier<ChatState> {
   ) : super(ChatState(
           messages: [],
           isLoading: false,
-          isRecording: false,
+          voiceState: VoiceInterfaceState.idle,
           sessionId: 'user_${_userId}_default',
         ));
 
@@ -142,7 +153,14 @@ class ChatNotifier extends StateNotifier<ChatState> {
   /// Start audio recording
   Future<void> startAudioRecording() async {
     try {
-      state = state.copyWith(isRecording: true, error: null);
+      // 기존 구독 취소하여 중복 방지 (두 번째 턴 버그 수정)
+      await _audioSubscription?.cancel();
+      _audioSubscription = null;
+
+      state = state.copyWith(
+        voiceState: VoiceInterfaceState.listening,
+        error: null,
+      );
 
       _audioSubscription = await _chatService.startAudioChat(
         userId: _userId,
@@ -160,13 +178,13 @@ class ChatNotifier extends StateNotifier<ChatState> {
 
       _audioSubscription?.onError((error) {
         state = state.copyWith(
-          isRecording: false,
+          voiceState: VoiceInterfaceState.idle,
           error: 'Audio error: $error',
         );
       });
     } catch (e) {
       state = state.copyWith(
-        isRecording: false,
+        voiceState: VoiceInterfaceState.idle,
         error: null, // 에러는 UI에서 직접 처리하므로 상태에 저장하지 않음
       );
       rethrow; // UI에서 에러를 처리할 수 있도록 다시 throw
@@ -176,8 +194,9 @@ class ChatNotifier extends StateNotifier<ChatState> {
   /// Stop audio recording
   Future<void> stopAudioRecording() async {
     await _audioSubscription?.cancel();
+    _audioSubscription = null;
     await _chatService.stopAudioChat();
-    state = state.copyWith(isRecording: false);
+    state = state.copyWith(voiceState: VoiceInterfaceState.idle);
   }
 
   /// Handle audio response from WebSocket
@@ -185,12 +204,27 @@ class ChatNotifier extends StateNotifier<ChatState> {
     final type = message['type'];
 
     if (type == 'status') {
-      // Handle status messages (connecting, ready, etc.)
-      // Just log for now
+      // Handle status messages
+      final status = message['status'] as String?;
+      if (status == 'listening') {
+        // 이미 startAudioRecording에서 처리됨
+      } else if (status == 'processing') {
+        state = state.copyWith(voiceState: VoiceInterfaceState.processing);
+      } else if (status == 'speaking') {
+        state = state.copyWith(voiceState: VoiceInterfaceState.replying);
+      }
     } else if (type == 'stt_result') {
       // Handle STT result - add user message
       final userText = message['text'] as String?;
+      final isFinal = message['is_final'] as bool? ?? false;
+      
       if (userText != null && userText.isNotEmpty) {
+        if (state.voiceState == VoiceInterfaceState.listening && isFinal) {
+           // 사용자가 말을 마치면 처리 상태로 전환
+           state = state.copyWith(voiceState: VoiceInterfaceState.processing);
+        }
+
+        // 중복 추가 방지 로직 필요 (임시로 항상 추가)
         final userMessage = ChatMessage(
           id: DateTime.now().millisecondsSinceEpoch.toString(),
           text: userText,
@@ -205,6 +239,9 @@ class ChatNotifier extends StateNotifier<ChatState> {
       // Handle agent response - add AI message
       final data = message['data'] as Map<String, dynamic>?;
       if (data != null) {
+        // 응답 오면 speaking 상태로
+        state = state.copyWith(voiceState: VoiceInterfaceState.replying);
+
         final replyText = data['reply_text'] as String?;
         if (replyText != null) {
           final aiMessage = ChatMessage(
@@ -216,6 +253,10 @@ class ChatNotifier extends StateNotifier<ChatState> {
           );
           state = state.copyWith(
             messages: [...state.messages, aiMessage],
+            // 응답이 완료되면 idle로 돌아가야 하는데, 
+            // 현재 구조에선 오디오 재생 완료 시점을 알기 어려우므로 
+            // 추가적인 'audio_finished' 이벤트가 필요하거나 사용자 상호작용으로 끊어야 함.
+            // 우선은 replying 상태 유지 -> 사용자가 다시 마이크 누르거나 텍스트 입력하면 초기화
           );
         }
       }
