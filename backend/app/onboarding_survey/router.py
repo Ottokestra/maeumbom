@@ -1,9 +1,12 @@
 import logging
-from typing import Any, Dict
 
 from fastapi import APIRouter, Request
 
-from .schemas import OnboardingSurveySubmitRequest
+from .schemas import (
+    OnboardingProfileSnapshot,
+    OnboardingSurveySubmitRequest,
+    OnboardingSurveySubmitResponse,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -13,11 +16,11 @@ router = APIRouter(
 )
 
 
-@router.post("/submit")
+@router.post("/submit", response_model=OnboardingSurveySubmitResponse)
 async def submit_onboarding_survey(
     payload: OnboardingSurveySubmitRequest,
     request: Request,
-) -> Dict[str, Any]:
+) -> OnboardingSurveySubmitResponse:
     """
     개발용 더미 온보딩 설문 제출 엔드포인트.
 
@@ -36,8 +39,42 @@ async def submit_onboarding_survey(
     # TODO: 실제 구현에서는 여기에서 DB에 저장하고, 생성/갱신된 profile_id 를 리턴한다.
     dummy_profile_id = -1
 
-    return {
-        "status": "OK",
-        "message": "Onboarding survey received (stub).",
-        "profile_id": dummy_profile_id,
-    }
+    # 숫자 필드는 기본값을 채워 null-safe 하게 내려보낸다.
+    # progress 는 답변 수를 기반으로 최소 0.0~1.0 사이 값으로 보정한다.
+    total_questions = len(payload.answers)
+    progress = 1.0 if total_questions else 0.0
+
+    response = OnboardingSurveySubmitResponse(
+        status="OK",
+        message="Onboarding survey received (stub).",
+        profile=OnboardingProfileSnapshot(
+            profile_id=dummy_profile_id or 0,
+            score=0.0,
+            level=0,
+            progress=progress,
+            stage="onboarding-complete",
+        ),
+    )
+
+    # 예시 요청/응답:
+    # 요청
+    # {
+    #   "user_id": 123,
+    #   "answers": [
+    #     {"question_id": "q1", "answer_id": "a1"}
+    #   ]
+    # }
+    # 응답
+    # {
+    #   "status": "OK",
+    #   "message": "Onboarding survey received (stub).",
+    #   "profile": {
+    #     "profileId": -1,
+    #     "score": 0.0,
+    #     "level": 0,
+    #     "progress": 1.0,
+    #     "stage": "onboarding-complete"
+    #   }
+    # }
+
+    return response
