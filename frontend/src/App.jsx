@@ -8,7 +8,6 @@ import {
 } from "react-router-dom";
 import SignupSurveyPage from "./pages/SignupSurveyPage";
 import EmotionReportPage from "./pages/EmotionReportPage";
-import ChatPage from "./pages/ChatPage";
 import ReportChatPage from "./pages/ReportChatPage";
 import EmotionInput from "./components/EmotionInput";
 import EmotionResult from "./components/EmotionResult";
@@ -1075,7 +1074,7 @@ function App() {
           path="/emotion-report"
           element={<Navigate to="/report" replace />}
         />
-        <Route path="/chat" element={<ChatPage />} />
+        <Route path="/chat" element={<ReportChatPage />} />
         <Route path="/home" element={<MainApp />} />
         <Route path="/" element={<MainApp />} />
         <Route path="*" element={<Navigate to="/" replace />} />
