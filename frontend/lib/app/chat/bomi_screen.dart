@@ -220,7 +220,8 @@ class _BomiContentState extends ConsumerState<BomiContent> {
                   // 감정 캐릭터 (중앙, 큰 사이즈) - Lottie 애니메이션
                   AnimatedCharacter(
                     characterId: 'relief',
-                    emotion: 'fear', // happiness, sedness, anger, fear
+                    emotion: 'sedness', // happiness, sedness, anger, fear
+
                     size: 350,
                     repeat: true,
                     animate: true,
