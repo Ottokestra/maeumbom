@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:dio/dio.dart';
 import '../../ui/app_ui.dart';
 import '../../providers/auth_provider.dart';
+import '../../core/config/api_config.dart';
+import '../../data/api/onboarding/onboarding_survey_api_client.dart';
+import '../../core/services/auth/auth_service.dart';
 
 /// 로그인 화면
 ///
@@ -204,6 +208,53 @@ class _SocialLoginButtons extends ConsumerWidget {
     );
   }
 
+  /// 설문 상태 확인 후 적절한 화면으로 이동
+  Future<void> _navigateAfterLogin(
+    BuildContext context,
+    WidgetRef ref,
+  ) async {
+    try {
+      // Access token 가져오기
+      final authService = ref.read(authServiceProvider);
+      final accessToken = await authService.getAccessToken();
+
+      if (accessToken == null) {
+        // 토큰이 없으면 설문 화면으로 이동 (안전장치)
+        if (context.mounted) {
+          Navigator.pushReplacementNamed(context, '/sign_up_slide');
+        }
+        return;
+      }
+
+      // 설문 상태 확인
+      final dio = Dio(
+        BaseOptions(
+          baseUrl: ApiConfig.baseUrl,
+          connectTimeout: ApiConfig.connectTimeout,
+          receiveTimeout: ApiConfig.receiveTimeout,
+        ),
+      );
+      final apiClient = OnboardingSurveyApiClient(dio);
+      final statusResponse = await apiClient.getProfileStatus(accessToken);
+
+      if (!context.mounted) return;
+
+      // 설문 완료 여부에 따라 분기
+      if (statusResponse.hasProfile) {
+        // 설문 완료된 사용자는 홈으로 이동
+        Navigator.pushReplacementNamed(context, '/home');
+      } else {
+        // 설문 미완료 사용자는 설문 화면으로 이동
+        Navigator.pushReplacementNamed(context, '/sign_up_slide');
+      }
+    } catch (e) {
+      // 에러 발생 시 기본값으로 설문 화면으로 이동 (안전장치)
+      if (context.mounted) {
+        Navigator.pushReplacementNamed(context, '/sign_up_slide');
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final authState = ref.watch(authProvider);
@@ -229,9 +280,8 @@ class _SocialLoginButtons extends ConsumerWidget {
                   result.when(
                     data: (user) {
                       if (user != null) {
-                        // 성공 - 회원가입 슬라이드로 이동
-                        Navigator.pushReplacementNamed(
-                            context, '/sign_up_slide');
+                        // 성공 - 설문 상태 확인 후 적절한 화면으로 이동
+                        _navigateAfterLogin(context, ref);
                       }
                     },
                     error: (error, stack) => _handleLoginError(context, error),
@@ -258,9 +308,8 @@ class _SocialLoginButtons extends ConsumerWidget {
                   result.when(
                     data: (user) {
                       if (user != null) {
-                        // 성공 - 회원가입 슬라이드로 이동
-                        //Navigator.pushReplacementNamed(context, '/sign_up_slide');
-                        Navigator.pushReplacementNamed(context, '/home');
+                        // 성공 - 설문 상태 확인 후 적절한 화면으로 이동
+                        _navigateAfterLogin(context, ref);
                       }
                     },
                     error: (error, stack) => _handleLoginError(context, error),
@@ -288,9 +337,8 @@ class _SocialLoginButtons extends ConsumerWidget {
                   result.when(
                     data: (user) {
                       if (user != null) {
-                        // 성공 - 회원가입 슬라이드로 이동
-                        Navigator.pushReplacementNamed(
-                            context, '/sign_up_slide');
+                        // 성공 - 설문 상태 확인 후 적절한 화면으로 이동
+                        _navigateAfterLogin(context, ref);
                       }
                     },
                     error: (error, stack) => _handleLoginError(context, error),
