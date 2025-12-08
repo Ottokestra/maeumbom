@@ -97,7 +97,7 @@ flutter:
 
   assets:
     - assets/characters/normal/
-    - assets/characters/high/
+    - assets/characters/normal_2d/
     - assets/characters/animation/
     - assets/characters/animation/happiness/
     - assets/characters/animation/sedness/

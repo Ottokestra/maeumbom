@@ -222,6 +222,7 @@ class _EmotionCard extends StatelessWidget {
                     child: EmotionCharacter(
                       id: emotion,
                       size: imageHeight * 0.9, // 여백 고려
+                      use2d: true,
                     ),
                   ),
                 ),
