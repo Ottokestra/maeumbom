@@ -129,7 +129,7 @@ UI는 감정 상태를 시각적으로 표현합니다.
 // 백엔드 API에서 대표 감정 받아오기
 EmotionCharacter(
   id: EmotionId.joy,  // API 응답으로 받은 감정 ID
-  highRes: true,      // 홈 화면은 고해상도 사용
+  use2d: false,       // normal 또는 2d 버전 선택
   size: 180,          // 큰 사이즈로 표시
 )
 ```
@@ -159,23 +159,15 @@ EmotionCharacter(
 
 ```
 assets/characters/
-  ├─ normal/  (일반 해상도, 200x200)
+  ├─ normal/     (일반 해상도, 200x200)
   │   ├─ char_joy.png
   │   ├─ char_anger.png
-  │   └─ ... (17개)
-  └─ high/    (고해상도, 400x400)
-      ├─ char_joy.png
-      ├─ char_anger.png
-      └─ ... (17개)
-```
-
-#### 애니메이션 시스템 (구현 완료 ✅)
-
-```
-assets/characters/
-  ├─ normal/  (정적 이미지, 200x200)
-  ├─ high/    (고해상도, 400x400)
-  └─ animation/  (Lottie 애니메이션)
+  │   └─ ... (18개 - 17개 감정 + test)
+  ├─ normal_2d/  (2D 버전, 200x200)
+  │   ├─ char_joy.png
+  │   ├─ char_anger.png
+  │   └─ ... (18개)
+  └─ animation/  (Lottie 애니메이션 - 별도 시스템)
       ├─ happiness/
       │   └─ char_relief.json
       ├─ sedness/
@@ -186,6 +178,10 @@ assets/characters/
           └─ char_relief.json
 ```
 
+**참고:** 
+- `normal/`과 `normal_2d/`는 정적 PNG 이미지
+- `animation/`은 별도 Lottie 애니메이션 시스템 (`AnimatedCharacter` 사용)
+
 ---
 
 ### 1.4 구현 위치
@@ -194,11 +190,47 @@ assets/characters/
 **파일:** [lib/ui/characters/app_characters.dart](lib/ui/characters/app_characters.dart)
 
 **주요 클래스:**
-- `EmotionId`: 17개 감정 enum
-- `EmotionMeta`: 감정별 메타데이터 (이름, 캐릭터, 에셋 경로)
-- `EmotionCharacter`: 위젯 (이미지 렌더링)
+- `EmotionId`: 18개 감정 enum (17개 + test)
+- `EmotionMeta`: 감정별 메타데이터 (이름, 캐릭터, PNG 에셋 경로)
+- `EmotionCharacter`: 위젯 (Image.asset으로 PNG 렌더링)
 
-#### 애니메이션 캐릭터 (Lottie) ✅
+**사용 예시:**
+```dart
+// 기본 사용 (normal 버전)
+EmotionCharacter(
+  id: EmotionId.joy,
+  size: 120,
+)
+
+// 2D 버전 사용
+EmotionCharacter(
+  id: EmotionId.joy,
+  use2d: true,
+  size: 120,
+)
+
+// 큰 사이즈 (홈 화면)
+EmotionCharacter(
+  id: EmotionId.joy,
+  size: 180,
+)
+```
+
+**EmotionMeta 구조:**
+```dart
+class EmotionMeta {
+  final EmotionId id;
+  final String nameKo;        // 한글 이름 (예: '기쁨')
+  final String nameEn;        // 영문 이름 (예: 'joy')
+  final String characterKo;   // 캐릭터 한글 (예: '해바라기')
+  final String characterEn;   // 캐릭터 영문 (예: 'sunflower')
+  final String shortDesc;     // 짧은 설명
+  final String assetNormal;   // normal 버전 PNG 경로
+  final String assetNormal2d; // normal_2d 버전 PNG 경로
+}
+```
+
+#### 애니메이션 캐릭터 (Lottie) - 별도 시스템 ✅
 **파일:** [lib/ui/characters/app_animations.dart](lib/ui/characters/app_animations.dart)
 
 **주요 클래스:**
@@ -229,6 +261,8 @@ AnimatedCharacter.withCategory(
 )
 ```
 
+**참고:** `EmotionCharacter`(정적)와 `AnimatedCharacter`(애니메이션)는 별도 시스템입니다.
+
 ---
 
 ### 1.5 API 연동 예시
@@ -242,7 +276,7 @@ GET /api/emotion/weekly-representative
 // 응답
 {
   "emotionId": "joy",
-  "intensity": "high",  // "normal" | "high"
+  "use2d": false,  // normal 또는 2d 버전 선택
   "message": "이번 주는 기쁨이 가득했어요!"
 }
 
@@ -255,7 +289,7 @@ final emotionId = EmotionId.values.firstWhere(
 
 EmotionCharacter(
   id: emotionId,
-  highRes: true,
+  use2d: response.use2d,
   size: 180,
 )
 ```
@@ -619,17 +653,34 @@ Container(
 
 ### 4.1 현재 상태 (2025-12-08 업데이트)
 
-#### 정적 이미지 (PNG)
-- 에셋: `assets/characters/normal/*.png`, `assets/characters/high/*.png`
-- 17개 감정 캐릭터 모두 정적 이미지 제공
+#### 정적 이미지 (PNG) - 현재 사용 중 ✅
+- 에셋: `assets/characters/normal/*.png`, `assets/characters/normal_2d/*.png`
+- 18개 감정 캐릭터 (17개 + test) 모두 정적 PNG 이미지 제공
 - 위젯: `EmotionCharacter` (app_characters.dart)
+- 렌더링: `Image.asset`
 
-#### Lottie 애니메이션 ✅ 구현 완료
+**사용 예시:**
+```dart
+// 기본 사용 (normal 버전)
+EmotionCharacter(
+  id: EmotionId.joy,
+  size: 120,
+)
+
+// 2D 버전 사용
+EmotionCharacter(
+  id: EmotionId.joy,
+  use2d: true,
+  size: 120,
+)
+```
+
+#### Lottie 애니메이션 - 별도 시스템 ✅
 - 에셋: `assets/characters/animation/{emotion}/char_{character}.json`
 - 현재 `relief` 캐릭터의 4가지 감정 애니메이션 구현
   - happiness, sedness, anger, fear
 - 위젯: `AnimatedCharacter` (app_animations.dart)
-- 패키지: `lottie: ^3.1.0`
+- 패키지: `lottie: ^3.0.0`
 
 **사용 예시:**
 ```dart
@@ -649,6 +700,10 @@ AnimatedCharacter(
   size: 350,
 )
 ```
+
+**참고:** 
+- `EmotionCharacter`: 정적 PNG 이미지 (일반 UI 사용)
+- `AnimatedCharacter`: Lottie 애니메이션 (특별한 인터랙션 필요 시)
 
 ---
 
@@ -777,20 +832,32 @@ AnimatedCharacter.withCategory(
 
 ---
 
-### 4.6 EmotionCharacter 확장 구조
+### 4.6 EmotionCharacter 시스템 구조
 
-**현재 구조:**
+**현재 구조 (2개의 독립적인 시스템):**
 
 ```dart
-// 정적 이미지 (app_characters.dart)
+// 1. 정적 이미지 시스템 (app_characters.dart) ✅ 현재 사용
 class EmotionCharacter extends StatelessWidget {
+  final EmotionId id;
+  final bool use2d;      // normal 또는 2d 버전 선택
+  final double size;
+
   @override
   Widget build(BuildContext context) {
-    return Image.asset(assetPath, width: size, height: size);
+    final meta = emotionMetaMap[id]!;
+    final assetPath = use2d ? meta.assetNormal2d : meta.assetNormal;
+    
+    return Image.asset(
+      assetPath,  // PNG 파일
+      width: size,
+      height: size,
+      fit: BoxFit.contain,
+    );
   }
 }
 
-// 애니메이션 (app_animations.dart) ✅
+// 2. 애니메이션 시스템 (app_animations.dart) ✅ 별도 사용
 class AnimatedCharacter extends StatelessWidget {
   AnimatedCharacter({
     required String characterId,
@@ -802,10 +869,20 @@ class AnimatedCharacter extends StatelessWidget {
   
   @override
   Widget build(BuildContext context) {
-    return Lottie.asset(meta.assetPath, width: size, height: size);
+    return Lottie.asset(
+      meta.assetPath,  // JSON 파일
+      width: size,
+      height: size,
+      repeat: repeat,
+      animate: animate,
+    );
   }
 }
 ```
+
+**사용 시나리오:**
+- **일반 UI**: `EmotionCharacter` 사용 (가볍고 빠름)
+- **특별한 인터랙션**: `AnimatedCharacter` 사용 (생동감 있는 애니메이션)
 
 ---
 
@@ -846,53 +923,48 @@ class AnimatedCharacter extends StatelessWidget {
 
 ---
 
-#### 4.2.3 EmotionCharacter 확장 구조
+#### 4.2.3 EmotionCharacter 시스템 구조
 
-현재 `EmotionCharacter` 위젯은 확장 가능하게 설계되어 있습니다.
+현재 `EmotionCharacter`는 정적 PNG 이미지를 사용하는 단순한 위젯입니다.
 
-**현재 (정적 이미지):**
+**현재 구현 (정적 이미지):**
 
 ```dart
 class EmotionCharacter extends StatelessWidget {
+  final EmotionId id;
+  final bool use2d;      // normal 또는 2d 버전
+  final double size;
+
   @override
   Widget build(BuildContext context) {
+    final meta = emotionMetaMap[id]!;
+    final assetPath = use2d ? meta.assetNormal2d : meta.assetNormal;
+    
     return Image.asset(
       assetPath,  // PNG 파일
       width: size,
       height: size,
+      fit: BoxFit.contain,
     );
   }
 }
 ```
 
-**향후 (애니메이션):**
+**애니메이션이 필요한 경우:**
+
+별도의 `AnimatedCharacter` 위젯 사용 (app_animations.dart):
 
 ```dart
-class EmotionCharacter extends StatefulWidget {
-  final bool enableAnimation;  // 애니메이션 활성화 여부
-
-  @override
-  Widget build(BuildContext context) {
-    if (enableAnimation && hasAnimationFile) {
-      return Lottie.asset(
-        animationPath,  // JSON 파일
-        width: size,
-        height: size,
-      );
-    } else {
-      return Image.asset(
-        imagePath,  // Fallback PNG
-        width: size,
-        height: size,
-      );
-    }
-  }
-}
+AnimatedCharacter(
+  characterId: 'relief',
+  emotion: 'happiness',
+  size: 350,
+)
 ```
 
-**추가 필요 파일:**
-- `lib/ui/characters/emotion_animation_controller.dart`
-- `assets/animations/*.json` (Lottie 파일)
+**참고:** 
+- `EmotionCharacter`: 정적 PNG (일반 UI)
+- `AnimatedCharacter`: Lottie 애니메이션 (특별한 경우)
 
 ---
 
@@ -1743,7 +1815,13 @@ ChatBubble(
 // 큰 사이즈 (홈 화면)
 EmotionCharacter(
   id: EmotionId.joy,
-  highRes: true,
+  size: 180,
+)
+
+// 2D 버전 사용
+EmotionCharacter(
+  id: EmotionId.joy,
+  use2d: true,
   size: 180,
 )
 

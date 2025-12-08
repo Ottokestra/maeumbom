@@ -292,14 +292,15 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
           // TODO: 더보기 메뉴 표시
         },
       ),
-      bottomBar: chatState.isRecording
-          ? _buildRecordingBar()
-          : BottomInputBar(
-              controller: _messageController,
-              hintText: '메시지를 입력하세요',
-              onSend: _handleSend,
-              onMicrophoneTap: _handleMicrophoneToggle,
-            ),
+      bottomBar: BottomInputBar(
+        onVoiceActivated: _handleMicrophoneToggle,
+        onTextActivated: () {}, // 텍스트 모드 활성화 (자동 전환)
+        onVoiceReset: _handleMicrophoneToggle,
+        voiceState: chatState.voiceState,
+        controller: _messageController,
+        hintText: '메시지를 입력하세요',
+        onSend: _handleSend,
+      ),
       body: ChatContent(
         messages: chatState.messages,
         isLoading: chatState.isLoading,
@@ -308,6 +309,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     );
   }
 
+  // _buildRecordingBar() - 더 이상 사용하지 않음
+  // 새로운 BottomInputBar가 녹음 상태를 자동으로 처리합니다.
+  /*
   Widget _buildRecordingBar() {
     final bottomPadding = MediaQuery.of(context).padding.bottom;
 
@@ -332,6 +336,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
       ),
     );
   }
+  */
 }
 
 /// Chat Content - 채팅 본문
@@ -401,4 +406,3 @@ class _LoadingBubble extends StatelessWidget {
     );
   }
 }
-

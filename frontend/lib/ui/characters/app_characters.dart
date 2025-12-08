@@ -30,8 +30,8 @@ class EmotionMeta {
   final String characterKo; // 해바라기
   final String characterEn; // sunflower
   final String shortDesc; // 한 줄 설명
-  final String assetnormal;
-  final String assetHigh;
+  final String assetNormal;
+  final String assetNormal2d;
 
   const EmotionMeta({
     required this.id,
@@ -40,8 +40,8 @@ class EmotionMeta {
     required this.characterKo,
     required this.characterEn,
     required this.shortDesc,
-    required this.assetnormal,
-    required this.assetHigh,
+    required this.assetNormal,
+    required this.assetNormal2d,
   });
 }
 
@@ -55,8 +55,8 @@ const Map<EmotionId, EmotionMeta> emotionMetaMap = {
     characterKo: '해바라기',
     characterEn: 'sunflower',
     shortDesc: '밝고 기분 좋은 상태',
-    assetnormal: 'assets/characters/normal/char_joy.png',
-    assetHigh: 'assets/characters/high/char_joy.png',
+    assetNormal: 'assets/characters/normal/char_joy.png',
+    assetNormal2d: 'assets/characters/normal_2d/char_joy.png',
   ),
   EmotionId.excitement: EmotionMeta(
     id: EmotionId.excitement,
@@ -65,8 +65,8 @@ const Map<EmotionId, EmotionMeta> emotionMetaMap = {
     characterKo: '별',
     characterEn: 'star',
     shortDesc: '기대와 에너지가 치솟는 상태',
-    assetnormal: 'assets/characters/normal/char_excitement.png',
-    assetHigh: 'assets/characters/high/char_excitement.png',
+    assetNormal: 'assets/characters/normal/char_excitement.png',
+    assetNormal2d: 'assets/characters/normal_2d/char_excitement.png',
   ),
   EmotionId.confidence: EmotionMeta(
     id: EmotionId.confidence,
@@ -75,8 +75,8 @@ const Map<EmotionId, EmotionMeta> emotionMetaMap = {
     characterKo: '사자',
     characterEn: 'lion',
     shortDesc: '잘 해낼 수 있다고 느끼는 상태',
-    assetnormal: 'assets/characters/normal/char_confidence.png',
-    assetHigh: 'assets/characters/high/char_confidence.png',
+    assetNormal: 'assets/characters/normal/char_confidence.png',
+    assetNormal2d: 'assets/characters/normal_2d/char_confidence.png',
   ),
   EmotionId.love: EmotionMeta(
     id: EmotionId.love,
@@ -85,8 +85,8 @@ const Map<EmotionId, EmotionMeta> emotionMetaMap = {
     characterKo: '펭귄',
     characterEn: 'peng_gwin',
     shortDesc: '따뜻한 애정을 느끼는 상태',
-    assetnormal: 'assets/characters/normal/char_love.png',
-    assetHigh: 'assets/characters/high/char_love.png',
+    assetNormal: 'assets/characters/normal/char_love.png',
+    assetNormal2d: 'assets/characters/normal_2d/char_love.png',
   ),
   EmotionId.relief: EmotionMeta(
     id: EmotionId.relief,
@@ -95,8 +95,8 @@ const Map<EmotionId, EmotionMeta> emotionMetaMap = {
     characterKo: '사슴',
     characterEn: 'deer',
     shortDesc: '걱정이 풀리고 편안해진 상태',
-    assetnormal: 'assets/characters/normal/char_relief.png',
-    assetHigh: 'assets/characters/high/char_relief.png',
+    assetNormal: 'assets/characters/normal/char_relief.png',
+    assetNormal2d: 'assets/characters/normal_2d/char_relief.png',
   ),
   EmotionId.enlightenment: EmotionMeta(
     id: EmotionId.enlightenment,
@@ -105,8 +105,8 @@ const Map<EmotionId, EmotionMeta> emotionMetaMap = {
     characterKo: '전구',
     characterEn: 'electric_bulb',
     shortDesc: '이해하고 시야가 트인 상태',
-    assetnormal: 'assets/characters/normal/char_enlightenment.png',
-    assetHigh: 'assets/characters/high/char_enlightenment.png',
+    assetNormal: 'assets/characters/normal/char_enlightenment.png',
+    assetNormal2d: 'assets/characters/normal_2d/char_enlightenment.png',
   ),
   EmotionId.interest: EmotionMeta(
     id: EmotionId.interest,
@@ -115,8 +115,8 @@ const Map<EmotionId, EmotionMeta> emotionMetaMap = {
     characterKo: '부엉이',
     characterEn: 'owl',
     shortDesc: '더 알고 싶고 해보고 싶은 상태',
-    assetnormal: 'assets/characters/normal/char_interest.png',
-    assetHigh: 'assets/characters/high/char_interest.png',
+    assetNormal: 'assets/characters/normal/char_interest.png',
+    assetNormal2d: 'assets/characters/normal_2d/char_interest.png',
   ),
 
   // ❌ 부정
@@ -127,8 +127,8 @@ const Map<EmotionId, EmotionMeta> emotionMetaMap = {
     characterKo: '당근',
     characterEn: 'carrot',
     shortDesc: '지금 상황이 못마땅한 상태',
-    assetnormal: 'assets/characters/normal/char_discontent.png',
-    assetHigh: 'assets/characters/high/char_discontent.png',
+    assetNormal: 'assets/characters/normal/char_discontent.png',
+    assetNormal2d: 'assets/characters/normal_2d/char_discontent.png',
   ),
   EmotionId.shame: EmotionMeta(
     id: EmotionId.shame,
@@ -137,8 +137,8 @@ const Map<EmotionId, EmotionMeta> emotionMetaMap = {
     characterKo: '복숭아',
     characterEn: 'peach',
     shortDesc: '숨고 싶어지는 상태',
-    assetnormal: 'assets/characters/normal/char_shame.png',
-    assetHigh: 'assets/characters/high/char_shame.png',
+    assetNormal: 'assets/characters/normal/char_shame.png',
+    assetNormal2d: 'assets/characters/normal_2d/char_shame.png',
   ),
   EmotionId.sadness: EmotionMeta(
     id: EmotionId.sadness,
@@ -147,8 +147,8 @@ const Map<EmotionId, EmotionMeta> emotionMetaMap = {
     characterKo: '고래',
     characterEn: 'whale',
     shortDesc: '상실이나 상처로 마음이 아픈 상태',
-    assetnormal: 'assets/characters/normal/char_sadness.png',
-    assetHigh: 'assets/characters/high/char_sadness.png',
+    assetNormal: 'assets/characters/normal/char_sadness.png',
+    assetNormal2d: 'assets/characters/normal_2d/char_sadness.png',
   ),
   EmotionId.guilt: EmotionMeta(
     id: EmotionId.guilt,
@@ -157,8 +157,8 @@ const Map<EmotionId, EmotionMeta> emotionMetaMap = {
     characterKo: '곰',
     characterEn: 'bear',
     shortDesc: '내가 잘못했다 느끼는 상태',
-    assetnormal: 'assets/characters/normal/char_guilt.png',
-    assetHigh: 'assets/characters/high/char_guilt.png',
+    assetNormal: 'assets/characters/normal/char_guilt.png',
+    assetNormal2d: 'assets/characters/normal_2d/char_guilt.png',
   ),
   EmotionId.depression: EmotionMeta(
     id: EmotionId.depression,
@@ -167,8 +167,8 @@ const Map<EmotionId, EmotionMeta> emotionMetaMap = {
     characterKo: '돌',
     characterEn: 'stone',
     shortDesc: '의욕이 없고 모든 게 힘든 상태',
-    assetnormal: 'assets/characters/normal/char_depression.png',
-    assetHigh: 'assets/characters/high/char_depression.png',
+    assetNormal: 'assets/characters/normal/char_depression.png',
+    assetNormal2d: 'assets/characters/normal_2d/char_depression.png',
   ),
   EmotionId.boredom: EmotionMeta(
     id: EmotionId.boredom,
@@ -177,8 +177,8 @@ const Map<EmotionId, EmotionMeta> emotionMetaMap = {
     characterKo: '나무늘보',
     characterEn: 'sloth',
     shortDesc: '아무것도 하기 싫은 상태',
-    assetnormal: 'assets/characters/normal/char_boredom.png',
-    assetHigh: 'assets/characters/high/char_boredom.png',
+    assetNormal: 'assets/characters/normal/char_boredom.png',
+    assetNormal2d: 'assets/characters/normal_2d/char_boredom.png',
   ),
   EmotionId.contempt: EmotionMeta(
     id: EmotionId.contempt,
@@ -187,8 +187,8 @@ const Map<EmotionId, EmotionMeta> emotionMetaMap = {
     characterKo: '가지',
     characterEn: 'plant',
     shortDesc: '상대를 깔보고 가치 없다고 느끼는 상태',
-    assetnormal: 'assets/characters/normal/char_contempt.png',
-    assetHigh: 'assets/characters/high/char_contempt.png',
+    assetNormal: 'assets/characters/normal/char_contempt.png',
+    assetNormal2d: 'assets/characters/normal_2d/char_contempt.png',
   ),
   EmotionId.anger: EmotionMeta(
     id: EmotionId.anger,
@@ -197,8 +197,8 @@ const Map<EmotionId, EmotionMeta> emotionMetaMap = {
     characterKo: '불',
     characterEn: 'fire',
     shortDesc: '부당하다고 느껴져 치밀어 오르는 상태',
-    assetnormal: 'assets/characters/normal/char_anger.png',
-    assetHigh: 'assets/characters/high/char_anger.png',
+    assetNormal: 'assets/characters/normal/char_anger.png',
+    assetNormal2d: 'assets/characters/normal_2d/char_anger.png',
   ),
   EmotionId.fear: EmotionMeta(
     id: EmotionId.fear,
@@ -207,8 +207,8 @@ const Map<EmotionId, EmotionMeta> emotionMetaMap = {
     characterKo: '쥐',
     characterEn: 'mouse',
     shortDesc: '위험을 느끼며 두려운 상태',
-    assetnormal: 'assets/characters/normal/char_fear.png',
-    assetHigh: 'assets/characters/high/char_fear.png',
+    assetNormal: 'assets/characters/normal/char_fear.png',
+    assetNormal2d: 'assets/characters/normal_2d/char_fear.png',
   ),
   EmotionId.confusion: EmotionMeta(
     id: EmotionId.confusion,
@@ -217,8 +217,8 @@ const Map<EmotionId, EmotionMeta> emotionMetaMap = {
     characterKo: '로봇',
     characterEn: 'robot',
     shortDesc: '무엇이 맞는지 모르는 상태',
-    assetnormal: 'assets/characters/normal/char_confusion.png',
-    assetHigh: 'assets/characters/high/char_confusion.png',
+    assetNormal: 'assets/characters/normal/char_confusion.png',
+    assetNormal2d: 'assets/characters/normal_2d/char_confusion.png',
   ),
 
   EmotionId.test: EmotionMeta(
@@ -228,28 +228,28 @@ const Map<EmotionId, EmotionMeta> emotionMetaMap = {
     characterKo: '테스트',
     characterEn: 'test',
     shortDesc: '테스트용 더미 데이터',
-    assetnormal: 'assets/characters/normal/char_test.png',
-    assetHigh: 'assets/characters/high/char_test.png',
+    assetNormal: 'assets/characters/normal/char_test.png',
+    assetNormal2d: 'assets/characters/normal_2d/char_test.png',
   ),
 };
 
 /// 감정 캐릭터 출력용 위젯
 class EmotionCharacter extends StatelessWidget {
   final EmotionId id;
-  final bool highRes;
+  final bool use2d;
   final double size;
 
   const EmotionCharacter({
     super.key,
     required this.id,
-    this.highRes = false,
+    this.use2d = false,
     this.size = 120,
   });
 
   @override
   Widget build(BuildContext context) {
     final meta = emotionMetaMap[id]!;
-    final assetPath = highRes ? meta.assetHigh : meta.assetnormal;
+    final assetPath = use2d ? meta.assetNormal2d : meta.assetNormal;
 
     return Image.asset(
       assetPath,
