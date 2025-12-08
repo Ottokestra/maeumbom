@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../ui/app_ui.dart';
+import 'survey_data_holder.dart';
 
 /// 회원가입 화면 3단계
 ///
@@ -17,8 +18,9 @@ class _SignUp3ScreenState extends State<SignUp3Screen> {
   String? _maritalStatus;
   String? _hasChildren;
   String? _livingWith;
+  final _surveyData = SurveyDataHolder();
 
-  final List<String> _maritalOptions = ['미혼', '기혼', '이혼/사별', '기타'];
+  final List<String> _maritalOptions = ['미혼', '기혼', '이혼/사별', '말하고 싶지 않음'];
   final List<String> _childrenOptions = ['있음', '없음'];
   final List<String> _livingOptions = ['혼자', '배우자와', '자녀와', '부모님과', '가족과 함께', '기타'];
 
@@ -134,6 +136,11 @@ class _SignUp3ScreenState extends State<SignUp3Screen> {
                 variant: ButtonVariant.primaryRed,
                 onTap: _canProceed
                     ? () {
+                        // 데이터 저장
+                        _surveyData.maritalStatus = _maritalStatus;
+                        _surveyData.childrenYn = _hasChildren;
+                        _surveyData.livingWith = _livingWith;
+                        
                         if (widget.onNext != null) {
                           widget.onNext!();
                         } else {
