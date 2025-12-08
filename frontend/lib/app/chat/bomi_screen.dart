@@ -77,10 +77,13 @@ class _BomiScreenState extends ConsumerState<BomiScreen> {
     }
   }
 
-  void _showPermissionDialog() {
-    showDialog(
+  Future<void> _showPermissionDialog() async {
+    if (!mounted) return;
+    
+    // 네이티브 스타일의 다이얼로그 표시
+    await showAdaptiveDialog(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (context) => AlertDialog.adaptive(
         title: const Text('마이크 권한 필요'),
         content: const Text(
           '음성 입력을 위해 마이크 권한이 필요합니다.\n설정에서 권한을 허용해주세요.',
@@ -109,7 +112,6 @@ class _BomiScreenState extends ConsumerState<BomiScreen> {
     final chatNotifier = ref.read(chatProvider.notifier);
 
     _textController.clear();
-    // 텍스트 바 유지 (사용자 요청)
 
     try {
       await chatNotifier.sendTextMessage(text);
