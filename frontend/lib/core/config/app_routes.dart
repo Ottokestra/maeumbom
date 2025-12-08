@@ -8,6 +8,9 @@ import '../../app/common/login_screen.dart';
 import '../../app/example/example_screen.dart';
 import '../../app/sign/sign_up_slide_screen.dart';
 import '../../app/example/bubble_screen.dart';
+import '../../app/onboarding/splash_screen.dart';
+import '../../app/chat/bomi_screen.dart';
+import '../../app/training/training_screen.dart';
 
 /// 라우트 메타데이터
 class RouteMetadata {
@@ -27,16 +30,39 @@ class RouteMetadata {
 /// 앱의 모든 라우트 정의
 class AppRoutes {
   // 공개 경로 (인증 불필요)
+  static const RouteMetadata splash = RouteMetadata(
+    routeName: '/splash',
+    builder: SplashScreen.new,
+  );
+
   static const RouteMetadata home = RouteMetadata(
     routeName: '/home',
     builder: HomeScreen.new,
-    tabIndex: 0,
+    tabIndex: 0, // BottomMenuBar: 홈 아이콘
   );
 
   static const RouteMetadata alarm = RouteMetadata(
     routeName: '/alarm',
     builder: AlarmScreen.new,
-    tabIndex: 1,
+  );
+
+  static const RouteMetadata bomi = RouteMetadata(
+    routeName: '/bomi',
+    builder: BomiScreen.new,
+    requiresAuth: true,
+    tabIndex: 1, // BottomMenuBar: 마이크 버튼 (중앙)
+  );
+
+  static const RouteMetadata report = RouteMetadata(
+    routeName: '/report',
+    builder: ReportScreen.new,
+    requiresAuth: true,
+  );
+
+  static const RouteMetadata mypage = RouteMetadata(
+    routeName: '/mypage',
+    builder: MypageScreen.new,
+    requiresAuth: true,
   );
 
   static const RouteMetadata login = RouteMetadata(
@@ -54,26 +80,16 @@ class AppRoutes {
     builder: BubbleScreen.new,
   );
 
+  static const RouteMetadata training = RouteMetadata(
+    routeName: '/training',
+    builder: TrainingScreen.new,
+  );
+
   // 보호된 경로 (인증 필요)
   static const RouteMetadata chat = RouteMetadata(
     routeName: '/chat',
     builder: ChatScreen.new,
     requiresAuth: true,
-    tabIndex: 2,
-  );
-
-  static const RouteMetadata report = RouteMetadata(
-    routeName: '/report',
-    builder: ReportScreen.new,
-    requiresAuth: true,
-    tabIndex: 3,
-  );
-
-  static const RouteMetadata mypage = RouteMetadata(
-    routeName: '/mypage',
-    builder: MypageScreen.new,
-    requiresAuth: true,
-    tabIndex: 4,
   );
 
   static const RouteMetadata signUpSlide = RouteMetadata(
@@ -84,6 +100,7 @@ class AppRoutes {
 
   /// 모든 라우트 목록
   static const List<RouteMetadata> allRoutes = [
+    splash,
     home,
     alarm,
     chat,
@@ -93,6 +110,8 @@ class AppRoutes {
     example,
     signUpSlide,
     bubbleTest,
+    bomi,
+    training,
   ];
 
   /// 경로 이름으로 라우트 찾기
@@ -129,8 +148,8 @@ class AppRoutes {
     for (final route in allRoutes) {
       routes[route.routeName] = (context) => route.builder();
     }
-    // 루트 경로도 추가
-    routes['/'] = (context) => const HomeScreen();
+    // 루트 경로는 스플래시 화면
+    routes['/'] = (context) => const SplashScreen();
     return routes;
   }
 }

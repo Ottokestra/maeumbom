@@ -15,3 +15,6 @@ export 'circular_ripple.dart';
 
 // Menu Components
 export 'more_menu_sheet.dart';
+
+// Slide Components
+export 'slide_to_action_button.dart';

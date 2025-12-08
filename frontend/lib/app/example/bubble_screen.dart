@@ -71,7 +71,8 @@ class BubbleContent extends StatelessWidget {
             ChatBubble(
               message: ChatMessage(
                 id: '4',
-                text: '정말 축하드려요! 열심히 준비하신 노력이 빛을 발했네요. 앞으로도 좋은 일만 가득하시길 바랄게요 😊',
+                text:
+                    '정말 축하드려요! 열심히 준비하신 노력이 빛을 발했네요. 앞으로도 좋은 일만 가득하시길 바랄게요 😊',
                 isUser: false,
                 timestamp: DateTime.now(),
               ),
@@ -116,42 +117,41 @@ class BubbleContent extends StatelessWidget {
             // ============================================================
             // Emotion Bubble Section
             // ============================================================
-            _buildSectionTitle('3. Emotion Bubble (감정 말풍선)'),
+            _buildSectionTitle('3. Emotion Bubble (봄이 말풍선)'),
             const SizedBox(height: AppSpacing.sm),
 
-            // 감정 말풍선 예시들
+            // 봄이 말풍선 예시들 (타이핑 애니메이션 + 스크롤 기능 테스트)
             EmotionBubble(
-              emotion: EmotionId.joy,
-              message: '기분 좋은 하루네요!',
-              onTap: () => _showToast(context, '기쁨 감정 탭'),
+              message: '오늘 하루 어떠셨나요?',
+              enableTypingAnimation: true,
+              onTap: () => _showToast(context, '봄이 말풍선 1 (짧은 메시지 + 타이핑)'),
             ),
             const SizedBox(height: AppSpacing.sm),
 
             EmotionBubble(
-              emotion: EmotionId.excitement,
-              message: '오늘 정말 신나요!',
-              onTap: () => _showToast(context, '신남 감정 탭'),
+              message: '그런 일이 있으셨군요. 조금 더 자세히 이야기해주실 수 있을까요?',
+              enableTypingAnimation: true,
+              typingSpeed: 30,
+              onTap: () => _showToast(context, '봄이 말풍선 2 (2줄 메시지 + 빠른 타이핑)'),
             ),
             const SizedBox(height: AppSpacing.sm),
 
             EmotionBubble(
-              emotion: EmotionId.sadness,
-              message: '어제는 조금 슬펐어요',
-              onTap: () => _showToast(context, '슬픔 감정 탭'),
+              message:
+                  '힘든 하루를 보내셨네요. 하지만 이렇게 이야기해주셔서 감사해요. 천천히 함께 이야기 나눠봐요. 당신의 감정을 충분히 이해하고 있어요. 언제든 편하게 이야기해주세요.',
+              enableTypingAnimation: true,
+              onTap: () => _showToast(context, '봄이 말풍선 3 (긴 메시지 + 스크롤 + 타이핑)'),
             ),
             const SizedBox(height: AppSpacing.sm),
 
-            EmotionBubble(
-              emotion: EmotionId.love,
-              message: '따뜻한 마음이 느껴져요',
-              onTap: () => _showToast(context, '사랑 감정 탭'),
+            const EmotionBubble(
+              message: '당신의 이야기에 귀 기울이고 있어요.',
+              enableTypingAnimation: true,
             ),
             const SizedBox(height: AppSpacing.sm),
 
-            EmotionBubble(
-              emotion: EmotionId.anger,
-              message: '화가 났던 순간이 있었어요',
-              onTap: () => _showToast(context, '분노 감정 탭'),
+            const EmotionBubble(
+              message: '좋은 하루 보내세요!',
             ),
 
             const SizedBox(height: AppSpacing.xl),
@@ -183,11 +183,6 @@ class BubbleContent extends StatelessWidget {
                 isUser: true,
                 timestamp: DateTime.now(),
               ),
-            ),
-
-            EmotionBubble(
-              emotion: EmotionId.joy,
-              message: '기쁨 감정이 느껴지네요!',
             ),
 
             const SizedBox(height: AppSpacing.sm),

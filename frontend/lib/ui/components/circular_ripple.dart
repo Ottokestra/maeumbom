@@ -1,23 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/ui/tokens/colors.dart';
+import '../../providers/chat_provider.dart';
 
 /// 원형 파동 효과 위젯
 ///
-/// 마이크 사용 시 캐릭터 주위에 원형 파동 애니메이션을 표시합니다.
-/// 중심에서 바깥쪽으로 퍼져나가는 3개의 동심원 파동을 그립니다.
+/// ⚠️ 참고: 현재 bomi_screen에서는 사용되지 않습니다.
+/// 파동 효과는 SlideToActionButton의 음성 입력 버튼에 통합되었습니다.
+/// 향후 다른 용도로 사용 가능하므로 보존됩니다.
 ///
-/// 사용 예시:
-/// ```dart
-/// CircularRipple(
-///   isActive: isRecording,
-///   color: AppColors.accentRed,
-///   size: 200,
-///   child: YourCharacterWidget(),
-/// )
-/// ```
+/// 상태에 따라 다른 애니메이션을 보여줍니다:
+/// - listening: 빠르고 강한 파동 (사용자 말하는 중)
+/// - processing: 느리고 부드러운 호흡 효과 (생각 중)
+/// - replying: 중간 속도의 리듬감 있는 파동 (대답 중)
 class CircularRipple extends StatefulWidget {
-  /// 파동 애니메이션 활성화 여부
-  final bool isActive;
+  /// 현재 보이스 인터페이스 상태
+  final VoiceInterfaceState voiceState;
 
   /// 파동 색상
   final Color color;
@@ -34,7 +31,7 @@ class CircularRipple extends StatefulWidget {
   const CircularRipple({
     super.key,
     required this.child,
-    this.isActive = true,
+    this.voiceState = VoiceInterfaceState.idle,
     this.color = AppColors.accentRed,
     this.size = 200,
     this.rippleCount = 3,
@@ -56,19 +53,36 @@ class _CircularRippleState extends State<CircularRipple>
       duration: const Duration(milliseconds: 2000),
     );
 
-    if (widget.isActive) {
-      _controller.repeat();
-    }
+    _updateAnimationState();
   }
 
   @override
   void didUpdateWidget(CircularRipple oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.isActive && !_controller.isAnimating) {
-      _controller.repeat();
-    } else if (!widget.isActive && _controller.isAnimating) {
-      _controller.stop();
-      _controller.reset();
+    if (widget.voiceState != oldWidget.voiceState) {
+      _updateAnimationState();
+    }
+  }
+
+  void _updateAnimationState() {
+    switch (widget.voiceState) {
+      case VoiceInterfaceState.listening:
+        _controller.duration = const Duration(milliseconds: 1500);
+        if (!_controller.isAnimating) _controller.repeat();
+        break;
+      case VoiceInterfaceState.processing:
+        _controller.duration = const Duration(milliseconds: 3000);
+        if (!_controller.isAnimating) _controller.repeat(reverse: true);
+        break;
+      case VoiceInterfaceState.replying:
+        _controller.duration = const Duration(milliseconds: 2000);
+        if (!_controller.isAnimating) _controller.repeat();
+        break;
+      case VoiceInterfaceState.idle:
+      default:
+        _controller.stop();
+        _controller.reset();
+        break;
     }
   }
 
@@ -87,7 +101,7 @@ class _CircularRippleState extends State<CircularRipple>
         alignment: Alignment.center,
         children: [
           // 파동 효과
-          if (widget.isActive)
+          if (widget.voiceState != VoiceInterfaceState.idle)
             AnimatedBuilder(
               animation: _controller,
               builder: (context, child) {
@@ -97,6 +111,7 @@ class _CircularRippleState extends State<CircularRipple>
                     progress: _controller.value,
                     color: widget.color,
                     rippleCount: widget.rippleCount,
+                    state: widget.voiceState,
                   ),
                 );
               },
@@ -110,9 +125,6 @@ class _CircularRippleState extends State<CircularRipple>
 }
 
 /// 원형 파동을 그리는 CustomPainter
-///
-/// 중심에서 바깥쪽으로 퍼져나가는 동심원을 그립니다.
-/// 각 파동은 시간차를 두고 시작하며, 퍼져나갈수록 투명해집니다.
 class RipplePainter extends CustomPainter {
   /// 애니메이션 진행 상태 (0.0 ~ 1.0)
   final double progress;
@@ -123,10 +135,14 @@ class RipplePainter extends CustomPainter {
   /// 파동 개수
   final int rippleCount;
 
+  /// 현재 상태
+  final VoiceInterfaceState state;
+
   RipplePainter({
     required this.progress,
     required this.color,
     required this.rippleCount,
+    required this.state,
   });
 
   @override
@@ -134,28 +150,46 @@ class RipplePainter extends CustomPainter {
     final center = Offset(size.width / 2, size.height / 2);
     final maxRadius = size.width / 2;
 
-    for (int i = 0; i < rippleCount; i++) {
-      // 각 파동의 시작 시간을 다르게 설정 (균등 분배)
-      final rippleDelay = i / rippleCount;
-      final rippleProgress = (progress - rippleDelay) % 1.0;
-
-      // 반경: 0에서 maxRadius까지 증가
-      final radius = maxRadius * rippleProgress;
-
-      // 투명도: 시작할 때 0.5, 끝날 때 0으로 감소
-      final opacity = (1.0 - rippleProgress) * 0.5;
+    if (state == VoiceInterfaceState.processing) {
+      // Breathing effect for processing
+      final currentRadius = maxRadius * 0.8 + (maxRadius * 0.2 * progress);
+      final opacity = 0.3 + (0.3 * progress);
 
       final paint = Paint()
         ..color = color.withOpacity(opacity)
-        ..strokeWidth = 2
-        ..style = PaintingStyle.stroke;
+        ..style = PaintingStyle.fill;
+        
+      // Blur effect
+      paint.maskFilter = const MaskFilter.blur(BlurStyle.normal, 20);
 
-      canvas.drawCircle(center, radius, paint);
+      canvas.drawCircle(center, currentRadius, paint);
+    } else {
+      // Ripple effect for listening and replying
+      for (int i = 0; i < rippleCount; i++) {
+        final rippleDelay = i / rippleCount;
+        final rippleProgress = (progress - rippleDelay) % 1.0;
+
+        // Skip if not started yet
+        if (progress < rippleDelay) continue;
+
+        final radius = maxRadius * rippleProgress;
+        
+        // 투명도: 시작할 때 0.5, 끝날 때 0으로 감소
+        final opacity = (1.0 - rippleProgress) * 0.5;
+
+        final paint = Paint()
+          ..color = color.withOpacity(opacity)
+          ..strokeWidth = state == VoiceInterfaceState.listening ? 3 : 2
+          ..style = PaintingStyle.stroke;
+
+        canvas.drawCircle(center, radius, paint);
+      }
     }
   }
 
   @override
   bool shouldRepaint(RipplePainter oldDelegate) {
-    return oldDelegate.progress != progress;
+    return oldDelegate.progress != progress || oldDelegate.state != state;
   }
 }
+
