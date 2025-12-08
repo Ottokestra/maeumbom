@@ -18,3 +18,6 @@ export 'more_menu_sheet.dart';
 
 // Slide Components
 export 'slide_to_action_button.dart';
+
+// Process Components
+export 'process_indicator.dart';

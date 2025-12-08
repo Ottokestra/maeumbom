@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -126,20 +127,24 @@ class _BomiScreenState extends ConsumerState<BomiScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final chatState = ref.watch(chatProvider);
+
     return AppFrame(
       topBar: TopBar(
         title: '',
         rightIcon: Icons.more_horiz,
         onTapRight: () => MoreMenuSheet.show(context),
       ),
-      bottomBar: _showInputBar
-          ? BottomInputBar(
-              controller: _textController,
-              hintText: '메시지를 입력하세요',
-              onSend: _handleSendMessage,
-              onMicrophoneTap: _handleVoiceInput,
-            )
-          : null,
+      bottomBar: BottomInputBar(
+        onVoiceActivated: _handleVoiceInput,
+        onTextActivated: _handleTextInputToggle,
+        onVoiceReset: _handleVoiceInput,
+        onTextReset: _handleTextInputToggle,
+        voiceState: chatState.voiceState,
+        controller: _textController,
+        hintText: '메시지를 입력하세요',
+        onSend: _handleSendMessage,
+      ),
       body: BomiContent(
         showInputBar: _showInputBar,
         onTextInputTap: _handleTextInputToggle,
@@ -167,10 +172,77 @@ class BomiContent extends ConsumerStatefulWidget {
 }
 
 class _BomiContentState extends ConsumerState<BomiContent> {
+  Timer? _textCompletionTimer;
+  bool _showTextCompletion = false;
+
+  @override
+  void dispose() {
+    _textCompletionTimer?.cancel();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     final chatState = ref.watch(chatProvider);
     final voiceState = chatState.voiceState;
+    final isLoading = chatState.isLoading;
+
+    // Determine Mode
+    ProcessMode mode;
+    if (widget.showInputBar || (isLoading && voiceState == VoiceInterfaceState.idle)) {
+      mode = ProcessMode.text;
+    } else {
+      mode = ProcessMode.voice;
+    }
+
+    // Determine Step
+    ProcessStep currentStep = ProcessStep.standby;
+
+    if (mode == ProcessMode.voice) {
+      switch (voiceState) {
+        case VoiceInterfaceState.idle:
+          currentStep = ProcessStep.standby;
+          break;
+        case VoiceInterfaceState.listening:
+          currentStep = ProcessStep.input;
+          break;
+        case VoiceInterfaceState.processing:
+          currentStep = ProcessStep.analysis;
+          break;
+        case VoiceInterfaceState.replying:
+          currentStep = ProcessStep.completion;
+          break;
+      }
+    } else {
+      // Text Mode
+      if (isLoading) {
+        currentStep = ProcessStep.analysis;
+      } else if (_showTextCompletion) {
+        currentStep = ProcessStep.completion;
+      } else {
+        currentStep = ProcessStep.standby;
+      }
+    }
+
+    // State Listener for Text Completion Transient State
+    ref.listen(chatProvider, (previous, next) {
+      if (previous?.isLoading == true && next.isLoading == false) {
+        // Just finished loading (likely text response if voiceState is idle)
+        if (next.voiceState == VoiceInterfaceState.idle) {
+          setState(() {
+            _showTextCompletion = true;
+          });
+          _textCompletionTimer?.cancel();
+          _textCompletionTimer = Timer(const Duration(seconds: 2), () {
+            if (mounted) {
+              setState(() {
+                _showTextCompletion = false;
+              });
+            }
+          });
+        }
+      }
+    });
 
     // 가장 최근 AI 메시지 가져오기 (오디오 응답 대체용)
     final latestBotMessage =
@@ -178,22 +250,6 @@ class _BomiContentState extends ConsumerState<BomiContent> {
 
     final botMessageText = latestBotMessage?.text ??
         '오늘 하루 어떠셨나요? 대화를 진행해볼까요? 아래 마이크나 텍스트 버튼을 눌러 시작해보세요.';
-
-    String statusText;
-    switch (voiceState) {
-      case VoiceInterfaceState.listening:
-        statusText = '듣고 있어요...';
-        break;
-      case VoiceInterfaceState.processing:
-        statusText = '생각하는 중...';
-        break;
-      case VoiceInterfaceState.replying:
-        statusText = '대답하는 중...';
-        break;
-      case VoiceInterfaceState.idle:
-        statusText = '봄이와 대화해보세요';
-        break;
-    }
 
     return GestureDetector(
       // 화면의 다른 영역 탭 시 input bar 닫기
@@ -215,48 +271,31 @@ class _BomiContentState extends ConsumerState<BomiContent> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  const SizedBox(height: AppSpacing.xs),
-
-                  // 감정 캐릭터 (중앙, 큰 사이즈) - Lottie 애니메이션
+                  // 1. 감정 캐릭터 (중앙, 큰 사이즈) - Lottie 애니메이션
                   AnimatedCharacter(
                     characterId: 'relief',
                     emotion: 'sedness', // happiness, sedness, anger, fear
-
-                    size: 350,
+                    size: 300,
                     repeat: true,
                     animate: true,
                   ),
+
+                  // 2. Process Indicator
+                  //tts 사용 여부 추가 예정
+                  ProcessIndicator(
+                    mode: mode,
+                    currentStep: currentStep,
+                  ),
+
                   const SizedBox(height: AppSpacing.md),
 
-                  // 봄이 메시지 버블 (최신 AI 응답 표시)
+                  // 3. AI 봄이 메시지 버블 (최신 AI 응답 표시)
                   EmotionBubble(
                     message: botMessageText,
                     enableTypingAnimation: latestBotMessage != null,
                     key: ValueKey(latestBotMessage?.id ?? 'default'),
                   ),
 
-                  const SizedBox(height: AppSpacing.sm),
-
-                  // 봄이 상태 표시용
-                  Text(
-                    statusText,
-                    style: AppTypography.caption,
-                  ),
-
-                  const SizedBox(height: AppSpacing.xxl),
-
-                  // 슬라이드 액션 버튼 (항상 표시, 상태 동기화)
-                  Padding(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: AppSpacing.md),
-                    child: SlideToActionButton(
-                      onVoiceActivated: widget.onVoiceToggle,
-                      onTextActivated: widget.onTextInputTap,
-                      onVoiceReset: widget.onVoiceToggle,
-                      voiceState: voiceState,
-                      isTextMode: widget.showInputBar,
-                    ),
-                  ),
                 ],
               ),
             ),
