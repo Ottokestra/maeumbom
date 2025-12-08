@@ -9,6 +9,7 @@ import '../core/services/auth/kakao_oauth_service.dart';
 import '../core/services/auth/naver_oauth_service.dart';
 import '../core/utils/dio_interceptors.dart';
 import '../data/api/auth/auth_api_client.dart';
+import '../data/api/user_phase/user_phase_api_client.dart';
 import '../data/repository/auth/auth_repository.dart';
 import '../data/models/auth/user.dart';
 
@@ -101,17 +102,29 @@ class AuthNotifier extends StateNotifier<AsyncValue<User?>> {
   }
 
   /// Check if user is already authenticated on app start
+  /// Automatically refreshes token if expired
   Future<void> _checkAuthStatus() async {
     try {
       final isAuth = await _authService.isAuthenticated();
       if (isAuth) {
+        // getCurrentUser() will automatically refresh token if expired
         final user = await _authService.getCurrentUser();
-        state = AsyncValue.data(user);
+        
+        if (user != null) {
+          state = AsyncValue.data(user);
+        } else {
+          // Token refresh failed or user not found
+          // Clear state and require login
+          state = const AsyncValue.data(null);
+        }
       } else {
+        // No tokens stored
         state = const AsyncValue.data(null);
       }
-    } catch (e, stack) {
-      state = AsyncValue.error(e, stack);
+    } catch (e) {
+      // Log error but don't show error state to user
+      // Just set to null (not logged in)
+      state = const AsyncValue.data(null);
     }
   }
 
@@ -197,4 +210,12 @@ final dioWithAuthProvider = Provider<Dio>((ref) {
   dio.interceptors.add(AuthInterceptor(authService, dio));
 
   return dio;
+});
+
+// ----- User Phase API Client Provider -----
+
+/// User Phase API Client provider
+final userPhaseApiClientProvider = Provider<UserPhaseApiClient>((ref) {
+  final dio = ref.watch(dioWithAuthProvider);
+  return UserPhaseApiClient(dio);
 });

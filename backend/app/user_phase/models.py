@@ -100,7 +100,7 @@ class WeekendPattern(BaseModel):
 class UserPatternResponse(BaseModel):
     """패턴 분석 결과 응답"""
     weekday: WeekdayPattern = Field(..., description="평일 패턴")
-    weekend: WeekendPattern = Field(..., description="주말 패턴")
+    weekend: Optional[WeekendPattern] = Field(None, description="주말 패턴 (데이터가 있을 때만)")
     last_analysis_date: Optional[str] = Field(None, description="마지막 분석 날짜")
     data_completeness: Optional[float] = Field(None, description="데이터 완성도 (0.0-1.0)")
     analysis_period_days: int = Field(..., description="분석 기간 (일)")

@@ -362,6 +362,63 @@ class HealthLog(Base):
         return f"<HealthLog(ID={self.ID}, USER_ID={self.USER_ID}, LOG_DATE={self.LOG_DATE}, SOURCE_TYPE={self.SOURCE_TYPE})>"
 
 
+class ManualHealthLog(Base):
+    """
+    Manual health log model
+    Stores manually entered health data (one record per user)
+    
+    Attributes:
+        ID: Primary key
+        USER_ID: Foreign key to users table (unique, one record per user)
+        LOG_DATE: Date when user entered the data (last input date)
+        SLEEP_START_TIME: Sleep start time
+        SLEEP_END_TIME: Sleep end time (wake time)
+        STEP_COUNT: Step count
+        SLEEP_DURATION_HOURS: Sleep duration in hours
+        HEART_RATE_AVG: Average heart rate
+        HEART_RATE_RESTING: Resting heart rate
+        HEART_RATE_VARIABILITY: Heart rate variability (HRV)
+        ACTIVE_MINUTES: Active minutes
+        EXERCISE_MINUTES: Exercise minutes
+        CALORIES_BURNED: Calories burned
+        DISTANCE_KM: Distance traveled in kilometers
+        RAW_DATA: Original health data in JSON format
+        CREATED_AT: Creation timestamp
+        UPDATED_AT: Last update timestamp
+    """
+    __tablename__ = "TB_MANUAL_HEALTH_LOGS"
+    
+    ID = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    USER_ID = Column(Integer, ForeignKey("TB_USERS.ID"), nullable=False, unique=True, index=True)
+    LOG_DATE = Column(Date, nullable=False)  # Date when user entered the data (last input date)
+    
+    # Phase calculation (core data)
+    SLEEP_START_TIME = Column(DateTime(timezone=True), nullable=True)
+    SLEEP_END_TIME = Column(DateTime(timezone=True), nullable=True)
+    STEP_COUNT = Column(Integer, nullable=True)
+    
+    # Menopause health monitoring (common data for iOS & Android)
+    SLEEP_DURATION_HOURS = Column(Float, nullable=True)
+    HEART_RATE_AVG = Column(Integer, nullable=True)
+    HEART_RATE_RESTING = Column(Integer, nullable=True)
+    HEART_RATE_VARIABILITY = Column(Float, nullable=True)
+    ACTIVE_MINUTES = Column(Integer, nullable=True)
+    EXERCISE_MINUTES = Column(Integer, nullable=True)
+    CALORIES_BURNED = Column(Integer, nullable=True)
+    DISTANCE_KM = Column(Float, nullable=True)
+    
+    # Metadata
+    RAW_DATA = Column(JSON, nullable=True)  # Original data for extensibility
+    CREATED_AT = Column(DateTime(timezone=True), server_default=func.now())
+    UPDATED_AT = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    
+    # Relationship to User
+    user = relationship("User", backref="manual_health_log", uselist=False)
+    
+    def __repr__(self):
+        return f"<ManualHealthLog(ID={self.ID}, USER_ID={self.USER_ID}, LOG_DATE={self.LOG_DATE})>"
+
+
 class UserPatternSetting(Base):
     """
     User pattern setting model
