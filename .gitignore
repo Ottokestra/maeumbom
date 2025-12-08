@@ -1,5 +1,7 @@
 .idea/
 .cursorrules
+.antigravityrules
+.claude/
 
 # macOS
 .DS_Store

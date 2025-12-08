@@ -43,7 +43,7 @@ class _LoginScreenState extends State<LoginScreen> {
               ],
             ),
           ),
-          
+
           // 페이지 인디케이터
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -62,12 +62,12 @@ class _LoginScreenState extends State<LoginScreen> {
               );
             }),
           ),
-          
+
           const SizedBox(height: 40),
 
           // 소셜 로그인 버튼 (고정)
           const _SocialLoginButtons(),
-          
+
           const SizedBox(height: 80), // 하단 여백
         ],
       ),
@@ -124,7 +124,8 @@ class _Slide2 extends StatelessWidget {
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(AppRadius.lg),
               image: const DecorationImage(
-                image: AssetImage('assets/characters/normal/char_excitement.png'),
+                image:
+                    AssetImage('assets/characters/normal/char_excitement.png'),
                 fit: BoxFit.contain,
               ),
             ),
@@ -229,7 +230,8 @@ class _SocialLoginButtons extends ConsumerWidget {
                     data: (user) {
                       if (user != null) {
                         // 성공 - 회원가입 슬라이드로 이동
-                        Navigator.pushReplacementNamed(context, '/sign_up_slide');
+                        Navigator.pushReplacementNamed(
+                            context, '/sign_up_slide');
                       }
                     },
                     error: (error, stack) => _handleLoginError(context, error),
@@ -257,7 +259,8 @@ class _SocialLoginButtons extends ConsumerWidget {
                     data: (user) {
                       if (user != null) {
                         // 성공 - 회원가입 슬라이드로 이동
-                        Navigator.pushReplacementNamed(context, '/sign_up_slide');
+                        //Navigator.pushReplacementNamed(context, '/sign_up_slide');
+                        Navigator.pushReplacementNamed(context, '/home');
                       }
                     },
                     error: (error, stack) => _handleLoginError(context, error),
@@ -286,7 +289,8 @@ class _SocialLoginButtons extends ConsumerWidget {
                     data: (user) {
                       if (user != null) {
                         // 성공 - 회원가입 슬라이드로 이동
-                        Navigator.pushReplacementNamed(context, '/sign_up_slide');
+                        Navigator.pushReplacementNamed(
+                            context, '/sign_up_slide');
                       }
                     },
                     error: (error, stack) => _handleLoginError(context, error),

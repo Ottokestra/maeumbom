@@ -13,7 +13,7 @@ class TopBar extends StatelessWidget implements PreferredSizeWidget {
     this.rightIcon,
     this.onTapLeft,
     this.onTapRight,
-    this.height = 80,
+    this.height = 60,
     this.backgroundColor = AppColors.pureWhite,
     this.foregroundColor = AppColors.textPrimary,
   });
@@ -79,4 +79,3 @@ class TopBar extends StatelessWidget implements PreferredSizeWidget {
     );
   }
 }
-

@@ -9,14 +9,8 @@
 **기본 서비스 생성 요청 예시:**
 ```
 "frontend/FRONTEND_GUIDE.md를 참고하여 
-/app/common 에 example_screen.dart 을 추가할거야
-- 하위 명시
-```
-
-**테스트 요청 예시:**
-```
-"test는 /frontend/lib/app/example/example_screen.dart에 버튼 추가하고
-test_screen.dart 파일로 생성해서 구현해줘"
+/app/example 에 example_screen.dart 을 추가할거야
+- (하위 명시)
 ```
 
 
@@ -86,9 +80,14 @@ frontend/
 ├── android/                            # Android 빌드 설정
 ├── ios/                                # iOS 빌드 설정
 ├── assets/                             # 리소스 파일
-│   ├── characters/                     # 감정 캐릭터 이미지
-│   │   ├── high/
-│   │   └── normal/
+│   ├── characters/                     # 감정 캐릭터
+│   │   ├── animation/                  # Lottie 애니메이션 (✅ 구현됨)
+│   │   │   ├── happiness/
+│   │   │   ├── sedness/
+│   │   │   ├── anger/
+│   │   │   └── fear/
+│   │   ├── high/                       # 고해상도 정적 이미지
+│   │   └── normal/                     # 일반 정적 이미지
 │   ├── fonts/                          # 커스텀 폰트
 │   └── images/                         # 앱 이미지, 아이콘
 │       └── icons/
@@ -98,8 +97,13 @@ frontend/
 │   │
 │   ├── app/                            # 기능별 화면 (Feature-first)
 │   │   ├── home/                       # 홈 화면
-│   │   │   └── home_screen.dart
+│   │   │   ├── home_screen.dart
+│   │   │   └── components/             # 홈 화면 컴포넌트
+│   │   │       ├── home_menu_grid.dart
+│   │   │       ├── daily_mood_check_widget.dart
+│   │   │       └── conversation_temperature_widget.dart
 │   │   ├── chat/                       # AI 봄이와 대화
+│   │   │   └── bomi_screen.dart        # 봄이 채팅 (✅ 애니메이션 적용)
 │   │   ├── alarm/                      # 똑똑 알람
 │   │   ├── report/                     # 마음리포트
 │   │   ├── training/                   # 마음연습실
@@ -127,9 +131,9 @@ frontend/
 │   │   │   ├── chat_bubble.dart        # 채팅 말풍선 (사용자/봇)
 │   │   │   ├── system_bubble.dart      # 시스템 말풍선
 │   │   │   ├── emotion_bubble.dart     # 감정 말풍선 (캐릭터 + 메시지)
-│   │   │   ├── voice_waveform.dart     # 음성 파동 애니메이션
 │   │   │   ├── circular_ripple.dart    # 원형 파동 효과
 │   │   │   ├── more_menu_sheet.dart    # 더보기 메뉴 시트
+│   │   │   ├── slide_to_action_button.dart  # 슬라이드 액션 버튼
 │   │   │   └── buttons.dart
 │   │   │
 │   │   ├── tokens/                     # 디자인 토큰
@@ -143,10 +147,13 @@ frontend/
 │   │   │   └── app_theme.dart          # 테마 설정
 │   │   │
 │   │   └── characters/                 # 감정 캐릭터
-│   │       └── app_characters.dart
+│   │       ├── app_characters.dart     # 정적 이미지 캐릭터
+│   │       └── app_animations.dart     # Lottie 애니메이션 캐릭터 (✅ 신규)
 │   │
 │   ├── providers/                      # Riverpod 상태 관리
-│   │   └── auth_provider.dart          # 인증 provider
+│   │   ├── auth_provider.dart          # 인증 provider
+│   │   ├── chat_provider.dart          # 채팅 provider
+│   │   └── daily_mood_provider.dart    # 일일 감정 체크 provider
 │   │
 │   ├── data/                           # 데이터 계층 (도메인별 분리)
 │   │   ├── models/                     # 도메인 모델
@@ -161,12 +168,16 @@ frontend/
 │   └── core/                           # 핵심 기능
 │       ├── config/                     # 앱 설정
 │       │   ├── api_config.dart         # API 엔드포인트
+│       │   ├── app_routes.dart         # 라우트 설정
 │       │   └── oauth_config.dart       # OAuth 설정
 │       ├── utils/                      # 유틸리티
 │       │   ├── logger.dart
-│       │   └── dio_interceptors.dart
+│       │   ├── dio_interceptors.dart
+│       │   └── emotion_classifier.dart # 감정 분류 유틸
 │       └── services/                   # 서비스 (도메인별 분리)
-│           └── auth/                   # 인증 서비스
+│           ├── auth/                   # 인증 서비스
+│           ├── chat/                   # 채팅 서비스
+│           └── navigation/             # 네비게이션 서비스
 │
 ├── DESIGN_GUIDE.md                     
 └── FRONTEND_GUIDE.md                   
@@ -194,6 +205,11 @@ frontend/
 - ✅ VoiceWaveform - 음성 녹음 파동 애니메이션
 - ✅ CircularRipple - 캐릭터 원형 파동 효과
 - ✅ MoreMenuSheet - 더보기 메뉴 바텀시트
+- ✅ SlideToActionButton - 슬라이드 액션 버튼
+
+** 캐릭터 **:
+- ✅ EmotionCharacter - 정적 감정 캐릭터 (PNG, 17개)
+- ✅ AnimatedCharacter - 애니메이션 감정 캐릭터 (Lottie, relief 4가지 감정)
 
 ### 빠른 시작
 
@@ -210,6 +226,7 @@ import 'package:frontend/ui/app_ui.dart';
 
 #### 2. 화면 구성
 
+**기본 화면:**
 ```dart
 class NewScreen extends StatelessWidget {
   @override
@@ -228,6 +245,18 @@ class NewScreen extends StatelessWidget {
     );
   }
 }
+```
+
+**애니메이션 캐릭터 사용:**
+```dart
+// 봄이 화면에서 감정 캐릭터 애니메이션
+AnimatedCharacter(
+  characterId: 'relief',
+  emotion: 'happiness',  // 'happiness', 'sedness', 'anger', 'fear'
+  size: 350,
+  repeat: true,
+  animate: true,
+)
 ```
 
 #### 3. 디자인 토큰 사용
@@ -1283,6 +1312,6 @@ flutter run
 
 ---
 
-**마지막 업데이트**: 2025-01-15
+**마지막 업데이트**: 2025-12-08
 
 **문의**: 개발팀 채널
