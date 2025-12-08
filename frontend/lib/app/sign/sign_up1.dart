@@ -48,7 +48,7 @@ class _SignUp1ScreenState extends State<SignUp1Screen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const SizedBox(height: 40),
+              const SizedBox(height: 30),
 
               // 타이틀
               Text(
