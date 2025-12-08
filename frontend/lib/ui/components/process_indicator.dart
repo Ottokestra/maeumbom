@@ -19,9 +19,6 @@ enum ProcessStep {
 }
 
 /// 진행 상태 표시 위젯
-///
-/// 현재 단일 상태만을 아이콘으로 크게 표시하며,
-/// 분석/입력 단계에서 애니메이션 효과를 제공합니다.
 class ProcessIndicator extends StatelessWidget {
   final ProcessMode mode;
   final ProcessStep currentStep;
@@ -43,7 +40,7 @@ class ProcessIndicator extends StatelessWidget {
     // 대기 상태는 아이콘 대신 텍스트 표시
     if (currentStep == ProcessStep.standby) {
       return Container(
-        height: 72, 
+        height: 64, 
         alignment: Alignment.center,
         child: Text(
           '봄이와 대화해보세요',
@@ -84,10 +81,9 @@ class ProcessIndicator extends StatelessWidget {
         content = const _TypingIndicator();
         break;
       case ProcessStep.completion:
-        // 완료 -> 체크 아이콘 (크기 증가 요청: 56.0)
         content = SvgPicture.asset(
           'assets/images/icons/icon-simple-check.svg',
-          width: 56, // Size increased from 40 to 56
+          width: 56,
           height: 56,
           colorFilter: ColorFilter.mode(iconColor, BlendMode.srcIn),
         );
@@ -97,7 +93,6 @@ class ProcessIndicator extends StatelessWidget {
         break;
     }
 
-    // 활성 상태 (준비, 입력, 분석, 완료) - 크고 명확한 컨테이너
     return AnimatedSwitcher(
       duration: const Duration(milliseconds: 300),
       transitionBuilder: (Widget child, Animation<double> animation) {
