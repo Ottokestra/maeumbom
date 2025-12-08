@@ -101,17 +101,29 @@ class AuthNotifier extends StateNotifier<AsyncValue<User?>> {
   }
 
   /// Check if user is already authenticated on app start
+  /// Automatically refreshes token if expired
   Future<void> _checkAuthStatus() async {
     try {
       final isAuth = await _authService.isAuthenticated();
       if (isAuth) {
+        // getCurrentUser() will automatically refresh token if expired
         final user = await _authService.getCurrentUser();
-        state = AsyncValue.data(user);
+        
+        if (user != null) {
+          state = AsyncValue.data(user);
+        } else {
+          // Token refresh failed or user not found
+          // Clear state and require login
+          state = const AsyncValue.data(null);
+        }
       } else {
+        // No tokens stored
         state = const AsyncValue.data(null);
       }
-    } catch (e, stack) {
-      state = AsyncValue.error(e, stack);
+    } catch (e) {
+      // Log error but don't show error state to user
+      // Just set to null (not logged in)
+      state = const AsyncValue.data(null);
     }
   }
 

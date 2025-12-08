@@ -176,17 +176,55 @@ class AuthService {
   }
 
   /// Get current user
+  /// Automatically refreshes access token if expired (401 error)
   Future<User?> getCurrentUser() async {
     try {
       final accessToken = await _tokenStorage.getAccessToken();
 
       if (accessToken == null) {
+        appLogger.d('액세스 토큰이 없습니다.');
         return null;
       }
 
-      return await _repository.getCurrentUser(accessToken);
+      try {
+        return await _repository.getCurrentUser(accessToken);
+      } catch (e) {
+        // Check if error is 401 Unauthorized (token expired)
+        final errorMessage = e.toString().toLowerCase();
+        if (errorMessage.contains('unauthorized') || 
+            errorMessage.contains('401') ||
+            errorMessage.contains('인증이 필요')) {
+          appLogger.w('액세스 토큰이 만료되었습니다. 리프레시 토큰으로 갱신 시도...');
+          
+          try {
+            // Try to refresh token
+            await refreshToken();
+            
+            // Retry with new access token
+            final newAccessToken = await _tokenStorage.getAccessToken();
+            if (newAccessToken != null) {
+              appLogger.i('토큰 갱신 성공. 사용자 정보 재조회...');
+              return await _repository.getCurrentUser(newAccessToken);
+            } else {
+              appLogger.w('토큰 갱신 후에도 액세스 토큰을 가져올 수 없습니다.');
+              return null;
+            }
+          } catch (refreshError) {
+            // Refresh token also expired or failed
+            appLogger.e('토큰 갱신 실패. 리프레시 토큰이 만료되었거나 유효하지 않습니다.', error: refreshError);
+            
+            // Clear tokens since refresh failed
+            await _tokenStorage.clearTokens();
+            return null;
+          }
+        } else {
+          // Other errors (network, server error, etc.)
+          appLogger.e('사용자 정보 조회 실패', error: e);
+          return null;
+        }
+      }
     } catch (e) {
-      appLogger.e('사용자 정보 조회 실패', error: e);
+      appLogger.e('사용자 정보 조회 중 예상치 못한 오류 발생', error: e);
       return null;
     }
   }
