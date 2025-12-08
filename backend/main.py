@@ -62,6 +62,7 @@ from app.routine_survey.routers import router as routine_survey_router
 from app.menopause_survey.router import router as menopause_survey_router
 from app.reports.router import router as reports_router
 from app.reports.emotion.router import router as emotion_report_router
+from app.reports.emotion.chat_router import router as report_chat_router
 
 # 루틴 설문 기본 seed
 from app.routine_survey.models import seed_default_mr_survey
@@ -159,6 +160,7 @@ except Exception as e:
 
 app.include_router(routine_survey_router, prefix="/api", tags=["routine-survey"])
 app.include_router(emotion_report_router)
+app.include_router(report_chat_router)
 app.include_router(reports_router)
 app.include_router(menopause_survey_router, prefix="/api", tags=["menopause-survey"])
 
