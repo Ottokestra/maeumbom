@@ -59,9 +59,9 @@ from engine.routine_recommend.models.schemas import (
 # 날씨 / 루틴 설문 라우터
 from app.weather.routes import router as weather_router
 from app.routine_survey.routers import router as routine_survey_router
-from app.routes.emotion_report import router as emotion_report_router
 from app.menopause_survey.router import router as menopause_survey_router
 from app.reports.router import router as reports_router
+from app.reports.emotion.router import router as emotion_report_router
 
 # 루틴 설문 기본 seed
 from app.routine_survey.models import seed_default_mr_survey
