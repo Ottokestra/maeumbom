@@ -8,6 +8,7 @@ import 'app/common/login_screen.dart';
 import 'app/home/home_screen.dart';
 import 'core/config/oauth_config.dart';
 import 'package:kakao_flutter_sdk_common/kakao_flutter_sdk_common.dart';
+
 // void main() {
 //   // Kakao SDK 초기화
 //   KakaoSdk.init(
@@ -36,6 +37,7 @@ Future<void> main() async {
     ),
   );
 }
+
 class MaeumBomApp extends ConsumerWidget {
   const MaeumBomApp({super.key});
   @override
@@ -44,7 +46,7 @@ class MaeumBomApp extends ConsumerWidget {
       title: 'Maeumbom',
       theme: AppTheme.light,
       darkTheme: AppTheme.dark,
-      initialRoute: '/example',
+      initialRoute: '/splash',
       onGenerateRoute: (settings) {
         // RouteGuard를 사용하여 인증 체크
         final routeGuard = ref.read(routeGuardProvider);
