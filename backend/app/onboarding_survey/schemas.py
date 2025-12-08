@@ -21,10 +21,10 @@ class OnboardingProfileSnapshot(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
     # 클라이언트에서는 camelCase 로 사용하므로 alias 를 지정한다.
-    profile_id: int = Field(default=0, alias="profileId")
-    score: float = 0.0
-    level: int = 0
-    progress: float = 0.0
+    profile_id: Optional[int] = Field(default=0, alias="profileId")
+    score: Optional[float] = 0.0
+    level: Optional[int] = 0
+    progress: Optional[float] = 0.0
     # Optional 필드들은 None 을 그대로 내려보내도록 명시한다.
     stage: Optional[str] = None
 
