@@ -16,6 +16,18 @@ router = APIRouter(
 )
 
 
+def _float(value: float | int | None, default: float = 0.0) -> float:
+    """Coerce nullable numeric values into a concrete float for responses."""
+
+    return float(value) if value is not None else default
+
+
+def _int(value: int | None, default: int = 0) -> int:
+    """Coerce nullable integer values into a concrete int for responses."""
+
+    return int(value) if value is not None else default
+
+
 @router.post("/submit", response_model=OnboardingSurveySubmitResponse)
 async def submit_onboarding_survey(
     payload: OnboardingSurveySubmitRequest,
@@ -48,10 +60,10 @@ async def submit_onboarding_survey(
         status="OK",
         message="Onboarding survey received (stub).",
         profile=OnboardingProfileSnapshot(
-            profile_id=dummy_profile_id or 0,
-            score=0.0,
-            level=0,
-            progress=progress,
+            profile_id=_int(dummy_profile_id, default=0),
+            score=_float(0.0),
+            level=_int(0),
+            progress=_float(progress),
             stage="onboarding-complete",
         ),
     )
