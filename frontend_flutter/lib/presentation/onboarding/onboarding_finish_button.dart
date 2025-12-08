@@ -29,24 +29,24 @@ class OnboardingFinishButton extends StatelessWidget {
       onPressed: () async {
         try {
           await repository.submit(request);
-          onNavigateHome();
         } catch (e, st) {
-          if (kOnboardingStubMode) {
-            debugPrint('Onboarding submit error (stub mode): $e');
-            debugPrint('$st');
-            onNavigateHome();
+          debugPrint('submitOnboardingSurvey error: $e\n$st');
+
+          if (onError != null) {
+            onError!(e);
           } else {
-            if (onError != null) {
-              onError!(e);
-              return;
-            }
+            final message = kOnboardingStubMode
+                ? '테스트 모드: 오류가 발생했지만 계속 진행합니다.'
+                : '오류: $e';
 
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('프로필을 찾을 수 없습니다.'),
+              SnackBar(
+                content: Text(message),
               ),
             );
           }
+        } finally {
+          onNavigateHome();
         }
       },
       child: Text(label ?? '시작하기'),
