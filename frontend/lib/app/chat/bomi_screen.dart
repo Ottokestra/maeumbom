@@ -221,6 +221,7 @@ class _BomiContentState extends ConsumerState<BomiContent> {
                   AnimatedCharacter(
                     characterId: 'relief',
                     emotion: 'sedness', // happiness, sedness, anger, fear
+
                     size: 350,
                     repeat: true,
                     animate: true,

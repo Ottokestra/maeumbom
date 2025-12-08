@@ -18,9 +18,8 @@ class TokenStorageService {
         _storage.write(key: _accessTokenKey, value: tokens.accessToken),
         _storage.write(key: _refreshTokenKey, value: tokens.refreshToken),
       ]);
-      appLogger.i('Tokens saved successfully');
     } catch (e) {
-      appLogger.e('Failed to save tokens', error: e);
+      appLogger.e('토큰 저장 실패', error: e);
       rethrow;
     }
   }
@@ -30,7 +29,7 @@ class TokenStorageService {
     try {
       return await _storage.read(key: _accessTokenKey);
     } catch (e) {
-      appLogger.e('Failed to read access token', error: e);
+      appLogger.e('액세스 토큰 조회 실패', error: e);
       return null;
     }
   }
@@ -40,7 +39,7 @@ class TokenStorageService {
     try {
       return await _storage.read(key: _refreshTokenKey);
     } catch (e) {
-      appLogger.e('Failed to read refresh token', error: e);
+      appLogger.e('리프레시 토큰 조회 실패', error: e);
       return null;
     }
   }
@@ -59,7 +58,7 @@ class TokenStorageService {
       }
       return null;
     } catch (e) {
-      appLogger.e('Failed to read tokens', error: e);
+      appLogger.e('토큰 조회 실패', error: e);
       return null;
     }
   }
@@ -71,9 +70,8 @@ class TokenStorageService {
         _storage.delete(key: _accessTokenKey),
         _storage.delete(key: _refreshTokenKey),
       ]);
-      appLogger.i('Tokens cleared successfully');
     } catch (e) {
-      appLogger.e('Failed to clear tokens', error: e);
+      appLogger.e('토큰 삭제 실패', error: e);
       rethrow;
     }
   }

@@ -16,13 +16,15 @@ class AuthApiClient {
   }
 
   void _setupInterceptors() {
-    _dio.interceptors.add(
-      LogInterceptor(
-        requestBody: true,
-        responseBody: true,
-        logPrint: (obj) => appLogger.d(obj),
-      ),
-    );
+    // HTTP 로그는 에러 발생시에만 출력하도록 비활성화
+    // 필요시 주석 해제하여 디버깅 가능
+    // _dio.interceptors.add(
+    //   LogInterceptor(
+    //     requestBody: true,
+    //     responseBody: true,
+    //     logPrint: (obj) => appLogger.d(obj),
+    //   ),
+    // );
   }
 
   /// Login with Google OAuth

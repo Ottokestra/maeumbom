@@ -28,7 +28,7 @@ class AuthService {
   /// Login with Google OAuth
   Future<User> loginWithGoogle() async {
     try {
-      appLogger.i('Starting Google login flow (DUMMY MODE)...');
+      appLogger.i('구글 로그인 요청 (DUMMY MODE)');
 
       // 더미 모드: 실제 Google OAuth 호출 없이 더미 데이터 생성
       // TODO: 개발 완료 후 실제 OAuth 플로우로 교체
@@ -47,13 +47,13 @@ class AuthService {
         createdAt: DateTime.now(),
       );
 
-      // Step 3: Store tokens securely
+      // Store tokens securely
       await _tokenStorage.saveTokens(dummyTokens);
 
-      appLogger.i('Google login completed (DUMMY): ${dummyUser.email}');
+      appLogger.i('구글 로그인 완료: ${dummyUser.email}');
       return dummyUser;
     } catch (e) {
-      appLogger.e('Google login failed', error: e);
+      appLogger.e('구글 로그인 실패', error: e);
       // Clean up on failure
       await _googleOAuth.signOut();
       rethrow;
@@ -67,11 +67,10 @@ class AuthService {
     }
 
     try {
-      appLogger.i('Starting Kakao login flow...');
+      appLogger.i('카카오 로그인 요청');
 
       // Step 1: Get access token from Kakao SDK
       final accessToken = await _kakaoOAuth!.signIn();
-      appLogger.i('Kakao SDK login successful, exchanging token...');
 
       // Step 2: Send access token to backend for verification and user creation
       // 백엔드에서 이 토큰으로 카카오 사용자 정보를 가져와서 처리
@@ -79,27 +78,25 @@ class AuthService {
         authCode: accessToken, // accessToken을 authCode 파라미터로 전달
         redirectUri: OAuthConfig.kakaoRedirectUri,
       );
-      appLogger.i('Token exchange successful');
 
       // Step 3: Store tokens securely
       await _tokenStorage.saveTokens(tokens);
 
-      appLogger.i('Kakao login completed: ${user.email}');
+      appLogger.i('카카오 로그인 완료: ${user.email}');
       return user;
     } catch (e) {
       // 상세한 에러 로깅 및 사용자 친화적 메시지 제공
       final errorMessage = e.toString();
-      
-      if (errorMessage.contains('로그인이 취소되었습니다') || 
+
+      if (errorMessage.contains('로그인이 취소되었습니다') ||
           errorMessage.contains('User canceled') ||
           errorMessage.contains('CANCELED')) {
-        appLogger.i('Kakao login canceled by user');
         throw Exception('로그인이 취소되었습니다.');
-      } else if (errorMessage.contains('network') || errorMessage.contains('네트워크')) {
-        appLogger.w('Kakao login network error');
+      } else if (errorMessage.contains('network') ||
+          errorMessage.contains('네트워크')) {
         throw Exception('네트워크 연결을 확인하고 다시 시도해주세요.');
       } else {
-        appLogger.e('Kakao login failed', error: e);
+        appLogger.e('카카오 로그인 실패', error: e);
         throw Exception('카카오 로그인에 실패했습니다. 잠시 후 다시 시도해주세요.');
       }
     }
@@ -112,11 +109,10 @@ class AuthService {
     }
 
     try {
-      appLogger.i('Starting Naver login flow...');
+      appLogger.i('네이버 로그인 요청');
 
       // Step 1: Get authorization code and state from Naver
       final (authCode, state) = await _naverOAuth!.signIn();
-      appLogger.i('OAuth authorization successful, exchanging for tokens...');
 
       // Step 2: Exchange auth code for tokens via backend
       final (tokens, user) = await _repository.loginWithNaver(
@@ -124,33 +120,32 @@ class AuthService {
         redirectUri: OAuthConfig.naverRedirectUri,
         state: state,
       );
-      appLogger.i('Token exchange successful');
 
       // Step 3: Store tokens securely
       await _tokenStorage.saveTokens(tokens);
 
-      appLogger.i('Naver login completed: ${user.email}');
+      appLogger.i('네이버 로그인 완료: ${user.email}');
       return user;
     } catch (e) {
       // 상세한 에러 로깅 및 사용자 친화적 메시지 제공
       final errorMessage = e.toString();
-      
-      if (errorMessage.contains('로그인이 취소되었습니다') || 
+
+      if (errorMessage.contains('로그인이 취소되었습니다') ||
           errorMessage.contains('User canceled') ||
           errorMessage.contains('CANCELED')) {
-        appLogger.i('Naver login canceled by user');
         throw Exception('로그인이 취소되었습니다.');
-      } else if (errorMessage.contains('timeout') || errorMessage.contains('시간이 초과')) {
-        appLogger.w('Naver login timeout');
+      } else if (errorMessage.contains('timeout') ||
+          errorMessage.contains('시간이 초과')) {
         throw Exception('로그인 시간이 초과되었습니다. 다시 시도해주세요.');
-      } else if (errorMessage.contains('network') || errorMessage.contains('네트워크')) {
-        appLogger.w('Naver login network error');
+      } else if (errorMessage.contains('network') ||
+          errorMessage.contains('네트워크')) {
         throw Exception('네트워크 연결을 확인하고 다시 시도해주세요.');
-      } else if (errorMessage.contains('State mismatch') || errorMessage.contains('CSRF')) {
-        appLogger.e('Naver login CSRF attack detected');
+      } else if (errorMessage.contains('State mismatch') ||
+          errorMessage.contains('CSRF')) {
+        appLogger.e('네이버 로그인 보안 오류 (CSRF)');
         throw Exception('보안 오류가 발생했습니다. 다시 시도해주세요.');
       } else {
-        appLogger.e('Naver login failed', error: e);
+        appLogger.e('네이버 로그인 실패', error: e);
         throw Exception('네이버 로그인에 실패했습니다. 잠시 후 다시 시도해주세요.');
       }
     }
@@ -173,10 +168,9 @@ class AuthService {
       // Store new tokens
       await _tokenStorage.saveTokens(newTokens);
 
-      appLogger.i('Token refreshed successfully');
       return newTokens;
     } catch (e) {
-      appLogger.e('Token refresh failed', error: e);
+      appLogger.e('토큰 갱신 실패', error: e);
       rethrow;
     }
   }
@@ -192,7 +186,7 @@ class AuthService {
 
       return await _repository.getCurrentUser(accessToken);
     } catch (e) {
-      appLogger.e('Get current user failed', error: e);
+      appLogger.e('사용자 정보 조회 실패', error: e);
       return null;
     }
   }
@@ -200,6 +194,8 @@ class AuthService {
   /// Logout
   Future<void> logout() async {
     try {
+      appLogger.i('로그아웃 요청');
+
       final accessToken = await _tokenStorage.getAccessToken();
 
       if (accessToken != null) {
@@ -213,9 +209,9 @@ class AuthService {
       // Sign out from Google
       await _googleOAuth.signOut();
 
-      appLogger.i('Logout successful');
+      appLogger.i('로그아웃 완료');
     } catch (e) {
-      appLogger.e('Logout failed', error: e);
+      appLogger.e('로그아웃 실패', error: e);
       // Still clear tokens even if backend call fails
       await _tokenStorage.clearTokens();
       await _googleOAuth.signOut();
