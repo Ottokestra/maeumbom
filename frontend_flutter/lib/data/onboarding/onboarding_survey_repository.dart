@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 
 import '../../config/dev_flags.dart';
 import 'onboarding_survey_submit_request.dart';
+import 'onboarding_survey_submit_response.dart';
 
 /// Handles submission of onboarding survey answers to the backend.
 class OnboardingSurveyRepository {
@@ -21,7 +22,7 @@ class OnboardingSurveyRepository {
   ///
   /// When [kOnboardingStubMode] is enabled, any failures are swallowed and a
   /// stub response is returned so the onboarding flow can proceed.
-  Future<Map<String, dynamic>> submit(
+  Future<OnboardingSurveySubmitResponse> submit(
     OnboardingSurveySubmitRequest request,
   ) async {
     final uri = Uri.parse('$_baseUrl/api/onboarding-survey/submit');
@@ -36,8 +37,10 @@ class OnboardingSurveyRepository {
 
       if (httpResponse.statusCode >= 200 && httpResponse.statusCode < 300) {
         return body.isEmpty
-            ? const {}
-            : (jsonDecode(body) as Map<String, dynamic>);
+            ? OnboardingSurveySubmitResponse.empty
+            : OnboardingSurveySubmitResponse.fromJson(
+                jsonDecode(body) as Map<String, dynamic>,
+              );
       }
 
       if (kOnboardingStubMode) {
@@ -45,7 +48,9 @@ class OnboardingSurveyRepository {
           'Onboarding submit failed (stub mode, ignoring): '
           '${httpResponse.statusCode} $body',
         );
-        return _dummyResponse(request);
+        return OnboardingSurveySubmitResponse.fromJson(
+          _dummyResponse(request),
+        );
       }
 
       throw HttpException(
@@ -56,7 +61,9 @@ class OnboardingSurveyRepository {
       if (kOnboardingStubMode) {
         debugPrint('Onboarding submit error (stub mode, ignoring): $e');
         debugPrint('$st');
-        return _dummyResponse(request);
+        return OnboardingSurveySubmitResponse.fromJson(
+          _dummyResponse(request),
+        );
       }
 
       rethrow;
@@ -66,6 +73,8 @@ class OnboardingSurveyRepository {
   Map<String, dynamic> _dummyResponse(OnboardingSurveySubmitRequest request) {
     return {
       'status': 'stubbed-success',
+      'message': 'Onboarding survey submission stubbed.',
+      'profile_id': null,
       'submittedAt': DateTime.now().toUtc().toIso8601String(),
       'payload': request.toJson(),
     };
