@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:frontend/ui/tokens/app_tokens.dart';
+import '../tokens/app_tokens.dart';
+import '../tokens/bubbles.dart';
 
 /// 봄이의 대화 말풍선 위젯
 ///
@@ -13,6 +14,7 @@ import 'package:frontend/ui/tokens/app_tokens.dart';
 /// EmotionBubble(
 ///   message: '오늘 하루 어떠셨나요?',
 ///   enableTypingAnimation: true,
+///   bgGreen: true, // 민트색 배경, 회색 테두리 적용
 ///   onTap: () => _handleTap(),
 /// )
 /// ```
@@ -29,12 +31,17 @@ class EmotionBubble extends StatefulWidget {
   /// 타이핑 애니메이션 속도 (밀리초, 기본값: 50ms)
   final int typingSpeed;
 
+  /// 배경색 Green(Mint) 모드 여부 (기본값: false - Pink)
+  /// true일 경우 Mint 배경 + LightGray 테두리 사용
+  final bool bgGreen;
+
   const EmotionBubble({
     super.key,
     required this.message,
     this.onTap,
     this.enableTypingAnimation = false,
     this.typingSpeed = 50,
+    this.bgGreen = false,
   });
 
   @override
@@ -132,6 +139,13 @@ class _EmotionBubbleState extends State<EmotionBubble> {
     final bubbleWidth = screenWidth - (AppSpacing.md * 2); // 좌우 여백 제외
     const bubbleHeight = 120.0; // 기본 높이 설정 (3줄 크기)
 
+    // 색상 결정 로직
+    final Color bgColor = widget.bgGreen ? AppColors.bgSoftMint : BubbleTokens.emotionBg;
+    final Color borderColor = widget.bgGreen ? AppColors.borderLightGray : BubbleTokens.emotionBorder;
+    
+    // 삼각형 색상: bgGreen이면 natureGreen, 아니면 기본(userBg)
+    final Color triangleColor = widget.bgGreen ? AppColors.natureGreen : BubbleTokens.userBg;
+
     return GestureDetector(
       onTap: widget.onTap,
       child: Center(
@@ -139,9 +153,9 @@ class _EmotionBubbleState extends State<EmotionBubble> {
           width: bubbleWidth, // 명확한 너비 지정 (화면 전체 - 좌우 여백)
           height: bubbleHeight, // 고정 높이 (3줄 크기)
           decoration: BoxDecoration(
-            color: BubbleTokens.emotionBg, // 연분홍 배경 유지 (#F4E6E4)
+            color: bgColor,
             border: Border.all(
-              color: BubbleTokens.emotionBorder, // 테두리 유지 (#F0EAE8)
+              color: borderColor,
               width: BubbleTokens.borderWidth,
             ),
             borderRadius:
@@ -179,7 +193,7 @@ class _EmotionBubbleState extends State<EmotionBubble> {
                       child: CustomPaint(
                         size: const Size(20, 10),
                         painter: _TrianglePainter(
-                          color: BubbleTokens.userBg,
+                          color: triangleColor,
                         ),
                       ),
                     ),
