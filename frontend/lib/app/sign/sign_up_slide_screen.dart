@@ -36,8 +36,8 @@ class _SignUpSlideScreenState extends State<SignUpSlideScreen> {
         curve: Curves.easeInOut,
       );
     } else {
-      // 마지막 페이지에서는 완료 처리
-      Navigator.pushReplacementNamed(context, '/');
+      // 마지막 페이지에서는 완료 처리 (sign_up5에서 API 호출)
+      // Navigator.pushReplacementNamed(context, '/');
     }
   }
 

@@ -33,6 +33,12 @@ class ApiConfig {
   static String get chatWebSocketUrl =>
       baseUrl.replaceFirst('http', 'ws') + '/agent/stream';
 
+  // Onboarding Survey Endpoints
+  static const String onboardingSurveyBase = '/api/onboarding-survey';
+  static const String onboardingSurveySubmit = '$onboardingSurveyBase/submit';
+  static const String onboardingSurveyMe = '$onboardingSurveyBase/me';
+  static const String onboardingSurveyStatus = '$onboardingSurveyBase/status';
+
   // Timeout Configuration
   static const Duration connectTimeout = Duration(seconds: 30);
   static const Duration receiveTimeout = Duration(seconds: 30);
