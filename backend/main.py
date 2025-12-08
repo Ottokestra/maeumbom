@@ -1,19 +1,21 @@
 """팀 프로젝트 메인 FastAPI 애플리케이션"""
 
+import json
 import os
 import sys
+from io import BytesIO
 from pathlib import Path
 from typing import List, Optional
 
 import numpy as np
 from fastapi import (
     FastAPI,
+    HTTPException,
     WebSocket,
     WebSocketDisconnect,
-    HTTPException,
 )
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, ConfigDict
 
 # ============================================================
@@ -853,6 +855,7 @@ async def tts_endpoint(payload: TTSRequest):
         raise HTTPException(status_code=400, detail="text is required")
 
     emotion_label = payload.emotion_label or payload.tone
+    tone = emotion_label or "neutral"
     engine_name = payload.engine
 
     tts_engine = get_tts_engine(engine_name)
@@ -870,7 +873,8 @@ async def tts_endpoint(payload: TTSRequest):
         _traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"TTS error: {e}")
 
-    filename = f"tts_{tone or 'neutral'}.wav"
+    audio_bytes = wav_path.read_bytes()
+    filename = f"tts_{tone}.wav"
     return StreamingResponse(
         BytesIO(audio_bytes),
         media_type="audio/wav",
