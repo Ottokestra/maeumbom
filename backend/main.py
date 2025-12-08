@@ -349,7 +349,7 @@ async def agent_text_v2_endpoint(
             # Create unique session_id: user_{user_id}_{timestamp}
             timestamp = int(time.time() * 1000)  # milliseconds
             session_id = f"user_{user_id}_{timestamp}"
-            logger.info(f"🔐 Generated new session_id: {session_id}")
+            print(f"🔐 Generated new session_id: {session_id}")
 
         # STT Quality 전처리
         if request.stt_quality == "no_speech":

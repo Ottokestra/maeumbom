@@ -357,7 +357,7 @@ def generate_llm_response(
     reply_text = response.choices[0].message.content
     
     # [DEBUG] Log GPT-4o-mini raw response (before any text processing/splitting)
-    logger.info(f"🤖 [GPT-4o-mini Raw Response]\n{reply_text}")
+    logger.warning(f"🤖 [GPT-4o-mini Raw Response]\n{reply_text}")
     
     return reply_text
 
