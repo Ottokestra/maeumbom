@@ -3,6 +3,7 @@ import '../../../core/config/api_config.dart';
 import '../../../core/utils/logger.dart';
 import '../../dtos/onboarding/onboarding_survey_request.dart';
 import '../../dtos/onboarding/onboarding_survey_response.dart';
+import '../../dtos/onboarding/onboarding_survey_status_response.dart';
 
 /// Onboarding Survey API Client
 class OnboardingSurveyApiClient {
@@ -58,6 +59,24 @@ class OnboardingSurveyApiClient {
       return OnboardingSurveyResponse.fromJson(response.data);
     } on DioException catch (e) {
       appLogger.e('Failed to get profile', error: e);
+      throw _handleError(e);
+    }
+  }
+
+  /// Get profile status (check if user has completed onboarding survey)
+  Future<OnboardingSurveyStatusResponse> getProfileStatus(String accessToken) async {
+    try {
+      final response = await _dio.get(
+        ApiConfig.onboardingSurveyStatus,
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer $accessToken',
+          },
+        ),
+      );
+      return OnboardingSurveyStatusResponse.fromJson(response.data);
+    } on DioException catch (e) {
+      appLogger.e('Failed to get profile status', error: e);
       throw _handleError(e);
     }
   }
