@@ -1,16 +1,6 @@
-from datetime import datetime
-from typing import List, Literal, Optional
+from typing import List, Optional
 
 from pydantic import BaseModel
-
-
-class ReportChatMessage(BaseModel):
-    id: str
-    role: Literal["user", "assistant"]
-    character_id: Optional[str] = None  # "worried-peach", "happy-star" 등
-    character_label: Optional[str] = None  # '걱정이 복숭아' 처럼 사용자에게 보여줄 이름
-    text: str
-    created_at: datetime
 
 
 class StartChatRequest(BaseModel):
@@ -19,6 +9,14 @@ class StartChatRequest(BaseModel):
 
 class SendMessageRequest(BaseModel):
     text: str
+
+
+class ReportChatMessage(BaseModel):
+    id: str
+    role: str  # "assistant" | "user"
+    text: str
+    character_id: Optional[str] = None
+    character_label: Optional[str] = None
 
 
 class ReportChatSession(BaseModel):

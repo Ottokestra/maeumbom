@@ -9,6 +9,7 @@ import {
 import SignupSurveyPage from "./pages/SignupSurveyPage";
 import EmotionReportPage from "./pages/EmotionReportPage";
 import ChatPage from "./pages/ChatPage";
+import ReportChatPage from "./pages/ReportChatPage";
 import EmotionInput from "./components/EmotionInput";
 import EmotionResult from "./components/EmotionResult";
 import EmotionChart from "./components/EmotionChart";
@@ -1069,6 +1070,7 @@ function App() {
         />
         <Route path="/report" element={<EmotionReportPage />} />
         <Route path="/reports/emotion" element={<EmotionReportPage />} />
+        <Route path="/reports/emotion/chat" element={<ReportChatPage />} />
         <Route
           path="/emotion-report"
           element={<Navigate to="/report" replace />}
