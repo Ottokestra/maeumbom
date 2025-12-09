@@ -92,20 +92,25 @@ class BottomButtonBar extends StatelessWidget {
           if (secondaryText != null) ...[
             Expanded(
               flex: 1,
-              child: Container(
-                height: double.infinity,
-                color: const Color(0xFF6B6B6B), // Cancel 영역 배경
-                padding: EdgeInsets.only(bottom: bottomPadding),
-                child: Center(
-                  child: SizedBox(
-                    height: 64,
+              child: Material(
+                color: const Color(0xFF6B6B6B),
+                child: InkWell(
+                  onTap: onSecondaryTap,
+                  child: Container(
+                    height: double.infinity,
+                    padding: EdgeInsets.only(bottom: bottomPadding),
                     child: Center(
-                      child: Text(
-                        secondaryText!,
-                        textAlign: TextAlign.center,
-                        style: AppTypography.bodyLarge.copyWith(
-                          color: AppColors.textWhite,
-                          fontWeight: FontWeight.w700,
+                      child: SizedBox(
+                        height: 64,
+                        child: Center(
+                          child: Text(
+                            secondaryText!,
+                            textAlign: TextAlign.center,
+                            style: AppTypography.bodyLarge.copyWith(
+                              color: AppColors.textWhite,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
                         ),
                       ),
                     ),
@@ -116,20 +121,25 @@ class BottomButtonBar extends StatelessWidget {
           ],
           Expanded(
             flex: 2,
-            child: Container(
-              height: double.infinity,
+            child: Material(
               color: primaryButtonColor,
-              padding: EdgeInsets.only(bottom: bottomPadding),
-              child: Center(
-                child: SizedBox(
-                  height: 64,
+              child: InkWell(
+                onTap: onPrimaryTap,
+                child: Container(
+                  height: double.infinity,
+                  padding: EdgeInsets.only(bottom: bottomPadding),
                   child: Center(
-                    child: Text(
-                      primaryText,
-                      textAlign: TextAlign.center,
-                      style: AppTypography.bodyLarge.copyWith(
-                        color: AppColors.textWhite,
-                        fontWeight: FontWeight.w700,
+                    child: SizedBox(
+                      height: 64,
+                      child: Center(
+                        child: Text(
+                          primaryText,
+                          textAlign: TextAlign.center,
+                          style: AppTypography.bodyLarge.copyWith(
+                            color: AppColors.textWhite,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
                       ),
                     ),
                   ),

@@ -150,6 +150,38 @@ class ChatNotifier extends StateNotifier<ChatState> {
     }
   }
 
+  /// Load specific session history
+  Future<void> loadSession(String sessionId) async {
+    state = state.copyWith(
+      isLoading: true,
+      messages: [],
+      sessionId: sessionId,
+      error: null,
+    );
+
+    try {
+      final messages = await _chatService.getSessionHistory(sessionId);
+      state = state.copyWith(
+        isLoading: false,
+        messages: messages,
+      );
+    } catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        error: e.toString(),
+      );
+    }
+  }
+
+  /// Reset session to default
+  void resetSession() {
+    state = state.copyWith(
+      sessionId: 'user_${_userId}_default',
+      messages: [],
+      error: null,
+    );
+  }
+
   /// Start audio recording
   Future<void> startAudioRecording() async {
     try {
