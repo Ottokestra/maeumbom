@@ -40,7 +40,7 @@ class HomeMenuGrid extends ConsumerWidget {
         crossAxisCount: 2,
         crossAxisSpacing: AppSpacing.sm,
         mainAxisSpacing: AppSpacing.sm,
-        childAspectRatio: 1.2, // 정사각형 비율로 변경
+        childAspectRatio: 1.0, // 정사각형 비율 (오버플로우 방지를 위해 높이 확보)
       ),
       itemCount: menus.length,
       itemBuilder: (context, index) {

@@ -146,7 +146,37 @@ class _HomeContentState extends ConsumerState<HomeContent> {
                         ),
                       ),
                       const SizedBox(height: AppSpacing.sm),
-                      Container(
+                      // 갱년기 설문 진입 버튼 (가시성 확보)
+                      GestureDetector(
+                        onTap: () => Navigator.pushNamed(context, '/menopause_survey'),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: Colors.white, // 흰색 배경
+                            borderRadius: BorderRadius.circular(20),
+                            boxShadow: [
+                              BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 4, offset:const Offset(0, 2))
+                            ],
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: const [
+                              Text(
+                                '나는 어떤 상태일까?',
+                                style: TextStyle(
+                                  color: AppColors.accentRed, // 빨간 글씨
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              SizedBox(width: 4),
+                              Icon(Icons.arrow_forward_ios, size: 12, color: AppColors.accentRed),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: AppSpacing.md),
+                      Contain(er
                         width: 40, 
                         height: 2, 
                         color: AppColors.pureWhite.withValues(alpha: 0.5)

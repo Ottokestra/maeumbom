@@ -17,12 +17,16 @@ class ConversationTemperatureWidget extends StatelessWidget {
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.center, // Center align
         children: [
           const Icon(Icons.thermostat, color: AppColors.natureGreen),
           const SizedBox(width: AppSpacing.xs),
-          Text(
-            '봄이와의 온도',
-            style: AppTypography.bodySmall.copyWith(color: AppColors.textPrimary),
+          Flexible(
+            child: Text(
+              '봄이와의 온도',
+              style: AppTypography.bodySmall.copyWith(color: AppColors.textPrimary),
+              overflow: TextOverflow.ellipsis,
+            ),
           ),
           const SizedBox(width: AppSpacing.sm),
           Text(
