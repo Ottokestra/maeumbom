@@ -7,12 +7,13 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
 import jwt
 
+from app.config import settings
 from app.db.database import get_db
-from .models import User
+from app.db.models import User
 from .utils import verify_token
 
 # HTTP Bearer token scheme
-security = HTTPBearer()
+security = HTTPBearer(auto_error=False)
 
 
 async def get_current_user(
@@ -37,8 +38,28 @@ async def get_current_user(
     Raises:
         HTTPException 401: If token is invalid or user not found
     """
+    if settings.DEBUG and settings.DISABLE_AUTH_FOR_DEV:
+        dev_user = db.query(User).filter(User.ID == settings.DEV_AUTH_USER_ID).first()
+        if dev_user:
+            return dev_user
+
+        return User(
+            ID=settings.DEV_AUTH_USER_ID,
+            SOCIAL_ID="dev-user",
+            PROVIDER="dev",
+            EMAIL="dev@example.com",
+            NICKNAME="개발자",
+        )
+
+    if not credentials:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail={"detail": "인증이 필요합니다. 다시 로그인해주세요.", "code": "AUTH_REQUIRED"},
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
     token = credentials.credentials
-    
+
     # Verify token
     try:
         payload = verify_token(token, token_type="access")
@@ -46,32 +67,32 @@ async def get_current_user(
     except jwt.ExpiredSignatureError:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Access token has expired",
+            detail={"detail": "인증이 필요합니다. 다시 로그인해주세요.", "code": "AUTH_REQUIRED"},
             headers={"WWW-Authenticate": "Bearer"}
         )
     except jwt.InvalidTokenError:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid access token",
+            detail={"detail": "인증이 필요합니다. 다시 로그인해주세요.", "code": "AUTH_REQUIRED"},
             headers={"WWW-Authenticate": "Bearer"}
         )
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=f"Token verification failed: {str(e)}",
+            detail={"detail": f"인증이 필요합니다. 다시 로그인해주세요.", "code": "AUTH_REQUIRED", "reason": str(e)},
             headers={"WWW-Authenticate": "Bearer"}
         )
-    
+
     # Get user from database
     user = db.query(User).filter(User.ID == user_id).first()
-    
+
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="User not found",
+            detail={"detail": "인증이 필요합니다. 다시 로그인해주세요.", "code": "AUTH_REQUIRED"},
             headers={"WWW-Authenticate": "Bearer"}
         )
-    
+
     return user
 
 
