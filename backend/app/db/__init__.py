@@ -2,19 +2,18 @@
 Database module for centralized DB management
 """
 from .database import Base, get_db, init_db, engine, SessionLocal
-<<<<<<< HEAD
 from .models import (
     User,
     DailyMoodSelection,
     EmotionAnalysis,
     EmotionLog,
+    UserEmotionLog,
     MenopauseSurveyQuestion,
     MenopauseQuestion,
     MenopauseAnswer,
+    HealthLog,
+    UserPatternSetting,
 )
-=======
-from .models import User, DailyMoodSelection, EmotionAnalysis, HealthLog, UserPatternSetting
->>>>>>> dev
 
 __all__ = [
     "Base",
@@ -25,14 +24,12 @@ __all__ = [
     "User",
     "DailyMoodSelection",
     "EmotionAnalysis",
-<<<<<<< HEAD
     "EmotionLog",
+    "UserEmotionLog",
     "MenopauseSurveyQuestion",
     "MenopauseQuestion",
     "MenopauseAnswer",
-=======
     "HealthLog",
     "UserPatternSetting",
->>>>>>> dev
 ]
 
