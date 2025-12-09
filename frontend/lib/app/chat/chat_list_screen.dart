@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../ui/app_ui.dart';
-import '../../core/services/navigation/navigation_service.dart';
 import '../../data/api/chat/chat_api_client.dart';
 import '../../data/dtos/chat/sessions_response.dart';
 import '../../providers/auth_provider.dart';
@@ -65,10 +64,10 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen> {
       bottomBar: BottomMenuBar(
         currentIndex: 1,
         onTap: (index) {
-           final route = AppRoutes.findByTabIndex(index);
-            if (route != null) {
-              Navigator.pushReplacementNamed(context, route.routeName);
-            }
+          final route = AppRoutes.findByTabIndex(index);
+          if (route != null) {
+            Navigator.pushReplacementNamed(context, route.routeName);
+          }
         },
       ),
       body: _buildBody(),
@@ -117,8 +116,10 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen> {
   }
 
   Widget _buildSessionItem(SessionItem session) {
-    final dateStr = '${session.createdAt.year}-${session.createdAt.month.toString().padLeft(2, '0')}-${session.createdAt.day.toString().padLeft(2, '0')}';
-    final timeStr = '${session.createdAt.hour.toString().padLeft(2, '0')}:${session.createdAt.minute.toString().padLeft(2, '0')}';
+    final dateStr =
+        '${session.createdAt.year}-${session.createdAt.month.toString().padLeft(2, '0')}-${session.createdAt.day.toString().padLeft(2, '0')}';
+    final timeStr =
+        '${session.createdAt.hour.toString().padLeft(2, '0')}:${session.createdAt.minute.toString().padLeft(2, '0')}';
 
     return InkWell(
       onTap: () {
@@ -153,7 +154,8 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen> {
                   const SizedBox(height: AppSpacing.xs),
                   Text(
                     '$dateStr $timeStr',
-                    style: AppTypography.caption.copyWith(color: AppColors.textSecondary),
+                    style: AppTypography.caption
+                        .copyWith(color: AppColors.textSecondary),
                   ),
                 ],
               ),
@@ -162,7 +164,8 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen> {
               children: [
                 Text(
                   '${session.messageCount}개',
-                  style: AppTypography.bodySmall.copyWith(color: AppColors.textSecondary),
+                  style: AppTypography.bodySmall
+                      .copyWith(color: AppColors.textSecondary),
                 ),
                 const SizedBox(width: AppSpacing.xs),
                 Icon(

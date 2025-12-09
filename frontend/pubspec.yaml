@@ -108,6 +108,11 @@ flutter:
     - assets/characters/animation/sadness/
     - assets/characters/animation/anger/
     - assets/characters/animation/fear/
+    - assets/characters/animation/basic/
+    - assets/characters/animation/error/
+    - assets/characters/animation/listening/
+    - assets/characters/animation/realization/
+    - assets/characters/animation/thinking/
     - assets/images/icons/
     - assets/images/logo/
 

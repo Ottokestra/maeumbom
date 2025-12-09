@@ -2,10 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../ui/app_ui.dart';
-import 'components/conversation_temperature_widget.dart';
-import 'components/home_menu_grid.dart';
 import '../../providers/daily_mood_provider.dart';
-import '../../providers/auth_provider.dart';
+import '../../core/utils/emotion_classifier.dart';
+import 'components/home_header_section.dart';
+import 'components/conversation_temperature_bar.dart';
+import 'components/home_bottom_menu.dart';
 import 'daily_mood_check_screen.dart';
 
 /// Home Screen - 메인 홈 화면
@@ -14,14 +15,10 @@ class HomeScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // NavigationService 인스턴스화 (필요시 사용)
-    // final navigationService = NavigationService(context, ref);
-
     return AppFrame(
-      topBar: null, // Custom header used instead
-      useSafeArea: false, // Allow background to go behind status bar
-      statusBarStyle: SystemUiOverlayStyle
-          .dark, // Dark status bar icons for white background
+      topBar: null,
+      useSafeArea: false,
+      statusBarStyle: SystemUiOverlayStyle.light, // 흰색 상태 바 아이콘
       body: const HomeContent(),
     );
   }
@@ -45,14 +42,13 @@ class _HomeContentState extends ConsumerState<HomeContent> {
   }
 
   void _checkMoodStatus() {
-    // 현재 화면이 최상위가 아니면 팝업 띄우지 않음 (예: 온보딩 중)
+    // 현재 화면이 최상위가 아니면 팝업 띄우지 않음
     if (ModalRoute.of(context)?.isCurrent != true) return;
 
     final dailyState = ref.read(dailyMoodProvider);
 
     // 아직 기분 체크를 하지 않았다면 팝업 표시
     if (!dailyState.hasChecked) {
-      // 화면 진입 후 약간의 딜레이를 두고 표시 (UX 개선 및 안전성)
       Future.delayed(const Duration(milliseconds: 500), () {
         if (mounted && ModalRoute.of(context)?.isCurrent == true) {
           _showMoodCheckDialog();
@@ -70,23 +66,29 @@ class _HomeContentState extends ConsumerState<HomeContent> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('나중에',
-                style: TextStyle(color: AppColors.textSecondary)),
+            child: Text(
+              '나중에',
+              style: AppTypography.body.copyWith(
+                color: AppColors.textSecondary,
+              ),
+            ),
           ),
           TextButton(
             onPressed: () {
-              Navigator.pop(context); // 팝업 닫기
+              Navigator.pop(context);
               Navigator.push(
                 context,
                 MaterialPageRoute(
                   builder: (context) => const DailyMoodCheckScreen(),
                 ),
-              ).then((_) {
-                // 화면 복귀 후 상태 업데이트가 필요하다면 여기서 처리 (Provider가 관리하므로 자동 반영됨)
-              });
+              );
             },
-            child: const Text('기록하기',
-                style: TextStyle(color: AppColors.accentRed)),
+            child: Text(
+              '기록하기',
+              style: AppTypography.body.copyWith(
+                color: AppColors.accentRed,
+              ),
+            ),
           ),
         ],
       ),
@@ -95,148 +97,74 @@ class _HomeContentState extends ConsumerState<HomeContent> {
 
   @override
   Widget build(BuildContext context) {
-    // AuthProvider를 통해 닉네임 가져오기
-    final user = ref.watch(currentUserProvider);
-    final nickname = user?.nickname ?? '봄이';
+    final dailyState = ref.watch(dailyMoodProvider);
+
+    // 현재 감정 가져오기 (기본값: 기쁨)
+    final currentEmotion = dailyState.selectedEmotion ?? EmotionId.joy;
+
+    // 배경색을 위한 기분 카테고리 가져오기
+    final moodCategory = EmotionClassifier.classify(currentEmotion);
+
+    // 배경색 결정
+    final backgroundColor = _getBackgroundColor(moodCategory);
 
     return Container(
-      color: AppColors.accentRed, // Bottom background: Accent Red
-      child: Stack(
-        children: [
-          // 1. Background Layer (Top Red Section)
-          Container(
-            height: 320, // 높이 조정
-            decoration: const BoxDecoration(
-              color: AppColors.pureWhite, // Top background: White
-              borderRadius: BorderRadius.vertical(
-                bottom: Radius.circular(AppRadius.xxl),
+      color: backgroundColor,
+      child: SafeArea(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // 상단 콘텐츠 영역
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.md,
+                  vertical: AppSpacing.lg,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // 1. 헤더 영역
+                    const HomeHeaderSection(),
+
+                    const SizedBox(height: AppSpacing.xxl),
+
+                    // 2. 캐릭터 (240x240, 중앙)
+                    Center(
+                      child: EmotionCharacter(
+                        id: currentEmotion,
+                        size: 240,
+                      ),
+                    ),
+
+                    const SizedBox(height: AppSpacing.xl),
+
+                    // 3. 대화 온도 막대
+                    ConversationTemperatureBar(
+                      currentMood: moodCategory,
+                    ),
+                  ],
+                ),
               ),
             ),
-          ),
 
-          // 2. Content Layer
-          SafeArea(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppSpacing.md,
-                vertical: AppSpacing.md,
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const SizedBox(height: AppSpacing.sm),
-
-                  // Header (Title & Greeting)
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        nickname + " 님,",
-                        style: AppTypography.h1.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.textPrimary,
-                          fontSize: 32, // 더 큰 폰트 강조
-                        ),
-                      ),
-                      const SizedBox(height: AppSpacing.xs),
-                      Text(
-                        '오늘 하루도 응원해요!',
-                        // 혹은 이미지처럼 '2021. 10. 15.(금) 오후 03:00에...' 같은 정보가 필요하다면 수정 필요
-                        // 여기서는 요청주신 "사용자 닉네임 과 함께 인사를 건내는 문구 표시"에 집중
-                        style: AppTypography.h3.copyWith(
-                          color: AppColors.textSecondary,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                      const SizedBox(height: AppSpacing.sm),
-                      // 갱년기 설문 진입 버튼 (가시성 확보)
-                      GestureDetector(
-                        onTap: () =>
-                            Navigator.pushNamed(context, '/menopause_survey'),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 16, vertical: 8),
-                          decoration: BoxDecoration(
-                            color: AppColors.accentRed, // 빨간 배경 버튼
-                            borderRadius: BorderRadius.circular(20),
-                            boxShadow: [
-                              BoxShadow(
-                                  color: Colors.black.withOpacity(0.2),
-                                  blurRadius: 4,
-                                  offset: const Offset(0, 2))
-                            ],
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: const [
-                              Text(
-                                '나는 어떤 상태일까?',
-                                style: TextStyle(
-                                  color: AppColors.pureWhite, // 흰색 글씨
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              SizedBox(width: 4),
-                              Icon(Icons.arrow_forward_ios,
-                                  size: 12, color: AppColors.pureWhite),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: AppSpacing.md), // 헤더와 본문 사이 간격 최소화
-
-                  // Conversation Temperature Widget (Relocated)
-                  // Body 영역(흰색 배경 위)에 위치하도록 배치
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(AppSpacing.lg),
-                    decoration: BoxDecoration(
-                      color: AppColors.bgBasic, // 흰색 카드 배경
-                      borderRadius: BorderRadius.circular(AppRadius.lg),
-                      boxShadow: [
-                        BoxShadow(
-                          color:
-                              const Color(0xFF000000).withValues(alpha: 0.05),
-                          blurRadius: 10,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: Column(
-                      children: [
-                        // Text(
-                        //   '마음 대화 온도',
-                        //   style: AppTypography.h3.copyWith(fontWeight: FontWeight.bold),
-                        // ),
-                        // const SizedBox(height: AppSpacing.sm),
-                        const ConversationTemperatureWidget(),
-                      ],
-                    ),
-                  ),
-
-                  const SizedBox(height: AppSpacing.md),
-
-                  // Menu Grid
-                  Text(
-                    '마음 챙김 메뉴',
-                    style: AppTypography.h3.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.pureWhite,
-                    ),
-                  ),
-                  const SizedBox(height: AppSpacing.sm),
-                  const HomeMenuGrid(),
-
-                  const SizedBox(height: AppSpacing.xxl),
-                ],
-              ),
-            ),
-          ),
-        ],
+            // 4. 하단 메뉴
+            const HomeBottomMenu(),
+          ],
+        ),
       ),
     );
+  }
+
+  /// 기분 카테고리에 따른 배경색 반환
+  Color _getBackgroundColor(MoodCategory category) {
+    switch (category) {
+      case MoodCategory.good:
+        return AppColors.homeGoodYellow;
+      case MoodCategory.neutral:
+        return AppColors.homeNormalGreen;
+      case MoodCategory.bad:
+        return AppColors.homeBadBlue;
+    }
   }
 }
