@@ -176,7 +176,7 @@ class _HomeContentState extends ConsumerState<HomeContent> {
                         ),
                       ),
                       const SizedBox(height: AppSpacing.md),
-                      Container(
+                      Contain(er
                         width: 40, 
                         height: 2, 
                         color: AppColors.pureWhite.withValues(alpha: 0.5)
