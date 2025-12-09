@@ -225,50 +225,76 @@ class ScenarioImporter:
                     Scenario.TITLE == scenario_data['title']
                 ).first()
                 
+                # 기존 시나리오가 있는 경우 노드 존재 여부 확인
+                has_nodes = False
                 if existing:
-                    # 스마트 업데이트: 파일 수정 시간과 DB 업데이트 시간 비교
-                    if file_mtime and existing.UPDATED_AT:
-                        import datetime
-                        db_updated_timestamp = existing.UPDATED_AT.timestamp()
+                    node_count = self.db.query(ScenarioNode).filter(
+                        ScenarioNode.SCENARIO_ID == existing.ID
+                    ).count()
+                    has_nodes = node_count > 0
+                
+                if existing:
+                    if has_nodes:
+                        # 노드가 있는 경우: 기존 로직대로 처리
+                        # 스마트 업데이트: 파일 수정 시간과 DB 업데이트 시간 비교
+                        if file_mtime and existing.UPDATED_AT:
+                            import datetime
+                            db_updated_timestamp = existing.UPDATED_AT.timestamp()
+                            
+                            # 파일이 DB보다 최신이 아니면 스킵
+                            if file_mtime <= db_updated_timestamp:
+                                skipped = True
+                                continue
                         
-                        # 파일이 DB보다 최신이 아니면 스킵
-                        if file_mtime <= db_updated_timestamp:
+                        if not update_if_exists:
                             skipped = True
                             continue
-                    
-                    if not update_if_exists:
-                        skipped = True
-                        continue
-                    else:
-                        # 업데이트 모드: 기존 데이터 삭제 (같은 ID 유지를 위해 재생성)
-                        self.db.query(ScenarioOption).filter(
-                            ScenarioOption.NODE_ID.in_(
-                                self.db.query(ScenarioNode.ID).filter(
-                                    ScenarioNode.SCENARIO_ID == existing.ID
+                        else:
+                            # 업데이트 모드: 기존 데이터 삭제 (같은 ID 유지를 위해 재생성)
+                            self.db.query(ScenarioOption).filter(
+                                ScenarioOption.NODE_ID.in_(
+                                    self.db.query(ScenarioNode.ID).filter(
+                                        ScenarioNode.SCENARIO_ID == existing.ID
+                                    )
                                 )
+                            ).delete(synchronize_session=False)
+                            
+                            self.db.query(ScenarioNode).filter(
+                                ScenarioNode.SCENARIO_ID == existing.ID
+                            ).delete()
+                            
+                            self.db.query(ScenarioResult).filter(
+                                ScenarioResult.SCENARIO_ID == existing.ID
+                            ).delete()
+                            
+                            self.db.delete(existing)
+                            self.db.commit()
+                            # 기존 시나리오 삭제 후 새로 생성
+                            scenario = Scenario(
+                                TITLE=scenario_data['title'],
+                                TARGET_TYPE=scenario_data.get('target_type', 'general'),
+                                CATEGORY=scenario_data['category'],
+                                START_IMAGE_URL=scenario_data.get('start_image_url')
                             )
-                        ).delete(synchronize_session=False)
-                        
-                        self.db.query(ScenarioNode).filter(
-                            ScenarioNode.SCENARIO_ID == existing.ID
-                        ).delete()
-                        
-                        self.db.query(ScenarioResult).filter(
-                            ScenarioResult.SCENARIO_ID == existing.ID
-                        ).delete()
-                        
-                        self.db.delete(existing)
-                        self.db.commit()
-                
-                # 시나리오 생성
-                scenario = Scenario(
-                    TITLE=scenario_data['title'],
-                    TARGET_TYPE=scenario_data.get('target_type', 'general'),
-                    CATEGORY=scenario_data['category'],
-                    START_IMAGE_URL=scenario_data.get('start_image_url')
-                )
-                self.db.add(scenario)
-                self.db.flush()  # ID 생성
+                            self.db.add(scenario)
+                            self.db.flush()  # ID 생성
+                    else:
+                        # 노드가 없는 경우: 기존 시나리오를 사용하고 노드/옵션/결과만 추가
+                        scenario = existing
+                        # 시나리오 정보 업데이트 (필요시)
+                        if scenario_data.get('start_image_url') and not scenario.START_IMAGE_URL:
+                            scenario.START_IMAGE_URL = scenario_data.get('start_image_url')
+                        self.db.flush()
+                else:
+                    # 시나리오 생성
+                    scenario = Scenario(
+                        TITLE=scenario_data['title'],
+                        TARGET_TYPE=scenario_data.get('target_type', 'general'),
+                        CATEGORY=scenario_data['category'],
+                        START_IMAGE_URL=scenario_data.get('start_image_url')
+                    )
+                    self.db.add(scenario)
+                    self.db.flush()  # ID 생성
                 
                 # 노드 생성
                 nodes_for_scenario = [n for n in data['nodes'] if n['scenario_id'] == scenario_id_in_excel]

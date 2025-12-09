@@ -1,8 +1,59 @@
 # Deep Agent Pipeline 아키텍처 변경 이력
 
-## 현재 아키텍처 (2025-12-03)
+## 현재 아키텍처 (2025-12-09 업데이트)
 
-### Orchestrator-Writer 패턴
+### Gemini + GPT-4o-mini 하이브리드
+
+```
+GPT-4o-mini (Orchestration)
+  ↓ 프롬프트 준비 (scenario_architect.md)
+Gemini (Scenario Generation)
+  ↓ 시나리오 JSON 생성
+GPT-4o-mini (Validation)
+  ↓ 검증 및 파싱
+DB 저장
+```
+
+**변경 사항**: 
+- Qwen 2.5 14B 모델 제거
+- Gemini로 시나리오 생성 전환
+- scenario_architect.md 하나로 전체 시나리오 한 번에 생성
+
+**GPT-4o-mini (Orchestration)**:
+- 프롬프트 로드 및 변수 준비
+- 결과 검증 및 품질 체크
+- JSON 파싱 및 최종 조합
+
+**Gemini (Scenario Generation)**:
+- 시나리오 텍스트 생성 (scenario_architect.md 사용)
+- 전체 시나리오 JSON 한 번에 생성
+- API 실행 (~20-30초, 비용 발생)
+
+**Image Generator (FLUX.1-schnell)**:
+- 17장 이미지 생성 (선택적)
+
+### 시나리오 생성 프로세스
+
+1. **프롬프트 준비** (GPT-4o-mini): scenario_architect.md 로드 및 변수 치환
+2. **시나리오 생성** (Gemini): 전체 시나리오 JSON 한 번에 생성
+   - Character Design
+   - Nodes (15개)
+   - Options (30개)
+   - Results (16개)
+3. **검증 및 파싱** (GPT-4o-mini): JSON 구조 검증 및 Pydantic 모델 변환
+
+### 검증 로직
+
+시나리오 생성 후 GPT-4o-mini가 품질 검증:
+- **노드**: 개수(15), 필수 필드, 역할 분리, 타겟 적합성
+- **옵션**: 개수(30), 필수 필드, 주인공 대사만 포함
+- **결과**: 개수(16), 필수 필드, 타겟 관계 표현
+
+---
+
+## 이전 아키텍처 (레거시)
+
+### Orchestrator-Writer 패턴 (2025-12-03 ~ 2025-12-09)
 
 ```
 GPT-4o-mini (Orchestrator)
@@ -14,39 +65,11 @@ GPT-4o-mini (Validator)
 DB 저장
 ```
 
-### 역할 분리
-
-**Orchestrator (GPT-4o-mini)**:
-- 전체 파이프라인 기획 및 지시
-- 프롬프트 로드 및 변수 준비
-- 결과 검증 및 품질 체크
-- JSON 파싱 및 최종 조합
-
-**Scenario Writer (Qwen 2.5 14B GGUF)**:
-- 시나리오 텍스트 생성 (Step 0-3)
-- 한국어 시나리오 고품질 생성
-- 로컬 실행 (무료, 6-7분)
-
-**Image Generator (FLUX.1-schnell)**:
-- 17장 이미지 생성 (선택적)
-
-### 4단계 생성 프로세스
-
-1. **STEP 0: Character Design** - 캐릭터 비주얼 설명
-2. **STEP 1: Nodes (15개)** - 타겟의 말/행동
-3. **STEP 2: Options (30개)** - 주인공의 선택/대사
-4. **STEP 3: Results (16개)** - 결과 및 분석
-
-### 검증 로직
-
-각 단계에서 Orchestrator가 품질 검증:
-- **노드**: 개수(15), 필수 필드, 역할 분리, 타겟 적합성
-- **옵션**: 개수(30), 필수 필드, 주인공 대사만 포함
-- **결과**: 개수(16), 필수 필드, 타겟 관계 표현
+**제거 이유**: Qwen 모델이 너무 느리고 무거움 (~6-7분). GPT-4o-mini로 통일하여 속도 개선 (~15초).
 
 ---
 
-## 이전 아키텍처 (레거시)
+## 더 이전 아키텍처 (레거시)
 
 ### 문제 상황
 

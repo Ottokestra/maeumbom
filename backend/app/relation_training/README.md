@@ -28,20 +28,20 @@
 
 ### 아키텍처
 
-Deep Agent Pipeline은 **Orchestrator-Writer 패턴**을 사용합니다:
+Deep Agent Pipeline은 **Gemini**와 **GPT-4o-mini**를 함께 사용합니다:
 
 ```
-GPT-4o-mini (Orchestrator)
-  ↓ 프롬프트 준비 및 변수 설정
-Qwen 2.5 14B (Scenario Writer)
-  ↓ 시나리오 텍스트 생성
-GPT-4o-mini (Validator)
-  ↓ 품질 검증 및 파싱
+GPT-4o-mini (Orchestration)
+  ↓ 프롬프트 준비 (scenario_architect.md)
+Gemini (Scenario Generation)
+  ↓ 시나리오 JSON 생성
+GPT-4o-mini (Validation)
+  ↓ 검증 및 파싱
 DB 저장
 ```
 
-- **Orchestrator (GPT-4o-mini)**: 전체 파이프라인 기획, 프롬프트 준비, 결과 검증
-- **Scenario Writer (Qwen 2.5 14B 또는 GPT-4o-mini)**: 시나리오 텍스트 생성
+- **GPT-4o-mini**: 오케스트레이션 (프롬프트 준비, 검증, 파싱)
+- **Gemini**: 시나리오 생성 (scenario_architect.md 하나로 전체 시나리오 한 번에 생성)
 - **Image Generator (FLUX.1-schnell)**: 이미지 생성 (선택적)
 
 ### 환경 변수 설정
@@ -50,23 +50,16 @@ DB 저장
 
 ```bash
 # ============================================================================
-# OpenAI API (Orchestrator - GPT-4o-mini)
+# OpenAI API (Orchestration - GPT-4o-mini)
 # ============================================================================
 OPENAI_API_KEY=your_openai_api_key_here
 OPENAI_MODEL_NAME=gpt-4o-mini
 
 # ============================================================================
-# Scenario Writer Configuration
+# Scenario Generation Model (Gemini)
 # ============================================================================
-# SCENARIO_MODE: Choose the LLM for scenario generation
-# - "qwen" = Qwen 2.5 14B GGUF (로컬, 고품질, 무료, 느림 ~6-7분)
-# - "openai" = GPT-4o-mini (API, 빠름 ~15초, 비용 발생)
-SCENARIO_MODE=qwen
-
-# PROMPT_STYLE: Choose prompt template style
-# - "step" = step0~step3 분리된 프롬프트 (권장, 역할 분리 명확)
-# - "architect" = scenario_architect.md 올인원 프롬프트 (레거시)
-PROMPT_STYLE=step
+SCENARIO_GENERATION_MODEL_NAME=gemini-1.5-pro
+GEMINI_API_KEY=your_gemini_api_key_here
 
 # ============================================================================
 # Image Generation Configuration
@@ -79,13 +72,14 @@ MAX_PARALLEL_IMAGE_GENERATION=4
 
 ### 설치
 
-Qwen 2.5 14B GGUF 모델을 사용하려면 `llama-cpp-python`이 필요합니다:
+Deep Agent Pipeline은 Gemini API와 OpenAI API를 사용합니다.
 
 ```bash
-pip install llama-cpp-python==0.2.90
+# Gemini API 패키지 설치
+pip install google-generativeai
 ```
 
-모델은 첫 실행 시 Hugging Face에서 자동으로 다운로드됩니다 (~8GB).
+Gemini API 키는 [Google AI Studio](https://makersuite.google.com/app/apikey)에서 발급받을 수 있습니다.
 
 ### 사용 방법
 
@@ -109,7 +103,7 @@ Content-Type: application/json
   "scenario_id": 123,
   "status": "completed",
   "image_count": 17,
-  "folder_name": "child_20231215_143022"
+  "folder_name": "요즘_말이_없는_남편_20231215_143022"
 }
 ```
 
@@ -117,27 +111,30 @@ Content-Type: application/json
 
 | 모드 | 시간 | 비용 | 품질 |
 |------|------|------|------|
-| **Qwen 2.5 14B (로컬)** | ~6-7분 | 무료 | ⭐⭐⭐⭐⭐ |
-| **GPT-4o-mini (API)** | ~15초 | ~$0.15 | ⭐⭐⭐ |
+| **Gemini 1.5 Pro (API)** | ~20-30초 | ~$0.10 | ⭐⭐⭐⭐⭐ |
 
-### 4단계 생성 프로세스
+### 시나리오 생성 프로세스
 
-1. **STEP 0: Character Design** - 주인공과 타겟의 비주얼 설명 생성
-2. **STEP 1: Nodes (15개)** - 시나리오 노드 생성 (타겟의 말/행동)
-3. **STEP 2: Options (30개)** - 선택지 생성 (주인공의 선택/대사)
-4. **STEP 3: Results (16개)** - 결과 및 분석 생성 (AAAA~BBBB)
+1. **프롬프트 준비** (GPT-4o-mini): `scenario_architect.md` 로드 및 변수 치환
+2. **시나리오 생성** (Gemini): 전체 시나리오 JSON 한 번에 생성
+   - Character Design
+   - Nodes (15개)
+   - Options (30개)
+   - Results (16개)
+3. **검증 및 파싱** (GPT-4o-mini): JSON 구조 검증 및 Pydantic 모델 변환
+4. **폴더명 생성**: 시나리오 타이틀 기반 하이브리드 방식 (`{타이틀}_{timestamp}`)
 
 ### 프롬프트 파일
 
-- `prompts/step0_character_design.md` - 캐릭터 디자인
-- `prompts/step1_nodes.md` - 노드 생성 (역할 분리 규칙 포함)
-- `prompts/step2_options.md` - 옵션 생성 (주인공 대사만)
-- `prompts/step3_results.md` - 결과 생성 (타겟별 관계 표현)
-- `prompts/scenario_architect.md` - 올인원 프롬프트 (레거시)
+- `prompts/scenario_architect.md` - 전체 시나리오 생성용 올인원 프롬프트 (현재 사용)
+- `prompts/step0_character_design.md` - 레거시 (사용 안 함)
+- `prompts/step1_nodes.md` - 레거시 (사용 안 함)
+- `prompts/step2_options.md` - 레거시 (사용 안 함)
+- `prompts/step3_results.md` - 레거시 (사용 안 함)
 
 ### 검증 로직
 
-Orchestrator (GPT-4o-mini)는 각 단계에서 품질을 검증합니다:
+GPT-4o-mini가 시나리오 생성 후 품질을 검증합니다:
 
 - **노드 검증**: 개수(15), 필수 필드, 역할 분리 (주인공 대사 포함 여부)
 - **옵션 검증**: 개수(30), 필수 필드, 주인공 대사만 포함
