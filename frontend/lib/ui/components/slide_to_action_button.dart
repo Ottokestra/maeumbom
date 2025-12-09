@@ -467,7 +467,8 @@ class _SlideToActionButtonState extends State<SlideToActionButton>
 
                 // 왼쪽 음성 입력 버튼 (위 레이어)
                 Positioned(
-                  left: -20.0 + leftButtonOffset, // 120px 크기를 80px 기준으로 중앙 정렬
+                  left: _leftButtonArrived ? null : -20.0 + leftButtonOffset,
+                  right: _leftButtonArrived ? -20.0 : null,
                   child: GestureDetector(
                     behavior: HitTestBehavior.opaque,
                     onTap: _leftButtonArrived
@@ -519,7 +520,7 @@ class _SlideToActionButtonState extends State<SlideToActionButton>
                                             alpha: 0.5),
                                         blurRadius: 20,
                                         offset: const Offset(0, 6),
-                                        spreadRadius: 2,
+                                        // spreadRadius removed to prevent bleeding
                                       ),
                                     ]
                                   : [

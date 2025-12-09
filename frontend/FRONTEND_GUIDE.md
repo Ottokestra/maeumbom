@@ -83,7 +83,7 @@ frontend/
 │   ├── characters/                     # 감정 캐릭터
 │   │   ├── animation/                  # Lottie 애니메이션 (✅ 구현됨)
 │   │   │   ├── happiness/
-│   │   │   ├── sedness/
+│   │   │   ├── sadness/
 │   │   │   ├── anger/
 │   │   │   └── fear/
 │   │   ├── high/                       # 고해상도 정적 이미지
@@ -201,11 +201,12 @@ frontend/
 ** 컴포넌트 **:
 - ✅ ChatBubble - 사용자/봇 채팅 말풍선
 - ✅ SystemBubble - 시스템 메시지 (info/success/warning)
-- ✅ EmotionBubble - 감정 캐릭터 + 메시지
+- ✅ EmotionBubble - 감정 말풍선 (캐릭터 + 메시지)
 - ✅ VoiceWaveform - 음성 녹음 파동 애니메이션
 - ✅ CircularRipple - 캐릭터 원형 파동 효과
-- ✅ MoreMenuSheet - 더보기 메뉴 바텀시트
-- ✅ SlideToActionButton - 슬라이드 액션 버튼
+- ✅ MoreMenuSheet - 더보기 메뉴 시트
+- [x] SlideToActionButton - 슬라이드 액션 버튼
+- [x] TopNotification - 상단 알림 배너 (Red/Green 테마)
 
 ** 캐릭터 **:
 - ✅ EmotionCharacter - 정적 감정 캐릭터 (PNG, 17개)
@@ -252,7 +253,7 @@ class NewScreen extends StatelessWidget {
 // 봄이 화면에서 감정 캐릭터 애니메이션
 AnimatedCharacter(
   characterId: 'relief',
-  emotion: 'happiness',  // 'happiness', 'sedness', 'anger', 'fear'
+  emotion: 'happiness',  // 'happiness', 'sadness', 'anger', 'fear'
   size: 350,
   repeat: true,
   animate: true,
