@@ -5,6 +5,7 @@ import '../../ui/app_ui.dart';
 import 'components/conversation_temperature_widget.dart';
 import 'components/home_menu_grid.dart';
 import '../../providers/daily_mood_provider.dart';
+import '../../providers/auth_provider.dart';
 import 'daily_mood_check_screen.dart';
 
 /// Home Screen - 메인 홈 화면
@@ -19,7 +20,8 @@ class HomeScreen extends ConsumerWidget {
     return AppFrame(
       topBar: null, // Custom header used instead
       useSafeArea: false, // Allow background to go behind status bar
-      statusBarStyle: SystemUiOverlayStyle.dark, // Dark status bar icons for white background
+      statusBarStyle: SystemUiOverlayStyle
+          .dark, // Dark status bar icons for white background
       body: const HomeContent(),
     );
   }
@@ -47,7 +49,7 @@ class _HomeContentState extends ConsumerState<HomeContent> {
     if (ModalRoute.of(context)?.isCurrent != true) return;
 
     final dailyState = ref.read(dailyMoodProvider);
-    
+
     // 아직 기분 체크를 하지 않았다면 팝업 표시
     if (!dailyState.hasChecked) {
       // 화면 진입 후 약간의 딜레이를 두고 표시 (UX 개선 및 안전성)
@@ -68,7 +70,8 @@ class _HomeContentState extends ConsumerState<HomeContent> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('나중에', style: TextStyle(color: AppColors.textSecondary)),
+            child: const Text('나중에',
+                style: TextStyle(color: AppColors.textSecondary)),
           ),
           TextButton(
             onPressed: () {
@@ -79,10 +82,11 @@ class _HomeContentState extends ConsumerState<HomeContent> {
                   builder: (context) => const DailyMoodCheckScreen(),
                 ),
               ).then((_) {
-                 // 화면 복귀 후 상태 업데이트가 필요하다면 여기서 처리 (Provider가 관리하므로 자동 반영됨)
+                // 화면 복귀 후 상태 업데이트가 필요하다면 여기서 처리 (Provider가 관리하므로 자동 반영됨)
               });
             },
-            child: const Text('기록하기', style: TextStyle(color: AppColors.accentRed)),
+            child: const Text('기록하기',
+                style: TextStyle(color: AppColors.accentRed)),
           ),
         ],
       ),
@@ -91,10 +95,9 @@ class _HomeContentState extends ConsumerState<HomeContent> {
 
   @override
   Widget build(BuildContext context) {
-    // TODO: AuthProvider를 통해 닉네임 가져오기
-    // final user = ref.watch(currentUserProvider);
-    // final nickname = user?.nickname ?? '봄이';
-    const nickname = '김땡땡'; // 임시 하드코딩 (이미지 예시 '홍길동')
+    // AuthProvider를 통해 닉네임 가져오기
+    final user = ref.watch(currentUserProvider);
+    final nickname = user?.nickname ?? '봄이';
 
     return Container(
       color: AppColors.accentRed, // Bottom background: Accent Red
@@ -137,7 +140,7 @@ class _HomeContentState extends ConsumerState<HomeContent> {
                       ),
                       const SizedBox(height: AppSpacing.xs),
                       Text(
-                        '오늘 하루도 응원해요!', 
+                        '오늘 하루도 응원해요!',
                         // 혹은 이미지처럼 '2021. 10. 15.(금) 오후 03:00에...' 같은 정보가 필요하다면 수정 필요
                         // 여기서는 요청주신 "사용자 닉네임 과 함께 인사를 건내는 문구 표시"에 집중
                         style: AppTypography.h3.copyWith(
@@ -148,14 +151,19 @@ class _HomeContentState extends ConsumerState<HomeContent> {
                       const SizedBox(height: AppSpacing.sm),
                       // 갱년기 설문 진입 버튼 (가시성 확보)
                       GestureDetector(
-                        onTap: () => Navigator.pushNamed(context, '/menopause_survey'),
+                        onTap: () =>
+                            Navigator.pushNamed(context, '/menopause_survey'),
                         child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 8),
                           decoration: BoxDecoration(
                             color: AppColors.accentRed, // 빨간 배경 버튼
                             borderRadius: BorderRadius.circular(20),
                             boxShadow: [
-                              BoxShadow(color: Colors.black.withOpacity(0.2), blurRadius: 4, offset:const Offset(0, 2))
+                              BoxShadow(
+                                  color: Colors.black.withOpacity(0.2),
+                                  blurRadius: 4,
+                                  offset: const Offset(0, 2))
                             ],
                           ),
                           child: Row(
@@ -170,23 +178,10 @@ class _HomeContentState extends ConsumerState<HomeContent> {
                                 ),
                               ),
                               SizedBox(width: 4),
-                              Icon(Icons.arrow_forward_ios, size: 12, color: AppColors.pureWhite),
+                              Icon(Icons.arrow_forward_ios,
+                                  size: 12, color: AppColors.pureWhite),
                             ],
                           ),
-                        ),
-                      ),
-                      const SizedBox(height: AppSpacing.md),
-                      Container(
-                        width: 40, 
-                        height: 2, 
-                        color: AppColors.borderLightGray
-                      ), // 구분선 느낌
-                      const SizedBox(height: AppSpacing.sm),
-                       Text(
-                        '마음봄과 함께 오늘의 감정을 나눠보세요.\n당신의 이야기를 들을 준비가 되어있어요.',
-                        style: AppTypography.bodySmall.copyWith(
-                          color: AppColors.textSecondary,
-                          height: 1.5,
                         ),
                       ),
                     ],
@@ -203,7 +198,8 @@ class _HomeContentState extends ConsumerState<HomeContent> {
                       borderRadius: BorderRadius.circular(AppRadius.lg),
                       boxShadow: [
                         BoxShadow(
-                          color: const Color(0xFF000000).withValues(alpha: 0.05),
+                          color:
+                              const Color(0xFF000000).withValues(alpha: 0.05),
                           blurRadius: 10,
                           offset: const Offset(0, 4),
                         ),
@@ -220,7 +216,7 @@ class _HomeContentState extends ConsumerState<HomeContent> {
                       ],
                     ),
                   ),
-                  
+
                   const SizedBox(height: AppSpacing.md),
 
                   // Menu Grid
