@@ -5,21 +5,101 @@ import '../../ui/app_ui.dart';
 import '../../providers/auth_provider.dart';
 import '../../core/config/api_config.dart';
 import '../../data/api/onboarding/onboarding_survey_api_client.dart';
-import '../../core/services/auth/auth_service.dart';
 
 /// 로그인 화면
 ///
 /// 3개의 슬라이드 페이지와 소셜 로그인 버튼을 포함합니다.
-class LoginScreen extends StatefulWidget {
+class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
 
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
+  ConsumerState<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
+class _LoginScreenState extends ConsumerState<LoginScreen> {
   final PageController _pageController = PageController();
   int _currentPage = 0;
+  bool _hasCheckedAuth = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // 인증 상태 확인을 다음 프레임으로 지연하여 위젯 트리가 완전히 빌드된 후 실행
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkAuthStatus();
+    });
+  }
+
+  /// 이미 로그인된 상태인지 확인하고 적절한 화면으로 이동
+  Future<void> _checkAuthStatus() async {
+    if (_hasCheckedAuth) return;
+    _hasCheckedAuth = true;
+
+    final authState = ref.read(authProvider);
+    
+    // 로딩 중이면 잠시 대기
+    if (authState.isLoading) {
+      await Future.delayed(const Duration(milliseconds: 500));
+      if (!mounted) return;
+      final updatedAuthState = ref.read(authProvider);
+      if (updatedAuthState.isLoading) {
+        // 여전히 로딩 중이면 다시 확인
+        _hasCheckedAuth = false;
+        return;
+      }
+    }
+
+    // 이미 로그인된 상태라면 적절한 화면으로 이동
+    authState.whenData((user) {
+      if (user != null && mounted) {
+        _navigateAfterLogin();
+      }
+    });
+  }
+
+  /// 설문 상태 확인 후 적절한 화면으로 이동
+  Future<void> _navigateAfterLogin() async {
+    try {
+      // Access token 가져오기
+      final authService = ref.read(authServiceProvider);
+      final accessToken = await authService.getAccessToken();
+
+      if (accessToken == null) {
+        // 토큰이 없으면 설문 화면으로 이동 (안전장치)
+        if (mounted) {
+          Navigator.pushReplacementNamed(context, '/sign_up_slide');
+        }
+        return;
+      }
+
+      // 설문 상태 확인
+      final dio = Dio(
+        BaseOptions(
+          baseUrl: ApiConfig.baseUrl,
+          connectTimeout: ApiConfig.connectTimeout,
+          receiveTimeout: ApiConfig.receiveTimeout,
+        ),
+      );
+      final apiClient = OnboardingSurveyApiClient(dio);
+      final statusResponse = await apiClient.getProfileStatus(accessToken);
+
+      if (!mounted) return;
+
+      // 설문 완료 여부에 따라 분기
+      if (statusResponse.hasProfile) {
+        // 설문 완료된 사용자는 홈으로 이동
+        Navigator.pushReplacementNamed(context, '/home');
+      } else {
+        // 설문 미완료 사용자는 설문 화면으로 이동
+        Navigator.pushReplacementNamed(context, '/sign_up_slide');
+      }
+    } catch (e) {
+      // 에러 발생 시 기본값으로 설문 화면으로 이동 (안전장치)
+      if (mounted) {
+        Navigator.pushReplacementNamed(context, '/sign_up_slide');
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {

@@ -13,7 +13,6 @@ import '../../data/dtos/user_phase/health_sync_request.dart';
 import '../../providers/auth_provider.dart';
 import '../../core/utils/logger.dart';
 import 'edit_profile_screen.dart';
-import '../chat/chat_screen.dart';
 import '../chat/chat_list_screen.dart';
 
 class MypageScreen extends ConsumerStatefulWidget {
@@ -413,6 +412,10 @@ class _MypageScreenState extends ConsumerState<MypageScreen> {
             _buildChatHistorySection(),
             const SizedBox(height: AppSpacing.xl),
 
+            // 섹션 4: 설정
+            _buildSettingsSection(),
+            const SizedBox(height: AppSpacing.xl),
+
             // 에러 메시지
             if (_errorMessage != null)
               Container(
@@ -649,5 +652,63 @@ class _MypageScreenState extends ConsumerState<MypageScreen> {
         ),
       ],
     );
+  }
+
+  Widget _buildSettingsSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('설정', style: AppTypography.h2),
+        const SizedBox(height: AppSpacing.md),
+        AppButton(
+          text: '로그아웃',
+          variant: ButtonVariant.secondaryRed,
+          onTap: _handleLogout,
+        ),
+      ],
+    );
+  }
+
+  Future<void> _handleLogout() async {
+    // 확인 다이얼로그 표시
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('로그아웃'),
+        content: const Text('정말 로그아웃하시겠습니까?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('취소'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('로그아웃', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true) return;
+
+    try {
+      // 로그아웃 실행
+      await ref.read(authProvider.notifier).logout();
+
+      if (!mounted) return;
+
+      // 로그인 화면으로 이동
+      Navigator.pushNamedAndRemoveUntil(
+        context,
+        '/login',
+        (route) => false, // 모든 이전 라우트 제거
+      );
+    } catch (e) {
+      appLogger.e('로그아웃 실패', error: e);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('로그아웃 중 오류가 발생했습니다: ${e.toString()}')),
+      );
+    }
   }
 } // End of class

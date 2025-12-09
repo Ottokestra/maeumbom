@@ -21,22 +21,33 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
 
   /// 스플래시 화면 표시 후 다음 화면으로 이동
   Future<void> _navigateToNextScreen() async {
-    // 2초 대기 (스플래시 화면 표시)
-    await Future.delayed(const Duration(seconds: 2));
+    // 최소 2초 대기 (스플래시 화면 표시)
+    final minDisplayTime = Future.delayed(const Duration(seconds: 2));
 
-    if (!mounted) return;
+    // 인증 상태 확인이 완료될 때까지 대기
+    // authProvider가 로딩 중이면 완료될 때까지 기다림
+    while (mounted) {
+      final authState = ref.read(authProvider);
+      
+      // 로딩이 완료되었는지 확인
+      if (!authState.isLoading) {
+        // 로딩 완료 - 최소 표시 시간도 기다림
+        await minDisplayTime;
+        
+        if (!mounted) return;
 
-    // 인증 상태 확인
-    final authState = ref.read(authProvider);
-    final isLoggedIn = authState.value != null;
-
-    if (!mounted) return;
-
-    // 인증 상태에 따라 화면 분기
-    if (isLoggedIn) {
-      Navigator.pushReplacementNamed(context, '/home');
-    } else {
-      Navigator.pushReplacementNamed(context, '/login');
+        // 인증 상태에 따라 화면 분기
+        final isLoggedIn = authState.value != null;
+        if (isLoggedIn) {
+          Navigator.pushReplacementNamed(context, '/home');
+        } else {
+          Navigator.pushReplacementNamed(context, '/login');
+        }
+        return;
+      }
+      
+      // 아직 로딩 중이면 잠시 대기 후 다시 확인
+      await Future.delayed(const Duration(milliseconds: 100));
     }
   }
 
