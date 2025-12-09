@@ -39,6 +39,12 @@ class ApiConfig {
   static const String onboardingSurveyMe = '$onboardingSurveyBase/me';
   static const String onboardingSurveyStatus = '$onboardingSurveyBase/status';
 
+  // Report Endpoints
+  static const String reportBase = '/api/reports/me';
+  static const String dailyReport = '$reportBase/daily';
+  static const String weeklyReport = '$reportBase/weekly';
+  static const String monthlyReport = '$reportBase/monthly';
+
   // User Phase Endpoints
   static const String userPhaseBase = '/api/service/user-phase';
   static const String userPhaseSync = '$userPhaseBase/sync';
