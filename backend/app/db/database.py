@@ -62,8 +62,74 @@ def init_db():
     Call this function on application startup
     """
     from . import models  # Import models to register them
+<<<<<<< HEAD
     from app.emotion_report import models as emotion_report_models  # noqa: F401
 
+=======
+    from sqlalchemy import text, inspect
+    
+>>>>>>> dev
     Base.metadata.create_all(bind=engine)
+    
+    # 마이그레이션: 컬럼 추가
+    try:
+        inspector = inspect(engine)
+        table_names = inspector.get_table_names()
+        
+        # TB_SCENARIO_RESULTS에 IMAGE_URL 컬럼 추가
+        if 'TB_SCENARIO_RESULTS' in table_names:
+            columns = [col['name'] for col in inspector.get_columns('TB_SCENARIO_RESULTS')]
+            if 'IMAGE_URL' not in columns:
+                with engine.begin() as conn:
+                    conn.execute(text("ALTER TABLE TB_SCENARIO_RESULTS ADD COLUMN IMAGE_URL VARCHAR(500) NULL"))
+                print("[DB] Added IMAGE_URL column to TB_SCENARIO_RESULTS")
+        
+        # TB_SCENARIOS에 START_IMAGE_URL 컬럼 추가
+        if 'TB_SCENARIOS' in table_names:
+            columns = [col['name'] for col in inspector.get_columns('TB_SCENARIOS')]
+            if 'START_IMAGE_URL' not in columns:
+                with engine.begin() as conn:
+                    conn.execute(text("ALTER TABLE TB_SCENARIOS ADD COLUMN START_IMAGE_URL VARCHAR(500) NULL"))
+                print("[DB] Added START_IMAGE_URL column to TB_SCENARIOS")
+            
+            # 컬럼 목록 다시 가져오기 (이전 변경사항 반영)
+            columns = [col['name'] for col in inspector.get_columns('TB_SCENARIOS')]
+            
+            # TB_SCENARIOS에 UPDATED_AT 컬럼 추가
+            if 'UPDATED_AT' not in columns:
+                with engine.begin() as conn:
+                    conn.execute(text("ALTER TABLE TB_SCENARIOS ADD COLUMN UPDATED_AT DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"))
+                print("[DB] Added UPDATED_AT column to TB_SCENARIOS")
+            
+            # 컬럼 목록 다시 가져오기 (이전 변경사항 반영)
+            columns = [col['name'] for col in inspector.get_columns('TB_SCENARIOS')]
+            
+            # TB_SCENARIOS에 USER_ID 컬럼 추가 (개인화 시나리오 지원)
+            if 'USER_ID' not in columns:
+                with engine.begin() as conn:
+                    # 컬럼 추가 (이미 존재 체크했으므로 성공해야 함)
+                    conn.execute(text("ALTER TABLE TB_SCENARIOS ADD COLUMN USER_ID INT NULL"))
+                    
+                    # 인덱스 추가 (이미 존재하면 에러 무시)
+                    try:
+                        conn.execute(text("ALTER TABLE TB_SCENARIOS ADD INDEX idx_user_id (USER_ID)"))
+                    except Exception:
+                        pass  # 인덱스가 이미 존재할 수 있음
+                    
+                    # 외래키 제약조건 추가 (이미 존재하면 에러 무시)
+                    try:
+                        conn.execute(text("ALTER TABLE TB_SCENARIOS ADD CONSTRAINT fk_scenarios_user_id FOREIGN KEY (USER_ID) REFERENCES TB_USERS(ID) ON DELETE CASCADE"))
+                    except Exception:
+                        pass  # 제약조건이 이미 존재할 수 있음
+                    
+                print("[DB] Added USER_ID column to TB_SCENARIOS")
+            else:
+                print("[DB] USER_ID column already exists in TB_SCENARIOS")
+                
+    except Exception as e:
+        import traceback
+        print(f"[DB] Migration failed: {e}")
+        traceback.print_exc()
+    
     print("[DB] All tables created successfully")
 

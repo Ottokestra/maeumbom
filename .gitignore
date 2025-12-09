@@ -1,5 +1,7 @@
 .idea/
 .cursorrules
+.antigravityrules
+.claude/
 
 # macOS
 .DS_Store
@@ -7,3 +9,6 @@
 .LSOverride
 # Thumbnails
 ._*
+
+# Test
+frontend-test/

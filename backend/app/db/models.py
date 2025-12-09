@@ -2,6 +2,7 @@
 SQLAlchemy models for all database tables
 Centralized model management
 """
+<<<<<<< HEAD
 from sqlalchemy import (
     Boolean,
     Column,
@@ -16,6 +17,9 @@ from sqlalchemy import (
     Text,
     UniqueConstraint,
 )
+=======
+from sqlalchemy import Column, Integer, String, Text, DateTime, Date, Index, ForeignKey, JSON, Float, Boolean, Time
+>>>>>>> dev
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 from .database import Base
@@ -72,6 +76,7 @@ class DailyMoodSelection(Base):
         FILENAME: Image filename
         DESCRIPTION: Image description text
         EMOTION_RESULT: Emotion analysis result (JSON)
+        DISPLAYED_IMAGES: The 3 images shown during selection (JSON)
         CREATED_AT: Selection timestamp
     """
     __tablename__ = "TB_DAILY_MOOD_SELECTIONS"
@@ -84,6 +89,7 @@ class DailyMoodSelection(Base):
     FILENAME = Column(String(255), nullable=False)
     DESCRIPTION = Column(Text, nullable=True)
     EMOTION_RESULT = Column(JSON, nullable=True)  # Store emotion analysis result as JSON
+    DISPLAYED_IMAGES = Column(Text, nullable=True)  # Store the 3 images shown during selection (JSON string)
     CREATED_AT = Column(DateTime(timezone=True), server_default=func.now())
     
     # Create composite index for faster lookups (USER_ID + SELECTED_DATE)
@@ -110,8 +116,9 @@ class EmotionAnalysis(Base):
     Attributes:
         ID: Primary key
         USER_ID: Foreign key to users table (optional)
-        SESSION_ID: Session identifier
+        CHECK_ROOT: Source of emotion analysis ("conversation" or "daily_mood_check")
         TEXT: Original input text
+        INPUT_TEXT_EMBEDDING: JSON array of embedding vector for similarity search
         LANGUAGE: Language code (default: "ko")
         RAW_DISTRIBUTION: JSON field (17 emotion distribution)
         PRIMARY_EMOTION: JSON field (primary emotion info)
@@ -128,8 +135,9 @@ class EmotionAnalysis(Base):
     
     ID = Column(Integer, primary_key=True, index=True, autoincrement=True)
     USER_ID = Column(Integer, ForeignKey("TB_USERS.ID"), nullable=True, index=True)
-    SESSION_ID = Column(String(255), nullable=False, index=True)
+    CHECK_ROOT = Column(String(20), nullable=False, index=True)
     TEXT = Column(Text, nullable=False)
+    INPUT_TEXT_EMBEDDING = Column(Text, nullable=True)  # JSON: "[0.123, -0.456, ...]"
     LANGUAGE = Column(String(10), nullable=False, default="ko")
     RAW_DISTRIBUTION = Column(JSON, nullable=True)
     PRIMARY_EMOTION = Column(JSON, nullable=True)
@@ -144,17 +152,18 @@ class EmotionAnalysis(Base):
     
     # Create composite index for faster lookups
     __table_args__ = (
-        Index('idx_session_created', 'SESSION_ID', 'CREATED_AT'),
         Index('idx_user_created', 'USER_ID', 'CREATED_AT'),
+        Index('idx_check_root', 'CHECK_ROOT'),
     )
     
     # Relationship to User
     user = relationship("User", backref="emotion_analyses")
     
     def __repr__(self):
-        return f"<EmotionAnalysis(ID={self.ID}, SESSION_ID={self.SESSION_ID}, SENTIMENT_OVERALL={self.SENTIMENT_OVERALL})>"
+        return f"<EmotionAnalysis(ID={self.ID}, CHECK_ROOT={self.CHECK_ROOT}, SENTIMENT_OVERALL={self.SENTIMENT_OVERALL})>"
 
 
+<<<<<<< HEAD
 class EmotionLog(Base):
     """
     감정 분석 결과 로그
@@ -255,3 +264,621 @@ class MenopauseAnswer(Base):
     ANSWER_VALUE = Column(String(10), nullable=False)
     CREATED_AT = Column(DateTime(timezone=True), server_default=func.now())
 
+=======
+# ============================================================================
+# 대화 및 메모리 저장 모델 (Agent 기능)
+# ============================================================================
+
+class Conversation(Base):
+    """
+    Conversation history model
+    Stores all conversation messages with user data isolation
+    
+    Attributes:
+        ID: Primary key
+        USER_ID: Foreign key to TB_USERS (data isolation)
+        SESSION_ID: Session identifier (UUID)
+        SPEAKER_TYPE: Speaker identifier (user-A, user-B, assistant)
+        CONTENT: Message content
+        IS_DELETED: Soft delete flag ('Y'/'N')
+        CREATED_AT: Creation timestamp
+        CREATED_BY: User who created this record
+        UPDATED_AT: Last update timestamp
+        UPDATED_BY: User who last updated this record
+    """
+    __tablename__ = "TB_CONVERSATIONS"
+    
+    ID = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    USER_ID = Column(Integer, ForeignKey("TB_USERS.ID"), nullable=False, index=True)
+    SESSION_ID = Column(String(255), nullable=False, index=True)
+    SPEAKER_TYPE = Column(String(50), nullable=False)  # user-A, user-B, assistant
+    CONTENT = Column(Text, nullable=False)
+    IS_DELETED = Column(String(1), nullable=False, default='N', server_default='N')
+    CREATED_AT = Column(DateTime(timezone=True), server_default=func.now())
+    CREATED_BY = Column(Integer, ForeignKey("TB_USERS.ID"), nullable=False)
+    UPDATED_AT = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    UPDATED_BY = Column(Integer, ForeignKey("TB_USERS.ID"), nullable=True)
+    
+    # Composite indexes for performance
+    __table_args__ = (
+        Index('idx_user_session_conv', 'USER_ID', 'SESSION_ID'),
+        Index('idx_session_created', 'SESSION_ID', 'CREATED_AT'),
+        Index('idx_user_deleted_conv', 'USER_ID', 'IS_DELETED'),
+    )
+    
+    # Relationships
+    user = relationship("User", foreign_keys=[USER_ID], backref="conversations")
+    creator = relationship("User", foreign_keys=[CREATED_BY])
+    updater = relationship("User", foreign_keys=[UPDATED_BY])
+    
+    def __repr__(self):
+        return f"<Conversation(ID={self.ID}, USER_ID={self.USER_ID}, SESSION_ID={self.SESSION_ID}, SPEAKER={self.SPEAKER_TYPE})>"
+
+
+
+
+class GlobalMemory(Base):
+    """
+    Global long-term memory model
+    Stores persistent user facts and patterns across sessions
+    
+    Attributes:
+        ID: Primary key
+        USER_ID: Foreign key to TB_USERS (data isolation)
+        CATEGORY: Memory category (health, preference, family, etc.)
+        MEMORY_TEXT: Memory content (factual information)
+        IMPORTANCE: Importance level (1-5, for RAG weighting)
+        SOURCE_SESSION_ID: Origin session ID (for tracking)
+        IS_DELETED: Soft delete flag ('Y'/'N')
+        LAST_ACCESSED_AT: Last access timestamp (for forgetting mechanism)
+        CREATED_AT: Creation timestamp
+        CREATED_BY: User who created this record
+        UPDATED_AT: Last update timestamp
+        UPDATED_BY: User who last updated this record
+    """
+    __tablename__ = "TB_GLOBAL_MEMORIES"
+    
+    ID = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    USER_ID = Column(Integer, ForeignKey("TB_USERS.ID"), nullable=False, index=True)
+    CATEGORY = Column(String(50), nullable=False)
+    MEMORY_TEXT = Column(Text, nullable=False)
+    IMPORTANCE = Column(Integer, default=1)
+    SOURCE_SESSION_ID = Column(String(255), nullable=True)
+    IS_DELETED = Column(String(1), nullable=False, default='N', server_default='N')
+    LAST_ACCESSED_AT = Column(DateTime(timezone=True), server_default=func.now())
+    CREATED_AT = Column(DateTime(timezone=True), server_default=func.now())
+    CREATED_BY = Column(Integer, ForeignKey("TB_USERS.ID"), nullable=False)
+    UPDATED_AT = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    UPDATED_BY = Column(Integer, ForeignKey("TB_USERS.ID"), nullable=True)
+    
+    # Composite indexes
+    __table_args__ = (
+        Index('idx_user_category', 'USER_ID', 'CATEGORY'),
+        Index('idx_user_deleted_gmem', 'USER_ID', 'IS_DELETED'),
+        Index('idx_user_importance', 'USER_ID', 'IMPORTANCE'),
+    )
+    
+    # Relationships
+    user = relationship("User", foreign_keys=[USER_ID], backref="global_memories")
+    creator = relationship("User", foreign_keys=[CREATED_BY])
+    updater = relationship("User", foreign_keys=[UPDATED_BY])
+    
+    def __repr__(self):
+        return f"<GlobalMemory(ID={self.ID}, USER_ID={self.USER_ID}, CATEGORY={self.CATEGORY}, IMPORTANCE={self.IMPORTANCE})>"
+
+
+class SpeakerProfile(Base):
+    """
+    Speaker Profile model for voice verification
+    Stores speaker embeddings and verification scores
+    
+    Attributes:
+        ID: Primary key
+        USER_ID: Foreign key to TB_USERS (owner of this profile)
+        SPEAKER_TYPE: Speaker identifier (e.g., 'user-A', 'user-B')
+        CURRENT_SCORE: Current confidence score (0.0-1.0)
+        USER_NAME: User's real name (optional, for future use)
+        IS_DELETED: Soft delete flag ('Y'/'N')
+        EMBEDDING: Speaker embedding vector (JSON array of floats)
+        CREATED_AT: Creation timestamp
+        CREATED_BY: User who created this record
+        UPDATED_AT: Last update timestamp
+        UPDATED_BY: User who last updated this record
+    """
+    __tablename__ = "TB_SPEAKER_PROFILES"
+    
+    ID = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    USER_ID = Column(Integer, ForeignKey("TB_USERS.ID"), nullable=False, index=True)
+    SPEAKER_TYPE = Column(String(50), nullable=False)
+    CURRENT_SCORE = Column(Float, nullable=False, default=0.0)
+    USER_NAME = Column(String(255), nullable=True)
+    IS_DELETED = Column(String(1), nullable=False, default='N', server_default='N')
+    EMBEDDING = Column(JSON, nullable=False)  # 256-dim float vector
+    
+    CREATED_AT = Column(DateTime(timezone=True), server_default=func.now())
+    CREATED_BY = Column(Integer, ForeignKey("TB_USERS.ID"), nullable=False)
+    UPDATED_AT = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    UPDATED_BY = Column(Integer, ForeignKey("TB_USERS.ID"), nullable=True)
+    
+    # Composite indexes
+    __table_args__ = (
+        Index('idx_user_speaker', 'USER_ID', 'SPEAKER_TYPE'),
+        Index('idx_user_deleted_spk', 'USER_ID', 'IS_DELETED'),
+    )
+    
+    # Relationships
+    user = relationship("User", foreign_keys=[USER_ID], backref="speaker_profiles")
+    creator = relationship("User", foreign_keys=[CREATED_BY])
+    updater = relationship("User", foreign_keys=[UPDATED_BY])
+    
+    def __repr__(self):
+        return f"<SpeakerProfile(ID={self.ID}, USER_ID={self.USER_ID}, SPEAKER_TYPE={self.SPEAKER_TYPE}, SCORE={self.CURRENT_SCORE})>"
+
+
+# ============================================================================
+# 신규 모델 (사용자 Phase 및 건강 데이터) - User Phase Service
+# ============================================================================
+
+class HealthLog(Base):
+    """
+    Health data log model
+    Stores daily health data from Apple HealthKit and Android Health Connect
+    
+    Attributes:
+        ID: Primary key
+        USER_ID: Foreign key to users table
+        LOG_DATE: Date of the health data (YYYY-MM-DD)
+        SLEEP_START_TIME: Sleep start time (bedtime)
+        SLEEP_END_TIME: Sleep end time (wake time) - used for Phase calculation
+        STEP_COUNT: Daily step count
+        SLEEP_DURATION_HOURS: Total sleep duration in hours
+        HEART_RATE_AVG: Average heart rate
+        HEART_RATE_RESTING: Resting heart rate
+        HEART_RATE_VARIABILITY: Heart rate variability (HRV)
+        ACTIVE_MINUTES: Active minutes
+        EXERCISE_MINUTES: Exercise minutes
+        CALORIES_BURNED: Calories burned
+        DISTANCE_KM: Distance traveled in kilometers
+        SOURCE_TYPE: Data source ("manual", "apple_health", "google_fit")
+        RAW_DATA: Original health data in JSON format
+        CREATED_AT: Creation timestamp
+    """
+    __tablename__ = "TB_HEALTH_LOGS"
+    
+    ID = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    USER_ID = Column(Integer, ForeignKey("TB_USERS.ID"), nullable=False, index=True)
+    LOG_DATE = Column(Date, nullable=False, index=True)
+    
+    # Phase calculation (core data)
+    SLEEP_START_TIME = Column(DateTime(timezone=True), nullable=True)
+    SLEEP_END_TIME = Column(DateTime(timezone=True), nullable=True)
+    STEP_COUNT = Column(Integer, nullable=True)
+    
+    # Menopause health monitoring (common data for iOS & Android)
+    SLEEP_DURATION_HOURS = Column(Float, nullable=True)
+    HEART_RATE_AVG = Column(Integer, nullable=True)
+    HEART_RATE_RESTING = Column(Integer, nullable=True)
+    HEART_RATE_VARIABILITY = Column(Float, nullable=True)
+    ACTIVE_MINUTES = Column(Integer, nullable=True)
+    EXERCISE_MINUTES = Column(Integer, nullable=True)
+    CALORIES_BURNED = Column(Integer, nullable=True)
+    DISTANCE_KM = Column(Float, nullable=True)
+    
+    # Metadata
+    SOURCE_TYPE = Column(String(50), nullable=False)  # "manual", "apple_health", "google_fit"
+    RAW_DATA = Column(JSON, nullable=True)  # Original data for extensibility
+    CREATED_AT = Column(DateTime(timezone=True), server_default=func.now())
+    
+    # Create composite index for faster lookups
+    __table_args__ = (
+        Index('idx_user_date', 'USER_ID', 'LOG_DATE'),
+    )
+    
+    # Relationship to User
+    user = relationship("User", backref="health_logs")
+    
+    def __repr__(self):
+        return f"<HealthLog(ID={self.ID}, USER_ID={self.USER_ID}, LOG_DATE={self.LOG_DATE}, SOURCE_TYPE={self.SOURCE_TYPE})>"
+
+
+class ManualHealthLog(Base):
+    """
+    Manual health log model
+    Stores manually entered health data (one record per user)
+    
+    Attributes:
+        ID: Primary key
+        USER_ID: Foreign key to users table (unique, one record per user)
+        LOG_DATE: Date when user entered the data (last input date)
+        SLEEP_START_TIME: Sleep start time
+        SLEEP_END_TIME: Sleep end time (wake time)
+        STEP_COUNT: Step count
+        SLEEP_DURATION_HOURS: Sleep duration in hours
+        HEART_RATE_AVG: Average heart rate
+        HEART_RATE_RESTING: Resting heart rate
+        HEART_RATE_VARIABILITY: Heart rate variability (HRV)
+        ACTIVE_MINUTES: Active minutes
+        EXERCISE_MINUTES: Exercise minutes
+        CALORIES_BURNED: Calories burned
+        DISTANCE_KM: Distance traveled in kilometers
+        RAW_DATA: Original health data in JSON format
+        CREATED_AT: Creation timestamp
+        UPDATED_AT: Last update timestamp
+    """
+    __tablename__ = "TB_MANUAL_HEALTH_LOGS"
+    
+    ID = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    USER_ID = Column(Integer, ForeignKey("TB_USERS.ID"), nullable=False, unique=True, index=True)
+    LOG_DATE = Column(Date, nullable=False)  # Date when user entered the data (last input date)
+    
+    # Phase calculation (core data)
+    SLEEP_START_TIME = Column(DateTime(timezone=True), nullable=True)
+    SLEEP_END_TIME = Column(DateTime(timezone=True), nullable=True)
+    STEP_COUNT = Column(Integer, nullable=True)
+    
+    # Menopause health monitoring (common data for iOS & Android)
+    SLEEP_DURATION_HOURS = Column(Float, nullable=True)
+    HEART_RATE_AVG = Column(Integer, nullable=True)
+    HEART_RATE_RESTING = Column(Integer, nullable=True)
+    HEART_RATE_VARIABILITY = Column(Float, nullable=True)
+    ACTIVE_MINUTES = Column(Integer, nullable=True)
+    EXERCISE_MINUTES = Column(Integer, nullable=True)
+    CALORIES_BURNED = Column(Integer, nullable=True)
+    DISTANCE_KM = Column(Float, nullable=True)
+    
+    # Metadata
+    RAW_DATA = Column(JSON, nullable=True)  # Original data for extensibility
+    CREATED_AT = Column(DateTime(timezone=True), server_default=func.now())
+    UPDATED_AT = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    
+    # Relationship to User
+    user = relationship("User", backref="manual_health_log", uselist=False)
+    
+    def __repr__(self):
+        return f"<ManualHealthLog(ID={self.ID}, USER_ID={self.USER_ID}, LOG_DATE={self.LOG_DATE})>"
+
+
+class UserPatternSetting(Base):
+    """
+    User pattern setting model
+    Stores weekly pattern analysis results (weekday/weekend patterns)
+    
+    Attributes:
+        ID: Primary key
+        USER_ID: Foreign key to users table (unique)
+        WEEKDAY_WAKE_TIME: Average wake time for weekdays (Mon-Fri)
+        WEEKDAY_SLEEP_TIME: Average sleep time for weekdays (Mon-Fri)
+        WEEKEND_WAKE_TIME: Average wake time for weekends (Sat-Sun)
+        WEEKEND_SLEEP_TIME: Average sleep time for weekends (Sat-Sun)
+        LAST_ANALYSIS_DATE: Last pattern analysis date
+        DATA_COMPLETENESS: Data completeness score (0.0-1.0)
+        IS_NIGHT_WORKER: Night worker flag
+        CREATED_AT: Creation timestamp
+        UPDATED_AT: Last update timestamp
+    """
+    __tablename__ = "TB_USER_PATTERN_SETTINGS"
+    
+    ID = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    USER_ID = Column(Integer, ForeignKey("TB_USERS.ID"), nullable=False, unique=True, index=True)
+    
+    # Weekday pattern (Mon-Fri average)
+    WEEKDAY_WAKE_TIME = Column(Time, nullable=False)
+    WEEKDAY_SLEEP_TIME = Column(Time, nullable=False)
+    
+    # Weekend pattern (Sat-Sun average)
+    WEEKEND_WAKE_TIME = Column(Time, nullable=False)
+    WEEKEND_SLEEP_TIME = Column(Time, nullable=False)
+    
+    # Analysis metadata
+    LAST_ANALYSIS_DATE = Column(Date, nullable=True)
+    DATA_COMPLETENESS = Column(Float, nullable=True)  # 0.0-1.0
+    
+    # Other settings
+    IS_NIGHT_WORKER = Column(Boolean, default=False)
+    
+    CREATED_AT = Column(DateTime(timezone=True), server_default=func.now())
+    UPDATED_AT = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    
+    # Relationship to User
+    user = relationship("User", backref="pattern_setting", uselist=False)
+    
+    def __repr__(self):
+        return f"<UserPatternSetting(ID={self.ID}, USER_ID={self.USER_ID}, WEEKDAY_WAKE={self.WEEKDAY_WAKE_TIME})>"
+
+
+# ============================================================================
+# 신규 모델 (인터랙티브 시나리오 서비스) - Relation Training & Drama
+# ============================================================================
+
+class Scenario(Base):
+    """
+    Scenario model for interactive training and drama
+    
+    Attributes:
+        ID: Primary key
+        USER_ID: User ID for personalized scenarios (NULL for public scenarios)
+        TITLE: Scenario title
+        TARGET_TYPE: Target relationship type (e.g., 'parent', 'friend', 'partner')
+        CATEGORY: Scenario category ('TRAINING' or 'DRAMA')
+        START_IMAGE_URL: Optional start image URL for the scenario
+        CREATED_AT: Creation timestamp
+        UPDATED_AT: Last update timestamp
+    """
+    __tablename__ = "TB_SCENARIOS"
+    
+    ID = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    USER_ID = Column(Integer, ForeignKey("TB_USERS.ID"), nullable=True, index=True)  # NULL for public scenarios
+    TITLE = Column(String(255), nullable=False)
+    TARGET_TYPE = Column(String(50), nullable=False)
+    CATEGORY = Column(String(20), nullable=False)  # 'TRAINING' or 'DRAMA'
+    START_IMAGE_URL = Column(String(500), nullable=True)
+    CREATED_AT = Column(DateTime(timezone=True), server_default=func.now())
+    UPDATED_AT = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    
+    # Relationships
+    user = relationship("User", foreign_keys=[USER_ID])
+    nodes = relationship("ScenarioNode", back_populates="scenario", cascade="all, delete-orphan")
+    results = relationship("ScenarioResult", back_populates="scenario", cascade="all, delete-orphan")
+    play_logs = relationship("PlayLog", back_populates="scenario")
+    
+    def __repr__(self):
+        return f"<Scenario(ID={self.ID}, TITLE={self.TITLE}, CATEGORY={self.CATEGORY}, USER_ID={self.USER_ID})>"
+
+
+class ScenarioNode(Base):
+    """
+    Scenario node model - represents each step in the scenario
+    
+    Attributes:
+        ID: Primary key
+        SCENARIO_ID: Foreign key to scenarios table
+        STEP_LEVEL: Step level in the scenario (1, 2, 3, ...)
+        SITUATION_TEXT: Situation description text
+        IMAGE_URL: Optional image URL for the situation
+        CREATED_AT: Creation timestamp
+    """
+    __tablename__ = "TB_SCENARIO_NODES"
+    
+    ID = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    SCENARIO_ID = Column(Integer, ForeignKey("TB_SCENARIOS.ID"), nullable=False, index=True)
+    STEP_LEVEL = Column(Integer, nullable=False)
+    SITUATION_TEXT = Column(Text, nullable=False)
+    IMAGE_URL = Column(String(500), nullable=True)
+    CREATED_AT = Column(DateTime(timezone=True), server_default=func.now())
+    
+    # Create composite index for faster lookups
+    __table_args__ = (
+        Index('idx_scenario_step', 'SCENARIO_ID', 'STEP_LEVEL'),
+    )
+    
+    # Relationships
+    scenario = relationship("Scenario", back_populates="nodes")
+    options = relationship("ScenarioOption", back_populates="node", foreign_keys="ScenarioOption.NODE_ID", cascade="all, delete-orphan")
+    
+    def __repr__(self):
+        return f"<ScenarioNode(ID={self.ID}, SCENARIO_ID={self.SCENARIO_ID}, STEP_LEVEL={self.STEP_LEVEL})>"
+
+
+class ScenarioOption(Base):
+    """
+    Scenario option model - represents choices at each node
+    
+    Attributes:
+        ID: Primary key
+        NODE_ID: Foreign key to scenario nodes table
+        OPTION_TEXT: Option text displayed to user
+        OPTION_CODE: Option code for tracking (e.g., 'A', 'B', 'C')
+        NEXT_NODE_ID: Foreign key to next node (NULL if this is an ending option)
+        RESULT_ID: Foreign key to result (used when NEXT_NODE_ID is NULL)
+        CREATED_AT: Creation timestamp
+    """
+    __tablename__ = "TB_SCENARIO_OPTIONS"
+    
+    ID = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    NODE_ID = Column(Integer, ForeignKey("TB_SCENARIO_NODES.ID"), nullable=False, index=True)
+    OPTION_TEXT = Column(Text, nullable=False)
+    OPTION_CODE = Column(String(10), nullable=False)
+    NEXT_NODE_ID = Column(Integer, ForeignKey("TB_SCENARIO_NODES.ID"), nullable=True, index=True)
+    RESULT_ID = Column(Integer, ForeignKey("TB_SCENARIO_RESULTS.ID"), nullable=True, index=True)
+    CREATED_AT = Column(DateTime(timezone=True), server_default=func.now())
+    
+    # Relationships
+    node = relationship("ScenarioNode", back_populates="options", foreign_keys=[NODE_ID])
+    next_node = relationship("ScenarioNode", foreign_keys=[NEXT_NODE_ID])
+    result = relationship("ScenarioResult", back_populates="options")
+    
+    def __repr__(self):
+        return f"<ScenarioOption(ID={self.ID}, NODE_ID={self.NODE_ID}, OPTION_CODE={self.OPTION_CODE})>"
+
+
+class ScenarioResult(Base):
+    """
+    Scenario result model - represents possible endings
+    
+    Attributes:
+        ID: Primary key
+        SCENARIO_ID: Foreign key to scenarios table
+        RESULT_CODE: Result code for tracking (e.g., 'AAAA', 'BBBB')
+        DISPLAY_TITLE: Result title displayed to user
+        ANALYSIS_TEXT: Detailed analysis text
+        ATMOSPHERE_IMAGE_TYPE: Image type for atmosphere (e.g., 'FLOWER', 'SUNNY', 'CLOUDY', 'STORM')
+        SCORE: Score for this result (0-100) - Legacy field for existing scenarios
+        RELATION_HEALTH_LEVEL: Relationship health level (GOOD/MIXED/BAD) - New field for Deep Agent
+        BOUNDARY_STYLE: Boundary setting style - New field for Deep Agent
+        RELATIONSHIP_TREND: Long-term relationship trend - New field for Deep Agent
+        IMAGE_URL: Optional image URL for result (4컷만화 이미지)
+        CREATED_AT: Creation timestamp
+    """
+    __tablename__ = "TB_SCENARIO_RESULTS"
+    
+    ID = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    SCENARIO_ID = Column(Integer, ForeignKey("TB_SCENARIOS.ID"), nullable=False, index=True)
+    RESULT_CODE = Column(String(50), nullable=False)
+    DISPLAY_TITLE = Column(String(255), nullable=False)
+    ANALYSIS_TEXT = Column(Text, nullable=False)
+    ATMOSPHERE_IMAGE_TYPE = Column(String(50), nullable=True)
+    SCORE = Column(Integer, nullable=True)  # Legacy: for existing scenarios
+    RELATION_HEALTH_LEVEL = Column(String(20), nullable=True)  # New: GOOD/MIXED/BAD
+    BOUNDARY_STYLE = Column(String(50), nullable=True)  # New: HEALTHY_ASSERTIVE/OVER_ADAPTIVE/ASSERTIVE_HARSH/AVOIDANT
+    RELATIONSHIP_TREND = Column(String(20), nullable=True)  # New: IMPROVING/STABLE/WORSENING
+    IMAGE_URL = Column(String(500), nullable=True)
+    CREATED_AT = Column(DateTime(timezone=True), server_default=func.now())
+    
+    # Create composite index for faster lookups
+    __table_args__ = (
+        Index('idx_scenario_result', 'SCENARIO_ID', 'RESULT_CODE'),
+    )
+    
+    # Relationships
+    scenario = relationship("Scenario", back_populates="results")
+    options = relationship("ScenarioOption", back_populates="result")
+    play_logs = relationship("PlayLog", back_populates="result")
+    
+    def __repr__(self):
+        return f"<ScenarioResult(ID={self.ID}, SCENARIO_ID={self.SCENARIO_ID}, RESULT_CODE={self.RESULT_CODE})>"
+
+
+class PlayLog(Base):
+    """
+    Play log model - tracks user's scenario plays
+    
+    Attributes:
+        ID: Primary key
+        USER_ID: Foreign key to users table
+        SCENARIO_ID: Foreign key to scenarios table
+        RESULT_ID: Foreign key to results table
+        PATH_CODE: Path taken through the scenario (e.g., 'A-B-C')
+        CREATED_AT: Play timestamp
+    """
+    __tablename__ = "TB_PLAY_LOGS"
+    
+    ID = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    USER_ID = Column(Integer, ForeignKey("TB_USERS.ID"), nullable=False, index=True)
+    SCENARIO_ID = Column(Integer, ForeignKey("TB_SCENARIOS.ID"), nullable=False, index=True)
+    RESULT_ID = Column(Integer, ForeignKey("TB_SCENARIO_RESULTS.ID"), nullable=False, index=True)
+    PATH_CODE = Column(String(255), nullable=False)
+    CREATED_AT = Column(DateTime(timezone=True), server_default=func.now())
+    
+    # Create composite index for faster lookups
+    __table_args__ = (
+        Index('idx_user_scenario', 'USER_ID', 'SCENARIO_ID', 'CREATED_AT'),
+        Index('idx_scenario_result', 'SCENARIO_ID', 'RESULT_ID'),
+    )
+    
+    # Relationships
+    user = relationship("User", backref="play_logs")
+    scenario = relationship("Scenario", back_populates="play_logs")
+    result = relationship("ScenarioResult", back_populates="play_logs")
+    
+    def __repr__(self):
+        return f"<PlayLog(ID={self.ID}, USER_ID={self.USER_ID}, SCENARIO_ID={self.SCENARIO_ID}, RESULT_ID={self.RESULT_ID})>"
+
+
+class AgentPlan(Base):
+    """
+    Agent Plan model
+    Stores future plans or scheduled actions generated by the agent
+    
+    Attributes:
+        ID: Primary key
+        USER_ID: Foreign key to TB_USERS
+        PLAN_TYPE: Type of plan (e.g., 'routine', 'reminder', 'suggestion')
+        TARGET_DATE: Scheduled date/time for the plan
+        CONTENT: Plan details (JSON or Text)
+        STATUS: Current status (e.g., 'pending', 'completed', 'cancelled')
+        SOURCE_SESSION_ID: Session ID where this plan was created
+        CREATED_AT: Creation timestamp
+        UPDATED_AT: Last update timestamp
+    """
+    __tablename__ = "TB_AGENT_PLANS"
+    
+    ID = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    USER_ID = Column(Integer, ForeignKey("TB_USERS.ID"), nullable=False, index=True)
+    PLAN_TYPE = Column(String(50), nullable=False)
+    TARGET_DATE = Column(DateTime(timezone=True), nullable=True)
+    CONTENT = Column(Text, nullable=False)
+    STATUS = Column(String(20), nullable=False, default='pending')
+    SOURCE_SESSION_ID = Column(String(255), nullable=True)
+    
+    CREATED_AT = Column(DateTime(timezone=True), server_default=func.now())
+    UPDATED_AT = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    
+    # Composite indexes
+    __table_args__ = (
+        Index('idx_user_plan_date', 'USER_ID', 'TARGET_DATE'),
+        Index('idx_user_plan_status', 'USER_ID', 'STATUS'),
+    )
+    
+    # Relationships
+    user = relationship("User", backref="agent_plans")
+    
+    def __repr__(self):
+        return f"<AgentPlan(ID={self.ID}, USER_ID={self.USER_ID}, TYPE={self.PLAN_TYPE}, STATUS={self.STATUS})>"
+
+
+# ============================================================================
+# 신규 모델 (온보딩 설문) - Onboarding Survey
+# ============================================================================
+
+class UserProfile(Base):
+    """
+    User Profile model for onboarding survey
+    Stores user profile data from onboarding survey (Q1-Q11)
+    
+    Attributes:
+        ID: Primary key
+        USER_ID: Foreign key to TB_USERS (unique, one profile per user)
+        NICKNAME: User nickname (Q1)
+        AGE_GROUP: Age group (Q2) - '40대', '50대', '60대', '70대 이상'
+        GENDER: Gender (Q3) - '여성', '남성'
+        MARITAL_STATUS: Marital status (Q4) - '미혼', '기혼', '이혼/사별', '말하고 싶지 않음'
+        CHILDREN_YN: Children existence (Q5) - '있음', '없음'
+        LIVING_WITH: Living with (Q6, multi-select) - JSON array of Korean text
+        PERSONALITY_TYPE: Personality type (Q7) - '내향적', '외향적', '상황에따라'
+        ACTIVITY_STYLE: Activity style (Q8) - '조용한 활동이 좋아요', '활동적인게 좋아요', '상황에 따라 달라요'
+        STRESS_RELIEF: Stress relief methods (Q9, multi-select) - JSON array of Korean text
+        HOBBIES: Hobbies (Q10, multi-select) - JSON array of Korean text
+        ATMOSPHERE: Preferred atmosphere (Q11, multi-select, optional) - JSON array of Korean text
+        IS_DELETED: Soft delete flag
+        CREATED_AT: Creation timestamp
+        CREATED_BY: Creator user ID
+        UPDATED_AT: Last update timestamp
+        UPDATED_BY: Last updater user ID
+    """
+    __tablename__ = "TB_USER_PROFILE"
+    
+    ID = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    USER_ID = Column(Integer, ForeignKey("TB_USERS.ID"), nullable=False, unique=True, index=True)
+    
+    # Q1: Nickname (text input)
+    NICKNAME = Column(String(100), nullable=False)
+    
+    # Q2-Q8: Single selection (Korean text values)
+    AGE_GROUP = Column(String(50), nullable=False)  # '40대', '50대', '60대', '70대 이상'
+    GENDER = Column(String(50), nullable=False)  # '여성', '남성'
+    MARITAL_STATUS = Column(String(50), nullable=False)  # '미혼', '기혼', '이혼/사별', '말하고 싶지 않음'
+    CHILDREN_YN = Column(String(50), nullable=False)  # '있음', '없음'
+    PERSONALITY_TYPE = Column(String(100), nullable=False)  # '내향적', '외향적', '상황에따라'
+    ACTIVITY_STYLE = Column(String(100), nullable=False)  # '조용한 활동이 좋아요', '활동적인게 좋아요', '상황에 따라 달라요'
+    
+    # Q6, Q9, Q10, Q11: Multi-select (JSON arrays of Korean text)
+    LIVING_WITH = Column(JSON, nullable=False)  # ["혼자", "배우자와", "자녀와", ...]
+    STRESS_RELIEF = Column(JSON, nullable=False)  # ["산책을 해요", "운동을 해요", ...]
+    HOBBIES = Column(JSON, nullable=False)  # ["독서", "음악감상", ...]
+    ATMOSPHERE = Column(JSON, nullable=True)  # ["잔잔한 분위기", "밝고 명랑한 분위기", ...] - Optional for future use
+    
+    # Standard fields
+    IS_DELETED = Column(Boolean, default=False, nullable=False, index=True)
+    CREATED_AT = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    CREATED_BY = Column(Integer, ForeignKey("TB_USERS.ID"), nullable=True, index=True)
+    UPDATED_AT = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
+    UPDATED_BY = Column(Integer, ForeignKey("TB_USERS.ID"), nullable=True, index=True)
+    
+    # Relationships
+    user = relationship("User", foreign_keys=[USER_ID], backref="profile")
+    creator = relationship("User", foreign_keys=[CREATED_BY], backref="created_profiles")
+    updater = relationship("User", foreign_keys=[UPDATED_BY], backref="updated_profiles")
+    
+    def __repr__(self):
+        return f"<UserProfile(ID={self.ID}, USER_ID={self.USER_ID}, NICKNAME={self.NICKNAME})>"
+>>>>>>> dev

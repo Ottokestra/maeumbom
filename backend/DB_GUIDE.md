@@ -61,12 +61,14 @@ USER_ID = Column(Integer, ForeignKey("TB_USERS.ID"), nullable=True, index=True)
 ### 타임스탬프
 
 ```python
-CREATED_AT = Column(DateTime(timezone=True), server_default=func.now())
-UPDATED_AT = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+CREATED_AT = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+UPDATED_AT = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
 ```
 
 - `CREATED_AT`: 필수 (생성 시간)
-- `UPDATED_AT`: 선택 (수정 시간, 필요한 경우에만)
+- `UPDATED_AT`: 권장 (수정 시간, 표준 필드에 포함)
+
+**참고**: 표준 필드 섹션을 참조하여 `CREATED_BY`, `UPDATED_BY`도 함께 사용하는 것을 권장합니다.
 
 ### JSON 필드
 
@@ -91,6 +93,162 @@ __table_args__ = (
 - 검색에 자주 사용되는 컬럼에 인덱스 추가
 - 복합 인덱스는 `__table_args__`에 정의
 
+## 표준 필드 (권장)
+
+모든 모델에 다음 5가지 표준 필드를 포함하는 것을 권장합니다:
+
+1. **삭제플래그** (`IS_DELETED` 또는 `DELETED_AT`)
+2. **생성일자** (`CREATED_AT`)
+3. **생성자** (`CREATED_BY`)
+4. **수정일자** (`UPDATED_AT`)
+5. **수정자** (`UPDATED_BY`)
+
+### 삭제플래그
+
+**방법 1: Boolean 방식 (권장)**
+
+```python
+IS_DELETED = Column(Boolean, default=False, nullable=False, index=True)
+```
+
+- 필드명: `IS_DELETED`
+- 타입: `Boolean`
+- 기본값: `False`
+- nullable: `False`
+- 인덱스: `True` (삭제되지 않은 데이터 조회 성능 향상)
+- 사용법: 삭제 시 `IS_DELETED=True`로 설정 (실제 데이터는 유지)
+
+**방법 2: DateTime 방식 (삭제 시간 추적 필요 시)**
+
+```python
+DELETED_AT = Column(DateTime(timezone=True), nullable=True, index=True)
+```
+
+- 필드명: `DELETED_AT`
+- 타입: `DateTime(timezone=True)`
+- nullable: `True` (삭제되지 않은 경우 NULL)
+- 인덱스: `True`
+- 사용법: 삭제 시 `DELETED_AT=func.now()`로 설정
+
+**권장**: Boolean 방식(`IS_DELETED`)을 사용하세요. 삭제 시간이 필요한 경우에만 DateTime 방식(`DELETED_AT`)을 사용하세요.
+
+### 생성일자
+
+```python
+CREATED_AT = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+```
+
+- 필드명: `CREATED_AT`
+- 타입: `DateTime(timezone=True)`
+- 옵션: `server_default=func.now()` (DB에서 자동 설정)
+- nullable: `False` (필수)
+- 인덱스: 필요에 따라 추가 (검색에 자주 사용되는 경우)
+
+### 생성자
+
+```python
+CREATED_BY = Column(Integer, ForeignKey("TB_USERS.ID"), nullable=True, index=True)
+```
+
+- 필드명: `CREATED_BY`
+- 타입: `Integer` (USER_ID 참조)
+- 옵션: `ForeignKey("TB_USERS.ID")`, `index=True`
+- nullable: `True` (시스템 생성 데이터의 경우 NULL 가능)
+- 사용법: 생성한 사용자의 `USER_ID` 저장
+
+**참고**: 시스템 자동 생성 데이터의 경우 `nullable=True`로 설정하여 NULL 허용
+
+### 수정일자
+
+```python
+UPDATED_AT = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
+```
+
+- 필드명: `UPDATED_AT`
+- 타입: `DateTime(timezone=True)`
+- 옵션: `server_default=func.now()`, `onupdate=func.now()` (자동 업데이트)
+- nullable: `False` (필수)
+- 사용법: 데이터 수정 시 자동으로 현재 시간으로 업데이트
+
+### 수정자
+
+```python
+UPDATED_BY = Column(Integer, ForeignKey("TB_USERS.ID"), nullable=True, index=True)
+```
+
+- 필드명: `UPDATED_BY`
+- 타입: `Integer` (USER_ID 참조)
+- 옵션: `ForeignKey("TB_USERS.ID")`, `index=True`
+- nullable: `True` (시스템 자동 업데이트의 경우 NULL 가능)
+- 사용법: 수정한 사용자의 `USER_ID` 저장
+
+**참고**: 수정 시마다 명시적으로 `UPDATED_BY`를 설정해야 합니다. `onupdate`는 `UPDATED_AT`에만 적용됩니다.
+
+### 표준 필드 사용 예시
+
+```python
+class YourNewModel(Base):
+    """
+    Your new model with standard fields
+    
+    Attributes:
+        ID: Primary key
+        YOUR_FIELD: Your custom field
+        IS_DELETED: Deletion flag
+        CREATED_AT: Creation timestamp
+        CREATED_BY: Creator user ID
+        UPDATED_AT: Last update timestamp
+        UPDATED_BY: Last updater user ID
+    """
+    __tablename__ = "TB_YOUR_TABLE_NAME"
+    
+    ID = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    YOUR_FIELD = Column(String(255), nullable=False)
+    
+    # 표준 필드
+    IS_DELETED = Column(Boolean, default=False, nullable=False, index=True)
+    CREATED_AT = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    CREATED_BY = Column(Integer, ForeignKey("TB_USERS.ID"), nullable=True, index=True)
+    UPDATED_AT = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
+    UPDATED_BY = Column(Integer, ForeignKey("TB_USERS.ID"), nullable=True, index=True)
+    
+    # Relationships
+    creator = relationship("User", foreign_keys=[CREATED_BY], backref="created_items")
+    updater = relationship("User", foreign_keys=[UPDATED_BY], backref="updated_items")
+    
+    def __repr__(self):
+        return f"<YourNewModel(ID={self.ID}, YOUR_FIELD={self.YOUR_FIELD})>"
+```
+
+### 표준 필드 사용 시 주의사항
+
+1. **조회 시 삭제된 데이터 제외**: `IS_DELETED=False` 조건 추가
+   ```python
+   items = db.query(YourModel).filter(YourModel.IS_DELETED == False).all()
+   ```
+
+2. **생성 시 생성자 설정**: 현재 로그인한 사용자 ID 설정
+   ```python
+   new_item = YourModel(
+       YOUR_FIELD="value",
+       CREATED_BY=current_user.id
+   )
+   ```
+
+3. **수정 시 수정자 설정**: 현재 로그인한 사용자 ID 명시적으로 설정
+   ```python
+   item.YOUR_FIELD = "new_value"
+   item.UPDATED_BY = current_user.id
+   db.commit()
+   ```
+
+4. **삭제 시 소프트 삭제**: 실제 삭제 대신 플래그 설정
+   ```python
+   item.IS_DELETED = True
+   item.UPDATED_BY = current_user.id
+   db.commit()
+   ```
+
 ## 새로운 모델 추가하기
 
 ### 1. `backend/app/db/models.py`에 모델 추가
@@ -104,14 +262,24 @@ class YourNewModel(Base):
         ID: Primary key
         USER_ID: Foreign key to users table
         YOUR_FIELD: Description
+        IS_DELETED: Deletion flag
         CREATED_AT: Creation timestamp
+        CREATED_BY: Creator user ID
+        UPDATED_AT: Last update timestamp
+        UPDATED_BY: Last updater user ID
     """
     __tablename__ = "TB_YOUR_TABLE_NAME"
     
     ID = Column(Integer, primary_key=True, index=True, autoincrement=True)
     USER_ID = Column(Integer, ForeignKey("TB_USERS.ID"), nullable=True, index=True)
     YOUR_FIELD = Column(String(255), nullable=False)
-    CREATED_AT = Column(DateTime(timezone=True), server_default=func.now())
+    
+    # 표준 필드 (권장)
+    IS_DELETED = Column(Boolean, default=False, nullable=False, index=True)
+    CREATED_AT = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    CREATED_BY = Column(Integer, ForeignKey("TB_USERS.ID"), nullable=True, index=True)
+    UPDATED_AT = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
+    UPDATED_BY = Column(Integer, ForeignKey("TB_USERS.ID"), nullable=True, index=True)
     
     # 인덱스 정의 (필요한 경우)
     __table_args__ = (
@@ -119,7 +287,9 @@ class YourNewModel(Base):
     )
     
     # Relationship 정의 (필요한 경우)
-    user = relationship("User", backref="your_new_models")
+    user = relationship("User", foreign_keys=[USER_ID], backref="your_new_models")
+    creator = relationship("User", foreign_keys=[CREATED_BY], backref="created_your_models")
+    updater = relationship("User", foreign_keys=[UPDATED_BY], backref="updated_your_models")
     
     def __repr__(self):
         return f"<YourNewModel(ID={self.ID}, YOUR_FIELD={self.YOUR_FIELD})>"
@@ -151,17 +321,65 @@ from app.db.models import YourNewModel
 from fastapi import Depends
 from sqlalchemy.orm import Session
 
+from app.auth.dependencies import get_current_user
+from app.auth.models import User
+
 @app.post("/your-endpoint")
-def create_item(db: Session = Depends(get_db)):
+def create_item(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """표준 필드를 포함한 항목 생성"""
     new_item = YourNewModel(
-        USER_ID=1,
-        YOUR_FIELD="value"
+        USER_ID=current_user.id,
+        YOUR_FIELD="value",
+        CREATED_BY=current_user.id  # 생성자 설정
     )
     db.add(new_item)
     db.commit()
     db.refresh(new_item)
     return new_item
-```
+
+@app.put("/your-endpoint/{item_id}")
+def update_item(
+    item_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """표준 필드를 포함한 항목 수정"""
+    item = db.query(YourNewModel).filter(
+        YourNewModel.ID == item_id,
+        YourNewModel.IS_DELETED == False  # 삭제되지 않은 항목만 조회
+    ).first()
+    
+    if not item:
+        raise HTTPException(status_code=404, detail="Item not found")
+    
+    item.YOUR_FIELD = "new_value"
+    item.UPDATED_BY = current_user.id  # 수정자 설정
+    db.commit()
+    db.refresh(item)
+    return item
+
+@app.delete("/your-endpoint/{item_id}")
+def delete_item(
+    item_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """소프트 삭제 (표준 필드 사용)"""
+    item = db.query(YourNewModel).filter(
+        YourNewModel.ID == item_id,
+        YourNewModel.IS_DELETED == False
+    ).first()
+    
+    if not item:
+        raise HTTPException(status_code=404, detail="Item not found")
+    
+    item.IS_DELETED = True  # 삭제 플래그 설정
+    item.UPDATED_BY = current_user.id
+    db.commit()
+    return {"message": "Item deleted successfully"}
 
 ## Import 규칙
 
@@ -216,6 +434,114 @@ init_db()
 2. 컬럼 삭제: 데이터 백업 후 진행
 3. 테이블명/컬럼명 변경: 마이그레이션 스크립트 작성 필요
 
+### 기존 모델에 표준 필드 추가하기
+
+기존 모델에 표준 필드를 추가할 때는 다음 순서를 따르세요:
+
+#### 1. 모델에 표준 필드 추가
+
+```python
+class YourExistingModel(Base):
+    __tablename__ = "TB_YOUR_EXISTING_TABLE"
+    
+    ID = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    YOUR_FIELD = Column(String(255), nullable=False)
+    
+    # 기존 필드
+    CREATED_AT = Column(DateTime(timezone=True), server_default=func.now())
+    
+    # 추가할 표준 필드 (nullable=True로 설정하여 기존 데이터 보호)
+    IS_DELETED = Column(Boolean, default=False, nullable=False, index=True)
+    CREATED_BY = Column(Integer, ForeignKey("TB_USERS.ID"), nullable=True, index=True)
+    UPDATED_AT = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=True)
+    UPDATED_BY = Column(Integer, ForeignKey("TB_USERS.ID"), nullable=True, index=True)
+    
+    # Relationships 추가
+    creator = relationship("User", foreign_keys=[CREATED_BY], backref="created_your_existing_models")
+    updater = relationship("User", foreign_keys=[UPDATED_BY], backref="updated_your_existing_models")
+```
+
+**주의사항**:
+- `IS_DELETED`: `nullable=False`이지만 `default=False`로 설정하여 기존 데이터는 자동으로 `False`가 됩니다.
+- `CREATED_BY`, `UPDATED_BY`: `nullable=True`로 설정하여 기존 데이터는 NULL로 유지됩니다.
+- `UPDATED_AT`: `nullable=True`로 설정하고, 기존 데이터는 `CREATED_AT` 값으로 업데이트하는 스크립트를 실행할 수 있습니다.
+
+#### 2. 기존 데이터 마이그레이션 (선택사항)
+
+기존 데이터에 기본값을 설정하려면 마이그레이션 스크립트를 실행하세요:
+
+```python
+from app.db.database import SessionLocal
+from app.db.models import YourExistingModel
+
+def migrate_existing_data():
+    """기존 데이터에 표준 필드 값 설정"""
+    db = SessionLocal()
+    try:
+        # UPDATED_AT을 CREATED_AT 값으로 설정 (기존 데이터)
+        items = db.query(YourExistingModel).filter(
+            YourExistingModel.UPDATED_AT.is_(None)
+        ).all()
+        
+        for item in items:
+            item.UPDATED_AT = item.CREATED_AT
+        
+        db.commit()
+        print(f"Migrated {len(items)} items")
+    except Exception as e:
+        db.rollback()
+        print(f"Migration failed: {e}")
+    finally:
+        db.close()
+
+# 실행
+if __name__ == "__main__":
+    migrate_existing_data()
+```
+
+#### 3. nullable=False로 변경 (선택사항)
+
+기존 데이터 마이그레이션이 완료된 후, `UPDATED_AT`을 `nullable=False`로 변경할 수 있습니다:
+
+```python
+# 마이그레이션 완료 후
+UPDATED_AT = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
+```
+
+**주의**: 프로덕션 환경에서는 단계적으로 진행하세요:
+1. 먼저 `nullable=True`로 컬럼 추가
+2. 기존 데이터 마이그레이션 실행
+3. 모든 데이터가 채워진 후 `nullable=False`로 변경
+
+#### 4. 조회 쿼리 업데이트
+
+표준 필드를 추가한 후, 모든 조회 쿼리에 `IS_DELETED=False` 조건을 추가하세요:
+
+```python
+# 기존 쿼리
+items = db.query(YourExistingModel).all()
+
+# 업데이트된 쿼리 (삭제되지 않은 항목만 조회)
+items = db.query(YourExistingModel).filter(
+    YourExistingModel.IS_DELETED == False
+).all()
+```
+
+#### 5. 삭제 로직 변경
+
+실제 삭제 대신 소프트 삭제를 사용하도록 변경하세요:
+
+```python
+# 기존 삭제 로직
+db.delete(item)
+db.commit()
+
+# 업데이트된 삭제 로직 (소프트 삭제)
+item.IS_DELETED = True
+item.UPDATED_BY = current_user.id
+db.commit()
+```
+
 ## 예시 프로젝트 참고
 
 ### 모든 모델 (새 규칙 적용)
@@ -232,7 +558,8 @@ init_db()
 "backend/DB_GUIDE.md를 참고하여 
 backend/app/db/models.py에 새로운 모델을 추가해줘.
 모델 이름은 'ConversationLog'이고, 테이블명은 'TB_CONVERSATION_LOG'로 해줘.
-필드는 ID, USER_ID, SESSION_ID, MESSAGE, CREATED_AT이 필요해."
+필드는 ID, USER_ID, SESSION_ID, MESSAGE가 필요하고,
+표준 필드(IS_DELETED, CREATED_AT, CREATED_BY, UPDATED_AT, UPDATED_BY)도 포함해줘."
 ```
 
 ## 문의

@@ -8,45 +8,50 @@ from pathlib import Path
 from typing import List, Optional
 
 import numpy as np
+import importlib.util
+
 from fastapi import (
     FastAPI,
     HTTPException,
     WebSocket,
     WebSocketDisconnect,
+<<<<<<< HEAD
+=======
+    HTTPException,
+    Request,
+    Depends,
+>>>>>>> dev
 )
+    # noqa
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, ConfigDict
 
-# ============================================================
+# =========================
 # 경로 설정
-# ============================================================
+# =========================
 
 backend_path = Path(__file__).parent
 sys.path.insert(0, str(backend_path))
 
-# ✅ TTS 모듈이 있는 폴더를 파이썬 경로에 추가
+# ✅ TTS 모듈 경로 추가
 tts_path = backend_path / "engine" / "text-to-speech"
 sys.path.insert(0, str(tts_path))
 
-# ============================================================
-# 서브 모듈 import
-# ============================================================
+# =========================
+# 라우터 / 엔진 import
+# =========================
 
-# Emotion 분석 라우터는 동적 로딩
-import importlib.util
+# 갱년기 설문 라우터
+from app.menopause_survey.router import router as menopause_survey_router
 
-emotion_router = None
-try:
-    emotion_analysis_path = backend_path / "engine" / "emotion-analysis" / "api" / "routes.py"
-    spec = importlib.util.spec_from_file_location("emotion_routes", emotion_analysis_path)
-    emotion_routes = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(emotion_routes)
-    emotion_router = emotion_routes.router
-    print("[INFO] Emotion analysis router loaded successfully.")
-except Exception as e:
-    print("[WARN] Emotion analysis module load failed:", e)
-    emotion_router = None
+# 날씨 / 루틴 설문 라우터
+from app.weather.routes import router as weather_router
+from app.routine_survey.routers import router as routine_survey_router
+from app.routine_survey.models import seed_default_mr_survey  # 사용 여부와 무관하게 유지
+
+# DB 세션/초기화
+from app.db.database import SessionLocal, init_db
 
 # TTS 엔진 레지스트리
 from engine.text_to_speech import get_tts_engine
@@ -58,6 +63,7 @@ from engine.routine_recommend.models.schemas import (
     RoutineRecommendationItem,
 )
 
+<<<<<<< HEAD
 # 날씨 / 루틴 설문 라우터
 from app.weather.routes import router as weather_router
 from app.routine_survey.routers import router as routine_survey_router
@@ -66,16 +72,40 @@ from app.reports.router import router as reports_router
 from app.reports.emotion.router import router as emotion_report_router
 from app.reports.emotion.chat_router import router as report_chat_router
 from app.onboarding_survey.router import router as onboarding_survey_router
+=======
+# Auth / User 모델
+from app.auth.dependencies import get_current_user
+from app.db.models import User
+>>>>>>> dev
 
-# 루틴 설문 기본 seed
-from app.routine_survey.models import seed_default_mr_survey
+# =========================
+# Emotion Analysis 라우터 로딩 (옵션)
+# =========================
 
-# DB 세션/초기화
-from app.db.database import SessionLocal, init_db
+emotion_router = None
+try:
+    emotion_analysis_path = (
+        backend_path / "engine" / "emotion-analysis" / "api" / "routes.py"
+    )
+    spec = importlib.util.spec_from_file_location("emotion_routes", emotion_analysis_path)
+    emotion_routes = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(emotion_routes)
+    emotion_router = emotion_routes.router
+    print("[INFO] Emotion analysis router loaded successfully.")
+except Exception as e:
+    print("[WARN] Emotion analysis module load failed:", e)
+    emotion_router = None
 
-# ============================================================
+# =========================
+# 시나리오 자동 Import 플래그
+# =========================
+
+# 🔹 openpyxl 때문에 서버가 죽지 않도록, 기본값은 False
+ENABLE_SCENARIO_AUTOIMPORT = False
+
+# =========================
 # FastAPI 앱 생성
-# ============================================================
+# =========================
 
 app = FastAPI(
     title="Team Project API",
@@ -83,7 +113,7 @@ app = FastAPI(
     version="1.0.0",
 )
 
-# CORS
+# CORS 설정
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:5173", "http://localhost:3000"],
@@ -92,49 +122,41 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# ------------------------------------------------------------
-# Startup: DB 테이블 생성 + 루틴 설문 기본 seed
-# ------------------------------------------------------------
-
-@app.on_event("startup")
-def on_startup():
-    """DB 초기화 및 루틴 설문 기본 데이터 seed"""
-    try:
-        # 테이블 생성
-        init_db()
-
-        # 루틴 설문 기본 세트 삽입
-        db = SessionLocal()
-        try:
-            seed_default_mr_survey(db)
-            print("[INFO] 기본 루틴 설문 seed 완료")
-        finally:
-            db.close()
-    except Exception as e:
-        import traceback
-        print(f"[WARN] Startup 초기화 오류: {e}")
-        traceback.print_exc()
-
-# ============================================================
-# Emotion 분석 라우터
-# ============================================================
+# =========================
+# Emotion Analysis 라우터 (옵션)
+# =========================
 
 if emotion_router is not None:
     app.include_router(emotion_router, prefix="/emotion/api", tags=["emotion"])
     # 하위 호환성을 위해 /api 경로도 지원
     app.include_router(emotion_router, prefix="/api", tags=["emotion"])
 
-# ============================================================
-# Daily Mood Check + Weather Service
-# ============================================================
+# =========================
+# Menopause Survey 라우터 (항상 등록)
+# =========================
 
 try:
-    # Daily mood check 라우터는 파일 경로 기반 동적 로딩
+    app.include_router(menopause_survey_router)
+    print("[INFO] Menopause survey router loaded successfully.")
+except Exception as e:
+    import traceback
+
+    print(f"[WARN] Menopause survey router load failed: {e}")
+    traceback.print_exc()
+
+# =========================
+# Daily Mood Check / Weather Service
+# =========================
+
+# Daily Mood Check
+try:
     daily_mood_check_path = backend_path / "app" / "daily_mood_check" / "routes.py"
     if not daily_mood_check_path.exists():
         print(f"[WARN] Daily mood check routes file not found: {daily_mood_check_path}")
     else:
-        spec = importlib.util.spec_from_file_location("daily_mood_check_routes", daily_mood_check_path)
+        spec = importlib.util.spec_from_file_location(
+            "daily_mood_check_routes", daily_mood_check_path
+        )
         daily_mood_check_module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(daily_mood_check_module)
         daily_mood_check_router = daily_mood_check_module.router
@@ -144,48 +166,177 @@ try:
             tags=["daily-mood-check"],
         )
         print("[INFO] Daily mood check router loaded successfully.")
+except Exception as e:
+    import traceback
 
-    # Weather 라우터
+    print(f"[WARN] Daily mood check module load failed: {e}")
+    traceback.print_exc()
+
+# Weather
+try:
     app.include_router(
-        weather_router,
-        prefix="/api/service/weather",
-        tags=["weather"],
+        weather_router, prefix="/api/service/weather", tags=["weather"]
     )
     print("[INFO] Weather router loaded successfully.")
 except Exception as e:
     import traceback
-    print(f"[WARN] Daily mood check / Weather module load failed: {e}")
+
+    print(f"[WARN] Weather module load failed: {e}")
     traceback.print_exc()
 
-# ============================================================
+# =========================
 # Routine survey 라우터
-# ============================================================
+# =========================
 
+<<<<<<< HEAD
 app.include_router(routine_survey_router, prefix="/api", tags=["routine-survey"])
 app.include_router(emotion_report_router)
 app.include_router(report_chat_router)
 app.include_router(reports_router)
 app.include_router(menopause_survey_router, prefix="/api", tags=["menopause-survey"])
 app.include_router(onboarding_survey_router)
+=======
+try:
+    app.include_router(routine_survey_router, prefix="/api", tags=["routine-survey"])
+    print("[INFO] Routine survey router loaded successfully.")
+except Exception as e:
+    import traceback
+>>>>>>> dev
 
-# ============================================================
+    print(f"[WARN] Routine survey router load failed: {e}")
+    traceback.print_exc()
+
+# =========================
 # Authentication (Google OAuth + JWT)
-# ============================================================
+# =========================
 
 try:
     from app.auth import router as auth_router
 
-    # init_db() 는 startup 에서 이미 호출되므로 여기서는 라우터만 포함
+    # DB 테이블 초기화
+    init_db()
+
+    # 시나리오 데이터 자동 import (옵션)
+    if ENABLE_SCENARIO_AUTOIMPORT:
+        try:
+            from app.relation_training.import_data import import_all
+            from pathlib import Path as _Path
+
+            data_dir = (
+                _Path(__file__).parent
+                / "app"
+                / "relation_training"
+                / "data"
+            )
+            if data_dir.exists():
+                excel_files = list(data_dir.glob("*.xlsx"))
+                excel_files = [
+                    f
+                    for f in excel_files
+                    if not f.name.startswith("~") and f.name != "template.xlsx"
+                ]
+                json_files = list(data_dir.glob("*.json"))
+                json_files = [f for f in json_files if f.name != "template.json"]
+
+                if excel_files or json_files:
+                    print(
+                        f"[INFO] Importing scenario files "
+                        f"(Excel: {len(excel_files)}, JSON: {len(json_files)})..."
+                    )
+                    try:
+                        import_all(data_dir, update=False, clear=False)
+                    except Exception as import_error:
+                        import traceback
+
+                        print(
+                            f"[ERROR] Scenario import 실행 중 에러 발생: {import_error}"
+                        )
+                        traceback.print_exc()
+                else:
+                    print("[INFO] No scenario files found in data folder.")
+            else:
+                print(f"[WARN] Scenario data directory not found: {data_dir}")
+        except Exception as e:
+            import traceback
+
+            print(f"[ERROR] Scenario data auto-import setup failed: {e}")
+            traceback.print_exc()
+
+    # Auth 라우터
     app.include_router(auth_router, prefix="/auth", tags=["authentication"])
     print("[INFO] Authentication router loaded successfully.")
+
+    # Dashboard 라우터
+    from app.dashboard.routes import router as dashboard_router
+
+    app.include_router(
+        dashboard_router, prefix="/api/dashboard", tags=["dashboard"]
+    )
+    print("[INFO] Dashboard router loaded successfully.")
+
 except Exception as e:
     import traceback
-    print(f"[WARN] Authentication module load failed: {e}")
+
+    print(f"[WARN] Authentication/Dashboard module load failed: {e}")
     traceback.print_exc()
 
-# ============================================================
-# LangChain Agent REST API
-# ============================================================
+# =========================
+# Onboarding Survey Service
+# =========================
+
+try:
+    from app.onboarding_survey.routes import router as onboarding_survey_router
+
+    app.include_router(
+        onboarding_survey_router,
+        prefix="/api/onboarding-survey",
+        tags=["onboarding-survey"]
+    )
+    print("[INFO] Onboarding survey router loaded successfully.")
+except Exception as e:
+    import traceback
+
+    print(f"[WARN] Onboarding survey module load failed: {e}")
+    traceback.print_exc()
+
+# =========================
+# User Phase Service
+# =========================
+
+try:
+    from app.user_phase.routes import router as user_phase_router
+
+    app.include_router(user_phase_router, tags=["user-phase"])
+    print("[INFO] User Phase router loaded successfully.")
+except Exception as e:
+    import traceback
+
+    print(f"[WARN] User Phase module load failed: {e}")
+    traceback.print_exc()
+
+# =========================
+# Relation Training Service (Interactive Scenario)
+# =========================
+
+try:
+    from app.relation_training.routes import router as relation_training_router
+
+    app.include_router(
+        relation_training_router,
+        prefix="/api/service/relation-training",
+        tags=["relation-training"],
+    )
+    print("[INFO] Relation training router loaded successfully.")
+except Exception as e:
+    import traceback
+
+    print(f"[WARN] Relation training module load failed: {e}")
+    traceback.print_exc()
+
+# =========================
+# LangChain Agent V2 API
+# =========================
+
 
 class AgentTextRequest(BaseModel):
     user_text: str
@@ -202,11 +353,21 @@ class AgentAudioRequest(BaseModel):
     session_id: Optional[str] = None
 
 
-@app.post("/api/agent/text")
-async def agent_text_endpoint(request: AgentTextRequest):
-    """LangChain Agent - 텍스트 입력 (STT Quality 전처리 포함)"""
+@app.post("/api/agent/v2/text")
+async def agent_text_v2_endpoint(
+    request: AgentTextRequest,
+    current_user: User = Depends(get_current_user),
+):
+    """
+    LangChain Agent V2 - 텍스트 입력 (JWT 인증 필수, DB 저장)
+    """
     try:
-        from engine.langchain_agent import run_ai_bomi_from_text
+        from engine.langchain_agent.agent_v2 import (
+            run_ai_bomi_from_text_v2,
+        )
+
+        user_id = current_user.ID
+        session_id = request.session_id or f"user_{user_id}_default"
 
         # STT Quality 전처리
         if request.stt_quality == "no_speech":
@@ -218,8 +379,11 @@ async def agent_text_endpoint(request: AgentTextRequest):
                 "meta": {
                     "model": os.getenv("OPENAI_MODEL_NAME", "gpt-4o-mini"),
                     "used_tools": [],
-                    "session_id": request.session_id or "default",
+                    "session_id": session_id,
                     "stt_quality": request.stt_quality,
+                    "user_id": user_id,
+                    "storage": "database",
+                    "api_version": "v2",
                     "note": "no_speech_detected",
                 },
             }
@@ -232,16 +396,20 @@ async def agent_text_endpoint(request: AgentTextRequest):
                 "meta": {
                     "model": os.getenv("OPENAI_MODEL_NAME", "gpt-4o-mini"),
                     "used_tools": [],
-                    "session_id": request.session_id or "default",
+                    "session_id": session_id,
                     "stt_quality": request.stt_quality,
+                    "user_id": user_id,
+                    "storage": "database",
+                    "api_version": "v2",
                     "note": "low_quality_audio",
                 },
             }
 
-        # 정상 품질 또는 텍스트 입력인 경우 Agent 실행
-        result = run_ai_bomi_from_text(
+        # V2 함수 호출 - DB에 저장됨
+        result = await run_ai_bomi_from_text_v2(
             user_text=request.user_text,
-            session_id=request.session_id,
+            user_id=user_id,
+            session_id=session_id,
             stt_quality=request.stt_quality,
         )
         return result
@@ -252,6 +420,7 @@ async def agent_text_endpoint(request: AgentTextRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+<<<<<<< HEAD
 @app.post("/api/agent/v2/text")
 async def agent_text_v2_endpoint(request: AgentTextV2Request):
     """LangChain Agent v2 - 텍스트 입력 (캐릭터 정보 포함)"""
@@ -308,14 +477,30 @@ async def agent_text_v2_endpoint(request: AgentTextV2Request):
 @app.post("/api/agent/audio")
 async def agent_audio_endpoint(request: AgentAudioRequest):
     """LangChain Agent - 음성 입력"""
+=======
+@app.get("/api/agent/v2/sessions")
+async def get_all_agent_sessions_v2(
+    current_user: User = Depends(get_current_user),
+):
+    """
+    LangChain Agent V2 - 현재 유저의 모든 세션 정보 조회
+    """
+>>>>>>> dev
     try:
-        from engine.langchain_agent import run_ai_bomi_from_audio
-
-        result = run_ai_bomi_from_audio(
-            audio_bytes=request.audio_bytes,
-            session_id=request.session_id,
+        from engine.langchain_agent.db_conversation_store import (
+            get_conversation_store,
         )
-        return result
+
+        user_id = current_user.ID
+        store = get_conversation_store()
+
+        sessions = store.get_user_sessions(user_id)
+
+        return {
+            "user_id": user_id,
+            "session_count": len(sessions),
+            "sessions": sessions,
+        }
     except Exception as e:
         import traceback
 
@@ -323,28 +508,29 @@ async def agent_audio_endpoint(request: AgentAudioRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.get("/api/agent/memory/{session_id}")
-async def get_agent_memory_legacy(session_id: str, limit: int = None):
-    """Legacy endpoint for backward compatibility"""
-    return await get_agent_session(session_id, limit)
-
-
-@app.get("/api/agent/sessions/{session_id}")
-async def get_agent_session(session_id: str, limit: int = None):
-    """LangChain Agent - 특정 세션의 대화 히스토리 및 메타데이터 조회"""
+@app.get("/api/agent/v2/sessions/{session_id}")
+async def get_agent_session_v2(
+    session_id: str,
+    current_user: User = Depends(get_current_user),
+    limit: int = None,
+):
+    """
+    LangChain Agent V2 - 특정 세션의 대화 히스토리 조회
+    """
     try:
-        from engine.langchain_agent import get_conversation_store
+        from engine.langchain_agent.db_conversation_store import (
+            get_conversation_store,
+        )
 
+        user_id = current_user.ID
         store = get_conversation_store()
 
-        # 히스토리 조회
-        history = store.get_history(session_id, limit=limit)
-
-        # 메타데이터 조회
-        metadata = store.get_session_metadata(session_id)
+        history = store.get_history(user_id, session_id, limit=limit)
+        metadata = store.get_session_metadata(user_id, session_id)
 
         return {
             "session_id": session_id,
+            "user_id": user_id,
             "metadata": metadata,
             "message_count": len(history),
             "messages": history,
@@ -356,39 +542,29 @@ async def get_agent_session(session_id: str, limit: int = None):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.delete("/api/agent/sessions/{session_id}")
-async def delete_agent_session(session_id: str):
-    """LangChain Agent - 특정 세션 삭제"""
+@app.delete("/api/agent/v2/sessions/{session_id}")
+async def delete_agent_session_v2(
+    session_id: str,
+    current_user: User = Depends(get_current_user),
+):
+    """
+    LangChain Agent V2 - 특정 세션 삭제 (Soft Delete)
+    """
     try:
-        from engine.langchain_agent import get_conversation_store
+        from engine.langchain_agent.db_conversation_store import (
+            get_conversation_store,
+        )
 
+        user_id = current_user.ID
         store = get_conversation_store()
 
-        # 세션 존재 여부 확인 (선택적)
-        if session_id not in store._store and session_id not in store._session_metadata:
-            raise HTTPException(status_code=404, detail="Session not found")
+        store.clear_session(user_id, session_id)
 
-        store.clear_session(session_id)
-        return {"status": "success", "message": f"Session {session_id} deleted"}
-    except HTTPException:
-        raise
-    except Exception as e:
-        import traceback
-
-        traceback.print_exc()
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-@app.get("/api/agent/sessions")
-async def get_all_agent_sessions():
-    """LangChain Agent - 모든 세션 정보 조회"""
-    try:
-        from engine.langchain_agent import get_all_sessions
-
-        sessions = get_all_sessions()
         return {
-            "session_count": len(sessions),
-            "sessions": sessions,
+            "status": "success",
+            "message": f"Session {session_id} soft deleted",
+            "user_id": user_id,
+            "session_id": session_id,
         }
     except Exception as e:
         import traceback
@@ -396,9 +572,166 @@ async def get_all_agent_sessions():
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
 
-# ============================================================
-# STT WebSocket
-# ============================================================
+
+# =====================================================================
+# Debug & Cleanup APIs
+# =====================================================================
+
+
+@app.delete("/api/agent/cleanup/conversations")
+async def cleanup_conversations(
+    current_user: User = Depends(get_current_user),
+):
+    """테스트용: 현재 유저의 모든 대화 내역 완전 삭제"""
+    try:
+        from engine.langchain_agent.db_conversation_store import (
+            get_conversation_store,
+        )
+
+        user_id = current_user.ID
+        store = get_conversation_store()
+
+        count = store.hard_delete_all_conversations(user_id)
+
+        return {
+            "status": "success",
+            "message": f"Deleted {count} conversation records",
+            "user_id": user_id,
+        }
+    except Exception as e:
+        import traceback
+
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ============================================================================
+# Debug/Cleanup Endpoints (for agent.html cleanup buttons)
+# ============================================================================
+
+@app.delete("/api/debug/cleanup/history")
+async def debug_cleanup_history(
+    current_user: User = Depends(get_current_user),
+):
+    """디버그: 현재 유저의 모든 대화 기록 삭제"""
+    try:
+        from engine.langchain_agent.db_conversation_store import get_conversation_store
+        
+        user_id = current_user.ID
+        store = get_conversation_store()
+        count = store.hard_delete_all_conversations(user_id)
+        
+        return {
+            "status": "success",
+            "message": f"Deleted {count} conversation records",
+            "user_id": user_id,
+        }
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.delete("/api/debug/cleanup/memories")
+async def debug_cleanup_memories(
+    current_user: User = Depends(get_current_user),
+):
+    """디버그: 현재 유저의 모든 메모리 삭제 (전역 메모리만)"""
+    import logging
+    logger = logging.getLogger(__name__)
+    
+    try:
+        from app.db.models import GlobalMemory
+        
+        user_id = current_user.ID
+        db = SessionLocal()
+        
+        try:
+            # GlobalMemory만 삭제 (SessionMemory는 존재하지 않음)
+            global_count = db.query(GlobalMemory).filter(GlobalMemory.USER_ID == user_id).delete()
+            db.commit()
+            
+            return {
+                "status": "success",
+                "message": f"Deleted {global_count} global memories",
+                "user_id": user_id,
+            }
+        finally:
+            db.close()
+    except Exception as e:
+        import traceback
+        logger.error(f"Memory cleanup failed: {e}")
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.delete("/api/agent/cleanup/session-memories")
+async def cleanup_session_memories(
+    current_user: User = Depends(get_current_user),
+):
+    """테스트용: 현재 유저의 모든 세션 메모리 완전 삭제"""
+    try:
+        from app.db.models import SessionMemory
+
+        user_id = current_user.ID
+        db = SessionLocal()
+        try:
+            count = (
+                db.query(SessionMemory)
+                .filter(SessionMemory.USER_ID == user_id)
+                .delete()
+            )
+            db.commit()
+
+            return {
+                "status": "success",
+                "message": f"Deleted {count} session memory records",
+                "user_id": user_id,
+            }
+        finally:
+            db.close()
+    except Exception as e:
+        import traceback
+
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.delete("/api/agent/cleanup/global-memories")
+async def cleanup_global_memories(
+    current_user: User = Depends(get_current_user),
+):
+    """테스트용: 현재 유저의 모든 전역 메모리 완전 삭제"""
+    try:
+        from app.db.models import GlobalMemory
+
+        user_id = current_user.ID
+        db = SessionLocal()
+        try:
+            count = (
+                db.query(GlobalMemory)
+                .filter(GlobalMemory.USER_ID == user_id)
+                .delete()
+            )
+            db.commit()
+
+            return {
+                "status": "success",
+                "message": f"Deleted {count} global memory records",
+                "user_id": user_id,
+            }
+        finally:
+            db.close()
+    except Exception as e:
+        import traceback
+
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# =====================================================================
+# STT 엔진 (WebSocket)
+# =====================================================================
 
 stt_engine = None
 
@@ -407,15 +740,26 @@ def get_stt_engine():
     """STT 엔진 싱글톤"""
     global stt_engine
     if stt_engine is None:
-        import importlib.util
-
-        stt_engine_path = backend_path / "engine" / "speech-to-text" / "faster_whisper" / "stt_engine.py"
-        spec = importlib.util.spec_from_file_location("stt_engine", stt_engine_path)
+        stt_engine_path = (
+            backend_path
+            / "engine"
+            / "speech-to-text"
+            / "faster_whisper"
+            / "stt_engine.py"
+        )
+        spec = importlib.util.spec_from_file_location(
+            "stt_engine", stt_engine_path
+        )
         stt_module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(stt_module)
 
-        # config.yaml 경로
-        config_path = backend_path / "engine" / "speech-to-text" / "faster_whisper" / "config.yaml"
+        config_path = (
+            backend_path
+            / "engine"
+            / "speech-to-text"
+            / "faster_whisper"
+            / "config.yaml"
+        )
         stt_engine = stt_module.MaumBomSTT(str(config_path))
     return stt_engine
 
@@ -426,14 +770,15 @@ async def stt_websocket(websocket: WebSocket):
     engine = None
 
     try:
-        # 즉시 연결 확인 메시지 전송
-        await websocket.send_json({"status": "connecting", "message": "STT 엔진 초기화 중..."})
+        await websocket.send_json(
+            {"status": "connecting", "message": "STT 엔진 초기화 중..."}
+        )
 
-        # STT 엔진 초기화
         engine = get_stt_engine()
 
-        # 엔진 준비 완료 메시지
-        await websocket.send_json({"status": "ready", "message": "STT 엔진 준비 완료"})
+        await websocket.send_json(
+            {"status": "ready", "message": "STT 엔진 준비 완료"}
+        )
 
         while True:
             try:
@@ -451,12 +796,15 @@ async def stt_websocket(websocket: WebSocket):
                 if len(audio_chunk) != 512:
                     continue
 
-                # VAD 처리
-                is_speech_end, speech_audio, is_short_pause = engine.vad.process_chunk(audio_chunk)
+                is_speech_end, speech_audio, is_short_pause = (
+                    engine.vad.process_chunk(audio_chunk)
+                )
 
-                # 디버그 카운터
+                # Debug counter
                 if hasattr(engine.vad, "_debug_counter"):
-                    engine.vad._debug_counter = getattr(engine.vad, "_debug_counter", 0) + 1
+                    engine.vad._debug_counter = (
+                        getattr(engine.vad, "_debug_counter", 0) + 1
+                    )
                 else:
                     engine.vad._debug_counter = 1
 
@@ -469,81 +817,122 @@ async def stt_websocket(websocket: WebSocket):
 
                 if is_speech_end and speech_audio is not None:
                     print(f"[STT] 발화 종료 감지, STT 처리 시작 (오디오 길이: {len(speech_audio)} 샘플)")
-
-                    await websocket.send_json(
-                        {
-                            "status": "processing",
-                            "message": "듣고 생각하는 중...",
-                        }
-                    )
-
+                    
+                    # 클라이언트에게 처리 중 알림
+                    await websocket.send_json({
+                        "status": "processing",
+                        "message": "듣고 생각하는 중..."
+                    })
+                    
                     transcript, quality = engine.whisper.transcribe(speech_audio, callback=None)
                     print(f"[STT] STT 결과: text='{transcript}', quality={quality}")
-
-                    # -------------------------- 화자 검증 --------------------------
+                    
+                    # ========================================================================
+                    # 🆕 화자 검증 로직 (DB 기반)
+                    # ========================================================================
                     speaker_id = None
+                    user_id = 1  # Default user ID for now (until auth is added to websocket)
+                    
                     if quality in ["success", "medium"]:
                         try:
                             stt_config_path = (
-                                backend_path / "engine" / "speech-to-text" / "faster_whisper" / "config.yaml"
+                                backend_path
+                                / "engine"
+                                / "speech-to-text"
+                                / "faster_whisper"
+                                / "config.yaml"
                             )
                             sys.path.insert(
-                                0, str(backend_path / "engine" / "speech-to-text" / "faster_whisper")
+                                0,
+                                str(
+                                    backend_path
+                                    / "engine"
+                                    / "speech-to-text"
+                                    / "faster_whisper"
+                                ),
                             )
                             from speaker_verifier import SpeakerVerifier
-                            from engine.langchain_agent import get_conversation_store
+                            from engine.langchain_agent import (
+                                get_conversation_store,
+                            )
 
-                            verifier = SpeakerVerifier(config_path=str(stt_config_path))
-                            current_embedding = verifier.extract_embedding(speech_audio)
+                            verifier = SpeakerVerifier(
+                                config_path=str(stt_config_path)
+                            )
+                            current_embedding = verifier.extract_embedding(
+                                speech_audio
+                            )
 
                             if current_embedding is not None:
                                 store = get_conversation_store()
-                                existing_profiles = store._speaker_profiles
+                                
+                                # 1. DB에서 프로필 조회
+                                db_profiles = store.get_speaker_profiles(user_id)
+                                
+                                # 2. Verifier 포맷으로 변환
+                                existing_profiles = {}
+                                for p in db_profiles:
+                                    existing_profiles[p["speaker_type"]] = {
+                                        "embedding": np.array(p["embedding"]),
+                                        "current_score": p["current_score"],
+                                        "quality": "success" # DB에는 품질 저장 안하므로 기본값
+                                    }
 
+                                # 3. 화자 식별
                                 speaker_id, similarity = verifier.identify_speaker(
                                     current_embedding, existing_profiles
                                 )
                                 print(f"[Speaker] 화자 식별: {speaker_id} (유사도: {similarity:.3f})")
 
                                 if speaker_id not in existing_profiles:
-                                    store.add_speaker_profile(
-                                        speaker_id, current_embedding, quality, session_id=None
+                                    # 4. 신규 등록
+                                    store.save_speaker_profile(
+                                        user_id, speaker_id, current_embedding.tolist(), similarity
                                     )
-                                    print(f"[Speaker] 🆕 신규 등록: {speaker_id}")
+                                    print(f"[Speaker] 신규 등록: {speaker_id}")
                                 else:
-                                    old_quality = existing_profiles[speaker_id]["quality"]
-                                    if verifier.should_update_profile(quality, old_quality):
+                                    # 5. 기존 화자 업데이트 (점수가 더 높을 때만)
+                                    current_score = existing_profiles[speaker_id]["current_score"]
+                                    if similarity > current_score:
+                                        # 임베딩 업데이트 (가중 평균)
                                         old_embedding = existing_profiles[speaker_id]["embedding"]
                                         updated_embedding = verifier.update_embedding(
                                             old_embedding, current_embedding, speaker_id=speaker_id
                                         )
-                                        store.update_speaker_embedding(
-                                            speaker_id, updated_embedding, quality
+                                        
+                                        # DB 업데이트
+                                        profile_id = next(p["id"] for p in db_profiles if p["speaker_type"] == speaker_id)
+                                        store.update_speaker_profile(
+                                            profile_id, updated_embedding.tolist(), similarity, user_id
                                         )
-                                        print(f"[Speaker] 🔄 프로필 업데이트: {speaker_id}")
+                                        print(f"[Speaker] 🔄 프로필 업데이트: {speaker_id} (Score: {current_score:.3f} -> {similarity:.3f})")
                                     else:
-                                        print(f"[Speaker] ✓ 기존 사용자: {speaker_id} (업데이트 불필요)")
+                                        print(f"[Speaker] ✓ 기존 사용자: {speaker_id} (업데이트 불필요, Score: {current_score:.3f} >= {similarity:.3f})")
 
-                                all_speaker_ids = store.get_all_speaker_ids()
+                                # 디버깅용 출력
+                                all_speaker_ids = [p["speaker_type"] for p in store.get_speaker_profiles(user_id)]
                                 print(f"[Speaker Debug] 현재 등록된 화자: {all_speaker_ids}")
                             else:
-                                print("[Speaker] ⚠️ 임베딩 추출 실패")
+                                print(
+                                    "[Speaker] 임베딩 추출 실패 (화자 검증 생략)"
+                                )
                         except Exception as e:
-                            print(f"[Speaker] ❌ 화자 검증 오류: {e}")
                             import traceback
-
+                            print(f"[Speaker] 화자 검증 오류: {e}")
                             traceback.print_exc()
                     else:
-                        print(f"[Speaker] ⚠️ 품질 부족으로 화자 검증 skip (quality={quality})")
+                        print(
+                            f"[Speaker] 품질 부족으로 화자 검증 skip (quality={quality})"
+                        )
 
-                    # 결과 전송
-                    await websocket.send_json(
-                        {
-                            "text": transcript if quality in ["success", "medium"] else None,
-                            "quality": quality,
-                            "speaker_id": speaker_id,
-                        }
-                    )
+                    response = {
+                        "text": transcript
+                        if quality in ["success", "medium"]
+                        else None,
+                        "quality": quality,
+                        "speaker_id": speaker_id,
+                    }
+                    await websocket.send_json(response)
 
                     engine.vad.reset()
 
@@ -551,7 +940,9 @@ async def stt_websocket(websocket: WebSocket):
                 command = data["text"]
                 if command == "reset":
                     engine.vad.reset()
-                    await websocket.send_json({"status": "reset", "message": "VAD 리셋 완료"})
+                    await websocket.send_json(
+                        {"status": "reset", "message": "VAD 리셋 완료"}
+                    )
                 elif command == "force_process":
                     print("[STT] 강제 인식 요청 수신")
                     try:
@@ -561,40 +952,47 @@ async def stt_websocket(websocket: WebSocket):
                                 print(
                                     f"[STT] 강제 인식 처리 (오디오 길이: {len(buffered_audio)} 샘플)"
                                 )
-                                transcript, quality = engine.whisper.transcribe(
-                                    buffered_audio, callback=None
+                                transcript, quality = (
+                                    engine.whisper.transcribe(
+                                        buffered_audio, callback=None
+                                    )
                                 )
                                 response = {
-                                    "text": transcript if quality in ["success", "medium"] else None,
+                                    "text": transcript
+                                    if quality in ["success", "medium"]
+                                    else None,
                                     "quality": quality,
                                 }
                                 await websocket.send_json(response)
                                 engine.vad.reset()
                             else:
-                                await websocket.send_json({"error": "처리할 오디오가 없습니다"})
+                                await websocket.send_json(
+                                    {"error": "처리할 오디오가 없습니다"}
+                                )
                         else:
-                            await websocket.send_json({"error": "강제 인식 기능을 사용할 수 없습니다"})
+                            await websocket.send_json(
+                                {"error": "강제 인식 기능을 사용할 수 없습니다"}
+                            )
                     except Exception as e:
-                        print(f"[STT] 강제 인식 오류: {e}")
                         import traceback
 
+                        print(f"[STT] 강제 인식 오류: {e}")
                         traceback.print_exc()
                         await websocket.send_json({"error": str(e)})
-
     except WebSocketDisconnect:
         print("STT WebSocket 연결 종료 (WebSocketDisconnect)")
     except Exception as e:
-        print(f"STT WebSocket 오류: {e}")
         import traceback
 
+        print(f"STT WebSocket 오류: {e}")
         traceback.print_exc()
         try:
             await websocket.send_json({"error": str(e)})
-        except:
+        except Exception:
             pass
         try:
             await websocket.close()
-        except:
+        except Exception:
             pass
     finally:
         if engine is not None:
@@ -604,15 +1002,16 @@ async def stt_websocket(websocket: WebSocket):
             except Exception as e:
                 print(f"VAD 리셋 오류 (무시): {e}")
 
-# ============================================================
+
+# =====================================================================
 # STT + Agent WebSocket
-# ============================================================
+# =====================================================================
+
 
 @app.websocket("/agent/stream")
 async def agent_websocket(websocket: WebSocket):
     """
     통합 STT + Agent WebSocket 엔드포인트
-    음성 입력을 받아 STT 처리 후 자동으로 Agent 실행
     """
     await websocket.accept()
     stt_engine_instance = None
@@ -648,12 +1047,21 @@ async def agent_websocket(websocket: WebSocket):
 
             if "text" in data:
                 try:
-                    message = json.loads(data["text"]) if isinstance(data["text"], str) else data["text"]
+                    message = (
+                        json.loads(data["text"])
+                        if isinstance(data["text"], str)
+                        else data["text"]
+                    )
                     if isinstance(message, dict) and "session_id" in message:
                         session_id = message["session_id"]
-                        print(f"[Agent WebSocket] 세션 ID 설정: {session_id}")
+                        print(
+                            f"[Agent WebSocket] 세션 ID 설정: {session_id}"
+                        )
                         await websocket.send_json(
-                            {"type": "status", "message": f"세션 ID 설정됨: {session_id}"}
+                            {
+                                "type": "status",
+                                "message": f"세션 ID 설정됨: {session_id}",
+                            }
                         )
                         continue
                 except Exception:
@@ -666,78 +1074,121 @@ async def agent_websocket(websocket: WebSocket):
                 if len(audio_chunk) != 512:
                     continue
 
-                is_speech_end, speech_audio, is_short_pause = stt_engine_instance.vad.process_chunk(
-                    audio_chunk
+                is_speech_end, speech_audio, is_short_pause = (
+                    stt_engine_instance.vad.process_chunk(audio_chunk)
                 )
 
                 if is_speech_end and speech_audio is not None:
                     print("[Agent WebSocket] 발화 종료 감지, STT + Agent 처리 시작")
 
-                    transcript, quality = stt_engine_instance.whisper.transcribe(
-                        speech_audio, callback=None
+                    transcript, quality = (
+                        stt_engine_instance.whisper.transcribe(
+                            speech_audio, callback=None
+                        )
                     )
-                    print(f"[Agent WebSocket] STT 결과: text='{transcript}', quality={quality}")
+                    print(
+                        f"[Agent WebSocket] STT 결과: text='{transcript}', quality={quality}"
+                    )
 
-                    # 화자 검증
+                    # ========================================================================
+                    # 🆕 화자 검증 로직 (DB 기반)
+                    # ========================================================================
                     speaker_id = None
+                    user_id = 1  # Default user ID for now
+                    
                     if quality in ["success", "medium"]:
                         try:
                             stt_config_path = (
-                                backend_path / "engine" / "speech-to-text" / "faster_whisper" / "config.yaml"
+                                backend_path
+                                / "engine"
+                                / "speech-to-text"
+                                / "faster_whisper"
+                                / "config.yaml"
                             )
                             sys.path.insert(
-                                0, str(backend_path / "engine" / "speech-to-text" / "faster_whisper")
+                                0,
+                                str(
+                                    backend_path
+                                    / "engine"
+                                    / "speech-to-text"
+                                    / "faster_whisper"
+                                ),
                             )
                             from speaker_verifier import SpeakerVerifier
-                            from engine.langchain_agent import get_conversation_store
+                            from engine.langchain_agent import (
+                                get_conversation_store,
+                            )
 
-                            verifier = SpeakerVerifier(config_path=str(stt_config_path))
-                            current_embedding = verifier.extract_embedding(speech_audio)
+                            verifier = SpeakerVerifier(
+                                config_path=str(stt_config_path)
+                            )
+                            current_embedding = verifier.extract_embedding(
+                                speech_audio
+                            )
 
                             if current_embedding is not None:
                                 store = get_conversation_store()
-                                existing_profiles = store._speaker_profiles
+                                
+                                # 1. DB에서 프로필 조회
+                                db_profiles = store.get_speaker_profiles(user_id)
+                                
+                                # 2. Verifier 포맷으로 변환
+                                existing_profiles = {}
+                                for p in db_profiles:
+                                    existing_profiles[p["speaker_type"]] = {
+                                        "embedding": np.array(p["embedding"]),
+                                        "current_score": p["current_score"],
+                                        "quality": "success"
+                                    }
 
+                                # 3. 화자 식별
                                 speaker_id, similarity = verifier.identify_speaker(
                                     current_embedding, existing_profiles
                                 )
                                 print(f"[Speaker] 화자 식별: {speaker_id} (유사도: {similarity:.3f})")
 
                                 if speaker_id not in existing_profiles:
-                                    store.add_speaker_profile(
-                                        speaker_id, current_embedding, quality, session_id=session_id
+                                    # 4. 신규 등록
+                                    store.save_speaker_profile(
+                                        user_id, speaker_id, current_embedding.tolist(), similarity
                                     )
-                                    print(f"[Speaker] 🆕 신규 등록: {speaker_id}")
+                                    print(f"[Speaker] 신규 등록: {speaker_id}")
                                 else:
-                                    old_quality = existing_profiles[speaker_id]["quality"]
-                                    if verifier.should_update_profile(quality, old_quality):
+                                    # 5. 기존 화자 업데이트
+                                    current_score = existing_profiles[speaker_id]["current_score"]
+                                    if similarity > current_score:
                                         old_embedding = existing_profiles[speaker_id]["embedding"]
                                         updated_embedding = verifier.update_embedding(
                                             old_embedding, current_embedding, speaker_id=speaker_id
                                         )
-                                        store.update_speaker_embedding(
-                                            speaker_id, updated_embedding, quality
+                                        
+                                        profile_id = next(p["id"] for p in db_profiles if p["speaker_type"] == speaker_id)
+                                        store.update_speaker_profile(
+                                            profile_id, updated_embedding.tolist(), similarity, user_id
                                         )
-                                        print(f"[Speaker] 🔄 프로필 업데이트: {speaker_id}")
+                                        print(f"[Speaker] 🔄 프로필 업데이트: {speaker_id} (Score: {current_score:.3f} -> {similarity:.3f})")
                                     else:
-                                        print(f"[Speaker] ✓ 기존 사용자: {speaker_id} (업데이트 불필요)")
+                                        print(f"[Speaker] ✓ 기존 사용자: {speaker_id} (업데이트 불필요, Score: {current_score:.3f} >= {similarity:.3f})")
 
-                                all_speaker_ids = store.get_all_speaker_ids()
+                                all_speaker_ids = [p["speaker_type"] for p in store.get_speaker_profiles(user_id)]
                                 print(f"[Speaker Debug] 현재 등록된 화자: {all_speaker_ids}")
                             else:
-                                print("[Speaker] ⚠️ 임베딩 추출 실패")
+                                print("[Speaker] 임베딩 추출 실패")
                         except Exception as e:
-                            print(f"[Speaker] ❌ 화자 검증 오류: {e}")
                             import traceback
-
+                            print(f"[Speaker] 화자 검증 오류: {e}")
                             traceback.print_exc()
                     else:
-                        print(f"[Speaker] ⚠️ 품질 부족으로 화자 검증 skip (quality={quality})")
+                        print(
+                            f"[Speaker] 품질 부족으로 화자 검증 skip (quality={quality})"
+                        )
 
                     await websocket.send_json(
                         {
                             "type": "stt_result",
-                            "text": transcript if quality != "no_speech" else None,
+                            "text": transcript
+                            if quality != "no_speech"
+                            else None,
                             "quality": quality,
                             "speaker_id": speaker_id,
                         }
@@ -745,7 +1196,7 @@ async def agent_websocket(websocket: WebSocket):
 
                     if quality in ["success", "medium"] and transcript:
                         try:
-                            from engine.langchain_agent import run_ai_bomi_from_text
+                            from engine.langchain_agent import run_ai_bomi_from_text_v2
 
                             await websocket.send_json(
                                 {
@@ -755,8 +1206,9 @@ async def agent_websocket(websocket: WebSocket):
                                 }
                             )
 
-                            result = run_ai_bomi_from_text(
+                            result = await run_ai_bomi_from_text_v2(
                                 user_text=transcript,
+                                user_id=user_id,
                                 session_id=session_id or "websocket_default",
                                 stt_quality=quality,
                                 speaker_id=speaker_id,
@@ -770,9 +1222,11 @@ async def agent_websocket(websocket: WebSocket):
                             )
                             print("[Agent WebSocket] Agent 응답 완료")
                         except Exception as e:
-                            print(f"[Agent WebSocket] Agent 처리 오류: {e}")
                             import traceback
 
+                            print(
+                                f"[Agent WebSocket] Agent 처리 오류: {e}"
+                            )
                             traceback.print_exc()
                             await websocket.send_json(
                                 {
@@ -786,12 +1240,14 @@ async def agent_websocket(websocket: WebSocket):
     except WebSocketDisconnect:
         print("[Agent WebSocket] 연결 종료")
     except Exception as e:
-        print(f"[Agent WebSocket] 오류: {e}")
         import traceback
 
+        print(f"[Agent WebSocket] 오류: {e}")
         traceback.print_exc()
         try:
-            await websocket.send_json({"type": "error", "message": str(e)})
+            await websocket.send_json(
+                {"type": "error", "message": str(e)}
+            )
         except Exception:
             pass
     finally:
@@ -801,12 +1257,18 @@ async def agent_websocket(websocket: WebSocket):
             except Exception:
                 pass
 
-# ============================================================
-# 루틴 추천 엔진 API
-# ============================================================
+
+# =====================================================================
+# Routine Recommend from Emotion
+# =====================================================================
 
 @app.post(
     "/api/engine/routine-from-emotion",
+    response_model=List[RoutineRecommendationItem],
+    tags=["routine-recommend"],
+)
+@app.post(
+    "/api/engine/routine-recommend-from-emotion",
     response_model=List[RoutineRecommendationItem],
     tags=["routine-recommend"],
 )
@@ -817,6 +1279,9 @@ async def recommend_routine_from_emotion(
 ):
     """
     감정 분석 결과를 기반으로 루틴을 추천합니다.
+
+    - POST /api/engine/routine-from-emotion
+    - POST /api/engine/routine-recommend-from-emotion  (호환용 alias)
     """
     try:
         engine = RoutineRecommendFromEmotionEngine()
@@ -827,11 +1292,15 @@ async def recommend_routine_from_emotion(
         )
         return recommendations
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"루틴 추천 실패: {str(e)}")
+        raise HTTPException(
+            status_code=500, detail=f"루틴 추천 실패: {str(e)}"
+        )
 
-# ============================================================
+
+# =====================================================================
 # TTS
-# ============================================================
+# =====================================================================
+
 
 @app.get("/health")
 async def health():
@@ -868,11 +1337,17 @@ async def tts_endpoint(payload: TTSRequest):
             voice_id=payload.character_id,
             emotion=emotion_label,
         )
+<<<<<<< HEAD
     except Exception as e:  # pragma: no cover - runtime logging aid
         import sys as _sys, traceback as _traceback
+=======
+    except Exception as e:
+        import traceback
+        import sys as _sys
+>>>>>>> dev
 
         print("[TTS ERROR]", e, file=_sys.stderr)
-        _traceback.print_exc()
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"TTS error: {e}")
 
     audio_bytes = wav_path.read_bytes()
@@ -883,9 +1358,11 @@ async def tts_endpoint(payload: TTSRequest):
         headers={"Content-Disposition": f"attachment; filename=\"{filename}\""},
     )
 
-# ============================================================
+
+# =====================================================================
 # Root
-# ============================================================
+# =====================================================================
+
 
 @app.get("/")
 async def root():
@@ -904,9 +1381,6 @@ async def root():
         "modules": modules,
     }
 
-# ============================================================
-# __main__
-# ============================================================
 
 if __name__ == "__main__":
     import uvicorn
@@ -920,7 +1394,11 @@ if __name__ == "__main__":
     print("  - 감정 분석: http://localhost:8000/emotion/api")
     print("  - STT 스트리밍: ws://localhost:8000/stt/stream")
     print("  - LangChain Agent: http://localhost:8000/api/agent")
+    print("  - Agent 테스트: http://localhost:8000/agent.html")
     print("  - TTS: POST http://localhost:8000/api/tts")
+    print("\n최초 실행 시:")
+    print("  1. 서버 시작 후 http://localhost:8000/docs 접속")
+    print("  2. 필요 시 /emotion/api/init 등 초기화 엔드포인트 호출")
     print("\n" + "=" * 50 + "\n")
 
     uvicorn.run(app, host="0.0.0.0", port=8000, reload=False)

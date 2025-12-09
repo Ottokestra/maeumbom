@@ -144,9 +144,9 @@ async def google_login(auth_code: str, redirect_uri: str, db: Session) -> TokenR
     # Step 2: Get user info from Google
     user_info = await get_google_user_info(google_access_token)
     
-    social_id = user_info.get("id")  # Google's unique user ID (sub)
+    social_id = user_info.get("sub") or user_info.get("id")  # Google's unique user ID (sub)
     email = user_info.get("email")
-    name = user_info.get("name", email.split("@")[0])  # Use email prefix if name not available
+    name = user_info.get("name", email.split("@")[0] if email else "User")  # Use email prefix if name not available
     
     if not social_id or not email:
         raise HTTPException(
@@ -155,34 +155,34 @@ async def google_login(auth_code: str, redirect_uri: str, db: Session) -> TokenR
         )
     
     # Step 3: Find or create user
-    user = db.query(User).filter(User.social_id == social_id, User.provider == "google").first()
+    user = db.query(User).filter(User.SOCIAL_ID == social_id, User.PROVIDER == "google").first()
     
     if not user:
         # Create new user (회원가입)
         user = User(
-            social_id=social_id,
-            provider="google",
-            email=email,
-            nickname=name
+            SOCIAL_ID=social_id,
+            PROVIDER="google",
+            EMAIL=email,
+            NICKNAME=name
         )
         db.add(user)
         db.commit()
         db.refresh(user)
-        print(f"[Auth] New user created: {user.id} ({user.email})")
+        print(f"[Auth] New user created: {user.ID} ({user.EMAIL})")
     else:
         # Update existing user info (로그인)
-        user.email = email
-        user.nickname = name
+        user.EMAIL = email
+        user.NICKNAME = name
         db.commit()
         db.refresh(user)
-        print(f"[Auth] User logged in: {user.id} ({user.email})")
+        print(f"[Auth] User logged in: {user.ID} ({user.EMAIL})")
     
     # Step 4: Generate JWT tokens
-    access_token = create_access_token(user.id)
-    refresh_token = create_refresh_token(user.id)
+    access_token = create_access_token(user.ID)
+    refresh_token = create_refresh_token(user.ID)
     
     # Step 5: Store refresh token in database (Whitelist)
-    user.refresh_token = refresh_token
+    user.REFRESH_TOKEN = refresh_token
     db.commit()
     
     return TokenResponse(
@@ -223,7 +223,7 @@ def refresh_access_token(refresh_token: str, db: Session) -> TokenResponse:
         )
     
     # Step 2: Check if token is whitelisted
-    user = db.query(User).filter(User.id == user_id).first()
+    user = db.query(User).filter(User.ID == user_id).first()
     
     if not user:
         raise HTTPException(
@@ -231,21 +231,21 @@ def refresh_access_token(refresh_token: str, db: Session) -> TokenResponse:
             detail="User not found"
         )
     
-    if user.refresh_token != refresh_token:
+    if user.REFRESH_TOKEN != refresh_token:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Refresh token not valid (not whitelisted or already used)"
         )
     
     # Step 3: Generate new tokens (RTR - Refresh Token Rotation)
-    new_access_token = create_access_token(user.id)
-    new_refresh_token = create_refresh_token(user.id)
+    new_access_token = create_access_token(user.ID)
+    new_refresh_token = create_refresh_token(user.ID)
     
     # Step 4: Update refresh token in database (invalidate old, store new)
-    user.refresh_token = new_refresh_token
+    user.REFRESH_TOKEN = new_refresh_token
     db.commit()
     
-    print(f"[Auth] Token refreshed for user: {user.id}")
+    print(f"[Auth] Token refreshed for user: {user.ID}")
     
     return TokenResponse(
         access_token=new_access_token,
@@ -265,7 +265,7 @@ def logout(user_id: int, db: Session) -> None:
     Raises:
         HTTPException: If user not found
     """
-    user = db.query(User).filter(User.id == user_id).first()
+    user = db.query(User).filter(User.ID == user_id).first()
     
     if not user:
         raise HTTPException(
@@ -274,10 +274,10 @@ def logout(user_id: int, db: Session) -> None:
         )
     
     # Invalidate refresh token
-    user.refresh_token = None
+    user.REFRESH_TOKEN = None
     db.commit()
     
-    print(f"[Auth] User logged out: {user.id}")
+    print(f"[Auth] User logged out: {user.ID}")
 
 
 # ============================================================================
@@ -370,14 +370,15 @@ async def kakao_login(auth_code: str, redirect_uri: str, db: Session) -> TokenRe
     Handle Kakao OAuth login
     
     Process:
-    1. Exchange auth_code for Kakao access token
-    2. Get user info from Kakao
-    3. Find or create user in database
-    4. Generate JWT tokens
-    5. Store refresh token in database (Whitelist)
+    1. Check if auth_code is actually an access_token (from Kakao SDK)
+    2. If not, exchange auth_code for Kakao access token
+    3. Get user info from Kakao
+    4. Find or create user in database
+    5. Generate JWT tokens
+    6. Store refresh token in database (Whitelist)
     
     Args:
-        auth_code: Authorization code from Kakao
+        auth_code: Authorization code from Kakao (or access_token from Kakao SDK)
         redirect_uri: Redirect URI for OAuth callback
         db: Database session
         
@@ -387,8 +388,14 @@ async def kakao_login(auth_code: str, redirect_uri: str, db: Session) -> TokenRe
     Raises:
         HTTPException: If login process fails
     """
-    # Step 1: Get Kakao access token
-    kakao_access_token = await get_kakao_access_token(auth_code, redirect_uri)
+    # Step 1: Check if auth_code is actually an access_token (from Kakao SDK)
+    # Kakao SDK에서 직접 access_token을 받은 경우, 토큰 교환 과정을 건너뜀
+    # Access token은 일반적으로 길이가 길고 특정 형식을 가짐
+    if len(auth_code) > 50:  # Access token은 보통 50자 이상, authCode는 30-40자
+        kakao_access_token = auth_code
+    else:
+        # Authorization code인 경우 토큰 교환
+        kakao_access_token = await get_kakao_access_token(auth_code, redirect_uri)
     
     # Step 2: Get user info from Kakao
     user_info = await get_kakao_user_info(kakao_access_token)
@@ -407,34 +414,34 @@ async def kakao_login(auth_code: str, redirect_uri: str, db: Session) -> TokenRe
         )
     
     # Step 3: Find or create user
-    user = db.query(User).filter(User.social_id == social_id, User.provider == "kakao").first()
+    user = db.query(User).filter(User.SOCIAL_ID == social_id, User.PROVIDER == "kakao").first()
     
     if not user:
         # Create new user (회원가입)
         user = User(
-            social_id=social_id,
-            provider="kakao",
-            email=email,
-            nickname=nickname
+            SOCIAL_ID=social_id,
+            PROVIDER="kakao",
+            EMAIL=email,
+            NICKNAME=nickname
         )
         db.add(user)
         db.commit()
         db.refresh(user)
-        print(f"[Auth] New Kakao user created: {user.id} ({user.email})")
+        print(f"[Auth] New Kakao user created: {user.ID} ({user.EMAIL})")
     else:
         # Update existing user info (로그인)
-        user.email = email
-        user.nickname = nickname
+        user.EMAIL = email
+        user.NICKNAME = nickname
         db.commit()
         db.refresh(user)
-        print(f"[Auth] Kakao user logged in: {user.id} ({user.email})")
+        print(f"[Auth] Kakao user logged in: {user.ID} ({user.EMAIL})")
     
     # Step 4: Generate JWT tokens
-    access_token = create_access_token(user.id)
-    refresh_token = create_refresh_token(user.id)
+    access_token = create_access_token(user.ID)
+    refresh_token = create_refresh_token(user.ID)
     
     # Step 5: Store refresh token in database (Whitelist)
-    user.refresh_token = refresh_token
+    user.REFRESH_TOKEN = refresh_token
     db.commit()
     
     return TokenResponse(
@@ -566,34 +573,34 @@ async def naver_login(auth_code: str, state: str, db: Session) -> TokenResponse:
         )
     
     # Step 3: Find or create user
-    user = db.query(User).filter(User.social_id == social_id, User.provider == "naver").first()
+    user = db.query(User).filter(User.SOCIAL_ID == social_id, User.PROVIDER == "naver").first()
     
     if not user:
         # Create new user (회원가입)
         user = User(
-            social_id=social_id,
-            provider="naver",
-            email=email,
-            nickname=nickname
+            SOCIAL_ID=social_id,
+            PROVIDER="naver",
+            EMAIL=email,
+            NICKNAME=nickname
         )
         db.add(user)
         db.commit()
         db.refresh(user)
-        print(f"[Auth] New Naver user created: {user.id} ({user.email})")
+        print(f"[Auth] New Naver user created: {user.ID} ({user.EMAIL})")
     else:
         # Update existing user info (로그인)
-        user.email = email
-        user.nickname = nickname
+        user.EMAIL = email
+        user.NICKNAME = nickname
         db.commit()
         db.refresh(user)
-        print(f"[Auth] Naver user logged in: {user.id} ({user.email})")
+        print(f"[Auth] Naver user logged in: {user.ID} ({user.EMAIL})")
     
     # Step 4: Generate JWT tokens
-    access_token = create_access_token(user.id)
-    refresh_token = create_refresh_token(user.id)
+    access_token = create_access_token(user.ID)
+    refresh_token = create_refresh_token(user.ID)
     
     # Step 5: Store refresh token in database (Whitelist)
-    user.refresh_token = refresh_token
+    user.REFRESH_TOKEN = refresh_token
     db.commit()
     
     return TokenResponse(

@@ -1,0 +1,262 @@
+{
+  "scenario": {
+    "title": "은퇴 후 삼시세끼 밥만 찾는 남편",
+    "target_type": "HUSBAND",
+    "category": "TRAINING",
+    "start_image_url": "/api/service/relation-training/images/husband_three_meals/start.png"
+  },
+  "nodes": [
+    {
+      "id": "node_1",
+      "step_level": 1,
+      "text": "아침 설거지를 막 끝내고 커피 한 잔 하려는데, 소파에 누워 TV를 보던 남편이 묻습니다. \"여보, 오늘 점심은 뭐야?\" 이 말에 순간 욱하는 당신. 어떻게 반응하시겠습니까?",
+      "image_url": ""
+    },
+    {
+      "id": "node_2_a",
+      "step_level": 2,
+      "text": "(남편이 당황하며) \"아니, 밥 묻는 게 그렇게 큰 죄야? 내가 평생 돈 벌어다 줬는데 집에서 밥도 못 얻어먹어?\" 남편도 목소리를 높입니다.",
+      "image_url": ""
+    },
+    {
+      "id": "node_2_b",
+      "step_level": 2,
+      "text": "(남편이 머쓱해하며) \"아니... 그냥 출출해서 물어본 거지. 당신 힘들면 대충 먹자. 라면 끓일까?\" 남편이 한발 물러섭니다.",
+      "image_url": ""
+    },
+    {
+      "id": "node_3_aa",
+      "step_level": 3,
+      "text": "\"말 다 했어? 식충이? 그래, 나 돈 못 벌어와서 밥만 축낸다! 됐어, 안 먹어!\" 남편이 방문을 쾅 닫으려 합니다.",
+      "image_url": ""
+    },
+    {
+      "id": "node_3_ab",
+      "step_level": 3,
+      "text": "\"아니 내 말은... 당신이 너무 쏘아붙이니까 나도 섭섭해서 그렇지. 늙어서 찬밥 신세네 거참.\"",
+      "image_url": ""
+    },
+    {
+      "id": "node_3_ba",
+      "step_level": 3,
+      "text": "\"라면? 내가 밥 안 차려준다고 시위해? 몸에도 안 좋은 걸 왜 먹어?\" 당신의 날 선 반응에 남편 표정이 굳어집니다.",
+      "image_url": ""
+    },
+    {
+      "id": "node_3_bb",
+      "step_level": 3,
+      "text": "\"그래, 라면 좋지. 당신이 끓여주면 더 맛있겠네. 계란도 하나 탁 넣어서?\" 분위기가 훈훈해집니다.",
+      "image_url": ""
+    },
+    {
+      "id": "node_4_aaa",
+      "step_level": 4,
+      "text": "서로를 향한 고성이 오가고, 집안에는 적막과 냉기만 흐릅니다. 점심은커녕 며칠간 말도 안 할 분위기입니다.",
+      "image_url": ""
+    },
+    {
+      "id": "node_4_aab",
+      "step_level": 4,
+      "text": "싸움은 멈췄지만, 서로의 마음에 생채기가 났습니다. 남편은 방에 들어갔고, 당신은 거실에 홀로 남았습니다.",
+      "image_url": ""
+    },
+    {
+      "id": "node_4_aba",
+      "step_level": 4,
+      "text": "남편이 입을 꾹 다물고 라면 봉지를 뜯습니다. 밥은 해결됐지만, 남편의 등 뒤로 서운함이 뚝뚝 묻어납니다.",
+      "image_url": ""
+    },
+    {
+      "id": "node_4_abb",
+      "step_level": 4,
+      "text": "약간의 언쟁은 있었지만, 서로 한 발씩 양보하여 냉장고 털이 비빔밥을 해 먹기로 했습니다.",
+      "image_url": ""
+    },
+    {
+      "id": "node_4_baa",
+      "step_level": 4,
+      "text": "남편이 \"그래 내가 해 먹을게!\"라며 라면 냄비를 꺼내지만, 씩씩대는 숨소리가 거칩니다. 당신은 그걸 보며 속이 부글거립니다.",
+      "image_url": ""
+    },
+    {
+      "id": "node_4_bab",
+      "step_level": 4,
+      "text": "남편이 눈치를 보며 식탁을 닦습니다. 당신은 한숨을 쉬며 냉장고에서 찌개 거리를 꺼냅니다.",
+      "image_url": ""
+    },
+    {
+      "id": "node_4_bba",
+      "step_level": 4,
+      "text": "라면을 먹으려는 찰나, 남편의 옷에 묻은 얼룩이 눈에 거슬립니다. 기분 좋게 먹으려다 찬물을 끼얹는 상황입니다.",
+      "image_url": ""
+    },
+    {
+      "id": "node_4_bbb",
+      "step_level": 4,
+      "text": "보글보글 끓는 라면 냄새와 함께 두 사람의 웃음소리가 주방을 채웁니다. 소박하지만 행복한 점심입니다.",
+      "image_url": ""
+    }
+  ],
+  "options": [
+    { "from_node_id": "node_1", "option_code": "A", "text": "\"방금 설거지했는데 또 밥 타령이야? 내가 밥 하는 기계야? 좀 알아서 찾아 먹어!\" (비난)", "to_node_id": "node_2_a", "result_code": null },
+    { "from_node_id": "node_1", "option_code": "B", "text": "\"어머, 벌써 시간이 그렇네? 나도 좀 쉬고 싶은데, 오늘 점심은 간단하게 냉동 볶음밥 어때요?\" (대안)", "to_node_id": "node_2_b", "result_code": null },
+    { "from_node_id": "node_2_a", "option_code": "A", "text": "\"누가 밥 달라는 게 죄래? 삼시세끼 꼬박꼬박 차려달라니까 내가 숨이 막혀서 그래!\" (폭발)", "to_node_id": "node_3_aa", "result_code": null },
+    { "from_node_id": "node_2_a", "option_code": "B", "text": "(한숨을 쉬며) \"...알았어요. 당신 고생한 거 아는데, 나도 늙어서 체력이 예전 같지 않아서 그래요.\" (진정)", "to_node_id": "node_3_ab", "result_code": null },
+    { "from_node_id": "node_2_b", "option_code": "A", "text": "\"됐어, 라면은 무슨. 당신이 끓이면 주방 다 어지럽히잖아. 비켜, 내가 할게.\" (무시)", "to_node_id": "node_3_ba", "result_code": null },
+    { "from_node_id": "node_2_b", "option_code": "B", "text": "\"정말? 당신이 끓여주게? 아이고 고마워라. 그럼 나는 김치 꺼낼게.\" (칭찬)", "to_node_id": "node_3_bb", "result_code": null },
+    { "from_node_id": "node_3_aa", "option_code": "A", "text": "\"나가! 밥이고 뭐고 다 꼴 보기 싫으니까 당장 나가!\" (파국 선언)", "to_node_id": "node_4_aaa", "result_code": "AAAA" },
+    { "from_node_id": "node_3_aa", "option_code": "B", "text": "(방문 잡으며) \"...여보, 잠깐만. 그만하자. 밥 때문에 우리가 이렇게까지 싸워야 해? 내가 말이 심했어.\" (뒤늦은 사과)", "to_node_id": "node_4_aab", "result_code": "AAAB" },
+    { "from_node_id": "node_3_ab", "option_code": "A", "text": "\"찬밥 신세? 당신이 언제 찬밥 먹었어? 말은 바로 해!\" (말꼬리 잡기)", "to_node_id": "node_4_aba", "result_code": "AABA" },
+    { "from_node_id": "node_3_ab", "option_code": "B", "text": "\"그래, 당신도 서운했겠네. 나도 힘들어서 투정 부린 거야. 같이 냉장고 털어서 비빔밥 해 먹을까?\" (화해 시도)", "to_node_id": "node_4_abb", "result_code": "AABB" },
+    { "from_node_id": "node_3_ba", "option_code": "A", "text": "\"라면 하나 끓이는 게 뭐 대수라고 생색은. 그냥 비켜, 내가 해!\" (비난 지속)", "to_node_id": "node_4_baa", "result_code": "BAAA" },
+    { "from_node_id": "node_3_ba", "option_code": "B", "text": "\"아휴... 알았어. 내가 좀 예민했네. 냄비 줘봐, 내가 할게. 미안.\"", "to_node_id": "node_4_bab", "result_code": "BAAB" },
+    { "from_node_id": "node_3_bb", "option_code": "A", "text": "\"근데 당신, 라면 먹는데 그 옷이 뭐야? 국물 튀면 어쩌려고. 좀 갈아입고 먹어.\" (잔소리)", "to_node_id": "node_4_bba", "result_code": "BBBA" },
+    { "from_node_id": "node_3_bb", "option_code": "B", "text": "\"와, 냄새 좋다! 역시 남이 끓여주는 라면이 최고야. 잘 먹을게 여보.\" (감사)", "to_node_id": "node_4_bbb", "result_code": "BBBB" },
+    { "from_node_id": "node_4_aaa", "option_code": "A", "text": "(끝까지 화가 안 풀려) \"됐어! 당신이랑 무슨 말을 하니. 나 나갈 거니까 찾지 마!\"", "to_node_id": null, "result_code": "AAAA" },
+    { "from_node_id": "node_4_aaa", "option_code": "B", "text": "(아차 싶어서) \"...하, 아니다. 내가 너무 흥분했네. 일단 진정 좀 하자.\"", "to_node_id": null, "result_code": "AAAB" },
+    { "from_node_id": "node_4_aab", "option_code": "A", "text": "(혼잣말로 들리게) \"아이고 내 팔자야. 늙어서 이게 무슨 꼴이람.\"", "to_node_id": null, "result_code": "AABA" },
+    { "from_node_id": "node_4_aab", "option_code": "B", "text": "(조용히 주방으로 가서) \"...나와서 밥 먹어요. 싸우더라도 밥은 먹어야지.\"", "to_node_id": null, "result_code": "AABB" },
+    { "from_node_id": "node_4_aba", "option_code": "A", "text": "\"라면 냄새 풍기지 말고 빨리 먹고 치워. 나 머리 아파서 들어갈 거야.\"", "to_node_id": null, "result_code": "ABAA" },
+    { "from_node_id": "node_4_aba", "option_code": "B", "text": "(슬그머니 김치를 꺼내주며) \"...체하겠다. 천천히 먹어.\"", "to_node_id": null, "result_code": "ABAB" },
+    { "from_node_id": "node_4_abb", "option_code": "A", "text": "\"근데 당신은 손이 없어? 비빔밥 정도는 혼자 해 먹을 수 있잖아.\"", "to_node_id": null, "result_code": "ABBA" },
+    { "from_node_id": "node_4_abb", "option_code": "B", "text": "\"자, 아~ 해봐. 당신 좋아하는 참기름 듬뿍 넣었어.\"", "to_node_id": null, "result_code": "ABBB" },
+    { "from_node_id": "node_4_baa", "option_code": "A", "text": "(라면 봉지를 식탁에 던져두고) \"됐어! 먹기 싫으면 관둬!\" 하고 방으로 들어간다.", "to_node_id": null, "result_code": "BAAA" },
+    { "from_node_id": "node_4_baa", "option_code": "B", "text": "(아무 말 없이 냄비를 받아들고 묵묵히 라면을 끓인다)", "to_node_id": null, "result_code": "BAAB" },
+    { "from_node_id": "node_4_bab", "option_code": "A", "text": "\"이번만 해주는 거야. 다음부턴 진짜 알아서 챙겨 먹어. 알았지?\" (조건부 수용)", "to_node_id": null, "result_code": "BABA" },
+    { "from_node_id": "node_4_bab", "option_code": "B", "text": "\"남편이 식탁도 닦고 다 컸네~ 앞으로 점심 준비는 같이 하자, 그럼 안 힘들겠어.\" (격려)", "to_node_id": null, "result_code": "BABB" },
+    { "from_node_id": "node_4_bba", "option_code": "A", "text": "\"아니 내 말은 옷 버릴까 봐 그렇지! 왜 성질이야?\" (말대꾸)", "to_node_id": null, "result_code": "BBAA" },
+    { "from_node_id": "node_4_bba", "option_code": "B", "text": "\"알았어, 잔소리 그만 할게. 얼른 와서 먹자. 불겠다.\"", "to_node_id": null, "result_code": "BBAB" },
+    { "from_node_id": "node_4_bbb", "option_code": "A", "text": "\"근데 물이 좀 많은 거 아니야? 다음엔 물 좀 적게 잡아.\" (지적)", "to_node_id": null, "result_code": "BBBA" },
+    { "from_node_id": "node_4_bbb", "option_code": "B", "text": "\"당신이 끓여줘서 그런가 진짜 꿀맛이다. 설거지는 내가 할게.\"", "to_node_id": null, "result_code": "BBBB" }
+  ],
+  "results": [
+    {
+      "result_code": "AAAA",
+      "display_title": "돌이킬 수 없는 말의 화살",
+      "analysis_text": "결국 넘지 말아야 할 선을 넘고 말았습니다. 홧김에 내뱉은 '나가라'는 말은 남편의 자존심을 짓밟는 행동입니다. 지금의 시원함은 잠깐이지만, 남편의 마음에 박힌 대못은 평생 갈 수 있습니다. 감정을 배설하는 것은 대화가 아닙니다.",
+      "atmosphere_image_type": "STORM",
+      "score": 10,
+      "image_url": "/api/service/relation-training/images/husband_three_meals/result_AAAA.png"
+    },
+    {
+      "result_code": "AAAB",
+      "display_title": "벼랑 끝에서 멈춘 용기",
+      "analysis_text": "정말 잘하셨습니다! 감정이 폭발하기 직전, '그만하자'고 멈춘 것은 대단한 용기입니다. 비록 서로 상처는 받았지만, 파국으로 치닫는 것은 막았습니다. 이 '멈춤'의 순간이 바로 관계 개선의 시작점입니다.",
+      "atmosphere_image_type": "CLOUDY",
+      "score": 45,
+      "image_url": "/api/service/relation-training/images/husband_three_meals/result_AAAB.png"
+    },
+    {
+      "result_code": "AABA",
+      "display_title": "꼬리에 꼬리를 무는 말싸움",
+      "analysis_text": "남편의 말실수를 그냥 넘기지 못하고 꼬투리를 잡으셨네요. '옳은 말'이라도 타이밍이 나쁘면 독이 됩니다. 이기고 지는 싸움이 아니라, 내 마음을 알아달라는 대화가 필요합니다.",
+      "atmosphere_image_type": "CLOUDY",
+      "score": 40,
+      "image_url": "/api/service/relation-training/images/husband_three_meals/result_AABA.png"
+    },
+    {
+      "result_code": "AABB",
+      "display_title": "비 온 뒤에 땅이 굳는다",
+      "analysis_text": "서로 티격태격했지만, 결국 '공감'으로 잘 마무리하셨습니다. 완벽하지 않아도 괜찮아요. 서로의 힘듦을 인정하고 함께 밥을 먹는다는 것 자체가 화해의 제스처니까요.",
+      "atmosphere_image_type": "SUNNY",
+      "score": 75,
+      "image_url": "/api/service/relation-training/images/husband_three_meals/result_AABB.png"
+    },
+    {
+      "result_code": "ABAA",
+      "display_title": "불편하기 짝이 없는 밥상",
+      "analysis_text": "행동(밥 차리기)은 했지만, 태도(그릇 쾅쾅)로 점수를 다 깎아먹었습니다. 이런 '시위성 행동'은 남편에게 죄책감보다는 반발심만 불러일으킵니다. 차라리 하지 말거나, 할 거면 기분 좋게 하는 게 나를 위해서도 좋습니다.",
+      "atmosphere_image_type": "STORM",
+      "score": 35,
+      "image_url": "/api/service/relation-training/images/husband_three_meals/result_ABAA.png"
+    },
+    {
+      "result_code": "ABAB",
+      "display_title": "솔직한 사과의 힘",
+      "analysis_text": "나의 예민함을 인정하고 먼저 사과하셨네요. 쉽지 않은 일인데 훌륭합니다. 내가 먼저 손을 내밀면 남편도 무장 해제될 수밖에 없습니다. 위기를 기회로 만든 현명한 대처였습니다.",
+      "atmosphere_image_type": "SUNNY",
+      "score": 80,
+      "image_url": "/api/service/relation-training/images/husband_three_meals/result_ABAB.png"
+    },
+    {
+      "result_code": "ABBA",
+      "display_title": "신세 한탄 밥상",
+      "analysis_text": "밥을 차려주면서 계속 신세 한탄을 하셨군요. 당신의 희생을 알아달라는 표현이지만, 남편 귀에는 듣기 싫은 잔소리로만 들립니다. 차라리 '오늘은 내가 힘들어서 그러니 설거지는 당신이 해'라고 명확히 요구하는 게 낫습니다.",
+      "atmosphere_image_type": "CLOUDY",
+      "score": 50,
+      "image_url": "/api/service/relation-training/images/husband_three_meals/result_ABBA.png"
+    },
+    {
+      "result_code": "ABBB",
+      "display_title": "조용한 헌신",
+      "analysis_text": "갈등이 있었지만, 묵묵히 따뜻한 밥상을 차려내셨네요. 남편도 당신의 그런 마음에 미안함을 느낄 겁니다. 하지만 당신의 속마음도 챙겨야 합니다. 나중에라도 '아까는 서운했어'라고 차분히 말해보세요.",
+      "atmosphere_image_type": "SUNNY",
+      "score": 75,
+      "image_url": "/api/service/relation-training/images/husband_three_meals/result_ABBB.png"
+    },
+    {
+      "result_code": "BAAA",
+      "display_title": "감정의 쓰레기통이 된 식탁",
+      "analysis_text": "라면 끓이겠다는 남편을 비난하다 결국 자리를 박차고 나가버리셨군요. 호의를 거절당한 남편의 마음은 닫힐 수밖에 없습니다. 상대가 노력하려 할 때는 마음에 안 들어도 일단 받아주는 여유가 필요합니다.",
+      "atmosphere_image_type": "STORM",
+      "score": 30,
+      "image_url": "/api/service/relation-training/images/husband_three_meals/result_BAAA.png"
+    },
+    {
+      "result_code": "BAAB",
+      "display_title": "체할 것 같은 침묵",
+      "analysis_text": "싸우기 싫어서 묵묵히 라면을 끓여주셨지만, 침묵은 때로 말보다 더 무겁습니다. '해줬으니 된 거 아냐?'라고 생각할 수 있지만, 남편은 아내의 차가운 등 뒤에서 눈치를 보게 됩니다. 감정을 억누르는 게 능사는 아닙니다.",
+      "atmosphere_image_type": "CLOUDY",
+      "score": 50,
+      "image_url": "/api/service/relation-training/images/husband_three_meals/result_BAAB.png"
+    },
+    {
+      "result_code": "BABA",
+      "display_title": "거래가 된 식사",
+      "analysis_text": "밥을 차려주며 '이번만'이라고 못 박는 모습, 똑 부러지시네요! 무조건 희생하는 게 아니라 내 한계를 알리는 건 좋습니다. 다만 말투가 조금 더 부드러웠다면 완벽했을 거예요.",
+      "atmosphere_image_type": "SUNNY",
+      "score": 70,
+      "image_url": "/api/service/relation-training/images/husband_three_meals/result_BABA.png"
+    },
+    {
+      "result_code": "BABB",
+      "display_title": "현명한 조련사",
+      "analysis_text": "남편의 작은 행동(식탁 닦기)을 칭찬하며 가사 분담을 유도하는 솜씨가 대단합니다! '함께' 한다는 인식을 심어주는 것이 은퇴 남편 길들이기의 핵심입니다. 아주 훌륭한 대처입니다.",
+      "atmosphere_image_type": "FLOWER",
+      "score": 95,
+      "image_url": "/api/service/relation-training/images/husband_three_meals/result_BABB.png"
+    },
+    {
+      "result_code": "BBAA",
+      "display_title": "다 된 밥에 재 뿌리기",
+      "analysis_text": "기분 좋게 라면 먹으려다 옷 지적 때문에 분위기를 망쳤네요. 걱정해서 한 말이지만, 지금 상황에서는 불필요한 잔소리였습니다. 즐거울 때는 그냥 즐거움만 누리세요. 지적은 나중에 해도 늦지 않습니다.",
+      "atmosphere_image_type": "CLOUDY",
+      "score": 60,
+      "image_url": "/api/service/relation-training/images/husband_three_meals/result_BBAA.png"
+    },
+    {
+      "result_code": "BBAB",
+      "display_title": "빠른 태세 전환",
+      "analysis_text": "순간 욱해서 잔소리가 나올 뻔했지만, 바로 멈추고 식사에 집중한 건 정말 잘한 선택입니다! 내 감정을 조절하고 긍정적인 방향으로 튼 당신의 순발력에 박수를 보냅니다.",
+      "atmosphere_image_type": "SUNNY",
+      "score": 85,
+      "image_url": "/api/service/relation-training/images/husband_three_meals/result_BBAB.png"
+    },
+    {
+      "result_code": "BBBA",
+      "display_title": "옥에 티 같은 지적",
+      "analysis_text": "남편이 해준 요리를 맛있게 먹다가 물 조절을 지적하셨군요. 칭찬 끝에 붙은 '근데...'는 칭찬의 효과를 반감시킵니다. 서툴러도 '맛있다'고만 해주세요. 그래야 다음에도 또 해줍니다.",
+      "atmosphere_image_type": "SUNNY",
+      "score": 75,
+      "image_url": "/api/service/relation-training/images/husband_three_meals/result_BBBA.png"
+    },
+    {
+      "result_code": "BBBB",
+      "display_title": "행복을 부르는 칭찬",
+      "analysis_text": "완벽합니다! 서툰 남편의 라면도 최고의 요리로 만들어주는 건 아내의 리액션입니다. 당신의 따뜻한 칭찬 한마디가 남편을 춤추게 하고, 주방으로 이끄는 마법이 됩니다.",
+      "atmosphere_image_type": "FLOWER",
+      "score": 100,
+      "image_url": "/api/service/relation-training/images/husband_three_meals/result_BBBB.png"
+    }
+  ]
+}
