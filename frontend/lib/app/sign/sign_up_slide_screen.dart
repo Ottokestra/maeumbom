@@ -1,14 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:dio/dio.dart';
 import '../../ui/app_ui.dart';
 import '../../ui/layout/app_frame.dart';
-import '../../ui/layout/bottom_button_bars.dart';
-import '../../data/api/onboarding/onboarding_survey_api_client.dart';
 import '../../data/dtos/onboarding/onboarding_survey_request.dart';
-import '../../core/utils/logger.dart';
-import '../../providers/auth_provider.dart';
-import '../../core/config/api_config.dart';
+import '../onboarding/onboarding_survey_controller.dart';
+import '../../providers/onboarding_provider.dart';
 
 /// 회원가입 슬라이드 화면
 ///
@@ -21,9 +17,11 @@ class SignUpSlideScreen extends ConsumerStatefulWidget {
 }
 
 class _SignUpSlideScreenState extends ConsumerState<SignUpSlideScreen> {
+  late final OnboardingSurveyController _surveyController;
   final PageController _pageController = PageController();
   int _currentPage = 0;
   final int _totalSteps = 6; // 약관, 정보, 가족, 성향, 취미, 분위기
+  String? _errorMessage;
 
   // --- 통합된 State ---
   // 1. 약관
@@ -78,6 +76,15 @@ class _SignUpSlideScreenState extends ConsumerState<SignUpSlideScreen> {
   ];
 
   @override
+  void initState() {
+    super.initState();
+    _surveyController = ref.read(onboardingSurveyControllerProvider);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadExistingSurvey();
+    });
+  }
+
+  @override
   void dispose() {
     _nicknameController.dispose();
     _otherHobbyController.dispose();
@@ -85,11 +92,52 @@ class _SignUpSlideScreenState extends ConsumerState<SignUpSlideScreen> {
     super.dispose();
   }
 
+  Future<void> _loadExistingSurvey() async {
+    await _surveyController.loadExistingSurvey();
+    if (!mounted) return;
+
+    final survey = _surveyController.initialSurvey;
+    if (survey != null) {
+      setState(() {
+        _nicknameController.text = survey.nickname;
+        _selectedGender = survey.gender;
+        _selectedAge = survey.ageGroup;
+        _maritalStatus = survey.maritalStatus;
+        _hasChildren = survey.childrenYn;
+        _livingWith = survey.livingWith.isNotEmpty ? survey.livingWith.first : null;
+        _personality = survey.personalityType;
+        _activityPreference = survey.activityStyle;
+        _stressReliefMethods
+          ..clear()
+          ..addAll(survey.stressRelief);
+        _hobbies
+          ..clear()
+          ..addAll(survey.hobbies.map((hobby) => hobby.trim()).where((hobby) => hobby.isNotEmpty));
+        _selectedAtmosphere =
+            survey.atmosphere.isNotEmpty ? survey.atmosphere.first : _selectedAtmosphere;
+        _errorMessage = _surveyController.errorMessage;
+      });
+    } else {
+      setState(() {
+        _errorMessage = _surveyController.errorMessage;
+      });
+    }
+  }
+
   // --- Logic Helpers ---
   void _showMessage(String msg) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(msg), backgroundColor: Colors.red, behavior: SnackBarBehavior.floating),
-    );
+    setState(() {
+      _errorMessage = msg;
+    });
+  }
+
+  void _clearError() {
+    if (_errorMessage != null) {
+      setState(() {
+        _errorMessage = null;
+      });
+    }
+    _surveyController.clearError();
   }
 
   void _nextPage() {
@@ -102,6 +150,7 @@ class _SignUpSlideScreenState extends ConsumerState<SignUpSlideScreen> {
 
   /// Step 1 Validation
   void _onNextStep1() {
+    _clearError();
     if (!_allAgreed) {
       _showMessage('약관에 모두 동의해주세요.');
       return;
@@ -111,6 +160,7 @@ class _SignUpSlideScreenState extends ConsumerState<SignUpSlideScreen> {
 
   /// Step 2 Validation
   void _onNextStep2() {
+    _clearError();
     if (_nicknameController.text.isEmpty) {
       _showMessage('닉네임을 입력해주세요.');
       return;
@@ -128,6 +178,7 @@ class _SignUpSlideScreenState extends ConsumerState<SignUpSlideScreen> {
 
   /// Step 3 Validation
   void _onNextStep3() {
+    _clearError();
     if (_maritalStatus == null || _hasChildren == null || _livingWith == null) {
       _showMessage('모든 항목을 선택해주세요.');
       return;
@@ -137,6 +188,7 @@ class _SignUpSlideScreenState extends ConsumerState<SignUpSlideScreen> {
 
   /// Step 4 Validation
   void _onNextStep4() {
+    _clearError();
     if (_personality == null || _activityPreference == null) {
       _showMessage('모든 항목을 선택해주세요.');
       return;
@@ -146,6 +198,7 @@ class _SignUpSlideScreenState extends ConsumerState<SignUpSlideScreen> {
 
   /// Step 5 Validation
   void _onNextStep5() {
+    _clearError();
     if (_stressReliefMethods.isEmpty || _hobbies.isEmpty) {
       _showMessage('항목을 하나 이상 선택해주세요.');
       return;
@@ -155,6 +208,7 @@ class _SignUpSlideScreenState extends ConsumerState<SignUpSlideScreen> {
 
   /// Step 6 Submit
   Future<void> _onSubmit() async {
+    _clearError();
     if (_selectedAtmosphere == null) {
       _showMessage('분위기를 선택해주세요.');
       return;
@@ -167,14 +221,6 @@ class _SignUpSlideScreenState extends ConsumerState<SignUpSlideScreen> {
         builder: (context) => const Center(child: CircularProgressIndicator()),
       );
 
-      final authService = ref.read(authServiceProvider);
-      final accessToken = await authService.getAccessToken();
-
-      if (accessToken == null) throw Exception('로그인이 필요합니다.');
-
-      final dio = Dio(BaseOptions(baseUrl: ApiConfig.baseUrl));
-      final apiClient = OnboardingSurveyApiClient(dio);
-
       final request = OnboardingSurveyRequest(
         nickname: _nicknameController.text,
         ageGroup: _selectedAge!,
@@ -185,23 +231,28 @@ class _SignUpSlideScreenState extends ConsumerState<SignUpSlideScreen> {
         personalityType: _personality!,
         activityStyle: _activityPreference!,
         stressRelief: _stressReliefMethods.toList(),
-        hobbies: _hobbies.map((e) => e.startsWith('기타:') ? e.substring(4).trim() : e).toList(),
+        hobbies: _hobbies
+            .map((e) => e.startsWith('기타:') ? e.substring(4).trim() : e)
+            .toList(),
         atmosphere: [_selectedAtmosphere!],
       );
 
-      await apiClient.submitSurvey(request, accessToken);
+      final status = await _surveyController.submitSurvey(request);
 
-      if (mounted) Navigator.pop(context); // close loading
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('회원가입 완료!'), backgroundColor: Colors.green),
+      if (mounted) Navigator.pop(context);
+      if (!mounted) return;
+
+      if (status != null) {
+        Navigator.pushReplacementNamed(context, '/home');
+      } else {
+        _showMessage(
+          _surveyController.errorMessage ?? '제출 중 문제가 발생했습니다. 잠시 후 다시 시도해주세요.',
         );
-        Navigator.pushReplacementNamed(context, '/home'); // 홈으로 이동
       }
     } catch (e) {
       if (mounted) Navigator.pop(context);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('오류: $e')));
+        _showMessage('오류: $e');
       }
     }
   }
@@ -380,6 +431,9 @@ class _SignUpSlideScreenState extends ConsumerState<SignUpSlideScreen> {
     required String buttonText,
     required VoidCallback onButtonTap,
   }) {
+    final controller = ref.watch(onboardingSurveyControllerProvider);
+    final resolvedError = _errorMessage ?? controller.errorMessage;
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
       child: Column(
@@ -405,11 +459,27 @@ class _SignUpSlideScreenState extends ConsumerState<SignUpSlideScreen> {
 
           const SizedBox(height: 24),
 
+          if (resolvedError != null) ...[
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(AppSpacing.sm),
+              decoration: BoxDecoration(
+                color: AppColors.accentCoral.withOpacity(0.15),
+                borderRadius: BorderRadius.circular(AppRadius.md),
+              ),
+              child: Text(
+                resolvedError,
+                style: AppTypography.body.copyWith(color: AppColors.accentRed),
+              ),
+            ),
+            const SizedBox(height: 12),
+          ],
+
           // 하단 버튼 영역 (고정)
           AppButton(
             text: buttonText,
             variant: ButtonVariant.primaryRed,
-            onTap: onButtonTap,
+            onTap: controller.isLoading ? null : onButtonTap,
           ),
           const SizedBox(height: 20),
         ],

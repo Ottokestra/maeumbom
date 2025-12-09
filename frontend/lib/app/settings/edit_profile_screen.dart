@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../ui/app_ui.dart';
+import '../../core/services/api_client.dart';
 import '../../data/api/onboarding/onboarding_survey_api_client.dart';
 import '../../data/dtos/onboarding/onboarding_survey_request.dart';
 import '../../providers/auth_provider.dart';
@@ -89,7 +90,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   Future<void> _loadProfile() async {
     try {
       final dio = ref.read(dioWithAuthProvider);
-      final apiClient = OnboardingSurveyApiClient(dio);
+      final apiClient = OnboardingSurveyApiClient(ApiClient(dio));
       
       // dioWithAuthProvider를 사용하면 AuthInterceptor가 자동으로 토큰을 추가하므로
       // accessToken을 빈 문자열로 전달 (실제로는 AuthInterceptor가 처리)
@@ -132,7 +133,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
 
     try {
       final dio = ref.read(dioWithAuthProvider);
-      final apiClient = OnboardingSurveyApiClient(dio);
+      final apiClient = OnboardingSurveyApiClient(ApiClient(dio));
 
       // dioWithAuthProvider를 사용하면 AuthInterceptor가 자동으로 토큰을 추가하므로
       // accessToken을 빈 문자열로 전달 (실제로는 AuthInterceptor가 처리)
