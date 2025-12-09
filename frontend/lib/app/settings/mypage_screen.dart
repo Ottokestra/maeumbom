@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../ui/app_ui.dart';
 import '../../core/services/navigation/navigation_service.dart';
+import '../../core/services/api_client.dart';
 import '../../data/api/onboarding/onboarding_survey_api_client.dart';
 import '../../data/api/user_phase/user_phase_api_client.dart';
 import '../../data/api/chat/chat_api_client.dart';
@@ -43,7 +44,7 @@ class _MypageScreenState extends ConsumerState<MypageScreen> {
   Future<void> _loadProfile() async {
     try {
       final dio = ref.read(dioWithAuthProvider);
-      final apiClient = OnboardingSurveyApiClient(dio);
+      final apiClient = OnboardingSurveyApiClient(ApiClient(dio));
       
       // dioWithAuthProvider를 사용하면 AuthInterceptor가 자동으로 토큰을 추가하므로
       // accessToken을 직접 전달할 필요 없음

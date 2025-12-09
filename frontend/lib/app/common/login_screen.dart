@@ -4,6 +4,7 @@ import 'package:dio/dio.dart';
 import '../../ui/app_ui.dart';
 import '../../providers/auth_provider.dart';
 import '../../core/config/api_config.dart';
+import '../../core/services/api_client.dart';
 import '../../data/api/onboarding/onboarding_survey_api_client.dart';
 import '../../core/services/auth/auth_service.dart';
 
@@ -234,7 +235,7 @@ class _SocialLoginButtons extends ConsumerWidget {
           receiveTimeout: ApiConfig.receiveTimeout,
         ),
       );
-      final apiClient = OnboardingSurveyApiClient(dio);
+      final apiClient = OnboardingSurveyApiClient(ApiClient(dio));
       final statusResponse = await apiClient.getProfileStatus(accessToken);
 
       if (!context.mounted) return;

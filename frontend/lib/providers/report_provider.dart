@@ -1,60 +1,78 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../data/api/report/report_api_client.dart';
-import '../data/dtos/report/user_report_response.dart';
+import '../data/api/dashboard/dashboard_api_client.dart';
+import '../data/api/recommendation/recommendation_api_client.dart';
+import '../data/dtos/dashboard/emotion_history_entry.dart';
+import '../data/dtos/recommendation/recommendation_response.dart';
+import '../data/dtos/user_phase/user_pattern_setting_response.dart';
+import '../data/dtos/user_phase/user_phase_response.dart';
+import '../data/repository/dashboard/dashboard_repository.dart';
+import '../data/repository/recommendation/recommendation_repository.dart';
+import '../data/repository/user_phase/user_phase_repository.dart';
+import 'api_client_provider.dart';
 import 'auth_provider.dart';
 
-enum ReportPeriod {
-  daily,
-  weekly,
-  monthly,
+enum EmotionHistoryRange {
+  week(7, '7일'),
+  month(30, '30일');
+
+  const EmotionHistoryRange(this.days, this.label);
+  final int days;
+  final String label;
 }
 
-extension ReportPeriodX on ReportPeriod {
-  String get label {
-    switch (this) {
-      case ReportPeriod.daily:
-        return '일간';
-      case ReportPeriod.weekly:
-        return '주간';
-      case ReportPeriod.monthly:
-        return '월간';
-    }
-  }
-
-  String get description {
-    switch (this) {
-      case ReportPeriod.daily:
-        return '일간 리포트';
-      case ReportPeriod.weekly:
-        return '주간 리포트';
-      case ReportPeriod.monthly:
-        return '월간 리포트';
-    }
-  }
-}
-
-final reportApiClientProvider = Provider<ReportApiClient>((ref) {
-  final dio = ref.watch(dioWithAuthProvider);
-  return ReportApiClient(dio);
+final emotionHistoryRangeProvider = StateProvider<EmotionHistoryRange>((ref) {
+  return EmotionHistoryRange.week;
 });
 
-final reportPeriodProvider = StateProvider<ReportPeriod>((ref) {
-  return ReportPeriod.daily;
+final dashboardRepositoryProvider = Provider<DashboardRepository>((ref) {
+  final apiClient = DashboardApiClient(ref.watch(apiClientProvider));
+  return DashboardRepository(apiClient);
 });
 
-final userReportProvider =
-    FutureProvider.autoDispose.family<UserReportResponse, ReportPeriod>(
-  (ref, period) {
-    final apiClient = ref.watch(reportApiClientProvider);
+final userPhaseRepositoryProvider = Provider<UserPhaseRepository>((ref) {
+  final apiClient = ref.watch(userPhaseApiClientProvider);
+  return UserPhaseRepository(apiClient);
+});
 
-    switch (period) {
-      case ReportPeriod.daily:
-        return apiClient.fetchDailyReport();
-      case ReportPeriod.weekly:
-        return apiClient.fetchWeeklyReport();
-      case ReportPeriod.monthly:
-        return apiClient.fetchMonthlyReport();
-    }
+final recommendationRepositoryProvider = Provider<RecommendationRepository>((ref) {
+  final apiClient = RecommendationApiClient(ref.watch(apiClientProvider));
+  return RecommendationRepository(apiClient);
+});
+
+final emotionHistoryProvider =
+    FutureProvider.autoDispose.family<List<EmotionHistoryEntry>, EmotionHistoryRange>(
+  (ref, range) {
+    final repository = ref.watch(dashboardRepositoryProvider);
+    return repository.fetchEmotionHistory(range.days);
   },
 );
+
+final currentPhaseProvider = FutureProvider.autoDispose<UserPhaseResponse>((ref) {
+  final repository = ref.watch(userPhaseRepositoryProvider);
+  return repository.fetchCurrentPhase();
+});
+
+final phaseSettingsProvider =
+    FutureProvider.autoDispose<UserPatternSettingResponse>((ref) {
+  final repository = ref.watch(userPhaseRepositoryProvider);
+  return repository.fetchSettings();
+});
+
+final quoteRecommendationProvider = FutureProvider.autoDispose
+    .family<RecommendationResponse, Map<String, dynamic>>((ref, payload) {
+  final repository = ref.watch(recommendationRepositoryProvider);
+  return repository.fetchQuote(payload);
+});
+
+final musicRecommendationProvider = FutureProvider.autoDispose
+    .family<RecommendationResponse, Map<String, dynamic>>((ref, payload) {
+  final repository = ref.watch(recommendationRepositoryProvider);
+  return repository.fetchMusic(payload);
+});
+
+final imageRecommendationProvider = FutureProvider.autoDispose
+    .family<RecommendationResponse, Map<String, dynamic>>((ref, payload) {
+  final repository = ref.watch(recommendationRepositoryProvider);
+  return repository.fetchImage(payload);
+});
