@@ -30,6 +30,13 @@ class AuthService {
     try {
       appLogger.i('구글 로그인 요청');
 
+      // 먼저 저장된 토큰이 유효한지 확인
+      final existingUser = await getCurrentUser();
+      if (existingUser != null) {
+        appLogger.i('이미 로그인된 상태입니다. 저장된 토큰 사용: ${existingUser.email}');
+        return existingUser;
+      }
+
       // Step 1: Get ID Token (or auth code) from Google SDK
       // ID Token is preferred as it's more reliable than serverAuthCode
       final tokenOrCode = await _googleOAuth.signIn();
@@ -66,6 +73,13 @@ class AuthService {
 
     try {
       appLogger.i('카카오 로그인 요청');
+
+      // 먼저 저장된 토큰이 유효한지 확인
+      final existingUser = await getCurrentUser();
+      if (existingUser != null) {
+        appLogger.i('이미 로그인된 상태입니다. 저장된 토큰 사용: ${existingUser.email}');
+        return existingUser;
+      }
 
       // Step 1: Get access token from Kakao SDK
       final accessToken = await _kakaoOAuth!.signIn();
@@ -108,6 +122,13 @@ class AuthService {
 
     try {
       appLogger.i('네이버 로그인 요청');
+
+      // 먼저 저장된 토큰이 유효한지 확인
+      final existingUser = await getCurrentUser();
+      if (existingUser != null) {
+        appLogger.i('이미 로그인된 상태입니다. 저장된 토큰 사용: ${existingUser.email}');
+        return existingUser;
+      }
 
       // Step 1: Get authorization code and state from Naver
       final (authCode, state) = await _naverOAuth!.signIn();
