@@ -9,12 +9,12 @@ audio:
 # VAD (Voice Activity Detection) 설정
 vad:
   model: "silero_vad"
-  threshold: 0.45 # 0.5 → 0.65 (문지기 강화: 확실한 음성만 통과)
+  threshold: 0.65 # 0.5 → 0.65 (문지기 강화: 확실한 음성만 통과)
   min_speech_duration_ms: 300  # 250 → 300 (짧은 소음 필터링)
   max_speech_duration_s: 30
-  min_silence_duration_ms: 2000  # 말 끝내고 2초 쉬면 전송 (발화 종료)
-  short_silence_duration_ms: 300  # 문장 구분용 짧은 침묵 (0.3초) - 텍스트 확정용
-  speech_pad_ms: 300
+  min_silence_duration_ms: 3000  # 말 끝내고 3초 쉬면 전송 (발화 종료) - 사용 편의성 개선
+  short_silence_duration_ms: 200  # 문장 구분용 짧은 침묵 (0.2초) - Phase 3: 비동기 STT
+  speech_pad_ms: 400  # 여유 시간 (300 → 400ms)
   
 # Whisper 설정
 whisper:

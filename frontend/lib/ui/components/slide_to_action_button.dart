@@ -137,6 +137,11 @@ class _SlideToActionButtonState extends State<SlideToActionButton>
 
   void _updateRippleAnimation() {
     switch (widget.voiceState) {
+      case VoiceInterfaceState.loading:
+        // Backend 로딩 중 - 느린 펄스
+        _rippleController.duration = const Duration(milliseconds: 2500);
+        if (!_rippleController.isAnimating) _rippleController.repeat();
+        break;
       case VoiceInterfaceState.listening:
         _rippleController.duration = const Duration(milliseconds: 1500);
         if (!_rippleController.isAnimating) _rippleController.repeat();
@@ -161,6 +166,9 @@ class _SlideToActionButtonState extends State<SlideToActionButton>
   void _startTypingAnimation() {
     String targetText;
     switch (widget.voiceState) {
+      case VoiceInterfaceState.loading:
+        targetText = '준비 중...'; // ✅ 새로 추가!
+        break;
       case VoiceInterfaceState.listening:
         targetText = '말씀해주세요...';
         break;
@@ -329,6 +337,8 @@ class _SlideToActionButtonState extends State<SlideToActionButton>
   // 상태에 따른 왼쪽 버튼 아이콘
   IconData get _leftButtonIcon {
     switch (widget.voiceState) {
+      case VoiceInterfaceState.loading:
+        return Icons.hourglass_empty; // ✅ 로딩 중 아이콘
       case VoiceInterfaceState.listening:
         return Icons.stop;
       case VoiceInterfaceState.processing:
@@ -344,6 +354,8 @@ class _SlideToActionButtonState extends State<SlideToActionButton>
   // 상태에 따른 왼쪽 버튼 색상
   Color get _leftButtonColor {
     switch (widget.voiceState) {
+      case VoiceInterfaceState.loading:
+        return Colors.grey; // ✅ 로딩 중 회색
       case VoiceInterfaceState.listening:
         return AppColors.accentRed;
       case VoiceInterfaceState.processing:

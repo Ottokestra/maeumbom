@@ -222,3 +222,233 @@ def generate_response_metadata(
             "emotion": "happiness",
             "response_type": "normal"
         }
+
+
+# ============================================================================
+# Alarm Request Parsing
+# ============================================================================
+
+def parse_alarm_request(
+    user_text: str,
+    llm_response: str,
+    current_datetime
+) -> Dict:
+    """
+    사용자 요청에서 알람 정보를 파싱
+    
+    Args:
+        user_text: 사용자 입력 텍스트
+        llm_response: LLM 응답 텍스트
+        current_datetime: 현재 시간 (datetime 객체)
+        
+    Returns:
+        {
+            "response_type": "alarm" | "warning" | None,
+            "count": int,
+            "data": [...],
+            "message": str (warning일 때만)
+        }
+    """
+    print("=" * 80)
+    print("🚨 [ALARM PARSER] FUNCTION CALLED!")
+    print(f"User text: {user_text}")
+    print(f"LLM response: {llm_response}")
+    print("=" * 80)
+    
+    try:
+        import json
+        from datetime import datetime
+        
+        print("[ALARM PARSER] Step 1: Imports successful")
+        
+        client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+        
+        print("[ALARM PARSER] Step 2: OpenAI client created")
+        
+        # 현재 시간 정보
+        current_str = current_datetime.strftime("%Y년 %m월 %d일 %H시 %M분 %A")
+        weekday_map = {
+            'Monday': '월요일',
+            'Tuesday': '화요일',
+            'Wednesday': '수요일',
+            'Thursday': '목요일',
+            'Friday': '금요일',
+            'Saturday': '토요일',
+            'Sunday': '일요일'
+        }
+        current_weekday_kr = weekday_map.get(current_datetime.strftime('%A'), '알 수 없음')
+        
+        print(f"[ALARM PARSER] Step 3: Current time formatted: {current_str}")
+        
+        prompt = f"""현재 시간: {current_str} ({current_weekday_kr})
+
+사용자 요청: "{user_text}"
+AI 응답: "{llm_response}"
+
+이 요청이 알람 설정 요청인지 판단하고, 맞다면 시간 정보를 추출하세요.
+
+**중요 규칙 (반드시 준수!):**
+1. time, minute, am_pm 필드는 **절대 null 불가** - 반드시 값 제공
+2. minute이 언급 안 되면 무조건 0
+3. 여러 알람의 경우 각각 완전한 정보 (time, minute, am_pm 모두 필수)
+4. am_pm 추론: 5시/6시/7시 → 문맥상 오후로 판단
+
+**반환 형식:**
+{{
+  "is_alarm": true,
+  "alarms": [
+    {{
+      "year": 2025,
+      "month": 12,
+      "week": ["Monday"],
+      "day": 10,
+      "time": 2,        // 반드시 숫자 (1-12), null 금지
+      "minute": 30,     // 반드시 숫자 (0-59), null 금지
+      "am_pm": "pm"     // 반드시 "am" 또는 "pm", null 금지
+    }}
+  ]
+}}
+
+**예시:**
+- "5시, 6시, 7시" → time:5/minute:0/am_pm:"pm", time:6/minute:0/am_pm:"pm", time:7/minute:0/am_pm:"pm"
+- "오후 2시 30분" → time:2/minute:30/am_pm:"pm"
+
+**기본값:**
+- 연도/월/일/요일: 지정 안 하면 현재 기준
+- minute: 지정 안 하면 00
+- am_pm: 13시 이상이면 pm, 아니면 am (오전/오후 언급 없으면 am)
+- time: 1~12 범위로 변환 (13시 → 1시 pm, 14시 → 2시 pm)
+
+**요일 변환:**
+- 월요일: Monday, 화요일: Tuesday, 수요일: Wednesday
+- 목요일: Thursday, 금요일: Friday, 토요일: Saturday, 일요일: Sunday
+
+**중요:** JSON만 출력하세요. 설명이나 마크다운 코드 블록 없이 순수 JSON만 반환.
+"""
+        
+        print("[ALARM PARSER] Step 4: Prompt created, calling LLM...")
+        
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": "You are a time parser. Return only valid JSON, no markdown or explanations."},
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0.3,
+            max_tokens=500
+        )
+        
+        result_text = response.choices[0].message.content.strip()
+        
+        print(f"[ALARM PARSER] Step 5: LLM response received: {result_text[:200]}...")
+        
+        print(f"[ALARM PARSER] Step 5: LLM response received: {result_text[:200]}...")
+        
+        # JSON 파싱 (마크다운 코드 블록 제거)
+        if result_text.startswith("```json"):
+            result_text = result_text.replace("```json", "").replace("```", "").strip()
+        elif result_text.startswith("```"):
+            result_text = result_text.replace("```", "").strip()
+        
+        print(f"[ALARM PARSER] Step 6: Cleaned JSON: {result_text[:200]}...")
+        
+        result = json.loads(result_text)
+        
+        print(f"[ALARM PARSER] Step 7: JSON parsed successfully: {result}")
+        
+        # 알람이 아니면 None 반환
+        if not result.get("is_alarm", False):
+            print("[ALARM PARSER] Step 8: Not an alarm request, returning None")
+            return {
+                "response_type": None,
+                "count": 0,
+                "data": []
+            }
+        
+        print("[ALARM PARSER] Step 9: IS an alarm request!")
+        
+        alarms = result.get("alarms", [])
+        
+        print(f"[ALARM PARSER] Step 10: Found {len(alarms)} alarms")
+        
+        # 3개 초과 검증
+        if len(alarms) > 3:
+            logger.warning(f"⚠️ [Alarm] Too many alarms requested: {len(alarms)}")
+            print(f"[ALARM PARSER] Step 11: TOO MANY alarms ({len(alarms)}), returning warning")
+            return {
+                "response_type": "warning",
+                "message": "알람은 한번의 요청에서 세개까지만 등록이 가능합니다.",
+                "count": len(alarms),
+                "data": []
+            }
+        
+        print("[AL ARM PARSER] Step 11: Processing alarms...")
+        
+        # 각 알람 처리 및 검증
+        processed_alarms = []
+        for i, alarm in enumerate(alarms):
+            print(f"[ALARM PARSER] Step 12.{i}: Processing alarm {i+1}/{len(alarms)}: {alarm}")
+            
+            # 알람 시간 생성
+            alarm_dt = datetime(
+                year=alarm.get("year", current_datetime.year),
+                month=alarm.get("month", current_datetime.month),
+                day=alarm.get("day", current_datetime.day),
+                hour=_convert_to_24h(alarm.get("time", 0), alarm.get("am_pm", "am")),
+                minute=alarm.get("minute", 0)
+            )
+            
+            # 과거 날짜 검증
+            is_valid = alarm_dt > current_datetime
+            
+            print(f"[ALARM PARSER] Step 13.{i}: alarm_dt={alarm_dt}, current={current_datetime}, is_valid={is_valid}")
+            
+            processed_alarm = {
+                "year": alarm.get("year", current_datetime.year),
+                "month": alarm.get("month", current_datetime.month),
+                "week": alarm.get("week", [current_datetime.strftime('%A')]),
+                "day": alarm.get("day", current_datetime.day),
+                "is_valid_alarm": is_valid
+            }
+            
+            # 유효한 알람만 시간 정보 포함
+            if is_valid:
+                processed_alarm["time"] = alarm.get("time", 12)
+                processed_alarm["minute"] = alarm.get("minute", 0)
+                processed_alarm["am_pm"] = alarm.get("am_pm", "am")
+            
+            processed_alarms.append(processed_alarm)
+            print(f"[ALARM PARSER] Step 14.{i}: Processed alarm: {processed_alarm}")
+        
+        logger.info(f"✅ [Alarm] Parsed {len(processed_alarms)} alarms")
+        
+        result = {
+            "response_type": "alarm",
+            "count": len(processed_alarms),
+            "data": processed_alarms
+        }
+        
+        print(f"[ALARM PARSER] Step 15: FINAL RESULT: {result}")
+        print("=" * 80)
+        
+        return result
+        
+    except Exception as e:
+        logger.error(f"Failed to parse alarm request: {e}", exc_info=True)
+        print(f"[ALARM PARSER] ERROR: {e}")
+        print("=" * 80)
+        return {
+            "response_type": None,
+            "count": 0,
+            "data": []
+        }
+
+
+def _convert_to_24h(time_12h: int, am_pm: str) -> int:
+    """12시간 형식을 24시간 형식으로 변환"""
+    if am_pm.lower() == "pm" and time_12h != 12:
+        return time_12h + 12
+    elif am_pm.lower() == "am" and time_12h == 12:
+        return 0
+    else:
+        return time_12h

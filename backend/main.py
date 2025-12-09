@@ -5,6 +5,7 @@
 import os
 import sys
 import json
+import asyncio  # ✅ Phase 3: 백그라운드 비동기 STT용
 from pathlib import Path
 from typing import List, Optional
 
@@ -927,18 +928,30 @@ async def stt_websocket(websocket: WebSocket):
 
 
 # =====================================================================
-# STT + Agent WebSocket
+# Agent WebSocket (Phase 2 - Audio Stream + Agent)
 # =====================================================================
 
-
 @app.websocket("/agent/stream")
-async def agent_websocket(websocket: WebSocket):
+async def agent_websocket(websocket: WebSocket, user_id: int = 1):
     """
-    통합 STT + Agent WebSocket 엔드포인트
+    Phase 2 WebSocket endpoint for audio streaming + Agent
+    
+    WebSocket 설정:
+    - ping_interval: 20 (기본값, 20초마다 ping)
+    - ping_timeout: 60 (60초 대기, Agent 처리 시간 고려)
     """
+    from starlette.websockets import WebSocketState
+    
+    # ✅ WebSocket ping timeout 증가 (Agent 처리 시간 확보)
+    # uvicorn의 WebSocket은 기본 20초 ping_timeout을 사용
+    # 하지만 starlette WebSocket은 직접 제어 불가
+    # 대신 uvicorn 실행 시 --timeout-keep-alive 60으로 설정 필요
+    
     await websocket.accept()
+    print(f"[Agent WebSocket] 연결 수락 (user_id: {user_id})")
     stt_engine_instance = None
     session_id = None
+    temporary_message_ids = []  # 🆕 Phase 3: 임시 메시지 ID 추적
 
     try:
         await websocket.send_json(
@@ -959,6 +972,7 @@ async def agent_websocket(websocket: WebSocket):
             }
         )
 
+        # WebSocket 메시지 수신 루프
         while True:
             try:
                 data = await websocket.receive()
@@ -980,6 +994,34 @@ async def agent_websocket(websocket: WebSocket):
                         if isinstance(data["text"], str)
                         else data["text"]
                     )
+                    
+                    # 🆕 Phase 3: interrupt 신호 처리
+                    if isinstance(message, dict) and message.get("type") == "interrupt":
+                        reason = message.get("reason", "unknown")
+                        print(f"[Agent WebSocket] ⚠️ Interrupt 수신: {reason}")
+                        
+                        # 1. 임시 메시지 삭제
+                        if temporary_message_ids:
+                            from engine.langchain_agent import get_conversation_store
+                            store = get_conversation_store()
+                            deleted_count = store.delete_messages_by_ids(user_id, temporary_message_ids)
+                            print(f"[Agent WebSocket] 🗑️ 삭제된 임시 메시지: {deleted_count}개 (IDs: {temporary_message_ids})")
+                            temporary_message_ids.clear()
+                        
+                        # 2. VAD 버퍼 초기화
+                        if stt_engine_instance:
+                            stt_engine_instance.vad.reset()
+                            print("[Agent WebSocket] VAD 버퍼 초기화 완료")
+                        
+                        # 3. Client에 응답
+                        await websocket.send_json({
+                            "type": "interrupted",
+                            "message": "파이프라인 중단 완료",
+                            "deleted_messages": deleted_count if temporary_message_ids else 0
+                        })
+                        continue
+                    
+                    # 기존 session_id 처리 로직
                     if isinstance(message, dict) and "session_id" in message:
                         session_id = message["session_id"]
                         print(
@@ -997,83 +1039,40 @@ async def agent_websocket(websocket: WebSocket):
                     pass
 
             if "bytes" in data:
-                # print(f"[Agent WebSocket DEBUG] ✅ Binary data received: {len(data['bytes'])} bytes")  # 디버그
                 audio_bytes = data["bytes"]
                 
-                # 🔍 바이트 레벨 진단 (첫 16바이트만)
-                if not hasattr(stt_engine_instance.vad, '_byte_diag_done'):
-                    stt_engine_instance.vad._byte_diag_done = True
-                    hex_bytes = ' '.join(f'{b:02x}' for b in audio_bytes[:16])
-                    print(f"\n[BYTE DIAG] First 16 bytes (hex): {hex_bytes}")
-                    print(f"[BYTE DIAG] Total bytes: {len(audio_bytes)}")
-                    
-                    # Float32로 변환 후 샘플 검사
-                    test_chunk = np.frombuffer(audio_bytes[:64], dtype=np.float32)  # 16 samples
-                    print(f"[BYTE DIAG] First 16 Float32 values: {test_chunk}")
-                    print(f"[BYTE DIAG] Range: min={test_chunk.min():.4f}, max={test_chunk.max():.4f}\n")
-                
-                audio_chunk = np.frombuffer(audio_bytes, dtype=np.float32)
-                
-                # 🔍 오디오 데이터 진단 (발화 시에만)
-                if len(audio_chunk) == 512:
-                    audio_std = float(np.std(audio_chunk))
-                    if audio_std > 0.05:  # 무음이 아닐 때만 로그
-                        audio_min = float(np.min(audio_chunk))
-                        audio_max = float(np.max(audio_chunk))
-                        audio_mean = float(np.mean(audio_chunk))
-                        # print(f"[Audio DIAG] min={audio_min:.4f}, max={audio_max:.4f}, mean={audio_mean:.4f}, std={audio_std:.4f}")
+                # Int16로 받아서 Float32로 변환 (정규화)
+                audio_chunk_int16 = np.frombuffer(audio_bytes, dtype=np.int16)
+                audio_chunk = audio_chunk_int16.astype(np.float32) / 32768.0  # -1.0 ~ 1.0
 
+                # ✅ CRITICAL: 512 샘플 체크 (32ms @ 16kHz)
                 if len(audio_chunk) != 512:
+                    print(f"[WARNING] Unexpected chunk size: {len(audio_chunk)}, skipping")
                     continue
 
-                # 🎵 WAV 디버그 저장 (처음 500 청크만)
-                if not hasattr(stt_engine_instance.vad, '_debug_chunks'):
-                    stt_engine_instance.vad._debug_chunks = []
-                    stt_engine_instance.vad._debug_counter = 0
-                
-                if stt_engine_instance.vad._debug_counter < 500:
-                    stt_engine_instance.vad._debug_chunks.append(audio_chunk)
-                    stt_engine_instance.vad._debug_counter += 1
-                    
-                    if stt_engine_instance.vad._debug_counter == 500:
-                        # 500개 청크 수집 완료 -> WAV 저장
-                        import scipy.io.wavfile as wavfile
-                        from datetime import datetime
-                        
-                        debug_audio = np.concatenate(stt_engine_instance.vad._debug_chunks)
-                        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-                        wav_path = f"debug_audio_{timestamp}.wav"
-                        
-                        # Float32 -> Int16 변환 (WAV 저장용)
-                        debug_audio_int16 = (debug_audio * 32767).astype(np.int16)
-                        wavfile.write(wav_path, 16000, debug_audio_int16)
-                        print(f"\n🎵 [DEBUG] WAV 저장 완료: {wav_path} (duration: {len(debug_audio)/16000:.1f}s)\n", flush=True)
-
+                # VAD 처리
                 is_speech_end, speech_audio, is_short_pause = (
                     stt_engine_instance.vad.process_chunk(audio_chunk)
                 )
-
                 
                 # VAD 결과 로깅
-                if is_speech_end or is_short_pause:
-                    print(f"[VAD] speech_end={is_speech_end}, short_pause={is_short_pause}, audio_len={len(speech_audio) if speech_audio is not None else 0}")
+                if is_speech_end:
+                    print(f"[VAD] speech_end=True, audio_len={len(speech_audio) if speech_audio is not None else 0}")
 
-
+                # Phase 2: Speech end 처리 (최종 발화만 처리)
                 if is_speech_end and speech_audio is not None:
                     print("[Agent WebSocket] 발화 종료 감지, STT + Agent 처리 시작")
 
+                    # STT 실행
                     transcript, quality = (
                         stt_engine_instance.whisper.transcribe(
                             speech_audio, callback=None
                         )
                     )
+                    
                     print(
                         f"[Agent WebSocket] STT 결과: text='{transcript}', quality={quality}"
                     )
-
-                    # ========================================================================
-                    # 🆕 화자 검증 로직 (DB 기반)
-                    # ========================================================================
                     speaker_id = None
                     user_id = 1  # Default user ID for now
                     
@@ -1194,13 +1193,39 @@ async def agent_websocket(websocket: WebSocket):
                                 session_id = f"user_{user_id}_{timestamp}"
                                 print(f"🔐 [WebSocket] Generated session_id: {session_id}")
 
+                            # 🆕 Phase 3: 사용자 메시지 저장 및 ID 추적
+                            from engine.langchain_agent import get_conversation_store
+                            store = get_conversation_store()
+                            user_msg_id = store.add_message(
+                                user_id, session_id, "user", transcript, speaker_id=speaker_id
+                            )
+                            temporary_message_ids.append(user_msg_id)
+                            print(f"[Agent WebSocket] 임시 메시지 추가: user_msg_id={user_msg_id}")
+
+                            # Agent 호출 (save_to_db=False로 중복 저장 방지)
                             result = await run_ai_bomi_from_text_v2(
                                 user_text=transcript,
                                 user_id=user_id,
                                 session_id=session_id,
                                 stt_quality=quality,
                                 speaker_id=speaker_id,
+                                save_to_db=False  # 🆕 WebSocket에서 직접 저장하므로 False
                             )
+
+                            # 🆕 Phase 3: AI 응답 저장 및 ID 추적
+                            ai_msg_id = store.add_message(
+                                user_id, session_id, "assistant", result["reply_text"]
+                            )
+                            temporary_message_ids.append(ai_msg_id)
+                            print(f"[Agent WebSocket] 임시 메시지 추가: ai_msg_id={ai_msg_id}")
+
+                            # 🆕 DEBUG: result 내용 확인
+                            print(f"[Agent WebSocket] 🔍 Sending result keys: {result.keys()}")
+                            print(f"[Agent WebSocket] 🔍 Response type: {result.get('response_type')}")
+                            if 'alarm_info' in result:
+                                print(f"[Agent WebSocket] ✅ alarm_info FOUND: {result['alarm_info']}")
+                            else:
+                                print(f"[Agent WebSocket] ❌ alarm_info NOT in result!")
 
                             await websocket.send_json(
                                 {
@@ -1208,6 +1233,10 @@ async def agent_websocket(websocket: WebSocket):
                                     "data": result,
                                 }
                             )
+                            
+                            # 🆕 Phase 3: 성공 시 임시 추적 초기화
+                            temporary_message_ids.clear()
+                            print("[Agent WebSocket] 대화 성공 - 임시 메시지 추적 초기화")
                             print("[Agent WebSocket] Agent 응답 완료")
                         except Exception as e:
                             import traceback
@@ -1223,10 +1252,23 @@ async def agent_websocket(websocket: WebSocket):
                                 }
                             )
 
+                    # VAD 리셋 후 다음 발화 대기
                     stt_engine_instance.vad.reset()
+                    # ✅ continue를 추가하여 다음 오디오 청크 수신 계속
+                    continue
 
     except WebSocketDisconnect:
         print("[Agent WebSocket] 연결 종료")
+        
+        # 🆕 Phase 3: 임시 메시지 정리
+        if temporary_message_ids:
+            try:
+                from engine.langchain_agent import get_conversation_store
+                store = get_conversation_store()
+                deleted_count = store.delete_messages_by_ids(user_id, temporary_message_ids)
+                print(f"[Agent WebSocket] 연결 종료 시 임시 메시지 삭제: {deleted_count}개")
+            except Exception as e:
+                print(f"[Agent WebSocket] 임시 메시지 삭제 실패: {e}")
     except Exception as e:
         import traceback
 
@@ -1388,4 +1430,12 @@ if __name__ == "__main__":
     print("  2. 필요 시 /emotion/api/init 등 초기화 엔드포인트 호출")
     print("\n" + "=" * 50 + "\n")
 
-    uvicorn.run(app, host="0.0.0.0", port=8000, reload=False)
+    # ✅ timeout-keep-alive 120초로 설정 (WebSocket keepalive timeout 방지)
+    uvicorn.run(
+        app, 
+        host="0.0.0.0", 
+        port=8000, 
+        reload=False,
+        timeout_keep_alive=120  # WebSocket ping timeout 방지
+    )
+

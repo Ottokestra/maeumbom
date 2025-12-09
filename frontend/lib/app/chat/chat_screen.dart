@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../ui/app_ui.dart';
 import '../../ui/components/chat_bubble.dart';
+import '../../ui/widgets/alarm_dialog.dart'; // 🆕
 import '../../providers/chat_provider.dart';
 import '../../data/models/chat/chat_message.dart';
 
