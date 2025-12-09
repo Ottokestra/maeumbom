@@ -1,5 +1,5 @@
-import 'package:dio/dio.dart';
 import '../../../core/config/api_config.dart';
+import '../../../core/services/api_client.dart';
 import '../../../core/utils/logger.dart';
 import '../../dtos/onboarding/onboarding_survey_request.dart';
 import '../../dtos/onboarding/onboarding_survey_response.dart';
@@ -7,118 +7,50 @@ import '../../dtos/onboarding/onboarding_survey_status_response.dart';
 
 /// Onboarding Survey API Client
 class OnboardingSurveyApiClient {
-  final Dio _dio;
+  final ApiClient _client;
 
-  OnboardingSurveyApiClient(this._dio) {
-    _setupInterceptors();
-  }
-
-  void _setupInterceptors() {
-    // HTTP 로그는 에러 발생시에만 출력하도록 비활성화
-    // 필요시 주석 해제하여 디버깅 가능
-    // _dio.interceptors.add(
-    //   LogInterceptor(
-    //     requestBody: true,
-    //     responseBody: true,
-    //     logPrint: (obj) => appLogger.d(obj),
-    //   ),
-    // );
-  }
+  OnboardingSurveyApiClient(this._client);
 
   /// Submit onboarding survey
-  /// accessToken은 dioWithAuthProvider를 사용할 때는 빈 문자열로 전달 가능
-  /// (AuthInterceptor가 자동으로 토큰을 추가함)
+  /// AuthInterceptor가 자동으로 토큰을 추가함
   Future<OnboardingSurveyResponse> submitSurvey(
     OnboardingSurveyRequest request,
-    String accessToken,
   ) async {
     try {
-      final options = accessToken.isNotEmpty
-          ? Options(
-              headers: {
-                'Authorization': 'Bearer $accessToken',
-              },
-            )
-          : null;
-      
-      final response = await _dio.post(
+      final response = await _client.post(
         ApiConfig.onboardingSurveySubmit,
         data: request.toJson(),
-        options: options,
       );
-      return OnboardingSurveyResponse.fromJson(response.data);
-    } on DioException catch (e) {
+      return OnboardingSurveyResponse.fromJson(response as Map<String, dynamic>);
+    } on ApiException catch (e) {
       appLogger.e('Onboarding survey submission failed', error: e);
-      throw _handleError(e);
+      throw e;
     }
   }
 
   /// Get my profile
-  /// accessToken은 dioWithAuthProvider를 사용할 때는 빈 문자열로 전달 가능
-  /// (AuthInterceptor가 자동으로 토큰을 추가함)
-  Future<OnboardingSurveyResponse> getMyProfile(String accessToken) async {
+  /// AuthInterceptor가 자동으로 토큰을 추가함
+  Future<OnboardingSurveyResponse> getMyProfile() async {
     try {
-      final options = accessToken.isNotEmpty
-          ? Options(
-              headers: {
-                'Authorization': 'Bearer $accessToken',
-              },
-            )
-          : null;
-      
-      final response = await _dio.get(
-        ApiConfig.onboardingSurveyMe,
-        options: options,
-      );
-      return OnboardingSurveyResponse.fromJson(response.data);
-    } on DioException catch (e) {
+      final response = await _client.get(ApiConfig.onboardingSurveyMe);
+      return OnboardingSurveyResponse.fromJson(response as Map<String, dynamic>);
+    } on ApiException catch (e) {
       appLogger.e('Failed to get profile', error: e);
-      throw _handleError(e);
+      throw e;
     }
   }
 
   /// Get profile status (check if user has completed onboarding survey)
-  /// accessToken은 dioWithAuthProvider를 사용할 때는 빈 문자열로 전달 가능
-  /// (AuthInterceptor가 자동으로 토큰을 추가함)
-  Future<OnboardingSurveyStatusResponse> getProfileStatus(
-      String accessToken) async {
+  /// AuthInterceptor가 자동으로 토큰을 추가함
+  Future<OnboardingSurveyStatusResponse> getProfileStatus() async {
     try {
-      final options = accessToken.isNotEmpty
-          ? Options(
-              headers: {
-                'Authorization': 'Bearer $accessToken',
-              },
-            )
-          : null;
-      
-      final response = await _dio.get(
-        ApiConfig.onboardingSurveyStatus,
-        options: options,
+      final response = await _client.get(ApiConfig.onboardingSurveyStatus);
+      return OnboardingSurveyStatusResponse.fromJson(
+        response as Map<String, dynamic>,
       );
-      return OnboardingSurveyStatusResponse.fromJson(response.data);
-    } on DioException catch (e) {
+    } on ApiException catch (e) {
       appLogger.e('Failed to get profile status', error: e);
-      throw _handleError(e);
-    }
-  }
-
-  Exception _handleError(DioException e) {
-    if (e.response != null) {
-      final statusCode = e.response!.statusCode;
-      final message = e.response!.data['detail'] ?? 'Unknown error';
-
-      switch (statusCode) {
-        case 401:
-          return Exception('인증이 필요합니다. 다시 로그인해주세요.');
-        case 404:
-          return Exception('프로필을 찾을 수 없습니다.');
-        case 500:
-          return Exception('서버 오류가 발생했습니다: $message');
-        default:
-          return Exception('오류가 발생했습니다: $message');
-      }
-    } else {
-      return Exception('네트워크 오류가 발생했습니다.');
+      throw e;
     }
   }
 }

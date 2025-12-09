@@ -6,6 +6,7 @@ import '../../ui/app_ui.dart';
 import '../../ui/layout/app_frame.dart';
 import '../../ui/layout/bottom_button_bars.dart';
 import 'survey_data_holder.dart';
+import '../../core/services/api_client.dart';
 import '../../data/api/onboarding/onboarding_survey_api_client.dart';
 import '../../data/dtos/onboarding/onboarding_survey_request.dart';
 import '../../core/utils/logger.dart';
@@ -188,7 +189,7 @@ class _SignUp1ScreenState extends ConsumerState<SignUp1Screen> {
       if (accessToken == null) throw Exception('로그인이 필요합니다.');
 
       final dio = Dio(BaseOptions(baseUrl: ApiConfig.baseUrl));
-      final apiClient = OnboardingSurveyApiClient(dio);
+      final apiClient = OnboardingSurveyApiClient(ApiClient(dio));
 
       final request = OnboardingSurveyRequest(
         nickname: _nicknameController.text,
