@@ -1,0 +1,101 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual Environment
+.venv/
+
+# Model Cache
+model_cache/
+
+# Data
+app/daily_mood_check/daily_checks.json
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Logs
+*.log
+logs/
+
+# Testing
+.coverage
+htmlcov/
+.pytest_cache/
+
+# Temp files
+*.tmp
+temp/
+tmp/
+cache/
+
+# Env secrets
+.env
+.env.*
+!.env.example
+
+# Windows reserved device name (ghost file)
+NUL
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# ===== emotion-analysis local vector DB =====
+engine/emotion-analysis/vectordb/
+
+# ===== routine_recommend local chroma DB =====
+engine/routine_recommend/chroma/
+engine/routine_recommend/chroma/routines/
+
+# ===== TTS engine external repo & outputs =====
+engine/text-to-speech/MeloTTS/
+engine/text-to-speech/outputs/
+
+# ===== local test DB & outputs =====
+test_db/
+outputs/
+
+# ===== local debug script =====
+reproduce_error.py
+scripts/
+
+# ===== LangChain Agent Memory & RAG =====
+engine/langchain_agent/memory_data/
+engine/langchain_agent/vectordb/
+engine/langchain_agent/chroma_db/
+
+# speech-to-speech secrets
+engine/speech-to-speech/.env
+engine/speech-to-speech/*.env
+engine/speech-to-speech/env_backup.txt
+
+
+/data/

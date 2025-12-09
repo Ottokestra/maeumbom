@@ -1,0 +1,47 @@
+"""
+Pydantic models for daily mood check API
+"""
+from pydantic import BaseModel, Field
+from typing import Optional, List
+from datetime import datetime
+
+
+class ImageInfo(BaseModel):
+    """이미지 정보"""
+    id: int = Field(..., description="이미지 ID")
+    sentiment: str = Field(..., description="감정 분류: negative, neutral, positive")
+    filename: str = Field(..., description="이미지 파일명")
+    description: str = Field(..., description="감정 분석에 사용될 텍스트 설명")
+    url: str = Field(..., description="이미지 URL")
+
+
+class ImageSelectionRequest(BaseModel):
+    """이미지 선택 요청"""
+    user_id: int = Field(..., description="사용자 ID")
+    image_id: int = Field(..., description="선택한 이미지 ID")
+    filename: Optional[str] = Field(None, description="선택한 이미지 파일명 (선택사항, 정확한 이미지 식별용)")
+    sentiment: Optional[str] = Field(None, description="선택한 이미지 감정 분류 (선택사항, 정확한 이미지 식별용)")
+    displayed_images: Optional[List[dict]] = Field(None, description="현재 표시된 3개 이미지 배열 (프론트엔드가 전송)")
+
+
+class ImageSelectionResponse(BaseModel):
+    """이미지 선택 응답"""
+    success: bool = Field(..., description="성공 여부")
+    selected_image: ImageInfo = Field(..., description="선택한 이미지 정보")
+    emotion_result: Optional[dict] = Field(None, description="감정 분석 결과")
+    message: str = Field(..., description="응답 메시지")
+    is_update: bool = Field(False, description="기존 선택 변경 여부 (True면 UPDATE, False면 INSERT)")
+
+
+class DailyCheckStatus(BaseModel):
+    """일일 체크 상태"""
+    user_id: int = Field(..., description="사용자 ID")
+    completed: bool = Field(..., description="오늘 체크 완료 여부")
+    last_check_date: Optional[str] = Field(None, description="마지막 체크 날짜 (YYYY-MM-DD)")
+    selected_image_id: Optional[int] = Field(None, description="선택한 이미지 ID")
+
+
+class ImagesResponse(BaseModel):
+    """이미지 목록 응답"""
+    images: List[ImageInfo] = Field(..., description="이미지 목록 (부정/중립/긍정 각 1개씩)")
+

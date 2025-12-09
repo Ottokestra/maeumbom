@@ -1,0 +1,31 @@
+# 마음봄 프로토타입 2 - Silero VAD + Whisper Large-v3-Turbo 설정
+
+# 오디오 설정
+audio:
+  sample_rate: 16000
+  channels: 1
+  chunk_size: 512
+  
+# VAD (Voice Activity Detection) 설정
+vad:
+  model: "silero_vad"
+  threshold: 0.65  # 0.5 → 0.65 (문지기 강화: 확실한 음성만 통과)
+  min_speech_duration_ms: 300  # 250 → 300 (짧은 소음 필터링)
+  max_speech_duration_s: 30
+  min_silence_duration_ms: 2000  # 말 끝내고 2초 쉬면 전송 (발화 종료)
+  short_silence_duration_ms: 300  # 문장 구분용 짧은 침묵 (0.3초) - 텍스트 확정용
+  speech_pad_ms: 300
+  
+# Whisper 설정
+whisper:
+  model_path: "models/ggml-large-v3-turbo.bin"  # Legacy parameter (not used)
+  model_size: "large-v3-turbo"
+  language: "ko"  # 한국어 고정
+  n_threads: 4
+  
+# Speaker Verification 설정
+speaker_verification:
+  enabled: true
+  similarity_threshold: 0.75  # 화자 매칭 임계값 (0.75 이상이면 동일 화자)
+  min_audio_duration: 3.0     # 최소 오디오 길이 (초) - Resemblyzer 권장
+  update_weight: 0.3           # 새 임베딩 가중치 (점진적 업데이트 시)
