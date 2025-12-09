@@ -98,10 +98,12 @@ frontend/
 │   ├── app/                            # 기능별 화면 (Feature-first)
 │   │   ├── home/                       # 홈 화면
 │   │   │   ├── home_screen.dart
+│   │   │   ├── daily_mood_check_screen.dart
 │   │   │   └── components/             # 홈 화면 컴포넌트
-│   │   │       ├── home_menu_grid.dart
-│   │   │       ├── daily_mood_check_widget.dart
-│   │   │       └── conversation_temperature_widget.dart
+│   │   │       ├── home_header_section.dart
+│   │   │       ├── conversation_temperature_bar.dart
+│   │   │       ├── home_bottom_menu.dart
+│   │   │       └── home_menu_grid.dart
 │   │   ├── chat/                       # AI 봄이와 대화
 │   │   │   └── bomi_screen.dart        # 봄이 채팅 (✅ 애니메이션 적용)
 │   │   ├── alarm/                      # 똑똑 알람
@@ -122,7 +124,8 @@ frontend/
 │   │   │   ├── top_bars.dart           # Top Bar (5가지 변형)
 │   │   │   ├── bottom_menu_bars.dart   # Bottom Menu Bar
 │   │   │   ├── bottom_button_bars.dart # Bottom Button Bar
-│   │   │   └── bottom_input_bars.dart  # Bottom Input Bar
+│   │   │   ├── bottom_input_bars.dart  # Bottom Input Bar
+│   │   │   └── bottom_home_bar.dart    # Bottom Home Bar (홈 화면 전용)
 │   │   │
 │   │   ├── components/                 # 재사용 컴포넌트
 │   │   │   ├── app_component.dart      # 컴포넌트 통합 export
@@ -1313,6 +1316,6 @@ flutter run
 
 ---
 
-**마지막 업데이트**: 2025-12-08
+**마지막 업데이트**: 2025-12-09
 
 **문의**: 개발팀 채널

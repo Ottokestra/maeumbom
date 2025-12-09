@@ -50,7 +50,41 @@ class AppColors {
   static const textDisabledVariant = Color(0xFF98A2B3); // Disabled variant text
 
   // Mood Category Theme Colors
-  static const moodGoodYellow = Color(0xFFFFF9C4); // 좋음 - 연한 노란색
-  static const moodNeutralPink = Color(0xFFFCE4EC); // 보통 - 연한 분홍색
-  static const moodBadBlue = Color(0xFFE3F2FD); // 나쁨 - 연한 파란색
+  static const moodGoodYellow = Color(0xFFFFD749); // 좋음 - 연한 노란색
+  static const moodNormalGreen = Color(0xFF8EE89C); // 보통 - 연한 초록색
+  static const moodBadBlue = Color(0xFF8AA7E2); // 나쁨 - 연한 파란색
+
+  // 오늘의 마음 상태
+  static const homeGoodYellow = Color(0xFFFFB84C); // 좋음
+  static const homeNormalGreen = Color(0xFF63C96B); // 보통
+  static const homeBadBlue = Color(0xFF6C8CD5); // 나쁨
+
+  // Emotion Colors - Primary & Secondary
+  // 기쁨 (Happiness)
+  static const emotionHappinessPrimary = Color(0xFFFFB84C);
+  static const emotionHappinessSecondary = Color(0xFFFFD749);
+
+  // 사랑 (Love)
+  static const emotionLovePrimary = Color(0xFFFF6FAE);
+  static const emotionLoveSecondary = Color(0xFFFF8EC3);
+
+  // 안정 (Stability/Peace)
+  static const emotionStabilityPrimary = Color(0xFF76D6FF);
+  static const emotionStabilitySecondary = Color(0xFFA1E8FF);
+
+  // 의욕 (Motivation)
+  static const emotionMotivationPrimary = Color(0xFF63C96B);
+  static const emotionMotivationSecondary = Color(0xFF8EE89C);
+
+  // 분노 (Anger)
+  static const emotionAngerPrimary = Color(0xFFFF5E4A);
+  static const emotionAngerSecondary = Color(0xFFFF7A5C);
+
+  // 걱정/우울 (Worry/Depression)
+  static const emotionWorryPrimary = Color(0xFF6C8CD5);
+  static const emotionWorrySecondary = Color(0xFF8AA7E2);
+
+  // 혼란 (Confusion)
+  static const emotionConfusionPrimary = Color(0xFFB28CFF);
+  static const emotionConfusionSecondary = Color(0xFFC7A4FF);
 }

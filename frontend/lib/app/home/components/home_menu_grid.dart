@@ -51,6 +51,8 @@ class HomeMenuGrid extends ConsumerWidget {
   }
 
   Widget _buildMenuCard(BuildContext context, _MenuData menu) {
+    final primaryColor = getEmotionPrimaryColor(menu.emotionId);
+
     return GestureDetector(
       onTap: menu.onTap,
       child: Container(
@@ -60,7 +62,7 @@ class HomeMenuGrid extends ConsumerWidget {
           borderRadius: BorderRadius.circular(AppRadius.lg),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFF000000).withValues(alpha: 0.05),
+              color: const Color(0xFF000000).withOpacity(0.05),
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),
