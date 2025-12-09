@@ -104,6 +104,10 @@ class SileroVAD:
         with torch.no_grad():
             speech_prob = self.model(audio_tensor, self.sample_rate).item()
         
+        # 🔍 VAD 확률 로깅 (음성이 있을 때만)
+        if speech_prob > 0.3:  # 임계값보다 낮아도 확인
+            print(f"[VAD PROB] speech_prob={speech_prob:.3f}, threshold={self.threshold:.3f}, is_speech={speech_prob >= self.threshold}", flush=True)
+        
         is_short_pause = False  # 짧은 침묵 감지 플래그
         current_is_speech = speech_prob >= self.threshold
         
@@ -111,6 +115,7 @@ class SileroVAD:
         if current_is_speech:
             if not self.is_speaking:
                 # 발화 시작
+                print(f"[VAD] 🎤 발화 시작 감지! (prob={speech_prob:.3f})", flush=True)
                 self.is_speaking = True
                 self.speech_start_sample = self.current_sample
                 self.speech_buffer = []

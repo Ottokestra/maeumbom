@@ -962,13 +962,18 @@ async def agent_websocket(websocket: WebSocket):
         while True:
             try:
                 data = await websocket.receive()
+                # print(f"[Agent WebSocket DEBUG] Received data keys: {data.keys()}")  # 디버그
             except RuntimeError as e:
                 if "disconnect" in str(e).lower():
                     print("[Agent WebSocket] 클라이언트 연결 종료")
                     break
                 raise
+            except Exception as e:
+                print(f"[Agent WebSocket ERROR] Receive error: {e}")
+                break
 
             if "text" in data:
+                # print(f"[Agent WebSocket DEBUG] Text message received: {data['text'][:100]}")  # 디버그
                 try:
                     message = (
                         json.loads(data["text"])
@@ -987,19 +992,72 @@ async def agent_websocket(websocket: WebSocket):
                             }
                         )
                         continue
-                except Exception:
+                except Exception as e:
+                    # print(f"[Agent WebSocket DEBUG] Text parsing error: {e}")
                     pass
 
             if "bytes" in data:
+                # print(f"[Agent WebSocket DEBUG] ✅ Binary data received: {len(data['bytes'])} bytes")  # 디버그
                 audio_bytes = data["bytes"]
+                
+                # 🔍 바이트 레벨 진단 (첫 16바이트만)
+                if not hasattr(stt_engine_instance.vad, '_byte_diag_done'):
+                    stt_engine_instance.vad._byte_diag_done = True
+                    hex_bytes = ' '.join(f'{b:02x}' for b in audio_bytes[:16])
+                    print(f"\n[BYTE DIAG] First 16 bytes (hex): {hex_bytes}")
+                    print(f"[BYTE DIAG] Total bytes: {len(audio_bytes)}")
+                    
+                    # Float32로 변환 후 샘플 검사
+                    test_chunk = np.frombuffer(audio_bytes[:64], dtype=np.float32)  # 16 samples
+                    print(f"[BYTE DIAG] First 16 Float32 values: {test_chunk}")
+                    print(f"[BYTE DIAG] Range: min={test_chunk.min():.4f}, max={test_chunk.max():.4f}\n")
+                
                 audio_chunk = np.frombuffer(audio_bytes, dtype=np.float32)
+                
+                # 🔍 오디오 데이터 진단 (발화 시에만)
+                if len(audio_chunk) == 512:
+                    audio_std = float(np.std(audio_chunk))
+                    if audio_std > 0.05:  # 무음이 아닐 때만 로그
+                        audio_min = float(np.min(audio_chunk))
+                        audio_max = float(np.max(audio_chunk))
+                        audio_mean = float(np.mean(audio_chunk))
+                        # print(f"[Audio DIAG] min={audio_min:.4f}, max={audio_max:.4f}, mean={audio_mean:.4f}, std={audio_std:.4f}")
 
                 if len(audio_chunk) != 512:
                     continue
 
+                # 🎵 WAV 디버그 저장 (처음 500 청크만)
+                if not hasattr(stt_engine_instance.vad, '_debug_chunks'):
+                    stt_engine_instance.vad._debug_chunks = []
+                    stt_engine_instance.vad._debug_counter = 0
+                
+                if stt_engine_instance.vad._debug_counter < 500:
+                    stt_engine_instance.vad._debug_chunks.append(audio_chunk)
+                    stt_engine_instance.vad._debug_counter += 1
+                    
+                    if stt_engine_instance.vad._debug_counter == 500:
+                        # 500개 청크 수집 완료 -> WAV 저장
+                        import scipy.io.wavfile as wavfile
+                        from datetime import datetime
+                        
+                        debug_audio = np.concatenate(stt_engine_instance.vad._debug_chunks)
+                        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                        wav_path = f"debug_audio_{timestamp}.wav"
+                        
+                        # Float32 -> Int16 변환 (WAV 저장용)
+                        debug_audio_int16 = (debug_audio * 32767).astype(np.int16)
+                        wavfile.write(wav_path, 16000, debug_audio_int16)
+                        print(f"\n🎵 [DEBUG] WAV 저장 완료: {wav_path} (duration: {len(debug_audio)/16000:.1f}s)\n", flush=True)
+
                 is_speech_end, speech_audio, is_short_pause = (
                     stt_engine_instance.vad.process_chunk(audio_chunk)
                 )
+
+                
+                # VAD 결과 로깅
+                if is_speech_end or is_short_pause:
+                    print(f"[VAD] speech_end={is_speech_end}, short_pause={is_short_pause}, audio_len={len(speech_audio) if speech_audio is not None else 0}")
+
 
                 if is_speech_end and speech_audio is not None:
                     print("[Agent WebSocket] 발화 종료 감지, STT + Agent 처리 시작")

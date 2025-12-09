@@ -4,7 +4,7 @@ import 'dart:io';
 class ApiConfig {
   // Base URL - 플랫폼별로 다른 URL 사용
   static String get baseUrl {
-    // Android 에뮬레이터는 10.0.2.2를 사용 (호스트 머신의 localhost)
+    // Android 에뮬레이터는 http://10.0.2.2:8000를 사용 (호스트 머신의 localhost)
     if (Platform.isAndroid) {
       return 'http://10.0.2.2:8000';
     }

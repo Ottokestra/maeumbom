@@ -74,17 +74,36 @@ class ChatService {
       _repository.setAudioSessionId(finalSessionId);
 
       // Start recording
+      appLogger.i('🎤 [5/6] Starting audio recording...');
       final audioStream = await _audioService.startRecording();
       if (audioStream == null) {
+        appLogger.e('❌ Audio stream is null!');
         throw Exception('녹음을 시작할 수 없습니다. 마이크 권한을 확인해주세요.');
       }
+      appLogger.i('🎤 [5/6] ✅ Audio stream created');
 
       // Stream audio chunks to WebSocket
-      audioStream.listen((chunk) {
-        _repository.sendAudioChunk(chunk);
-      });
+      appLogger.i('🎤 [6/6] Setting up audio streaming...');
+      var chunkCount = 0;
+      audioStream.listen(
+        (chunk) {
+          chunkCount++;
+          if (chunkCount % 50 == 0) {
+            // Every 50 chunks
+            appLogger.i(
+                '🎤 Audio chunk #$chunkCount sent (${chunk.length} samples)');
+          }
+          _repository.sendAudioChunk(chunk);
+        },
+        onError: (error) {
+          appLogger.e('❌ Audio stream error', error: error);
+        },
+        onDone: () {
+          appLogger.i('🎤 Audio stream ended (total chunks: $chunkCount)');
+        },
+      );
 
-      appLogger.i('Audio chat started');
+      appLogger.i('🎤 ✅ Audio chat started, listening for chunks...');
 
       // Return subscription to WebSocket messages
       return _repository.audioMessageStream?.listen((message) {

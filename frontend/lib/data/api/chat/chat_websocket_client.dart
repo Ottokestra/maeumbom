@@ -56,13 +56,37 @@ class ChatWebSocketClient {
   /// Send audio chunk (Float32Array, 512 samples)
   void sendAudioChunk(Float32List audioChunk) {
     if (_channel != null && audioChunk.length == 512) {
+      // 🔍 바이트 변환 진단 (첫 청크만)
+      if (!_diagDone) {
+        _diagDone = true;
+        final bytes = audioChunk.buffer.asUint8List();
+
+        print(
+            '[FLUTTER DIAG] Float32 first 4 values: ${audioChunk.sublist(0, 4)}');
+        print('[FLUTTER DIAG] Bytes length: ${bytes.length}');
+        print(
+            '[FLUTTER DIAG] First 16 bytes (hex): ${bytes.sublist(0, 16).map((b) => b.toRadixString(16).padLeft(2, '0')).join(' ')}');
+
+        // Float32 값을 수동으로 바이트로 변환하여 비교
+        final byteData = ByteData(16);
+        for (int i = 0; i < 4; i++) {
+          byteData.setFloat32(i * 4, audioChunk[i], Endian.little);
+        }
+        print(
+            '[FLUTTER DIAG] Manual conversion (little-endian): ${byteData.buffer.asUint8List().map((b) => b.toRadixString(16).padLeft(2, '0')).join(' ')}');
+      }
+
       _channel!.sink.add(audioChunk.buffer.asUint8List());
+    } else {
+      print(
+          '[WebSocket] ⚠️ Cannot send chunk: channel=${_channel != null}, length=${audioChunk.length}');
     }
   }
 
+  bool _diagDone = false;
+
   /// Stream of incoming messages
-  Stream<Map<String, dynamic>>? get messageStream =>
-      _messageController?.stream;
+  Stream<Map<String, dynamic>>? get messageStream => _messageController?.stream;
 
   /// Disconnect WebSocket
   Future<void> disconnect() async {

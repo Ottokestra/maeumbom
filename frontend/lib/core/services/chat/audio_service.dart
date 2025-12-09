@@ -1,58 +1,116 @@
 import 'dart:async';
 import 'dart:typed_data';
-import 'package:record/record.dart';
+import 'package:flutter_sound/flutter_sound.dart';
 import '../../utils/logger.dart';
 
-/// Audio Service - Handles audio recording
+/// Audio Service - Handles audio recording using flutter_sound
 class AudioService {
-  final AudioRecorder _recorder = AudioRecorder();
-  StreamSubscription<Uint8List>? _audioStreamSubscription;
+  final FlutterSoundRecorder _recorder = FlutterSoundRecorder();
+  StreamController<Uint8List>? _streamController;
+  StreamController<Float32List>? _outputController;
+  StreamSubscription<Uint8List>? _streamSubscription;
+  bool _isRecorderInitialized = false;
+  bool _pcm16DiagDone = false;
+
+  // Buffer for accumulating samples to create 512-sample chunks
+  final List<double> _sampleBuffer = [];
+
+  /// Initialize the recorder
+  Future<void> _initRecorder() async {
+    if (_isRecorderInitialized) return;
+
+    await _recorder.openRecorder();
+    _isRecorderInitialized = true;
+    appLogger.i('FlutterSoundRecorder initialized');
+  }
 
   /// Start recording audio stream
   /// Note: Permission should be checked/requested before calling this method
   Future<Stream<Float32List>?> startRecording() async {
     try {
-      // Create stream controller
-      final controller = StreamController<Float32List>();
+      await _initRecorder();
 
-      // Start recording with stream
-      // Permission is assumed to be granted (checked by caller)
-      final stream = await _recorder.startStream(
-        const RecordConfig(
-          encoder: AudioEncoder.pcm16bits,
-          sampleRate: 16000, // 16kHz for Whisper
-          numChannels: 1, // Mono
-        ),
+      // Create stream controllers
+      _streamController = StreamController<Uint8List>();
+      _outputController = StreamController<Float32List>();
+      _sampleBuffer.clear();
+      _pcm16DiagDone = false;
+
+      // Start recording to stream
+      await _recorder.startRecorder(
+        toStream: _streamController!.sink,
+        codec: Codec.pcm16,
+        sampleRate: 16000, // 16kHz for Whisper
+        numChannels: 1, // Mono
       );
 
-      // Convert Uint8List to Float32List (512 samples chunks)
-      _audioStreamSubscription = stream.listen(
-        (chunk) {
-          // Convert PCM16 to Float32
-          final float32Chunk = _convertPcm16ToFloat32(chunk);
+      // Listen to the PCM16 stream and convert to Float32 chunks
+      _streamSubscription = _streamController!.stream.listen(
+        (pcm16Bytes) {
+          if (pcm16Bytes.isEmpty) return;
 
-          // Send in 512-sample chunks
-          for (int i = 0; i < float32Chunk.length; i += 512) {
-            final end =
-                (i + 512 < float32Chunk.length) ? i + 512 : float32Chunk.length;
-            final chunkData = float32Chunk.sublist(i, end);
+          // Convert Uint8List (PCM16) to Int16List
+          final int16Data = Int16List.view(pcm16Bytes.buffer);
 
-            if (chunkData.length == 512) {
-              controller.add(chunkData);
+          // 🔍 원본 PCM16 데이터 품질 확인 (첫 청크만)
+          if (!_pcm16DiagDone && int16Data.length > 100) {
+            _pcm16DiagDone = true;
+            final maxValue =
+                int16Data.reduce((a, b) => a.abs() > b.abs() ? a : b);
+            final minValue = int16Data.reduce((a, b) => a < b ? a : b);
+            final avgValue =
+                int16Data.reduce((a, b) => a + b) / int16Data.length;
+
+            appLogger.i('🎤 RAW PCM16 DIAGNOSTIC:');
+            appLogger.i('  - Samples: ${int16Data.length}');
+            appLogger.i('  - Min: $minValue, Max: $maxValue');
+            appLogger.i('  - Avg: ${avgValue.toStringAsFixed(1)}');
+            appLogger.i('  - First 10 values: ${int16Data.sublist(0, 10)}');
+
+            // 전부 0이거나 일정한 값이면 마이크 문제
+            final allZero = int16Data.every((v) => v == 0);
+            final allSame = int16Data.every((v) => v == int16Data[0]);
+            if (allZero) {
+              appLogger
+                  .e('❌ PCM16 data is ALL ZEROS - Microphone not working!');
+            } else if (allSame) {
+              appLogger.e('❌ PCM16 data is CONSTANT - Microphone not working!');
+            } else if (maxValue.abs() < 100) {
+              appLogger.e(
+                  '❌ PCM16 amplitude too low (max=${maxValue}) - No real audio!');
+            } else {
+              appLogger.i('✅ PCM16 looks like real audio data');
+            }
+          }
+
+          // Convert Int16 to Float32 and add to buffer
+          // 🔧 Unsigned → Signed 변환 (flutter_sound가 0~32767 범위 제공)
+          for (int i = 0; i < int16Data.length; i++) {
+            // Unsigned → Signed: 16384를 빼서 중심을 0으로
+            final signedValue = int16Data[i] - 16384;
+            final normalized = signedValue / 16384.0; // -1.0 to 1.0
+            _sampleBuffer.add(normalized);
+
+            // Send in 512-sample chunks
+            while (_sampleBuffer.length >= 512) {
+              final chunk = Float32List.fromList(_sampleBuffer.sublist(0, 512));
+              _outputController?.add(chunk);
+              _sampleBuffer.removeRange(0, 512);
             }
           }
         },
         onError: (error) {
-          appLogger.e('Audio stream error', error: error);
-          controller.addError(error);
+          appLogger.e('Recording stream error', error: error);
+          _outputController?.addError(error);
         },
         onDone: () {
-          controller.close();
+          appLogger.i('Recording stream ended');
+          _outputController?.close();
         },
       );
 
-      appLogger.i('Audio recording started');
-      return controller.stream;
+      appLogger.i('Audio recording started with flutter_sound');
+      return _outputController?.stream;
     } catch (e) {
       appLogger.e('Failed to start recording', error: e);
       return null;
@@ -61,31 +119,40 @@ class AudioService {
 
   /// Stop recording
   Future<void> stopRecording() async {
-    await _audioStreamSubscription?.cancel();
-    await _recorder.stop();
-    appLogger.i('Audio recording stopped');
+    try {
+      await _streamSubscription?.cancel();
+      _streamSubscription = null;
+
+      await _recorder.stopRecorder();
+
+      await _streamController?.close();
+      _streamController = null;
+
+      await _outputController?.close();
+      _outputController = null;
+
+      _sampleBuffer.clear();
+
+      appLogger.i('Audio recording stopped');
+    } catch (e) {
+      appLogger.e('Error stopping recording', error: e);
+    }
   }
 
   /// Check if recording
   Future<bool> isRecording() async {
-    return await _recorder.isRecording();
+    return _recorder.isRecording;
   }
 
   /// Dispose resources
   Future<void> dispose() async {
     await stopRecording();
-    _recorder.dispose();
-  }
 
-  /// Convert PCM16 to Float32 (normalized to -1.0 to 1.0)
-  Float32List _convertPcm16ToFloat32(Uint8List pcm16Data) {
-    final int16Data = Int16List.view(pcm16Data.buffer);
-    final float32Data = Float32List(int16Data.length);
-
-    for (int i = 0; i < int16Data.length; i++) {
-      float32Data[i] = int16Data[i] / 32768.0; // Normalize to -1.0 to 1.0
+    if (_isRecorderInitialized) {
+      await _recorder.closeRecorder();
+      _isRecorderInitialized = false;
     }
 
-    return float32Data;
+    appLogger.i('AudioService disposed');
   }
 }

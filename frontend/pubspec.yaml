@@ -61,7 +61,7 @@ dependencies:
   logger: ^2.0.2
 
   # Audio & Permissions
-  record: ^6.1.2
+  flutter_sound: ^9.4.9
   permission_handler: ^12.0.1
   web_socket_channel: ^3.0.3
 
@@ -84,9 +84,8 @@ dev_dependencies:
   freezed: ^2.4.1
   json_serializable: ^6.7.1
 
-# Override dependencies to fix Linux compatibility issues
-dependency_overrides:
-  record_linux: ^1.0.0
+# Override dependencies to fix compatibility issues
+# dependency_overrides:
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
