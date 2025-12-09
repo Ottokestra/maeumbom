@@ -86,8 +86,9 @@ except Exception as e:
 # 시나리오 자동 Import 플래그
 # =========================
 
-# 🔹 openpyxl 때문에 서버가 죽지 않도록, 기본값은 False
-ENABLE_SCENARIO_AUTOIMPORT = False
+# 환경변수로 설정 가능, 기본값은 True (예전처럼 자동 import)
+# False로 설정하려면: ENABLE_SCENARIO_AUTOIMPORT=false
+ENABLE_SCENARIO_AUTOIMPORT = os.getenv("ENABLE_SCENARIO_AUTOIMPORT", "true").lower() == "true"
 
 # =========================
 # FastAPI 앱 생성

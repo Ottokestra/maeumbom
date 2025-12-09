@@ -3,7 +3,26 @@ import 'dart:io';
 /// OAuth Configuration - Client IDs and redirect URIs
 class OAuthConfig {
   // Google OAuth
-  static const String googleClientId =
+  // Android 앱용 클라이언트 ID
+  static const String googleAndroidClientId =
+      '758124085502-l3be3r79df8ti4i8pqu223v1laufef4t.apps.googleusercontent.com';
+  
+  // iOS 앱용 클라이언트 ID
+  static const String googleIosClientId =
+      '758124085502-umcpgll7m378fgtdkq25s66srdk99sui.apps.googleusercontent.com';
+  
+  // 플랫폼별 클라이언트 ID (자동 선택)
+  static String get googleClientId {
+    if (Platform.isIOS) {
+      return googleIosClientId;
+    }
+    return googleAndroidClientId;
+  }
+  
+  // 백엔드용 클라이언트 ID (서버 측 인증 코드 교환용)
+  // 백엔드의 GOOGLE_CLIENT_ID와 동일해야 함
+  // Google Cloud Console에서 "웹 애플리케이션" 타입으로 생성된 클라이언트 ID 사용
+  static const String googleServerClientId =
       '758124085502-7so94snakhcj5bj5o1242o6ktg48eqqj.apps.googleusercontent.com';
 
   // Kakao OAuth

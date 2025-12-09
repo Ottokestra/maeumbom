@@ -12,12 +12,15 @@ class AuthRepository {
   AuthRepository(this._apiClient);
 
   /// Login with Google and return tokens + user
+  /// Supports both auth_code and id_token (id_token preferred)
   Future<(TokenPair, User)> loginWithGoogle({
-    required String authCode,
+    String? authCode,
+    String? idToken,
     required String redirectUri,
   }) async {
     final request = GoogleLoginRequest(
       authCode: authCode,
+      idToken: idToken,
       redirectUri: redirectUri,
     );
 
