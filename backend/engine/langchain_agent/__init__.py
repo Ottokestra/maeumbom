@@ -13,7 +13,6 @@ from .db_conversation_store import (
 from .agent_v2 import run_ai_bomi_from_text_v2, select_character_from_emotion, CharacterInfo
 
 __all__ = [
-<<<<<<< HEAD
     "run_ai_bomi_from_text",
     "run_ai_bomi_from_audio",
     "run_ai_bomi_from_text_v2",
@@ -23,10 +22,5 @@ __all__ = [
     "route_tools",
     "select_character_from_emotion",
     "CharacterInfo",
-=======
-    "run_ai_bomi_from_text_v2",
-    "get_conversation_store",
-    "DBConversationStore",
->>>>>>> dev
 ]
 
