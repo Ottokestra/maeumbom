@@ -170,7 +170,7 @@ assets/characters/
   └─ animation/  (Lottie 애니메이션 - 별도 시스템)
       ├─ happiness/
       │   └─ char_relief.json
-      ├─ sedness/
+      ├─ sadness/
       │   └─ char_relief.json
       ├─ anger/
       │   └─ char_relief.json
@@ -234,7 +234,7 @@ class EmotionMeta {
 **파일:** [lib/ui/characters/app_animations.dart](lib/ui/characters/app_animations.dart)
 
 **주요 클래스:**
-- `EmotionCategory`: 4가지 감정군 enum (happiness, sedness, anger, fear)
+- `EmotionCategory`: 4가지 감정군 enum (happiness, sadness, anger, fear)
 - `AnimationMeta`: 애니메이션 메타데이터
 - `AnimatedCharacter`: Lottie 애니메이션 위젯
 
@@ -243,7 +243,7 @@ class EmotionMeta {
 // 기본 사용 - emotion을 String으로 지정
 AnimatedCharacter(
   characterId: 'relief',
-  emotion: 'happiness',  // 'happiness', 'sedness', 'anger', 'fear'
+  emotion: 'happiness',  // 'happiness', 'sadness', 'anger', 'fear'
   size: 350,
 )
 
@@ -678,7 +678,7 @@ EmotionCharacter(
 #### Lottie 애니메이션 - 별도 시스템 ✅
 - 에셋: `assets/characters/animation/{emotion}/char_{character}.json`
 - 현재 `relief` 캐릭터의 4가지 감정 애니메이션 구현
-  - happiness, sedness, anger, fear
+  - happiness, sadness, anger, fear
 - 위젯: `AnimatedCharacter` (app_animations.dart)
 - 패키지: `lottie: ^3.0.0`
 
@@ -696,7 +696,7 @@ AnimatedCharacter(
 // 감정 변경 예시
 AnimatedCharacter(
   characterId: 'relief',
-  emotion: 'anger',  // happiness, sedness, anger, fear
+  emotion: 'anger',  // happiness, sadness, anger, fear
   size: 350,
 )
 ```
@@ -715,7 +715,7 @@ AnimatedCharacter(
 ```dart
 enum EmotionCategory {
   happiness,  // 기쁨
-  sedness,    // 슬픔
+  sadness,    // 슬픔
   anger,      // 분노
   fear,       // 공포
 }
@@ -756,7 +756,7 @@ AnimatedCharacter.withCategory(
 | 파라미터 | 타입 | 기본값 | 설명 |
 |---------|------|--------|------|
 | `characterId` | `String` | - | 캐릭터 ID (예: 'relief') |
-| `emotion` | `String` | `'happiness'` | 감정 (happiness/sedness/anger/fear) |
+| `emotion` | `String` | `'happiness'` | 감정 (happiness/sadness/anger/fear) |
 | `size` | `double` | `120` | 애니메이션 크기 |
 | `fit` | `BoxFit` | `BoxFit.contain` | 크기 맞춤 방식 |
 | `repeat` | `bool` | `true` | 반복 재생 여부 |
@@ -1893,7 +1893,28 @@ VoiceWaveform(
 더보기 BottomSheet.
 
 ```dart
-MoreMenuSheet.show(context);
+```
+
+---
+
+#### TopNotification
+**파일:** `lib/ui/components/top_notification.dart`
+
+상단 알림 배너 (Alert/Success).
+
+**타입:**
+- `red`: 경고, 삭제, 중요한 알림 (`accentRed`)
+- `green`: 성공, 완료 (`natureGreen`)
+
+```dart
+// 표시
+TopNotificationManager.show(
+  context,
+  message: '알람이 삭제되었습니다.',
+  actionLabel: '실행취소',
+  type: TopNotificationType.red,
+  onActionTap: () => _undo(),
+);
 ```
 
 ---

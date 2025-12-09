@@ -44,6 +44,17 @@ class ChatService {
     }
   }
 
+  /// Get session history
+  Future<List<ChatMessage>> getSessionHistory(String sessionId) async {
+    try {
+      appLogger.i('Fetching session history for: $sessionId');
+      return await _repository.getSessionHistory(sessionId);
+    } catch (e) {
+      appLogger.e('Failed to fetch session history', error: e);
+      rethrow;
+    }
+  }
+
   /// Start audio recording and streaming
   Future<StreamSubscription<Map<String, dynamic>>?> startAudioChat({
     required int userId,

@@ -19,7 +19,7 @@ class HomeScreen extends ConsumerWidget {
     return AppFrame(
       topBar: null, // Custom header used instead
       useSafeArea: false, // Allow background to go behind status bar
-      statusBarStyle: SystemUiOverlayStyle.light, // White status bar icons
+      statusBarStyle: SystemUiOverlayStyle.dark, // Dark status bar icons for white background
       body: const HomeContent(),
     );
   }
@@ -97,14 +97,14 @@ class _HomeContentState extends ConsumerState<HomeContent> {
     const nickname = '김땡땡'; // 임시 하드코딩 (이미지 예시 '홍길동')
 
     return Container(
-      color: AppColors.warmWhite, // Warm white 배경색
+      color: AppColors.accentRed, // Bottom background: Accent Red
       child: Stack(
         children: [
           // 1. Background Layer (Top Red Section)
           Container(
             height: 320, // 높이 조정
             decoration: const BoxDecoration(
-              color: AppColors.accentRed,
+              color: AppColors.pureWhite, // Top background: White
               borderRadius: BorderRadius.vertical(
                 bottom: Radius.circular(AppRadius.xxl),
               ),
@@ -131,7 +131,7 @@ class _HomeContentState extends ConsumerState<HomeContent> {
                         nickname + " 님,",
                         style: AppTypography.h1.copyWith(
                           fontWeight: FontWeight.bold,
-                          color: AppColors.pureWhite,
+                          color: AppColors.textPrimary,
                           fontSize: 32, // 더 큰 폰트 강조
                         ),
                       ),
@@ -141,7 +141,7 @@ class _HomeContentState extends ConsumerState<HomeContent> {
                         // 혹은 이미지처럼 '2021. 10. 15.(금) 오후 03:00에...' 같은 정보가 필요하다면 수정 필요
                         // 여기서는 요청주신 "사용자 닉네임 과 함께 인사를 건내는 문구 표시"에 집중
                         style: AppTypography.h3.copyWith(
-                          color: AppColors.pureWhite.withValues(alpha: 0.9),
+                          color: AppColors.textSecondary,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
@@ -152,10 +152,10 @@ class _HomeContentState extends ConsumerState<HomeContent> {
                         child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                           decoration: BoxDecoration(
-                            color: Colors.white, // 흰색 배경
+                            color: AppColors.accentRed, // 빨간 배경 버튼
                             borderRadius: BorderRadius.circular(20),
                             boxShadow: [
-                              BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 4, offset:const Offset(0, 2))
+                              BoxShadow(color: Colors.black.withOpacity(0.2), blurRadius: 4, offset:const Offset(0, 2))
                             ],
                           ),
                           child: Row(
@@ -164,13 +164,13 @@ class _HomeContentState extends ConsumerState<HomeContent> {
                               Text(
                                 '나는 어떤 상태일까?',
                                 style: TextStyle(
-                                  color: AppColors.accentRed, // 빨간 글씨
+                                  color: AppColors.pureWhite, // 흰색 글씨
                                   fontSize: 14,
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
                               SizedBox(width: 4),
-                              Icon(Icons.arrow_forward_ios, size: 12, color: AppColors.accentRed),
+                              Icon(Icons.arrow_forward_ios, size: 12, color: AppColors.pureWhite),
                             ],
                           ),
                         ),
@@ -179,13 +179,13 @@ class _HomeContentState extends ConsumerState<HomeContent> {
                       Container(
                         width: 40, 
                         height: 2, 
-                        color: AppColors.pureWhite.withValues(alpha: 0.5)
+                        color: AppColors.borderLightGray
                       ), // 구분선 느낌
                       const SizedBox(height: AppSpacing.sm),
                        Text(
                         '마음봄과 함께 오늘의 감정을 나눠보세요.\n당신의 이야기를 들을 준비가 되어있어요.',
                         style: AppTypography.bodySmall.copyWith(
-                          color: AppColors.pureWhite.withValues(alpha: 0.8),
+                          color: AppColors.textSecondary,
                           height: 1.5,
                         ),
                       ),
@@ -228,7 +228,7 @@ class _HomeContentState extends ConsumerState<HomeContent> {
                     '마음 챙김 메뉴',
                     style: AppTypography.h3.copyWith(
                       fontWeight: FontWeight.bold,
-                      color: AppColors.textPrimary,
+                      color: AppColors.pureWhite,
                     ),
                   ),
                   const SizedBox(height: AppSpacing.sm),
