@@ -1,0 +1,154 @@
+# ----------------------------
+# OS
+# ----------------------------
+.DS_Store
+Thumbs.db
+
+# ----------------------------
+# Flutter / Dart
+# ----------------------------
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.metadata
+*.iml
+
+# Generated files
+*.g.dart
+*.freezed.dart
+
+# ----------------------------
+# Node / Monorepo
+# ----------------------------
+node_modules/
+frontend/node_modules/
+
+# Package managers / Debug logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# PnP
+.pnp
+.pnp.js
+
+# ----------------------------
+# Build / Coverage / Dist
+# ----------------------------
+build/
+dist/
+frontend/dist/
+coverage/
+
+# ----------------------------
+# Android
+# ----------------------------
+android/.gradle/
+android/gradle/
+android/local.properties
+android/**/GeneratedPluginRegistrant.java
+android/app/google-services.json
+android/key.properties
+
+# ----------------------------
+# iOS
+# ----------------------------
+ios/Pods/
+ios/.symlinks/
+ios/Flutter/Flutter.framework
+ios/Flutter/Flutter.podspec
+ios/Flutter/Generated.xcconfig
+ios/Flutter/app.flx
+ios/Flutter/app.zip
+ios/Flutter/flutter_assets/
+ios/ServiceDefinitions.json
+ios/Runner/GeneratedPluginRegistrant.*
+ios/Runner/GoogleService-Info.plist
+
+# ----------------------------
+# 환경변수(루트/프런트/백엔드)
+# ----------------------------
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+frontend/.env
+frontend/.env.local
+backend/.env
+
+# ----------------------------
+# Python
+# ----------------------------
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Virtualenvs
+env/
+venv/
+ENV/
+backend/venv/
+backend/.venv/
+
+# Python packaging artifacts
+develop-eggs/
+downloads/
+eggs/
+.eggs/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Model cache
+model_cache/
+backend/model_cache/
+
+# ----------------------------
+# IDE / Editors
+# ----------------------------
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+*.swp
+*.swo
+*~
+
+# ----------------------------
+# Logs
+# ----------------------------
+logs/
+*.log
+
+# ----------------------------
+# Testing
+# ----------------------------
+.coverage
+htmlcov/
+.pytest_cache/
+
+# ----------------------------
+# Temp files
+# ----------------------------
+*.tmp
+temp/
+tmp/
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+# Thumbnails
+._*
