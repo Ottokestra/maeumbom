@@ -46,6 +46,9 @@ from app.weather.routes import router as weather_router
 from app.routine_survey.routers import router as routine_survey_router
 from app.routine_survey.models import seed_default_mr_survey  # 사용 여부와 무관하게 유지
 from app.reports.router import router as reports_router
+from app.health.router import router as health_router
+from app.emotion.router import router as emotion_v1_router
+from app.recommendations.router import router as recommendations_router
 
 # DB 세션/초기화
 from app.db.database import SessionLocal, init_db
@@ -68,7 +71,7 @@ from app.db.models import User
 # Emotion Analysis 라우터 로딩 (옵션)
 # =========================
 
-emotion_router = None
+legacy_emotion_router = None
 try:
     emotion_analysis_path = (
         backend_path / "engine" / "emotion-analysis" / "api" / "routes.py"
@@ -76,11 +79,11 @@ try:
     spec = importlib.util.spec_from_file_location("emotion_routes", emotion_analysis_path)
     emotion_routes = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(emotion_routes)
-    emotion_router = emotion_routes.router
+    legacy_emotion_router = emotion_routes.router
     print("[INFO] Emotion analysis router loaded successfully.")
 except Exception as e:
     print("[WARN] Emotion analysis module load failed:", e)
-    emotion_router = None
+    legacy_emotion_router = None
 
 # =========================
 # 시나리오 자동 Import 플래그
@@ -112,10 +115,15 @@ app.add_middleware(
 # Emotion Analysis 라우터 (옵션)
 # =========================
 
-if emotion_router is not None:
-    app.include_router(emotion_router, prefix="/emotion/api", tags=["emotion"])
+if legacy_emotion_router is not None:
+    app.include_router(legacy_emotion_router, prefix="/emotion/api", tags=["emotion"])
     # 하위 호환성을 위해 /api 경로도 지원
-    app.include_router(emotion_router, prefix="/api", tags=["emotion"])
+    app.include_router(legacy_emotion_router, prefix="/api", tags=["emotion"])
+
+# 신규 감정 분석/추천 및 헬스 체크 라우터
+app.include_router(emotion_v1_router, tags=["emotion"])
+app.include_router(recommendations_router, tags=["recommendations"])
+app.include_router(health_router, tags=["health"])
 
 # =========================
 # Menopause Survey 라우터 (항상 등록)
@@ -1287,8 +1295,11 @@ async def root():
         "stt": "/stt/stream",
         "tts": "/api/tts",
     }
-    if emotion_router is not None:
+    if legacy_emotion_router is not None:
         modules["emotion_analysis"] = "/emotion/api"
+    modules["emotion_v1"] = "/api/v1/emotion"
+    modules["recommendations"] = "/api/v1/recommendations"
+    modules["health"] = "/api/health"
 
     return {
         "message": "Team Project API",
