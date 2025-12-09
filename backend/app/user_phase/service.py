@@ -15,13 +15,16 @@ from datetime import datetime, date, time, timedelta
 from typing import Optional, Dict, Any, List
 from fastapi import HTTPException
 
-from app.db.models import HealthLog, UserPatternSetting
+from app.db.models import HealthLog, UserPatternSetting, ManualHealthLog
 from .models import HealthSyncRequest, HealthDataSummary
 
 
-def sync_health_data(user_id: int, request: HealthSyncRequest, db: Session) -> HealthLog:
+def sync_health_data(user_id: int, request: HealthSyncRequest, db: Session):
     """
-    건강 데이터 동기화 (Upsert)
+    건강 데이터 동기화
+    
+    - 자동 동기화 (apple_health, google_fit): TB_HEALTH_LOGS에 항상 추가 저장
+    - 수동 입력 (manual): TB_MANUAL_HEALTH_LOGS에 사용자당 하나의 레코드만 업데이트
     
     Args:
         user_id: 사용자 ID
@@ -29,16 +32,10 @@ def sync_health_data(user_id: int, request: HealthSyncRequest, db: Session) -> H
         db: Database session
         
     Returns:
-        저장된 HealthLog
+        저장된 HealthLog 또는 ManualHealthLog
     """
     # 날짜 파싱
     log_date = datetime.strptime(request.log_date, "%Y-%m-%d").date()
-    
-    # 기존 데이터 확인
-    existing_log = db.query(HealthLog).filter(
-        HealthLog.USER_ID == user_id,
-        HealthLog.LOG_DATE == log_date
-    ).first()
     
     # 시간 데이터 파싱
     sleep_start_time = None
@@ -49,27 +46,60 @@ def sync_health_data(user_id: int, request: HealthSyncRequest, db: Session) -> H
     if request.sleep_end_time:
         sleep_end_time = datetime.fromisoformat(request.sleep_end_time.replace('Z', '+00:00'))
     
-    if existing_log:
-        # Update
-        existing_log.SLEEP_START_TIME = sleep_start_time
-        existing_log.SLEEP_END_TIME = sleep_end_time
-        existing_log.STEP_COUNT = request.step_count
-        existing_log.SLEEP_DURATION_HOURS = request.sleep_duration_hours
-        existing_log.HEART_RATE_AVG = request.heart_rate_avg
-        existing_log.HEART_RATE_RESTING = request.heart_rate_resting
-        existing_log.HEART_RATE_VARIABILITY = request.heart_rate_variability
-        existing_log.ACTIVE_MINUTES = request.active_minutes
-        existing_log.EXERCISE_MINUTES = request.exercise_minutes
-        existing_log.CALORIES_BURNED = request.calories_burned
-        existing_log.DISTANCE_KM = request.distance_km
-        existing_log.SOURCE_TYPE = request.source_type
-        existing_log.RAW_DATA = request.raw_data
+    # 수동 입력인 경우: TB_MANUAL_HEALTH_LOGS 사용
+    if request.source_type == "manual":
+        # 기존 수동 입력 데이터 확인 (사용자당 하나의 레코드만 존재)
+        existing_manual_log = db.query(ManualHealthLog).filter(
+            ManualHealthLog.USER_ID == user_id
+        ).first()
         
-        db.commit()
-        db.refresh(existing_log)
-        return existing_log
+        if existing_manual_log:
+            # Update: 사용자당 하나의 레코드만 업데이트
+            existing_manual_log.LOG_DATE = log_date
+            existing_manual_log.SLEEP_START_TIME = sleep_start_time
+            existing_manual_log.SLEEP_END_TIME = sleep_end_time
+            existing_manual_log.STEP_COUNT = request.step_count
+            existing_manual_log.SLEEP_DURATION_HOURS = request.sleep_duration_hours
+            existing_manual_log.HEART_RATE_AVG = request.heart_rate_avg
+            existing_manual_log.HEART_RATE_RESTING = request.heart_rate_resting
+            existing_manual_log.HEART_RATE_VARIABILITY = request.heart_rate_variability
+            existing_manual_log.ACTIVE_MINUTES = request.active_minutes
+            existing_manual_log.EXERCISE_MINUTES = request.exercise_minutes
+            existing_manual_log.CALORIES_BURNED = request.calories_burned
+            existing_manual_log.DISTANCE_KM = request.distance_km
+            existing_manual_log.RAW_DATA = request.raw_data
+            # UPDATED_AT는 자동으로 업데이트됨 (onupdate=func.now())
+            
+            db.commit()
+            db.refresh(existing_manual_log)
+            return existing_manual_log
+        else:
+            # Insert: 첫 번째 수동 입력
+            new_manual_log = ManualHealthLog(
+                USER_ID=user_id,
+                LOG_DATE=log_date,
+                SLEEP_START_TIME=sleep_start_time,
+                SLEEP_END_TIME=sleep_end_time,
+                STEP_COUNT=request.step_count,
+                SLEEP_DURATION_HOURS=request.sleep_duration_hours,
+                HEART_RATE_AVG=request.heart_rate_avg,
+                HEART_RATE_RESTING=request.heart_rate_resting,
+                HEART_RATE_VARIABILITY=request.heart_rate_variability,
+                ACTIVE_MINUTES=request.active_minutes,
+                EXERCISE_MINUTES=request.exercise_minutes,
+                CALORIES_BURNED=request.calories_burned,
+                DISTANCE_KM=request.distance_km,
+                RAW_DATA=request.raw_data
+            )
+            
+            db.add(new_manual_log)
+            db.commit()
+            db.refresh(new_manual_log)
+            return new_manual_log
+    
+    # 자동 동기화인 경우 (apple_health, google_fit): TB_HEALTH_LOGS에 항상 추가 저장
     else:
-        # Insert
+        # 기존 데이터 확인 없이 항상 추가 저장 (같은 날짜여도 새 레코드)
         new_log = HealthLog(
             USER_ID=user_id,
             LOG_DATE=log_date,
@@ -122,9 +152,16 @@ def get_current_phase(user_id: int, db: Session) -> Dict[str, Any]:
         is_weekend = today.weekday() >= 5  # 토(5), 일(6)
         
         if is_weekend:
-            wake_time_obj = setting.WEEKEND_WAKE_TIME
-            sleep_time_obj = setting.WEEKEND_SLEEP_TIME
-            pattern_type = "주말"
+            # 주말인데 주말 데이터가 없으면 평일 패턴 사용
+            if setting.WEEKEND_WAKE_TIME and setting.WEEKEND_SLEEP_TIME:
+                wake_time_obj = setting.WEEKEND_WAKE_TIME
+                sleep_time_obj = setting.WEEKEND_SLEEP_TIME
+                pattern_type = "주말"
+            else:
+                # 주말 데이터가 없으면 평일 패턴 사용
+                wake_time_obj = setting.WEEKDAY_WAKE_TIME
+                sleep_time_obj = setting.WEEKDAY_SLEEP_TIME
+                pattern_type = "평일 (주말 데이터 부족)"
             data_source = "pattern_analysis" if setting.LAST_ANALYSIS_DATE else "user_setting"
         else:
             wake_time_obj = setting.WEEKDAY_WAKE_TIME
@@ -273,17 +310,20 @@ def analyze_weekly_pattern(user_id: int, db: Session) -> Dict[str, Any]:
     weekend_wake_times = [log.SLEEP_END_TIME.time() for log in weekend_logs if log.SLEEP_END_TIME]
     weekend_sleep_times = [log.SLEEP_START_TIME.time() for log in weekend_logs if log.SLEEP_START_TIME]
     
-    if not weekday_wake_times or not weekend_wake_times:
+    # 평일 데이터가 없으면 에러
+    if not weekday_wake_times:
         raise HTTPException(
             status_code=400,
-            detail="평일 또는 주말 데이터가 부족합니다."
+            detail="평일 데이터가 부족합니다. 최소 평일 데이터가 필요합니다."
         )
     
     # 평균 시간 계산
     weekday_avg_wake = calculate_average_time(weekday_wake_times)
     weekday_avg_sleep = calculate_average_time(weekday_sleep_times) if weekday_sleep_times else time(23, 0)
-    weekend_avg_wake = calculate_average_time(weekend_wake_times)
-    weekend_avg_sleep = calculate_average_time(weekend_sleep_times) if weekend_sleep_times else time(1, 0)
+    
+    # 주말 데이터가 있으면 계산, 없으면 None
+    weekend_avg_wake = calculate_average_time(weekend_wake_times) if weekend_wake_times else None
+    weekend_avg_sleep = calculate_average_time(weekend_sleep_times) if weekend_sleep_times else None
     
     # 데이터 완성도 계산
     data_completeness = len(logs) / 7.0
@@ -294,15 +334,22 @@ def analyze_weekly_pattern(user_id: int, db: Session) -> Dict[str, Any]:
     ).first()
     
     if setting:
-        # Update
+        # Update - 평일만 업데이트, 주말은 데이터가 있을 때만 업데이트
         setting.WEEKDAY_WAKE_TIME = weekday_avg_wake
         setting.WEEKDAY_SLEEP_TIME = weekday_avg_sleep
-        setting.WEEKEND_WAKE_TIME = weekend_avg_wake
-        setting.WEEKEND_SLEEP_TIME = weekend_avg_sleep
+        if weekend_avg_wake is not None:
+            setting.WEEKEND_WAKE_TIME = weekend_avg_wake
+        if weekend_avg_sleep is not None:
+            setting.WEEKEND_SLEEP_TIME = weekend_avg_sleep
         setting.LAST_ANALYSIS_DATE = date.today()
         setting.DATA_COMPLETENESS = data_completeness
     else:
-        # Create
+        # Create - 주말 데이터가 없으면 평일 데이터만 사용
+        if weekend_avg_wake is None:
+            weekend_avg_wake = weekday_avg_wake  # 평일 값으로 대체
+        if weekend_avg_sleep is None:
+            weekend_avg_sleep = weekday_avg_sleep  # 평일 값으로 대체
+        
         setting = UserPatternSetting(
             USER_ID=user_id,
             WEEKDAY_WAKE_TIME=weekday_avg_wake,
@@ -318,32 +365,45 @@ def analyze_weekly_pattern(user_id: int, db: Session) -> Dict[str, Any]:
     db.commit()
     db.refresh(setting)
     
-    # 인사이트 생성
-    weekday_wake_minutes = weekday_avg_wake.hour * 60 + weekday_avg_wake.minute
-    weekend_wake_minutes = weekend_avg_wake.hour * 60 + weekend_avg_wake.minute
-    diff_minutes = weekend_wake_minutes - weekday_wake_minutes
+    # 인사이트 생성 (주말 데이터가 있을 때만)
+    insight = None
+    if weekend_avg_wake is not None:
+        weekday_wake_minutes = weekday_avg_wake.hour * 60 + weekday_avg_wake.minute
+        weekend_wake_minutes = weekend_avg_wake.hour * 60 + weekend_avg_wake.minute
+        diff_minutes = weekend_wake_minutes - weekday_wake_minutes
+        
+        if diff_minutes > 60:
+            insight = f"평일보다 주말에 {diff_minutes // 60}시간 {diff_minutes % 60}분 늦게 일어나시네요"
+        elif diff_minutes < -60:
+            insight = f"주말보다 평일에 {abs(diff_minutes) // 60}시간 {abs(diff_minutes) % 60}분 늦게 일어나시네요"
+        else:
+            insight = "평일과 주말의 기상 시간이 비슷하시네요"
     
-    if diff_minutes > 60:
-        insight = f"평일보다 주말에 {diff_minutes // 60}시간 {diff_minutes % 60}분 늦게 일어나시네요"
-    elif diff_minutes < -60:
-        insight = f"주말보다 평일에 {abs(diff_minutes) // 60}시간 {abs(diff_minutes) % 60}분 늦게 일어나시네요"
-    else:
-        insight = "평일과 주말의 기상 시간이 비슷하시네요"
-    
-    return {
+    # 응답 생성
+    result = {
         "weekday": {
             "avg_wake_time": weekday_avg_wake.strftime("%H:%M"),
             "avg_sleep_time": weekday_avg_sleep.strftime("%H:%M")
         },
-        "weekend": {
-            "avg_wake_time": weekend_avg_wake.strftime("%H:%M"),
-            "avg_sleep_time": weekend_avg_sleep.strftime("%H:%M")
-        },
         "last_analysis_date": date.today().isoformat(),
         "data_completeness": round(data_completeness, 2),
         "analysis_period_days": 7,
-        "insight": insight
     }
+    
+    # 주말 데이터가 있을 때만 주말 패턴 포함
+    if weekend_avg_wake is not None and weekend_avg_sleep is not None:
+        result["weekend"] = {
+            "avg_wake_time": weekend_avg_wake.strftime("%H:%M"),
+            "avg_sleep_time": weekend_avg_sleep.strftime("%H:%M")
+        }
+        if insight:
+            result["insight"] = insight
+    else:
+        # 주말 데이터가 없으면 주말 패턴을 None으로 설정
+        result["weekend"] = None
+        result["insight"] = "주말 데이터가 부족하여 주말 패턴을 분석할 수 없습니다."
+    
+    return result
 
 
 def calculate_average_time(times: List[time]) -> time:

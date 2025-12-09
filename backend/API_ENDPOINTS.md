@@ -737,33 +737,46 @@
 ### 1. 건강 데이터 동기화
 **경로**: `POST /api/service/user-phase/sync`  
 **인증**: 필요 (Bearer Token)  
-**설명**: 건강 데이터를 DB에 저장하고 Phase 계산  
+**설명**: 건강 데이터를 DB에 저장하고 Phase 계산
+- **자동 동기화** (`source_type: "apple_health"` 또는 `"google_fit"`): `TB_HEALTH_LOGS`에 항상 추가 저장 (같은 날짜여도 새 레코드)
+- **수동 입력** (`source_type: "manual"`): `TB_MANUAL_HEALTH_LOGS`에 사용자당 하나의 레코드만 업데이트
 
 **요청 Body**:
 ```json
 {
-  "health_data": [
-    {
-      "log_date": "YYYY-MM-DD",
-      "sleep_start_time": "datetime",
-      "sleep_end_time": "datetime",
-      "step_count": "integer",
-      "source_type": "manual|apple_health|google_fit"
-    }
-  ]
+  "log_date": "YYYY-MM-DD",
+  "sleep_start_time": "datetime",
+  "sleep_end_time": "datetime",
+  "step_count": "integer",
+  "sleep_duration_hours": "float",
+  "heart_rate_avg": "integer",
+  "heart_rate_resting": "integer",
+  "heart_rate_variability": "float",
+  "active_minutes": "integer",
+  "exercise_minutes": "integer",
+  "calories_burned": "integer",
+  "distance_km": "float",
+  "source_type": "manual|apple_health|google_fit",
+  "raw_data": {}
 }
 ```
 
 **응답**:
 ```json
 {
-  "current_phase": "morning|afternoon|evening|night",
-  "phase_start_time": "HH:MM",
-  "phase_end_time": "HH:MM",
-  "next_phase": "string",
-  "next_phase_time": "HH:MM",
-  "is_weekend": "boolean",
-  "calculation_method": "pattern_analysis|user_setting|default"
+  "current_phase": "morning|day|evening|sleep_prep",
+  "hours_since_wake": "float",
+  "hours_to_sleep": "float",
+  "data_source": "pattern_analysis|user_setting",
+  "message": "string",
+  "health_data": {
+    "sleep_duration_hours": "float",
+    "heart_rate_avg": "integer",
+    "heart_rate_resting": "integer",
+    "heart_rate_variability": "float",
+    "step_count": "integer",
+    "active_minutes": "integer"
+  }
 }
 ```
 
@@ -775,13 +788,19 @@
 **응답**:
 ```json
 {
-  "current_phase": "morning|afternoon|evening|night",
-  "phase_start_time": "HH:MM",
-  "phase_end_time": "HH:MM",
-  "next_phase": "string",
-  "next_phase_time": "HH:MM",
-  "is_weekend": "boolean",
-  "calculation_method": "pattern_analysis|user_setting|default"
+  "current_phase": "morning|day|evening|sleep_prep",
+  "hours_since_wake": "float",
+  "hours_to_sleep": "float",
+  "data_source": "pattern_analysis|user_setting",
+  "message": "string",
+  "health_data": {
+    "sleep_duration_hours": "float",
+    "heart_rate_avg": "integer",
+    "heart_rate_resting": "integer",
+    "heart_rate_variability": "float",
+    "step_count": "integer",
+    "active_minutes": "integer"
+  }
 }
 ```
 
@@ -839,7 +858,7 @@
 ### 5. 주간 패턴 분석 (수동 트리거)
 **경로**: `POST /api/service/user-phase/analyze`  
 **인증**: 필요 (Bearer Token)  
-**설명**: 지난 7일 건강 데이터를 분석하여 평일/주말 패턴 계산  
+**설명**: 지난 7일 건강 데이터를 분석하여 평일/주말 패턴 계산 (TB_HEALTH_LOGS 데이터만 사용)  
 
 **응답**:
 ```json
@@ -860,6 +879,8 @@
   "insight": "string"
 }
 ```
+
+**참고**: `weekend` 필드는 주말 데이터가 있을 때만 포함됩니다. 데이터가 없으면 `null`입니다.
 
 ### 6. 패턴 분석 결과 조회
 **경로**: `GET /api/service/user-phase/pattern`  
@@ -885,6 +906,8 @@
   "insight": "string"
 }
 ```
+
+**참고**: `weekend` 필드는 주말 데이터가 있을 때만 포함됩니다. 데이터가 없으면 `null`입니다.
 
 ---
 

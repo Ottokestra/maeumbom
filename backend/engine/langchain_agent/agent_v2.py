@@ -287,10 +287,12 @@ def generate_llm_response(
     emotion_result: Dict[str, Any],
     conversation_history: List[Dict],
     memory_context: str,
-    rag_context: str
+    rag_context: str,
+    user_id: int = None  # 🆕 Phase 3: Added for user profile
 ) -> str:
     """
     Generate response using GPT-4o-mini with Emotion & Context (No Routine)
+    **Phase 3**: Uses casual tone (반말) and includes TB_USER_PROFILE data
     """
     client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
     
@@ -302,25 +304,63 @@ def generate_llm_response(
         emotion_summary = "neutral (분석 생략됨)"
         emotion_result = {}  # Empty dict to avoid None errors below
     
-    system_prompt = f"""당신은 갱년기 여성을 위한 공감형 AI 친구 '봄이'의 "오케스트레이터(Orchestrator)"입니다.
-당신의 목표는 대화 흐름을 관리하고, 사용자의 의도를 파악하며, 전문 하위 에이전트나 도구에 작업을 효율적으로 위임하는 것입니다.
+    # 🆕 Phase 3: Fetch user profile from TB_USER_PROFILE
+    user_profile_context = ""
+    if user_id:
+        try:
+            from app.db.database import SessionLocal
+            from app.db.models import UserProfile
+            
+            db = SessionLocal()
+            try:
+                profile = db.query(UserProfile).filter(
+                    UserProfile.USER_ID == user_id,
+                    UserProfile.IS_DELETED == False
+                ).first()
+                
+                if profile:
+                    import json
+                    user_profile_context = f"""
+[사용자 프로필]
+- 닉네임: {profile.NICKNAME}
+- 연령대: {profile.AGE_GROUP}
+- 성별: {profile.GENDER}
+- 결혼 상태: {profile.MARITAL_STATUS}
+- 자녀 여부: {profile.CHILDREN_YN}
+- 동거인: {json.dumps(profile.LIVING_WITH, ensure_ascii=False)}
+- 성격 유형: {profile.PERSONALITY_TYPE}
+- 활동 스타일: {profile.ACTIVITY_STYLE}
+- 스트레스 해소법: {json.dumps(profile.STRESS_RELIEF, ensure_ascii=False)}
+- 취미: {json.dumps(profile.HOBBIES, ensure_ascii=False)}
+"""
+                    logger.info(f"📋 [User Profile] Loaded for user_id={user_id}")
+                else:
+                    logger.warning(f"⚠️  [User Profile] Not found for user_id={user_id}")
+            finally:
+                db.close()
+        except Exception as e:
+            logger.error(f"Failed to load user profile: {e}")
+    
+    # 원래 오케스트레이터 시스템 프롬프트 복원 + 반말 톤 추가
+    system_prompt = f"""당신은 갱년기 여성을 위한 공감형 AI 친구 '봄이'의 "오케스트레이터(Orchestrator)"야.
+당신의 목표는 대화 흐름을 관리하고, 사용자의 의도를 파악하며, 전문 하위 에이전트나 도구에 작업을 효율적으로 위임하는 거야.
 
 [핵심 책임]
-1. **의도 분류**: 사용자의 입력(텍스트/음성)을 분석하여 주된 목표를 결정합니다.
+1. **의도 분류**: 사용자의 입력(텍스트/음성)을 분석하여 주된 목표를 결정해.
 2. **흐름 제어**:
-   - **패스트 트랙 (우선순위)**: 일반적인 대화나 정서적 지지의 경우, 지연 시간을 최소화하기 위해 [감정 분석 -> 답변 생성] 경로를 우선시합니다.
-   - **백그라운드 작업**: [루틴 추천], [심층 기억 분석], [미래 계획 수립]과 같이 시간이 오래 걸리는 작업은 메인 답변을 차단하지 않도록 병렬로 위임합니다.
-3. **컨텍스트 관리**: 즉각적인 답변에 필수적인 컨텍스트와 나중에 처리해도 되는 컨텍스트를 결정합니다.
+   - **패스트 트랙 (우선순위)**: 일반적인 대화나 정서적 지지의 경우, 지연 시간을 최소화하기 위해 [감정 분석 -> 답변 생성] 경로를 우선시해.
+   - **백그라운드 작업**: [루틴 추천], [심층 기억 분석], [미래 계획 수립]과 같이 시간이 오래 걸리는 작업은 메인 답변을 차단하지 않도록 병렬로 위임해.
+3. **컨텍스트 관리**: 즉각적인 답변에 필수적인 컨텍스트와 나중에 처리해도 되는 컨텍스트를 결정해.
 
 [지침]
-- **항상** 모든 사용자 입력에 대해 즉시 '감정 분석'을 트리거하세요.
-- **만약** 사용자가 괴로워 보이거나 특정 증상을 언급하면, 백그라운드에서 '루틴 추천'을 트리거하세요.
-- 사용자가 명시적으로 추천을 요청(예: "루틴 추천해줘")하지 않는 한, 대화형 답변을 생성하기 위해 '루틴 추천'이 완료될 때까지 **기다리지 마세요**.
-- **출력**: '감정 분석'과 사용 가능한 컨텍스트를 바탕으로 사용자에게 최종 답변을 생성하세요.
+- **항상** 모든 사용자 입력에 대해 즉시 '감정 분석'을 트리거해.
+- **만약** 사용자가 괴로워 보이거나 특정 증상을 언급하면, 백그라운드에서 '루틴 추천'을 트리거해.
+- 사용자가 명시적으로 추천을 요청(예: "루틴 추천해줘")하지 않는 한, 대화형 답변을 생성하기 위해 '루틴 추천'이 완료될 때까지 **기다리지 마**.
+- **출력**: '감정 분석'과 사용 가능한 컨텍스트를 바탕으로 사용자에게 최종 답변을 생성해.
 
 [사용자 프로필]
-- 40~50대 갱년기 여성
-- 감정 기복이 심하고 신체적/정신적 어려움을 겪을 수 있음
+- 감정 기복이 심하고 신체적/정신적 어려움을 겪을 수 있어
+{user_profile_context}
 
 [대화 컨텍스트]
 {memory_context}
@@ -330,10 +370,18 @@ def generate_llm_response(
 - 감정: {emotion_summary}
 - 상세: {json.dumps(emotion_result, ensure_ascii=False)}
 
-[출력 형식]
-중년 여성에게 적합한 자연스럽고 공감적인 한국어로 답변을 제공하세요.
-"""
+[말투 스타일] 🆕 Phase 3
+- **친구와 대화하듯 편안한 반말을 사용해**
+- 존댓말 사용 금지 (예: "안녕하세요" ❌ → "안녕" ✅)
+- 자연스럽고 친근한 톤으로 대화해
+- 예시:
+  - "오늘 어떠셨어요?" ❌
+  - "오늘 어땠어?" ✅
 
+[출력 형식]
+반말로 자연스럽고 공감적인 한국어로 답변을 제공해. 중년 여성에게 적합한 따뜻하고 친근한 톤을 유지해.
+"""
+    
     messages = [{"role": "system", "content": system_prompt}]
     
     # Add history (limit to last 10 messages)
@@ -554,7 +602,8 @@ async def run_ai_bomi_from_text_v2(
         emotion_result=emotion_result,
         conversation_history=conversation_history,
         memory_context=memory_context,
-        rag_context=rag_context
+        rag_context=rag_context,
+        user_id=user_id  # 🆕 Phase 3: Pass user_id for profile
     )
     
     # 6. Save AI Response
@@ -569,11 +618,28 @@ async def run_ai_bomi_from_text_v2(
         
     logger.info(f"✅ [DeepAgents] Response generated: {ai_response_text[:50]}...")
     
+    # 🆕 Phase 3: Generate emotion and response-type metadata
+    response_metadata = {}
+    try:
+        from .response_generator import generate_response_metadata
+        response_metadata = generate_response_metadata(
+            conversation_history=conversation_history,
+            llm_response=ai_response_text,
+            user_text=user_text
+        )
+        logger.info(f"✨ [Response Metadata] emotion={response_metadata.get('emotion')}, type={response_metadata.get('response_type')}")
+    except Exception as e:
+        logger.error(f"Failed to generate response metadata: {e}")
+        response_metadata = {"emotion": "happiness", "response_type": "normal"}
+    
     return {
         "reply_text": ai_response_text,
         "input_text": user_text,
         "emotion_result": emotion_result,
         "routine_result": routine_result,
+        "emotion": response_metadata.get("emotion", "happiness"),  # 🆕 Phase 3
+        "response_type": response_metadata.get("response_type", "normal"),  # 🆕 Phase 3
+        "tts_audio": None,  # 🆕 Phase 2: TTS toggle (현재는 null, 추후 구현)
         "meta": {
             "model": os.getenv("OPENAI_MODEL_NAME", "gpt-4o-mini"),
             "session_id": session_id,

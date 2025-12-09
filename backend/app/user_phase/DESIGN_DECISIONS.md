@@ -33,7 +33,7 @@ backend/app/user_phase/
 
 ## 2. 데이터베이스 설계 결정
 
-### 2.1. 테이블 구조
+### 2.1. 테이블 구조 (2025-12-08 업데이트)
 
 #### 고민: 단일 테이블 vs OS별 테이블 분리
 
@@ -48,12 +48,25 @@ TB_ANDROID_HEALTH_LOGS
 TB_HEALTH_LOGS (SOURCE_TYPE으로 구분)
 ```
 
-**결정: 옵션 2 (통합 테이블)**
-- **이유**:
-  - Phase 계산 시 두 테이블 JOIN 불필요
-  - 사용자가 기기 변경 시 데이터 분산 방지
-  - 확장성 (Fitbit, Samsung Health 등 추가 용이)
-  - 코드 중복 방지
+**결정: 옵션 2 (통합 테이블) + 수동 입력 테이블 분리**
+
+**최종 테이블 구조 (2025-12-08 업데이트)**:
+- `TB_HEALTH_LOGS`: 자동 동기화 데이터 (apple_health, google_fit)
+  - 날짜별로 여러 레코드 저장 가능
+  - 같은 날짜여도 새 레코드로 추가 저장
+  - 매주 월요일마다 지난 7일 데이터를 추가 저장하여 히스토리 유지
+- `TB_MANUAL_HEALTH_LOGS`: 수동 입력 데이터 (manual)
+  - 사용자당 하나의 레코드만 유지 (USER_ID가 Unique)
+  - 업데이트 방식 (같은 사용자가 다시 입력하면 기존 레코드 업데이트)
+  - `LOG_DATE`: 사용자가 입력한 날짜 (마지막 입력 날짜)
+  - `CREATED_AT`, `UPDATED_AT`: 자동 타임스탬프
+
+**이유**:
+- 자동 동기화와 수동 입력의 저장 방식이 다름
+- 자동 동기화: 매주 월요일마다 지난 7일 데이터를 추가 저장 (히스토리 유지)
+- 수동 입력: 사용자가 입력한 최신 데이터만 유지 (하나의 레코드)
+- 테이블 분리로 로직이 명확해짐
+- Phase 계산 시 자동 동기화 데이터만 패턴 분석에 사용
 
 ---
 
@@ -161,9 +174,10 @@ DISTANCE_KM
    - HTTPException 400 반환
    - "온보딩 필요 또는 건강 데이터 동기화 허용" 메시지
 
-**구현 현황 (2025-01-15)**:
+**구현 현황 (2025-12-08)**:
 - ✅ 2단계 Fallback 구현 완료
 - ✅ 패턴 기반 Phase 계산으로 일관된 결과 제공
+- ✅ 자동 동기화와 수동 입력 테이블 분리 완료
 - ⚠️ 실시간 건강 데이터(오늘 데이터)는 수집되지만 Phase 계산에는 **사용되지 않음**
 - ⚠️ 오늘의 건강 데이터는 API 응답에서 참고용(display)으로만 포함됨
 
@@ -304,6 +318,22 @@ WEEKEND_WAKE_TIME  # 토~일 평균
 
 ---
 
+### 5.3. 수동 입력 vs 자동 동기화 (2025-12-08 추가)
+
+**자동 동기화 (사용자 동의 시)**:
+- 삼성 헬스, 애플 헬스킷에서 매주 월요일마다 지난 7일 데이터를 가져옴
+- `TB_HEALTH_LOGS`에 항상 추가 저장 (같은 날짜여도 새 레코드)
+- 히스토리 데이터 유지로 패턴 분석에 활용
+
+**수동 입력 (방어 전략)**:
+- 사용자가 자동 동기화에 동의하지 않은 경우
+- 사용자가 직접 건강 데이터를 입력
+- `TB_MANUAL_HEALTH_LOGS`에 사용자당 하나의 레코드만 유지
+- 같은 사용자가 다시 입력하면 기존 레코드 업데이트
+- 패턴 분석에는 사용되지 않음 (날짜별 데이터가 아니므로)
+
+---
+
 ## 6. 테스트 전략 결정
 
 ### 고민: 어떻게 테스트할까?
@@ -352,47 +382,64 @@ GET  /api/service/user-phase/pattern    # 패턴 조회
 
 ---
 
-### 7.2. Upsert 동작
+### 7.2. 데이터 저장 방식 (2025-12-08 업데이트)
 
-**결정: 같은 날짜면 업데이트**
-- **이유**:
-  - 사용자가 하루에 여러 번 동기화 가능
-  - 최신 데이터로 업데이트
-  - 중복 데이터 방지
+**자동 동기화 (apple_health, google_fit)**:
+- `TB_HEALTH_LOGS` 테이블 사용
+- 항상 추가 저장 (기존 데이터 확인 안 함)
+- 같은 날짜여도 새 레코드로 저장
+- 매주 월요일마다 지난 7일 데이터를 추가 저장하여 히스토리 유지
+
+**수동 입력 (manual)**:
+- `TB_MANUAL_HEALTH_LOGS` 테이블 사용
+- 사용자당 하나의 레코드만 유지
+- 같은 사용자가 다시 입력하면 기존 레코드 업데이트
+- `LOG_DATE`: 사용자가 입력한 날짜 (마지막 입력 날짜)
+- `UPDATED_AT`: 자동으로 업데이트 시간 기록
 
 **구현**:
 ```python
-existing_log = db.query(HealthLog).filter(
-    HealthLog.USER_ID == user_id,
-    HealthLog.LOG_DATE == log_date
-).first()
+# 자동 동기화
+if request.source_type in ["apple_health", "google_fit"]:
+    # 항상 추가 저장
+    new_log = HealthLog(...)
+    db.add(new_log)
 
-if existing_log:
-    # Update
-else:
-    # Insert
+# 수동 입력
+elif request.source_type == "manual":
+    existing_log = db.query(ManualHealthLog).filter(
+        ManualHealthLog.USER_ID == user_id
+    ).first()
+    
+    if existing_log:
+        # Update
+    else:
+        # Insert (첫 번째 입력)
 ```
 
 ---
 
 ## 8. 최종 아키텍처
 
-### 데이터 흐름
+### 데이터 흐름 (2025-12-08 업데이트)
 
 ```
 1. Flutter 앱 실행
    ↓
-2. HealthKit/Health Connect에서 데이터 가져오기
+2. HealthKit/Health Connect에서 데이터 가져오기 (사용자 동의 시)
    - 평일(화~일): 오늘 데이터만
    - 월요일: 지난 7일(월~일) 데이터
    ↓
-3. POST /sync → 서버로 전송 (날짜별로 각각)
+3. POST /sync → 서버로 전송
    ↓
-4. TB_HEALTH_LOGS에 저장 (upsert)
+4. source_type에 따라 분기:
+   - apple_health/google_fit → TB_HEALTH_LOGS에 추가 저장
+   - manual → TB_MANUAL_HEALTH_LOGS에 업데이트 (사용자당 하나)
    ↓
 5. 월요일이면 주간 패턴 분석 자동 실행
    ↓
 6. TB_USER_PATTERN_SETTINGS 업데이트 (평일/주말 평균)
+   - 패턴 분석은 TB_HEALTH_LOGS 데이터만 사용
    ↓
 7. GET /current → Phase 조회
    ↓
@@ -471,8 +518,9 @@ else:
 4. **공평성**: iOS/Android 동일한 데이터 구조
 5. **사용자 중심**: 갱년기 여성의 건강 모니터링에 특화
 
-**구현 현황 (2025-01-15)**:
+**구현 현황 (2025-12-08)**:
 - ✅ 패턴 기반 Phase 계산 완료
+- ✅ 자동 동기화와 수동 입력 테이블 분리 완료
 - ⚠️ 실시간 데이터는 수집되지만 Phase 계산에는 미사용 (향후 개선 예정)
 
 ---
