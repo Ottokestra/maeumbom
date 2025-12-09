@@ -2,8 +2,8 @@
 SQLAlchemy models for all database tables
 Centralized model management
 """
-<<<<<<< HEAD
 from sqlalchemy import (
+    BigInteger,
     Boolean,
     Column,
     Date,
@@ -15,11 +15,9 @@ from sqlalchemy import (
     JSON,
     String,
     Text,
+    Time,
     UniqueConstraint,
 )
-=======
-from sqlalchemy import Column, Integer, String, Text, DateTime, Date, Index, ForeignKey, JSON, Float, Boolean, Time
->>>>>>> dev
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 from .database import Base
@@ -163,7 +161,6 @@ class EmotionAnalysis(Base):
         return f"<EmotionAnalysis(ID={self.ID}, CHECK_ROOT={self.CHECK_ROOT}, SENTIMENT_OVERALL={self.SENTIMENT_OVERALL})>"
 
 
-<<<<<<< HEAD
 class EmotionLog(Base):
     """
     감정 분석 결과 로그
@@ -264,7 +261,24 @@ class MenopauseAnswer(Base):
     ANSWER_VALUE = Column(String(10), nullable=False)
     CREATED_AT = Column(DateTime(timezone=True), server_default=func.now())
 
-=======
+
+class UserEmotionLog(Base):
+    """사용자 감정 로그 테이블."""
+
+    __tablename__ = "user_emotion_log"
+
+    id = Column(BigInteger, primary_key=True, index=True, autoincrement=True)
+    user_id = Column(BigInteger, index=True, nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), index=True)
+    session_id = Column(String(255), nullable=True)
+    emotion_label = Column(String(50), nullable=False)
+    sentiment_score = Column(Float, nullable=True)
+    raw_meta = Column(JSON, nullable=True)
+
+    __table_args__ = (
+        Index("idx_user_emotion_log_user_created", "user_id", "created_at"),
+    )
+
 # ============================================================================
 # 대화 및 메모리 저장 모델 (Agent 기능)
 # ============================================================================
@@ -881,4 +895,3 @@ class UserProfile(Base):
     
     def __repr__(self):
         return f"<UserProfile(ID={self.ID}, USER_ID={self.USER_ID}, NICKNAME={self.NICKNAME})>"
->>>>>>> dev

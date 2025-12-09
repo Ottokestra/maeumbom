@@ -15,12 +15,8 @@ from fastapi import (
     HTTPException,
     WebSocket,
     WebSocketDisconnect,
-<<<<<<< HEAD
-=======
-    HTTPException,
     Request,
     Depends,
->>>>>>> dev
 )
     # noqa
 from fastapi.middleware.cors import CORSMiddleware
@@ -49,6 +45,7 @@ from app.menopause_survey.router import router as menopause_survey_router
 from app.weather.routes import router as weather_router
 from app.routine_survey.routers import router as routine_survey_router
 from app.routine_survey.models import seed_default_mr_survey  # 사용 여부와 무관하게 유지
+from app.reports.router import router as reports_router
 
 # DB 세션/초기화
 from app.db.database import SessionLocal, init_db
@@ -63,20 +60,9 @@ from engine.routine_recommend.models.schemas import (
     RoutineRecommendationItem,
 )
 
-<<<<<<< HEAD
-# 날씨 / 루틴 설문 라우터
-from app.weather.routes import router as weather_router
-from app.routine_survey.routers import router as routine_survey_router
-from app.menopause_survey.router import router as menopause_survey_router
-from app.reports.router import router as reports_router
-from app.reports.emotion.router import router as emotion_report_router
-from app.reports.emotion.chat_router import router as report_chat_router
-from app.onboarding_survey.router import router as onboarding_survey_router
-=======
 # Auth / User 모델
 from app.auth.dependencies import get_current_user
 from app.db.models import User
->>>>>>> dev
 
 # =========================
 # Emotion Analysis 라우터 로딩 (옵션)
@@ -188,23 +174,17 @@ except Exception as e:
 # Routine survey 라우터
 # =========================
 
-<<<<<<< HEAD
-app.include_router(routine_survey_router, prefix="/api", tags=["routine-survey"])
-app.include_router(emotion_report_router)
-app.include_router(report_chat_router)
-app.include_router(reports_router)
-app.include_router(menopause_survey_router, prefix="/api", tags=["menopause-survey"])
-app.include_router(onboarding_survey_router)
-=======
 try:
     app.include_router(routine_survey_router, prefix="/api", tags=["routine-survey"])
     print("[INFO] Routine survey router loaded successfully.")
 except Exception as e:
     import traceback
->>>>>>> dev
 
     print(f"[WARN] Routine survey router load failed: {e}")
     traceback.print_exc()
+
+# Reports
+app.include_router(reports_router, prefix="/api", tags=["reports"])
 
 # =========================
 # Authentication (Google OAuth + JWT)
@@ -420,64 +400,6 @@ async def agent_text_v2_endpoint(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-<<<<<<< HEAD
-@app.post("/api/agent/v2/text")
-async def agent_text_v2_endpoint(request: AgentTextV2Request):
-    """LangChain Agent v2 - 텍스트 입력 (캐릭터 정보 포함)"""
-    try:
-        from engine.langchain_agent import run_ai_bomi_from_text_v2
-
-        default_meta = {
-            "model": os.getenv("OPENAI_MODEL_NAME", "gpt-4o-mini"),
-            "used_tools": [],
-            "session_id": request.session_id or "default",
-            "stt_quality": request.stt_quality,
-            "tts_engine_default": "cute_bomi",
-        }
-        default_character = {"id": "cloud_white", "emotion_label": "NEUTRAL"}
-
-        if request.stt_quality == "no_speech":
-            return {
-                "reply_text": "음성이 감지되지 않았어요. 다시 말씀해주시겠어요?",
-                "input_text": request.user_text or "",
-                "emotion_result": None,
-                "routine_result": None,
-                "character": default_character,
-                "meta": {
-                    **default_meta,
-                    "note": "no_speech_detected",
-                },
-            }
-        elif request.stt_quality == "low_quality":
-            return {
-                "reply_text": "소음이 심해서 잘 들리지 않았어요. 조용한 곳에서 다시 말씀해주시겠어요?",
-                "input_text": request.user_text or "",
-                "emotion_result": None,
-                "routine_result": None,
-                "character": default_character,
-                "meta": {
-                    **default_meta,
-                    "note": "low_quality_audio",
-                },
-            }
-
-        result = run_ai_bomi_from_text_v2(
-            user_text=request.user_text,
-            session_id=request.session_id or "default",
-            stt_quality=request.stt_quality,
-        )
-        return result
-    except Exception as e:
-        import traceback
-
-        traceback.print_exc()
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-@app.post("/api/agent/audio")
-async def agent_audio_endpoint(request: AgentAudioRequest):
-    """LangChain Agent - 음성 입력"""
-=======
 @app.get("/api/agent/v2/sessions")
 async def get_all_agent_sessions_v2(
     current_user: User = Depends(get_current_user),
@@ -485,7 +407,6 @@ async def get_all_agent_sessions_v2(
     """
     LangChain Agent V2 - 현재 유저의 모든 세션 정보 조회
     """
->>>>>>> dev
     try:
         from engine.langchain_agent.db_conversation_store import (
             get_conversation_store,
@@ -1337,14 +1258,9 @@ async def tts_endpoint(payload: TTSRequest):
             voice_id=payload.character_id,
             emotion=emotion_label,
         )
-<<<<<<< HEAD
-    except Exception as e:  # pragma: no cover - runtime logging aid
-        import sys as _sys, traceback as _traceback
-=======
     except Exception as e:
         import traceback
         import sys as _sys
->>>>>>> dev
 
         print("[TTS ERROR]", e, file=_sys.stderr)
         traceback.print_exc()

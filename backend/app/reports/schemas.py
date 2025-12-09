@@ -1,50 +1,31 @@
-"""Schemas for weekly emotion reports."""
+"""보고서 응답 스키마 정의."""
 from __future__ import annotations
 
-from datetime import date
-from typing import List, Optional
+from datetime import datetime
+from typing import List
 from typing_extensions import Literal
 from pydantic import BaseModel
 
 
-class DateRange(BaseModel):
-    start: date
-    end: date
+class TopEmotionItem(BaseModel):
+    label: str
+    count: int
+    ratio: float
 
 
-class ReportCharacter(BaseModel):
-    id: str
-    name: str
-    avatar_url: Optional[str] = None
-    color: Optional[str] = None
-    role: Optional[str] = None
+class EmotionMetric(BaseModel):
+    period_start: datetime
+    period_end: datetime
+    total_sessions: int
+    total_messages: int
+    avg_sentiment: float
+    top_emotions: List[TopEmotionItem]
 
 
-class EmotionMetrics(BaseModel):
-    mood_score: int
-    stress_score: int
-    stability_score: int
-    talk_count: int
-    positive_ratio: float
-    negative_ratio: float
-    neutral_ratio: float
-    main_emotion: str
-    secondary_emotion: Optional[str] = None
-
-
-class DialogLine(BaseModel):
-    speaker_id: str
-    type: Literal["opening", "analysis", "warning", "tip", "closing"]
-    emotion: str
-    text: str
-
-
-class WeeklyEmotionReportResponse(BaseModel):
-    has_data: bool
-    period: Literal["WEEKLY"]
-    date_range: DateRange
-    title: Optional[str] = None
-    summary: Optional[str] = None
-    characters: List[ReportCharacter]
-    metrics: Optional[EmotionMetrics] = None
-    dialog: List[DialogLine]
+class UserReportResponse(BaseModel):
+    period_type: Literal["daily", "weekly", "monthly"]
+    period_start: datetime
+    period_end: datetime
+    metrics: EmotionMetric
+    recent_highlights: List[str]
+    recommendation: str
