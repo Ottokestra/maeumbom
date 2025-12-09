@@ -103,6 +103,15 @@ KEY POINTS YOU MUST FOLLOW:
    - "protagonist_visual": detailed English description of a Korean woman in her 50s–60s (hair, color, clothes, context).
    - "target_visual": detailed English description matching the Target type (husband, child, friend, colleague, etc.).
 
+6. [CRITICAL] Dynamic Persona Injection (Randomize)
+   - Before generating dialogues, internally select ONE specific persona for the Target to ensure variety.
+   - Persona Examples:
+     * "The Hothead": Reacts with immediate anger and loud voice.
+     * "The Silent Treatment": Reacts with cold silence and sighs.
+     * "The Guilt Tripper": Plays the victim ("I did everything for you...").
+     * "The Logical Critic": Argues with cold facts and logic.
+   - Apply this chosen persona consistently throughout all nodes.
+
 # 🚨 SECTION 2-1: INPUT VARIABLES BINDING
 
 - Target 값은 다음 중 하나이다: HUSBAND, CHILD, FRIEND, COLLEAGUE, ETC.
