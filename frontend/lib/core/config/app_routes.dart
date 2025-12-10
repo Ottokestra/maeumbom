@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../../app/home/home_screen.dart';
 import '../../app/alarm/alarm_screen.dart';
 import '../../app/chat/chat_screen.dart';
-import '../../app/report/report_screen.dart';
+import '../../app/report/weekly_emotion_report_screen.dart';
 import '../../app/settings/mypage_screen.dart';
 import '../../app/common/login_screen.dart';
 import '../../app/example/example_screen.dart';
@@ -14,6 +14,9 @@ import '../../app/onboarding/splash_screen.dart';
 import '../../app/chat/bomi_screen.dart';
 import '../../app/training/training_screen.dart';
 import '../../app/chat/chat_list_screen.dart';
+// import '../../app/training/training_screen.dart'; // No longer used if we skip it
+import '../../app/training/relation_training_screen.dart';
+import '../../app/training/relation_training_list_screen.dart'; // Add import
 
 /// 라우트 메타데이터
 class RouteMetadata {
@@ -58,7 +61,7 @@ class AppRoutes {
 
   static const RouteMetadata report = RouteMetadata(
     routeName: '/report',
-    builder: ReportScreen.new,
+    builder: WeeklyEmotionReportScreen.new,
     requiresAuth: true,
   );
 
@@ -85,7 +88,7 @@ class AppRoutes {
 
   static const RouteMetadata training = RouteMetadata(
     routeName: '/training',
-    builder: TrainingScreen.new,
+    builder: RelationTrainingListScreen.new,
   );
 
   // 보호된 경로 (인증 필요)
@@ -114,7 +117,8 @@ class AppRoutes {
   );
 
   /// 모든 라우트 목록
-  static const List<RouteMetadata> allRoutes = [
+  // static const List<RouteMetadata> allRoutes = [
+  static final List<RouteMetadata> allRoutes = [
     splash,
     home,
     alarm,

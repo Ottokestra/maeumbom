@@ -36,6 +36,37 @@ class ChatRepository {
     );
   }
 
+  /// Send text message and return raw response (for alarm processing)
+  Future<Map<String, dynamic>> sendTextMessageRaw({
+    required String text,
+    required int userId,
+    String? sessionId,
+    String? sttQuality,
+  }) async {
+    final request = TextChatRequest(
+      userText: text,
+      sessionId: sessionId ?? 'user_${userId}_default',
+      sttQuality: sttQuality,
+    );
+
+    appLogger.i('Sending text message via repository (raw)');
+    final response = await _apiClient.sendTextMessage(request);
+
+    print('[ChatRepository] Raw response meta: ${response.meta}');
+    print('[ChatRepository] Reply text: ${response.replyText}');
+
+    // Return raw response as map
+    final result = {
+      'reply_text': response.replyText,
+      'emotion': response.meta?['emotion'],
+      'response_type': response.meta?['response_type'],
+      'alarm_info': response.meta?['alarm_info'],
+    };
+
+    print('[ChatRepository] Returning result: $result');
+    return result;
+  }
+
   // ❌ 삭제: 음성 채팅 관련 메서드는 BomChatService로 이동
   // - connectAudioStream()
   // - disconnectAudioStream()
