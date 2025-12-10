@@ -12,7 +12,9 @@ import '../../app/survey/menopause_survey_screen.dart';
 import '../../app/example/bubble_screen.dart';
 import '../../app/onboarding/splash_screen.dart';
 import '../../app/chat/bomi_screen.dart';
-import '../../app/training/training_screen.dart';
+// import '../../app/training/training_screen.dart'; // No longer used if we skip it
+import '../../app/training/relation_training_screen.dart';
+import '../../app/training/relation_training_list_screen.dart'; // Add import
 
 /// 라우트 메타데이터
 class RouteMetadata {
@@ -82,9 +84,14 @@ class AppRoutes {
     builder: BubbleScreen.new,
   );
 
+
+
+  // ...
+
+  // Link to RelationTrainingListScreen
   static const RouteMetadata training = RouteMetadata(
     routeName: '/training',
-    builder: TrainingScreen.new,
+    builder: RelationTrainingListScreen.new,
   );
 
   // 보호된 경로 (인증 필요)
@@ -107,7 +114,7 @@ class AppRoutes {
   );
 
   /// 모든 라우트 목록
-  static const List<RouteMetadata> allRoutes = [
+  static final List<RouteMetadata> allRoutes = [
     splash,
     home,
     alarm,

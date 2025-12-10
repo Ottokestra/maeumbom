@@ -47,6 +47,13 @@ class ApiConfig {
   static const String userPhaseAnalyze = '$userPhaseBase/analyze';
   static const String userPhasePattern = '$userPhaseBase/pattern';
 
+  // Relation Training Endpoints
+  static const String relationTrainingBase = '/api/service/relation-training';
+  static const String relationTrainingScenarios = '$relationTrainingBase/scenarios';
+  static String relationTrainingStart(int scenarioId) => '$relationTrainingScenarios/$scenarioId/start';
+  static const String relationTrainingProgress = '$relationTrainingBase/progress';
+  static String relationTrainingScenario(int scenarioId) => '$relationTrainingScenarios/$scenarioId';
+
   // Timeout Configuration
   static const Duration connectTimeout = Duration(seconds: 30);
   static const Duration receiveTimeout = Duration(seconds: 30);

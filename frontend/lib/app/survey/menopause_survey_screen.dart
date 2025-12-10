@@ -29,39 +29,7 @@ class _MenopauseSurveyScreenState extends State<MenopauseSurveyScreen> {
         curve: Curves.easeInOut,
       );
     } else {
-      // Last page answered, maybe show submission button state change?
-      // For now, auto-submit or wait for "Complete" button click?
-      // Design shows "Next" / "Prev". Let's assume user clicks "Next" or we auto-advance.
-      // Actually, standard survey UX: click answer -> auto advance.
-      // But we have "Prev" and "Next" buttons in the design request as Bottom Menu Bar.
-      // Let's make "Next" button advance, and answer buttons just select.
-    }
-  }
-
-  void _goToNext() {
-    if (_answers[menopauseQuestions[_currentPage].id] == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('예/아니오 중 하나를 선택해주세요.')),
-      );
-      return;
-    }
-
-    if (_currentPage < menopauseQuestions.length - 1) {
-      _pageController.nextPage(
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeInOut,
-      );
-    } else {
       _submitSurvey();
-    }
-  }
-
-  void _goToPrev() {
-    if (_currentPage > 0) {
-      _pageController.previousPage(
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeInOut,
-      );
     }
   }
 
@@ -129,6 +97,17 @@ class _MenopauseSurveyScreenState extends State<MenopauseSurveyScreen> {
       backgroundColor: Colors.white,
       appBar: TopBar(
         title: '',
+        leftIcon: Icons.arrow_back,
+        onTapLeft: () {
+          if (_currentPage > 0) {
+            _pageController.previousPage(
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeInOut,
+            );
+          } else {
+            Navigator.pop(context);
+          }
+        },
         rightIcon: Icons.close,
         onTapRight: () => Navigator.pop(context),
       ),
@@ -170,7 +149,8 @@ class _MenopauseSurveyScreenState extends State<MenopauseSurveyScreen> {
             Expanded(
               child: PageView.builder(
                 controller: _pageController,
-                physics: const NeverScrollableScrollPhysics(),
+                // Default physics allows swipe
+                physics: const AlwaysScrollableScrollPhysics(), 
                 onPageChanged: (index) {
                   setState(() {
                     _currentPage = index;
@@ -206,7 +186,7 @@ class _MenopauseSurveyScreenState extends State<MenopauseSurveyScreen> {
                               width: double.infinity,
                               height: 8,
                               decoration: BoxDecoration(
-                                color: const Color(0xFFF0EAE8), 
+                              color: const Color(0xFFF0EAE8), 
                                 borderRadius: BorderRadius.circular(4),
                               ),
                             ),
@@ -263,7 +243,7 @@ class _MenopauseSurveyScreenState extends State<MenopauseSurveyScreen> {
                                       color: Color(0xFF6B6B6B),
                                       fontSize: 14,
                                       fontFamily: 'Inter',
-                                    ),
+                                      ),
                                   ),
                                 ],
                               ),
@@ -297,66 +277,6 @@ class _MenopauseSurveyScreenState extends State<MenopauseSurveyScreen> {
                     ),
                   );
                 },
-              ),
-            ),
-          ],
-        ),
-      ),
-      // Bottom Menu Bar
-      bottomNavigationBar: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          border: Border(top: BorderSide(color: const Color(0xFFF0EAE8))),
-        ),
-        child: Row(
-          children: [
-            // Previous Button
-            Expanded(
-              child: GestureDetector(
-                onTap: _goToPrev,
-                child: Container(
-                  height: 48,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(30),
-                    border: Border.all(color: _currentPage > 0 ? const Color(0xFFD7454D) : const Color(0xFFE0E0E0)),
-                  ),
-                  alignment: Alignment.center,
-                  child: Text(
-                    '이전',
-                    style: TextStyle(
-                      color: _currentPage > 0 ? const Color(0xFFD7454D) : const Color(0xFFB0B8C1),
-                      fontSize: 16,
-                      fontFamily: 'Pretendard',
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(width: 16),
-            // Next/Submit Button
-            Expanded(
-              child: GestureDetector(
-                onTap: _goToNext,
-                child: Container(
-                  height: 48,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFD7454D),
-                    borderRadius: BorderRadius.circular(30),
-                  ),
-                  alignment: Alignment.center,
-                  child: Text(
-                    _currentPage == menopauseQuestions.length - 1 ? '완료' : '다음',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontFamily: 'Pretendard',
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
               ),
             ),
           ],
