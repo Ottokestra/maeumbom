@@ -59,20 +59,20 @@ class _AlarmScreenState extends ConsumerState<AlarmScreen> {
   Widget _buildAlarmList(List<AlarmModel> alarms) {
     if (alarms.isEmpty) {
       return Center(
-        child: Text(
-          '등록된 알람이 없습니다.',
-          style: AppTypography.body.copyWith(color: AppColors.textSecondary),
-        ),
+              child: Text(
+                '등록된 알람이 없습니다.',
+                style: AppTypography.body.copyWith(color: AppColors.textSecondary),
+              ),
       );
     }
 
     return ListView.builder(
-      padding: const EdgeInsets.all(AppSpacing.md),
+              padding: const EdgeInsets.all(AppSpacing.md),
       itemCount: alarms.length,
-      itemBuilder: (context, index) {
+              itemBuilder: (context, index) {
         final alarm = alarms[index];
-        return _buildAlarmItem(alarm);
-      },
+                return _buildAlarmItem(alarm);
+              },
     );
   }
 
@@ -141,8 +141,8 @@ class _AlarmScreenState extends ConsumerState<AlarmScreen> {
                         color: alarm.isEnabled
                             ? AppColors.textSecondary
                             : AppColors.disabledText,
-                      ),
                     ),
+                  ),
                   ],
                 ],
               ),

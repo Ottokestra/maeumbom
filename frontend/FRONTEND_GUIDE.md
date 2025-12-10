@@ -884,6 +884,817 @@ try {
 
 ---
 
+## 💾 로컬 데이터베이스 (Drift)
+
+### 개요
+
+마음봄 앱은 로컬 데이터 저장을 위해 **Drift** (구 Moor)를 사용합니다.
+
+Drift는 SQLite 기반의 타입 안전한 ORM으로, Flutter에서 로컬 데이터베이스를 쉽게 관리할 수 있게 해줍니다.
+
+### 주요 특징
+
+- ✅ **타입 안전**: 컴파일 타임에 SQL 오류 감지
+- ✅ **자동 코드 생성**: build_runner로 CRUD 코드 자동 생성
+- ✅ **Reactive Streams**: 데이터 변경 시 자동 UI 업데이트
+- ✅ **마이그레이션**: 스키마 버전 관리 지원
+- ✅ **백엔드 규칙 준수**: 테이블명, 컬럼명 등 백엔드 DB 규칙 적용
+
+### 프로젝트 구조
+
+```
+lib/
+├── data/
+│   ├── local/
+│   │   └── database/
+│   │       ├── app_database.dart      # DB 정의 및 CRUD
+│   │       └── app_database.g.dart    # 자동 생성 파일 (build_runner)
+│   ├── models/
+│   │   └── alarm/
+│   │       ├── alarm_model.dart       # 도메인 모델 (Freezed)
+│   │       ├── alarm_model.freezed.dart
+│   │       └── alarm_model.g.dart
+│   └── repository/
+│       └── alarm/
+│           └── alarm_repository.dart  # Repository 계층
+├── providers/
+│   └── alarm_provider.dart            # Riverpod Provider
+└── debug/
+    └── db_path_helper.dart            # DB 경로 확인 헬퍼
+```
+
+### 1. 데이터베이스 정의
+
+#### 테이블 정의 (app_database.dart)
+
+```dart
+// lib/data/local/database/app_database.dart
+import 'dart:io';
+import 'package:drift/drift.dart';
+import 'package:drift/native.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:path/path.dart' as p;
+
+part 'app_database.g.dart';
+
+/// 테이블 정의
+/// 백엔드 DB 규칙 준수: TB_ 접두사, 대문자 컬럼명
+@DataClassName('AlarmData')
+class Alarms extends Table {
+  @override
+  String get tableName => 'TB_ALARMS';
+
+  // Primary Key
+  IntColumn get id => integer().autoIncrement()();
+
+  // 비즈니스 컬럼
+  IntColumn get year => integer()();
+  IntColumn get month => integer()();
+  IntColumn get day => integer()();
+  TextColumn get week => text()(); // JSON 배열
+  IntColumn get time => integer()();
+  IntColumn get minute => integer()();
+  TextColumn get amPm => text().withLength(min: 2, max: 2)();
+  
+  BoolColumn get isEnabled => boolean().withDefault(const Constant(true))();
+  IntColumn get notificationId => integer()();
+  DateTimeColumn get scheduledDatetime => dateTime()();
+
+  // 표준 필드 (백엔드 규칙)
+  BoolColumn get isDeleted => boolean().withDefault(const Constant(false))();
+  DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
+  IntColumn get createdBy => integer().nullable()();
+  DateTimeColumn get updatedAt => dateTime().withDefault(currentDateAndTime)();
+  IntColumn get updatedBy => integer().nullable()();
+
+  @override
+  List<String> get customConstraints => [
+    'UNIQUE(notification_id)',
+  ];
+}
+
+/// 데이터베이스 클래스
+@DriftDatabase(tables: [Alarms])
+class AppDatabase extends _$AppDatabase {
+  AppDatabase() : super(_openConnection());
+
+  @override
+  int get schemaVersion => 1;
+
+  // CRUD 메서드
+  Future<List<AlarmData>> getAllAlarms() {
+    return (select(alarms)
+      ..where((tbl) => tbl.isDeleted.equals(false))
+      ..orderBy([(t) => OrderingTerm.asc(t.scheduledDatetime)]))
+      .get();
+  }
+
+  Future<int> insertAlarm(AlarmsCompanion alarm) {
+    return into(alarms).insert(alarm);
+  }
+
+  Future<int> updateAlarm(int id, AlarmsCompanion alarm) {
+    return (update(alarms)..where((tbl) => tbl.id.equals(id))).write(alarm);
+  }
+
+  Future<int> deleteAlarm(int id, {int? userId}) {
+    return (update(alarms)..where((tbl) => tbl.id.equals(id))).write(
+      AlarmsCompanion(
+        isDeleted: const Value(true),
+        updatedAt: Value(DateTime.now()),
+        updatedBy: Value(userId),
+      ),
+    );
+  }
+}
+
+/// DB 연결 설정
+LazyDatabase _openConnection() {
+  return LazyDatabase(() async {
+    final dbFolder = await getApplicationDocumentsDirectory();
+    final file = File(p.join(dbFolder.path, 'maeumbom.db'));
+    return NativeDatabase(file);
+  });
+}
+```
+
+#### 코드 생성
+
+```bash
+# Drift 코드 생성
+flutter pub run build_runner build --delete-conflicting-outputs
+
+# 또는 watch 모드 (자동 재생성)
+flutter pub run build_runner watch
+```
+
+### 2. 도메인 모델 (Freezed)
+
+```dart
+// lib/data/models/alarm/alarm_model.dart
+import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:drift/drift.dart' hide JsonKey;
+import '../../local/database/app_database.dart';
+
+part 'alarm_model.freezed.dart';
+part 'alarm_model.g.dart';
+
+@freezed
+class AlarmModel with _$AlarmModel {
+  const AlarmModel._();
+
+  const factory AlarmModel({
+    required int id,
+    required int year,
+    required int month,
+    required int day,
+    required List<String> week,
+    required int time,
+    required int minute,
+    required String amPm,
+    required bool isEnabled,
+    required DateTime scheduledDatetime,
+    // ... 기타 필드
+  }) = _AlarmModel;
+
+  // Drift → Model
+  factory AlarmModel.fromDrift(AlarmData data) {
+    return AlarmModel(
+      id: data.id,
+      year: data.year,
+      // ... 매핑
+    );
+  }
+
+  // Model → Drift Companion
+  AlarmsCompanion toCompanion({int? userId}) {
+    return AlarmsCompanion.insert(
+      year: year,
+      month: month,
+      // ... 매핑
+      createdBy: Value(userId),
+      updatedBy: Value(userId),
+    );
+  }
+
+  // Helper getters
+  String get timeString => '$time:${minute.toString().padLeft(2, '0')} ${amPm.toUpperCase()}';
+}
+```
+
+### 3. Repository 계층
+
+```dart
+// lib/data/repository/alarm/alarm_repository.dart
+import '../../local/database/app_database.dart';
+import '../../models/alarm/alarm_model.dart';
+
+class AlarmRepository {
+  final AppDatabase _database;
+
+  AlarmRepository(this._database);
+
+  // 조회
+  Future<List<AlarmModel>> getAllAlarms() async {
+    final alarmDataList = await _database.getAllAlarms();
+    return alarmDataList.map((data) => AlarmModel.fromDrift(data)).toList();
+  }
+
+  // 삽입
+  Future<int> insertAlarm(AlarmModel alarm, {int? userId}) async {
+    return await _database.insertAlarm(alarm.toCompanion(userId: userId));
+  }
+
+  // 수정
+  Future<void> updateAlarm(AlarmModel alarm, {int? userId}) async {
+    await _database.updateAlarm(
+      alarm.id,
+      alarm.toCompanion(userId: userId),
+    );
+  }
+
+  // 삭제 (소프트 삭제)
+  Future<void> deleteAlarm(int id, {int? userId}) async {
+    await _database.deleteAlarm(id, userId: userId);
+  }
+}
+```
+
+### 4. Provider 연동
+
+```dart
+// lib/providers/alarm_provider.dart
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../data/local/database/app_database.dart';
+import '../data/repository/alarm/alarm_repository.dart';
+import '../data/models/alarm/alarm_model.dart';
+
+// Database Provider
+final appDatabaseProvider = Provider<AppDatabase>((ref) {
+  return AppDatabase();
+});
+
+// Repository Provider
+final alarmRepositoryProvider = Provider<AlarmRepository>((ref) {
+  final database = ref.watch(appDatabaseProvider);
+  return AlarmRepository(database);
+});
+
+// State Notifier
+class AlarmNotifier extends StateNotifier<List<AlarmModel>> {
+  final AlarmRepository _repository;
+
+  AlarmNotifier(this._repository) : super([]) {
+    loadAlarms();
+  }
+
+  Future<void> loadAlarms() async {
+    final alarms = await _repository.getAllAlarms();
+    state = alarms;
+  }
+
+  Future<void> addAlarm(AlarmModel alarm) async {
+    await _repository.insertAlarm(alarm);
+    await loadAlarms();
+  }
+
+  Future<void> deleteAlarm(int id) async {
+    await _repository.deleteAlarm(id);
+    await loadAlarms();
+  }
+}
+
+// Provider
+final alarmProvider = StateNotifierProvider<AlarmNotifier, List<AlarmModel>>((ref) {
+  final repository = ref.watch(alarmRepositoryProvider);
+  return AlarmNotifier(repository);
+});
+```
+
+### 5. UI에서 사용
+
+```dart
+// lib/app/alarm/alarm_screen.dart
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../providers/alarm_provider.dart';
+
+class AlarmScreen extends ConsumerWidget {
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final alarms = ref.watch(alarmProvider);
+
+    return AppFrame(
+      body: ListView.builder(
+        itemCount: alarms.length,
+        itemBuilder: (context, index) {
+          final alarm = alarms[index];
+          return ListTile(
+            title: Text(alarm.timeString),
+            trailing: IconButton(
+              icon: Icon(Icons.delete),
+              onPressed: () async {
+                await ref.read(alarmProvider.notifier).deleteAlarm(alarm.id);
+                
+                TopNotificationManager.show(
+                  context,
+                  message: '알람이 삭제되었습니다.',
+                  type: TopNotificationType.red,
+                );
+              },
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+```
+
+### 6. DB 파일 위치 확인
+
+```dart
+// lib/debug/db_path_helper.dart
+import 'dart:io';
+import 'package:path_provider/path_provider.dart';
+import 'package:path/path.dart' as p;
+
+class DbPathHelper {
+  static Future<void> printDbPath() async {
+    final dbFolder = await getApplicationDocumentsDirectory();
+    final file = File(p.join(dbFolder.path, 'maeumbom.db'));
+    
+    print('═══════════════════════════════════════');
+    print('📂 DB File Location:');
+    print('   ${file.path}');
+    print('═══════════════════════════════════════');
+    print('📊 DB File Info:');
+    print('   Exists: ${file.existsSync()}');
+    if (file.existsSync()) {
+      print('   Size: ${file.lengthSync()} bytes');
+    }
+    print('═══════════════════════════════════════');
+  }
+}
+```
+
+```dart
+// lib/main.dart
+import 'debug/db_path_helper.dart';
+
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  
+  // 🔍 DB 경로 출력 (디버그용)
+  await DbPathHelper.printDbPath();
+  
+  runApp(const ProviderScope(child: MaeumBomApp()));
+}
+```
+
+### 플랫폼별 DB 위치
+
+#### iOS (시뮬레이터)
+```
+~/Library/Developer/CoreSimulator/Devices/[DEVICE_ID]/data/Containers/Data/Application/[APP_ID]/Documents/maeumbom.db
+```
+
+#### Android
+```
+/data/data/com.example.maeumbom/app_flutter/maeumbom.db
+```
+
+### DB 확인 방법
+
+#### 1. SQLite CLI
+```bash
+# 터미널에서 출력된 경로 복사 후
+sqlite3 "/경로/maeumbom.db"
+
+# 테이블 확인
+.tables
+
+# 데이터 조회
+SELECT * FROM TB_ALARMS;
+
+# 종료
+.quit
+```
+
+#### 2. DB Browser for SQLite (추천)
+1. [DB Browser for SQLite](https://sqlitebrowser.org/) 다운로드
+2. 앱 실행 후 출력된 경로의 `maeumbom.db` 파일 열기
+3. GUI로 데이터 확인 및 수정
+
+### 백엔드 DB 규칙 준수
+
+마음봄 프로젝트는 프론트엔드와 백엔드의 일관성을 위해 동일한 DB 규칙을 따릅니다.
+
+#### 명명 규칙
+
+```dart
+// ✅ 테이블명: TB_ 접두사 + 대문자
+@override
+String get tableName => 'TB_ALARMS';
+
+// ✅ 컬럼명: 대문자 스네이크 케이스 (Drift가 자동 변환)
+IntColumn get year => integer()();        // → YEAR
+TextColumn get amPm => text()();          // → AM_PM
+BoolColumn get isDeleted => boolean()();  // → IS_DELETED
+```
+
+#### 표준 필드
+
+모든 테이블에 다음 필드를 포함해야 합니다:
+
+```dart
+BoolColumn get isDeleted => boolean().withDefault(const Constant(false))();
+DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
+IntColumn get createdBy => integer().nullable()();
+DateTimeColumn get updatedAt => dateTime().withDefault(currentDateAndTime)();
+IntColumn get updatedBy => integer().nullable()();
+```
+
+### 마이그레이션
+
+스키마 변경 시:
+
+```dart
+@DriftDatabase(tables: [Alarms, NewTable])
+class AppDatabase extends _$AppDatabase {
+  @override
+  int get schemaVersion => 2; // 버전 증가
+
+  @override
+  MigrationStrategy get migration {
+    return MigrationStrategy(
+      onCreate: (Migrator m) async {
+        await m.createAll();
+      },
+      onUpgrade: (Migrator m, int from, int to) async {
+        if (from == 1) {
+          // 버전 1 → 2 마이그레이션
+          await m.addColumn(alarms, alarms.newColumn);
+        }
+      },
+    );
+  }
+}
+```
+
+### Best Practices
+
+#### ✅ 권장
+
+```dart
+// 1. 소프트 삭제 사용
+Future<void> deleteAlarm(int id) {
+  return (update(alarms)..where((tbl) => tbl.id.equals(id))).write(
+    AlarmsCompanion(isDeleted: const Value(true)),
+  );
+}
+
+// 2. Repository 계층 사용
+final repository = ref.watch(alarmRepositoryProvider);
+await repository.insertAlarm(alarm);
+
+// 3. 도메인 모델과 Drift 분리
+AlarmModel.fromDrift(alarmData)  // Drift → Model
+alarm.toCompanion()              // Model → Drift
+
+// 4. Provider로 상태 관리
+final alarms = ref.watch(alarmProvider);
+```
+
+#### ❌ 비권장
+
+```dart
+// 1. UI에서 직접 DB 접근 ❌
+final database = AppDatabase();
+await database.insertAlarm(...);
+
+// 2. 하드 삭제 ❌
+await (delete(alarms)..where((tbl) => tbl.id.equals(id))).go();
+
+// 3. 표준 필드 누락 ❌
+class MyTable extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  TextColumn get name => text()();
+  // isDeleted, createdAt 등 누락 ❌
+}
+```
+
+### 참고 문서
+
+- **[Drift 공식 문서](https://drift.simonbinder.eu/)** - 상세 API 가이드
+- **[backend/DB_GUIDE.md](../../backend/DB_GUIDE.md)** - 백엔드 DB 규칙
+- **구현 파일**: `lib/data/local/database/app_database.dart`
+
+---
+
+## 📢 사용자 피드백 (TopNotification)
+
+### 개요
+
+화면 개발 시 사용자에게 작업 결과나 상태를 알려야 할 때는 **TopNotification**을 사용하세요.
+
+Flutter의 기본 `SnackBar` 대신 디자인 시스템에 정의된 `TopNotification`을 사용하면 일관된 UX를 제공할 수 있습니다.
+
+### 언제 사용하나요?
+
+- ✅ 데이터 저장/수정/삭제 완료 시
+- ✅ API 요청 성공/실패 시
+- ✅ 폼 제출 결과 알림
+- ✅ 중요한 상태 변경 알림
+- ✅ 사용자 액션에 대한 즉각적인 피드백
+
+### 기본 사용법
+
+```dart
+import '../../ui/app_ui.dart';
+
+// ✅ 성공 메시지 (녹색)
+TopNotificationManager.show(
+  context,
+  message: '알람이 설정되었습니다.',
+  type: TopNotificationType.green,
+  duration: const Duration(milliseconds: 2000),
+);
+
+// ✅ 경고/삭제 메시지 (빨간색)
+TopNotificationManager.show(
+  context,
+  message: '알람이 삭제되었습니다.',
+  type: TopNotificationType.red,
+  duration: const Duration(milliseconds: 2000),
+);
+
+// ✅ 실행취소 액션 포함
+TopNotificationManager.show(
+  context,
+  message: '알람이 삭제되었습니다.',
+  actionLabel: '실행취소',
+  type: TopNotificationType.red,
+  onActionTap: () {
+    // 실행취소 로직
+    _undoDelete();
+  },
+);
+```
+
+### 타입별 사용 가이드
+
+#### 🟢 Green (성공, 완료)
+
+```dart
+// 데이터 저장 성공
+TopNotificationManager.show(
+  context,
+  message: '저장되었습니다.',
+  type: TopNotificationType.green,
+);
+
+// 설정 변경 완료
+TopNotificationManager.show(
+  context,
+  message: '설정이 변경되었습니다.',
+  type: TopNotificationType.green,
+);
+
+// 업로드 완료
+TopNotificationManager.show(
+  context,
+  message: '파일이 업로드되었습니다.',
+  type: TopNotificationType.green,
+);
+```
+
+#### 🔴 Red (경고, 삭제, 중요 알림)
+
+```dart
+// 삭제 완료
+TopNotificationManager.show(
+  context,
+  message: '항목이 삭제되었습니다.',
+  type: TopNotificationType.red,
+);
+
+// 오류 발생
+TopNotificationManager.show(
+  context,
+  message: '오류가 발생했습니다. 다시 시도해주세요.',
+  type: TopNotificationType.red,
+);
+
+// 중요한 경고
+TopNotificationManager.show(
+  context,
+  message: '네트워크 연결을 확인해주세요.',
+  type: TopNotificationType.red,
+);
+```
+
+### 실전 예시
+
+#### 예시 1: 폼 제출
+
+```dart
+class ProfileEditScreen extends ConsumerWidget {
+  Future<void> _saveProfile(WidgetRef ref) async {
+    try {
+      await ref.read(profileProvider.notifier).updateProfile(profileData);
+      
+      // ✅ 성공 피드백
+      TopNotificationManager.show(
+        context,
+        message: '프로필이 저장되었습니다.',
+        type: TopNotificationType.green,
+      );
+      
+      Navigator.pop(context);
+    } catch (e) {
+      // ❌ 실패 피드백
+      TopNotificationManager.show(
+        context,
+        message: '저장에 실패했습니다. 다시 시도해주세요.',
+        type: TopNotificationType.red,
+      );
+    }
+  }
+}
+```
+
+#### 예시 2: 삭제 with 실행취소
+
+```dart
+class AlarmScreen extends ConsumerWidget {
+  Future<void> _deleteAlarm(WidgetRef ref, int alarmId) async {
+    // 임시로 삭제된 알람 저장
+    final deletedAlarm = alarms.firstWhere((a) => a.id == alarmId);
+    
+    // 삭제 실행
+    await ref.read(alarmProvider.notifier).deleteAlarm(alarmId);
+    
+    // ✅ 실행취소 가능한 피드백
+    TopNotificationManager.show(
+      context,
+      message: '알람이 삭제되었습니다.',
+      actionLabel: '실행취소',
+      type: TopNotificationType.red,
+      onActionTap: () async {
+        // 실행취소 로직
+        await ref.read(alarmProvider.notifier).restoreAlarm(deletedAlarm);
+        
+        TopNotificationManager.show(
+          context,
+          message: '알람이 복구되었습니다.',
+          type: TopNotificationType.green,
+        );
+      },
+    );
+  }
+}
+```
+
+#### 예시 3: API 요청 결과
+
+```dart
+class SurveyScreen extends ConsumerWidget {
+  Future<void> _submitSurvey(WidgetRef ref) async {
+    final surveyState = await ref.read(surveyProvider.notifier).submitSurvey(answers);
+    
+    surveyState.when(
+      data: (result) {
+        // ✅ 성공
+        TopNotificationManager.show(
+          context,
+          message: '설문이 제출되었습니다.',
+          type: TopNotificationType.green,
+        );
+      },
+      error: (error, stack) {
+        // ❌ 실패
+        TopNotificationManager.show(
+          context,
+          message: '제출에 실패했습니다.',
+          type: TopNotificationType.red,
+        );
+      },
+      loading: () {},
+    );
+  }
+}
+```
+
+### ❌ 비권장: SnackBar 사용
+
+```dart
+// ❌ 비권장: Flutter 기본 SnackBar
+ScaffoldMessenger.of(context).showSnackBar(
+  SnackBar(
+    content: Text('저장되었습니다.'),
+    backgroundColor: Colors.green,
+  ),
+);
+
+// ✅ 권장: TopNotification 사용
+TopNotificationManager.show(
+  context,
+  message: '저장되었습니다.',
+  type: TopNotificationType.green,
+);
+```
+
+### 주요 특징
+
+#### 1. 일관된 디자인
+- 디자인 시스템 색상 자동 적용 (`AppColors.accentRed`, `AppColors.natureGreen`)
+- 통일된 위치 (TopBar 바로 아래)
+- 일관된 애니메이션
+
+#### 2. 자동 관리
+- 2초 후 자동 닫힘 (duration 조정 가능)
+- 새 알림 표시 시 이전 알림 자동 제거
+- 오버레이 기반으로 어떤 화면에서도 사용 가능
+
+#### 3. 접근성
+- 명확한 메시지 전달
+- 선택적 액션 버튼 (실행취소 등)
+- 시각적으로 눈에 잘 띄는 위치
+
+### 파라미터 상세
+
+```dart
+TopNotificationManager.show(
+  BuildContext context,           // 필수: BuildContext
+  {
+    required String message,      // 필수: 표시할 메시지
+    String? actionLabel,          // 선택: 액션 버튼 텍스트
+    VoidCallback? onActionTap,    // 선택: 액션 버튼 콜백
+    TopNotificationType type,     // 선택: red(기본) 또는 green
+    Duration duration,            // 선택: 표시 시간 (기본 2000ms)
+  }
+)
+```
+
+### Best Practices
+
+#### ✅ 권장
+
+```dart
+// 1. 짧고 명확한 메시지
+TopNotificationManager.show(
+  context,
+  message: '저장되었습니다.',
+  type: TopNotificationType.green,
+);
+
+// 2. 적절한 타입 선택
+// - 성공/완료 → green
+// - 삭제/경고/오류 → red
+
+// 3. 중요한 삭제 시 실행취소 제공
+TopNotificationManager.show(
+  context,
+  message: '삭제되었습니다.',
+  actionLabel: '실행취소',
+  type: TopNotificationType.red,
+  onActionTap: () => _undo(),
+);
+
+// 4. try-catch와 함께 사용
+try {
+  await saveData();
+  TopNotificationManager.show(context, message: '저장 완료', type: TopNotificationType.green);
+} catch (e) {
+  TopNotificationManager.show(context, message: '저장 실패', type: TopNotificationType.red);
+}
+```
+
+#### ❌ 비권장
+
+```dart
+// 1. 너무 긴 메시지 ❌
+TopNotificationManager.show(
+  context,
+  message: '사용자의 프로필 정보가 성공적으로 서버에 저장되었으며 이제 다른 사용자들도 볼 수 있습니다.',
+  type: TopNotificationType.green,
+);
+
+// 2. 중복 호출 ❌
+TopNotificationManager.show(context, message: '첫 번째');
+TopNotificationManager.show(context, message: '두 번째'); // 첫 번째가 즉시 사라짐
+
+// 3. 불필요한 알림 남발 ❌
+// 모든 작은 액션마다 알림을 표시하지 마세요
+```
+
+### 참고 문서
+
+- **[DESIGN_GUIDE.md - TopNotification](./DESIGN_GUIDE.md#93-topnotification)** - 디자인 상세 가이드
+- **구현 파일**: `lib/ui/components/top_notification.dart`
+
+---
+
 ## 🔨 개발 워크플로우
 
 ### 새로운 화면 추가
