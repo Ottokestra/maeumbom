@@ -6,17 +6,14 @@ import '../../app/report/report_screen.dart';
 import '../../app/settings/mypage_screen.dart';
 import '../../app/common/login_screen.dart';
 import '../../app/example/example_screen.dart';
-import '../../app/sign/sign_up_slide_screen.dart';
 import '../../app/sign/sign_up1.dart';
 import '../../app/survey/menopause_survey_screen.dart';
 import '../../app/example/bubble_screen.dart';
 import '../../app/onboarding/splash_screen.dart';
 import '../../app/chat/bomi_screen.dart';
-import '../../app/training/training_screen.dart';
 import '../../app/chat/chat_list_screen.dart';
-// import '../../app/training/training_screen.dart'; // No longer used if we skip it
-import '../../app/training/relation_training_screen.dart';
-import '../../app/training/relation_training_list_screen.dart'; // Add import
+import '../../app/training/relation_training_list_screen.dart';
+import '../../app/slang_quiz/slang_quiz_start_screen.dart';
 
 /// 라우트 메타데이터
 class RouteMetadata {
@@ -116,6 +113,13 @@ class AppRoutes {
     requiresAuth: true,
   );
 
+  // Slang Quiz Routes
+  static const RouteMetadata slangQuizStart = RouteMetadata(
+    routeName: '/training/slang-quiz/start',
+    builder: SlangQuizStartScreen.new,
+    requiresAuth: true,
+  );
+
   /// 모든 라우트 목록
   // static const List<RouteMetadata> allRoutes = [
   static final List<RouteMetadata> allRoutes = [
@@ -133,6 +137,7 @@ class AppRoutes {
     bomi,
     training,
     menopauseSurvey,
+    slangQuizStart,
   ];
 
   /// 경로 이름으로 라우트 찾기
