@@ -46,6 +46,7 @@ from app.weather.routes import router as weather_router
 from app.routine_survey.routers import router as routine_survey_router
 from app.routine_survey.models import seed_default_mr_survey  # 사용 여부와 무관하게 유지
 from app.reports.router import router as reports_router
+from app.reports.emotion_weekly.router import router as emotion_weekly_report_router
 from app.health.router import router as health_router
 from app.emotion.router import router as emotion_v1_router
 from app.recommendations.router import router as recommendations_router
@@ -193,6 +194,7 @@ except Exception as e:
 
 # Reports
 app.include_router(reports_router, prefix="/api", tags=["reports"])
+app.include_router(emotion_weekly_report_router)
 
 # =========================
 # Authentication (Google OAuth + JWT)
