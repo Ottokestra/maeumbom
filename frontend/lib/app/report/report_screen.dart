@@ -8,6 +8,7 @@ import '../../data/dtos/report/user_report_response.dart';
 import '../../data/dtos/user_phase/user_pattern_setting_update.dart';
 import '../../data/dtos/user_phase/user_pattern_setting_response.dart';
 import '../../data/dtos/user_phase/user_phase_response.dart';
+import '../../data/models/report/weekly_mood_report.dart';
 import '../../providers/report_provider.dart';
 import '../../ui/app_ui.dart';
 import '../../ui/characters/app_characters.dart';
@@ -36,6 +37,11 @@ class ReportScreen extends ConsumerWidget {
           ref.refresh(emotionHistoryProvider(selectedRange));
           ref.refresh(currentPhaseProvider);
           ref.refresh(phaseSettingsProvider);
+          ref.refresh(
+            weeklyMoodReportProvider(
+              ref.read(weeklyMoodWeekOffsetProvider),
+            ),
+          );
         },
         title: '마음리포트',
         rightIcon: Icons.close,
@@ -87,6 +93,11 @@ class _ReportBody extends ConsumerWidget {
     return RefreshIndicator(
       onRefresh: () async {
         await ref.refresh(emotionHistoryProvider(selectedRange).future);
+        await ref.refresh(
+          weeklyMoodReportProvider(
+            ref.read(weeklyMoodWeekOffsetProvider),
+          ).future,
+        );
       },
       child: SingleChildScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
@@ -134,6 +145,8 @@ class _ReportBody extends ConsumerWidget {
                 summary: summary,
               ),
             ),
+            const SizedBox(height: AppSpacing.md),
+            const ReportContent(),
             const SizedBox(height: AppSpacing.xl),
           ],
         ),
@@ -283,14 +296,21 @@ class _PhaseStatusCard extends StatelessWidget {
             phase.message,
             style: AppTypography.body.copyWith(color: AppColors.textSecondary),
 /// Report Content with Vertical Scroll
-class ReportContent extends StatelessWidget {
+class ReportContent extends ConsumerWidget {
   const ReportContent({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      child: Column(
-        children: [
+  Widget build(BuildContext context, WidgetRef ref) {
+    final weekOffset = ref.watch(weeklyMoodWeekOffsetProvider);
+    final reportAsync = ref.watch(weeklyMoodReportProvider(weekOffset));
+
+    final report = reportAsync.valueOrNull ?? _fallbackWeeklyMoodReport();
+    final isNextDisabled = weekOffset >= 0;
+    final isInitialLoading =
+        reportAsync.isLoading && reportAsync.valueOrNull == null;
+
+    return Column(
+      children: [
           // 날짜 표시 헤더 (화살표 네비게이션)
           Padding(
             padding: const EdgeInsets.symmetric(
@@ -300,48 +320,70 @@ class ReportContent extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                // 왼쪽 화살표
                 IconButton(
                   icon: const Icon(Icons.chevron_left),
                   color: AppColors.textSecondary,
                   onPressed: () {
-                    // TODO: 이전 주로 이동
+                    ref.read(weeklyMoodWeekOffsetProvider.notifier).state =
+                        weekOffset - 1;
                   },
                 ),
-
-                // 중앙 날짜 표시
                 Text(
-                  '2025년 1월 1주차',
+                  report.weekLabel.isNotEmpty
+                      ? report.weekLabel
+                      : '주간 리포트',
                   style: AppTypography.h3.copyWith(
                     color: AppColors.textPrimary,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
-
-                // 오른쪽 화살표
                 IconButton(
                   icon: const Icon(Icons.chevron_right),
-                  color: AppColors.textSecondary,
-                  onPressed: () {
-                    // TODO: 다음 주로 이동
-                  },
+                  color: isNextDisabled
+                      ? AppColors.borderLight
+                      : AppColors.textSecondary,
+                  onPressed: isNextDisabled
+                      ? null
+                      : () {
+                          ref
+                              .read(weeklyMoodWeekOffsetProvider.notifier)
+                              .state =
+                          weekOffset + 1;
+                        },
                 ),
               ],
             ),
           ),
 
-          // 페이지 1: 이번주 감정 온도
-          const ReportPage1(),
+          if (isInitialLoading)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: AppSpacing.lg),
+              child: CircularProgressIndicator(),
+            )
+          else ...[
+            // 페이지 1: 이번주 감정 온도
+            ReportPage1(report: report),
 
-          const SizedBox(height: AppSpacing.xl),
+            const SizedBox(height: AppSpacing.xl),
 
-          // 페이지 2: 요일별 감정 캐릭터
-          const ReportPage2(),
+            // 페이지 2: 요일별 감정 캐릭터
+            ReportPage2(report: report),
 
-          const SizedBox(height: AppSpacing.xl),
+            const SizedBox(height: AppSpacing.xl),
 
-          // 페이지 3: 이번주 감정 분석 상세
-          const ReportPage3(),
+            // 페이지 3: 이번주 감정 분석 상세
+            ReportPage3(report: report),
+          ],
+
+          if (reportAsync.hasError)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
+              child: Text(
+                '리포트를 불러오지 못했어요. 기본 정보를 표시합니다.',
+                style: AppTypography.caption
+                    .copyWith(color: AppColors.textSecondary),
+              ),
+            ),
 
           const SizedBox(height: AppSpacing.xl),
         ],
@@ -376,6 +418,66 @@ class _PhaseSettingsCard extends StatelessWidget {
       ],
     );
   }
+}
+
+WeeklyMoodReport _fallbackWeeklyMoodReport() {
+  final now = DateTime.now();
+  final startOfWeek = now.subtract(Duration(days: now.weekday - 1));
+  final endOfWeek = startOfWeek.add(const Duration(days: 6));
+
+  final dominant = WeeklyEmotionRanking(
+    rank: 1,
+    code: 'JOY',
+    label: '기쁨',
+    percent: 35,
+    count: 12,
+    characterCode: 'joy',
+  );
+
+  final daily = List<DailyMoodSticker>.generate(7, (index) {
+    final date = startOfWeek.add(Duration(days: index));
+    const weekdays = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
+    final hasRecord = index < 2;
+    return DailyMoodSticker(
+      date: date,
+      weekday: weekdays[index],
+      emotionCode: hasRecord ? 'JOY' : null,
+      emotionLabel: hasRecord ? '기쁨' : null,
+      characterCode: hasRecord ? 'joy' : null,
+      hasRecord: hasRecord,
+    );
+  });
+
+  final rankings = [
+    dominant,
+    WeeklyEmotionRanking(
+      rank: 2,
+      code: 'LOVE',
+      label: '사랑',
+      percent: 25,
+      count: 8,
+      characterCode: 'love',
+    ),
+    WeeklyEmotionRanking(
+      rank: 3,
+      code: 'RELIEF',
+      label: '안정',
+      percent: 20,
+      count: 6,
+      characterCode: 'relief',
+    ),
+  ];
+
+  return WeeklyMoodReport(
+    weekLabel: '이번 주',
+    weekStart: startOfWeek,
+    weekEnd: endOfWeek,
+    overallScorePercent: 75,
+    dominantEmotion: dominant,
+    dailyCharacters: daily,
+    emotionRankings: rankings,
+    analysisText: '이번 주에는 기쁨 감정을 가장 많이 느끼셨네요!',
+  );
 }
 
 class _RecommendationButtons extends ConsumerWidget {

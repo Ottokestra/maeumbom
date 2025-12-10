@@ -1,61 +1,42 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import '../../../data/models/report/weekly_mood_report.dart';
 import '../../../ui/app_ui.dart';
+import 'report_page_utils.dart';
 
 /// 페이지 2: 요일별 감정 캐릭터 스티커
 class ReportPage2 extends StatelessWidget {
-  const ReportPage2({super.key});
+  const ReportPage2({super.key, required this.report});
+
+  final WeeklyMoodReport report;
 
   @override
   Widget build(BuildContext context) {
-    // TODO: API에서 데이터 가져오기
-    final List<DailyEmotion> weeklyEmotions = [
-      DailyEmotion(
-        day: '월요일',
-        date: '1/1',
-        emotion: EmotionId.joy,
-        isCollected: true,
-      ),
-      DailyEmotion(
-        day: '화요일',
-        date: '1/2',
-        emotion: EmotionId.love,
-        isCollected: true,
-      ),
-      DailyEmotion(
-        day: '수요일',
-        date: '1/3',
-        emotion: EmotionId.relief,
-        isCollected: false,
-      ),
-      DailyEmotion(
-        day: '목요일',
-        date: '1/4',
-        emotion: EmotionId.excitement,
-        isCollected: false,
-      ),
-      DailyEmotion(
-        day: '금요일',
-        date: '1/5',
-        emotion: EmotionId.interest,
-        isCollected: false,
-      ),
-      DailyEmotion(
-        day: '토요일',
-        date: '1/6',
-        emotion: EmotionId.sadness,
-        isCollected: false,
-      ),
-      DailyEmotion(
-        day: '일요일',
-        date: '1/7',
-        emotion: EmotionId.anger,
-        isCollected: false,
-      ),
-    ];
+    final List<_DailyEmotionView> weeklyEmotions = report.dailyCharacters
+        .map(
+          (sticker) => _DailyEmotionView(
+            day: formatWeekdayLabel(sticker.weekday),
+            date: formatShortDate(sticker.date),
+            emotion: sticker.hasRecord
+                ? mapEmotionFromCode(
+                    sticker.characterCode,
+                    emotionLabel: sticker.emotionLabel,
+                  )
+                : null,
+            isCollected: sticker.hasRecord,
+          ),
+        )
+        .toList();
 
-    final int collectedCount = weeklyEmotions.where((e) => e.isCollected).length;
-    final double progress = collectedCount / 7;
+    final int totalDays = weeklyEmotions.isEmpty ? 7 : weeklyEmotions.length;
+    final int collectedCount =
+        weeklyEmotions.where((e) => e.isCollected).length;
+    final double progress =
+        totalDays == 0 ? 0 : collectedCount / totalDays.clamp(1, 7);
+
+    final firstRow = weeklyEmotions.take(3).toList();
+    final secondRow = weeklyEmotions.skip(3).take(3).toList();
+    final thirdRow = weeklyEmotions.skip(6).take(1).toList();
 
     return Padding(
       padding: const EdgeInsets.all(AppSpacing.lg),
@@ -151,24 +132,20 @@ class ReportPage2 extends StatelessWidget {
               // 첫 번째 줄 (월, 화, 수)
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: weeklyEmotions
-                    .sublist(0, 3)
-                    .map((emotion) => _buildEmotionCircle(emotion))
-                    .toList(),
+                children:
+                    firstRow.map((emotion) => _buildEmotionCircle(emotion)).toList(),
               ),
               const SizedBox(height: AppSpacing.lg),
               // 두 번째 줄 (목, 금, 토)
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: weeklyEmotions
-                    .sublist(3, 6)
-                    .map((emotion) => _buildEmotionCircle(emotion))
-                    .toList(),
+                children:
+                    secondRow.map((emotion) => _buildEmotionCircle(emotion)).toList(),
               ),
               const SizedBox(height: AppSpacing.lg),
               // 세 번째 줄 (일)
-              weeklyEmotions.length > 6
-                  ? _buildEmotionCircle(weeklyEmotions[6])
+              thirdRow.isNotEmpty
+                  ? _buildEmotionCircle(thirdRow.first)
                   : const SizedBox.shrink(),
             ],
           ),
@@ -178,7 +155,7 @@ class ReportPage2 extends StatelessWidget {
   }
 
   /// 감정 원형 위젯
-  Widget _buildEmotionCircle(DailyEmotion emotion) {
+  Widget _buildEmotionCircle(_DailyEmotionView emotion) {
     return SizedBox(
       width: 100,
       height: 130,
@@ -277,17 +254,16 @@ class ReportPage2 extends StatelessWidget {
   }
 }
 
-/// 일일 감정 데이터 모델
-class DailyEmotion {
-  final String day;
-  final String date;
-  final EmotionId? emotion;
-  final bool isCollected;
-
-  DailyEmotion({
+class _DailyEmotionView {
+  _DailyEmotionView({
     required this.day,
     required this.date,
     required this.emotion,
     required this.isCollected,
   });
+
+  final String day;
+  final String date;
+  final EmotionId? emotion;
+  final bool isCollected;
 }

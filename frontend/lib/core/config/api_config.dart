@@ -72,6 +72,7 @@ class ApiConfig {
   // Emotion Report Endpoints
   static const String emotionReportBase = '/api/v1/reports/emotion';
   static const String emotionWeeklyReport = '$emotionReportBase/weekly';
+  static const String weeklyMoodReport = '/api/dashboard/weekly-mood-report';
 
   // Timeout Configuration
   static const Duration connectTimeout = Duration(seconds: 30);

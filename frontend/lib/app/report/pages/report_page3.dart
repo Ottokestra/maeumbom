@@ -1,52 +1,22 @@
 import 'package:flutter/material.dart';
+import '../../../data/models/report/weekly_mood_report.dart';
 import '../../../ui/app_ui.dart';
+import 'report_page_utils.dart';
 
 /// 페이지 3: 이번주 감정 분석 상세
 class ReportPage3 extends StatelessWidget {
-  const ReportPage3({super.key});
+  const ReportPage3({super.key, required this.report});
+
+  final WeeklyMoodReport report;
 
   @override
   Widget build(BuildContext context) {
-    // TODO: API에서 데이터 가져오기
-    final EmotionRank topEmotion = EmotionRank(
-      rank: 1,
-      emotion: EmotionId.joy,
-      emotionName: '기쁨',
-      percentage: 35,
-      count: 12,
+    final topEmotionId = mapEmotionFromCode(
+      report.dominantEmotion.characterCode,
+      emotionLabel: report.dominantEmotion.label,
     );
-
-    final List<EmotionRank> allEmotions = [
-      topEmotion,
-      EmotionRank(
-        rank: 2,
-        emotion: EmotionId.love,
-        emotionName: '사랑',
-        percentage: 25,
-        count: 8,
-      ),
-      EmotionRank(
-        rank: 3,
-        emotion: EmotionId.relief,
-        emotionName: '안정',
-        percentage: 20,
-        count: 6,
-      ),
-      EmotionRank(
-        rank: 4,
-        emotion: EmotionId.excitement,
-        emotionName: '의욕',
-        percentage: 15,
-        count: 5,
-      ),
-      EmotionRank(
-        rank: 5,
-        emotion: EmotionId.interest,
-        emotionName: '관심',
-        percentage: 10,
-        count: 3,
-      ),
-    ];
+    final topEmotion = report.dominantEmotion;
+    final List<WeeklyEmotionRanking> allEmotions = report.emotionRankings;
 
     return Padding(
       padding: const EdgeInsets.all(AppSpacing.lg),
@@ -93,7 +63,7 @@ class ReportPage3 extends StatelessWidget {
           const SizedBox(height: AppSpacing.xl),
 
           // 상위 감정 카드
-          _buildTopEmotionCard(topEmotion),
+          _buildTopEmotionCard(topEmotion, topEmotionId),
 
           const SizedBox(height: AppSpacing.xl),
 
@@ -110,7 +80,11 @@ class ReportPage3 extends StatelessWidget {
             ),
             child: Column(
               children: allEmotions.skip(1).map((emotion) {
-                final emotionColor = getEmotionPrimaryColor(emotion.emotion);
+                final emotionId = mapEmotionFromCode(
+                  emotion.characterCode,
+                  emotionLabel: emotion.label,
+                );
+                final emotionColor = getEmotionPrimaryColor(emotionId);
                 final isFirst = emotion.rank == 2; // 2위가 리스트의 첫 번째
                 return Padding(
                   padding: EdgeInsets.only(
@@ -155,7 +129,7 @@ class ReportPage3 extends StatelessWidget {
 
                         // 감정 캐릭터
                         EmotionCharacter(
-                          id: emotion.emotion,
+                          id: emotionId,
                           use2d: true,
                           size: 32,
                         ),
@@ -164,7 +138,7 @@ class ReportPage3 extends StatelessWidget {
 
                         // 감정 이름
                         Text(
-                          emotion.emotionName,
+                          emotion.label,
                           style: AppTypography.body.copyWith(
                             color: AppColors.textPrimary,
                             fontWeight: isFirst ? FontWeight.w700 : FontWeight.w500,
@@ -175,7 +149,7 @@ class ReportPage3 extends StatelessWidget {
 
                         // 퍼센트
                         Text(
-                          '${emotion.percentage}%',
+                          '${emotion.percent.toStringAsFixed(0)}%',
                           style: AppTypography.body.copyWith(
                             color: AppColors.textPrimary,
                             fontWeight: FontWeight.w600,
@@ -220,7 +194,9 @@ class ReportPage3 extends StatelessWidget {
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  '이번 주에는 기쁨 감정을 가장 많이 느끼셨네요! 긍정적인 감정이 주를 이루고 있어 마음이 안정적인 상태입니다. 계속해서 이런 긍정적인 마음을 유지하시면 좋겠어요.',
+                  report.analysisText.isNotEmpty
+                      ? report.analysisText
+                      : '이번 주에는 ${report.dominantEmotion.label} 감정을 가장 많이 느끼셨네요! 긍정적인 감정이 주를 이루고 있어 마음이 안정적인 상태입니다. 계속해서 이런 긍정적인 마음을 유지하시면 좋겠어요.',
                   style: AppTypography.body.copyWith(
                     color: AppColors.textPrimary,
                     height: 1.5,
@@ -235,8 +211,11 @@ class ReportPage3 extends StatelessWidget {
   }
 
   /// 상위 감정 카드
-  Widget _buildTopEmotionCard(EmotionRank emotion) {
-    final Color emotionColor = getEmotionPrimaryColor(emotion.emotion);
+  Widget _buildTopEmotionCard(
+    WeeklyEmotionRanking emotion,
+    EmotionId emotionId,
+  ) {
+    final Color emotionColor = getEmotionPrimaryColor(emotionId);
 
     return Container(
       padding: const EdgeInsets.all(AppSpacing.lg),
@@ -257,7 +236,7 @@ class ReportPage3 extends StatelessWidget {
           Align(
             alignment: Alignment.centerRight,
             child: EmotionCharacter(
-              id: emotion.emotion,
+              id: emotionId,
               size: 120,
             ),
           ),
@@ -287,7 +266,7 @@ class ReportPage3 extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  emotion.emotionName,
+                  emotion.label,
                   style: AppTypography.h1.copyWith(
                     color: AppColors.pureWhite,
                     fontWeight: FontWeight.w700,
@@ -307,7 +286,7 @@ class ReportPage3 extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      '${emotion.percentage}%',
+                      '${emotion.percent.toStringAsFixed(0)}%',
                       style: AppTypography.h1.copyWith(
                         color: AppColors.pureWhite,
                         fontWeight: FontWeight.w700,
@@ -323,122 +302,4 @@ class ReportPage3 extends StatelessWidget {
       ),
     );
   }
-
-  /// 감정 순위 아이템
-  Widget _buildEmotionRankItem(EmotionRank emotion) {
-    final Color emotionColor = getEmotionPrimaryColor(emotion.emotion);
-
-    return Row(
-      children: [
-        // 순위
-        SizedBox(
-          width: 32,
-          child: Text(
-            '${emotion.rank}',
-            style: AppTypography.h3.copyWith(
-              color: AppColors.textSecondary,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ),
-
-        const SizedBox(width: AppSpacing.sm),
-
-        // 캐릭터
-        Container(
-          width: 56,
-          height: 56,
-          decoration: BoxDecoration(
-            color: emotionColor.withOpacity(0.12),
-            shape: BoxShape.circle,
-          ),
-          child: Center(
-            child: EmotionCharacter(
-              id: emotion.emotion,
-              size: 40,
-            ),
-          ),
-        ),
-
-        const SizedBox(width: AppSpacing.md),
-
-        // 감정 정보 및 진행 바
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    emotion.emotionName,
-                    style: AppTypography.body.copyWith(
-                      color: AppColors.textPrimary,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  Text(
-                    '${emotion.percentage}%',
-                    style: AppTypography.h3.copyWith(
-                      color: AppColors.textPrimary,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 4),
-              Text(
-                '${emotion.count}회 기록됨',
-                style: AppTypography.caption.copyWith(
-                  color: AppColors.textSecondary,
-                ),
-              ),
-              const SizedBox(height: 8),
-              // 진행 바
-              Stack(
-                children: [
-                  // 배경
-                  Container(
-                    height: 6,
-                    decoration: BoxDecoration(
-                      color: AppColors.borderLight,
-                      borderRadius: BorderRadius.circular(3),
-                    ),
-                  ),
-                  // 진행
-                  FractionallySizedBox(
-                    widthFactor: emotion.percentage / 100,
-                    child: Container(
-                      height: 6,
-                      decoration: BoxDecoration(
-                        color: emotionColor,
-                        borderRadius: BorderRadius.circular(3),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-/// 감정 순위 데이터 모델
-class EmotionRank {
-  final int rank;
-  final EmotionId emotion;
-  final String emotionName;
-  final int percentage;
-  final int count;
-
-  EmotionRank({
-    required this.rank,
-    required this.emotion,
-    required this.emotionName,
-    required this.percentage,
-    required this.count,
-  });
 }
