@@ -287,10 +287,12 @@ def generate_llm_response(
     emotion_result: Dict[str, Any],
     conversation_history: List[Dict],
     memory_context: str,
-    rag_context: str
+    rag_context: str,
+    user_id: int = None  # 🆕 Phase 3: Added for user profile
 ) -> str:
     """
     Generate response using GPT-4o-mini with Emotion & Context (No Routine)
+    **Phase 3**: Uses casual tone (반말) and includes TB_USER_PROFILE data
     """
     client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
     
@@ -302,25 +304,68 @@ def generate_llm_response(
         emotion_summary = "neutral (분석 생략됨)"
         emotion_result = {}  # Empty dict to avoid None errors below
     
-    system_prompt = f"""당신은 갱년기 여성을 위한 공감형 AI 친구 '봄이'의 "오케스트레이터(Orchestrator)"입니다.
-당신의 목표는 대화 흐름을 관리하고, 사용자의 의도를 파악하며, 전문 하위 에이전트나 도구에 작업을 효율적으로 위임하는 것입니다.
+    # 🆕 Phase 3: Fetch user profile from TB_USER_PROFILE
+    user_profile_context = ""
+    if user_id:
+        try:
+            from app.db.database import SessionLocal
+            from app.db.models import UserProfile
+            
+            db = SessionLocal()
+            try:
+                profile = db.query(UserProfile).filter(
+                    UserProfile.USER_ID == user_id,
+                    UserProfile.IS_DELETED == False
+                ).first()
+                
+                if profile:
+                    user_profile_context = f"""
+[사용자 프로필]
+- 닉네임: {profile.NICKNAME}
+- 연령대: {profile.AGE_GROUP}
+- 성별: {profile.GENDER}
+- 결혼 상태: {profile.MARITAL_STATUS}
+- 자녀 여부: {profile.CHILDREN_YN}
+- 동거인: {json.dumps(profile.LIVING_WITH, ensure_ascii=False)}
+- 성격 유형: {profile.PERSONALITY_TYPE}
+- 활동 스타일: {profile.ACTIVITY_STYLE}
+- 스트레스 해소법: {json.dumps(profile.STRESS_RELIEF, ensure_ascii=False)}
+- 취미: {json.dumps(profile.HOBBIES, ensure_ascii=False)}
+"""
+                    logger.info(f"📋 [User Profile] Loaded for user_id={user_id}")
+                else:
+                    logger.warning(f"⚠️  [User Profile] Not found for user_id={user_id}")
+            finally:
+                db.close()
+        except Exception as e:
+            logger.error(f"Failed to load user profile: {e}")
+    
+    # 2. System Prompt
+    system_prompt = f"""당신은 갱년기 중년 여성을 돕는 AI 친구 '봄이'입니다.
 
-[핵심 책임]
-1. **의도 분류**: 사용자의 입력(텍스트/음성)을 분석하여 주된 목표를 결정합니다.
-2. **흐름 제어**:
-   - **패스트 트랙 (우선순위)**: 일반적인 대화나 정서적 지지의 경우, 지연 시간을 최소화하기 위해 [감정 분석 -> 답변 생성] 경로를 우선시합니다.
-   - **백그라운드 작업**: [루틴 추천], [심층 기억 분석], [미래 계획 수립]과 같이 시간이 오래 걸리는 작업은 메인 답변을 차단하지 않도록 병렬로 위임합니다.
-3. **컨텍스트 관리**: 즉각적인 답변에 필수적인 컨텍스트와 나중에 처리해도 되는 컨텍스트를 결정합니다.
+역할:
+- 친구처럼 편안하게 대화하며 공감하고 위로합니다
+- 갱년기 증상과 일상의 어려움을 이해하고 도움을 줍니다
+- 필요시 루틴, 운동, 명상 등을 추천합니다
+- 알람 설정 요청 시 긍정적으로 응답하고 확인합니다
 
-[지침]
-- **항상** 모든 사용자 입력에 대해 즉시 '감정 분석'을 트리거하세요.
-- **만약** 사용자가 괴로워 보이거나 특정 증상을 언급하면, 백그라운드에서 '루틴 추천'을 트리거하세요.
-- 사용자가 명시적으로 추천을 요청(예: "루틴 추천해줘")하지 않는 한, 대화형 답변을 생성하기 위해 '루틴 추천'이 완료될 때까지 **기다리지 마세요**.
-- **출력**: '감정 분석'과 사용 가능한 컨텍스트를 바탕으로 사용자에게 최종 답변을 생성하세요.
+대화 원칙:
+- 따뜻하고 공감적인 태도
+- 구체적이고 실용적인 조언
+- 부정적 감정을 인정하고 존중
+- 친구와 대화하듯 편안한 반말 사용
+
+알람 설정 요청 처리:
+- 사용자가 알람 설정을 요청하면 긍정적으로 수락하되, **확인 요청 톤**을 사용하세요
+- 예: "좋아! 이렇게 맞춰주면 될까? 확인 버튼 눌러줘!" 또는 "내일 오후 2시 알람으로 설정할게. 괜찮으면 확인 눌러줘!"
+- **"맞춰놨어" 같은 확정 표현 금지** - 사용자 확인 필요
+- **4개 이상 알람 요청 시 (한 번의 대화에서):** "앗, 한 번에 3개까지만 설정할 수 있어. 어떤 3개를 먼저 맞춰줄까?"
+- **중요:** 이미 설정된 알람 개수는 신경쓰지 마세요. 한 번의 요청에서 3개까지만 제한입니다.
+- 알람을 맞춰줄 수 없다고 말하지 마세요
 
 [사용자 프로필]
-- 40~50대 갱년기 여성
-- 감정 기복이 심하고 신체적/정신적 어려움을 겪을 수 있음
+- 감정 기복이 심하고 신체적/정신적 어려움을 겪을 수 있어
+{user_profile_context}
 
 [대화 컨텍스트]
 {memory_context}
@@ -330,10 +375,18 @@ def generate_llm_response(
 - 감정: {emotion_summary}
 - 상세: {json.dumps(emotion_result, ensure_ascii=False)}
 
-[출력 형식]
-중년 여성에게 적합한 자연스럽고 공감적인 한국어로 답변을 제공하세요.
-"""
+[말투 스타일]
+- 친구와 대화하듯 편안한 반말을 사용해
+- 존댓말 사용 금지 (예: "안녕하세요" → "안녕")
+- 자연스럽고 친근한 톤으로 대화해
+- 예시:
+  - "오늘 어떠셨어요?" ❌
+  - "오늘 어땠어?" ✅
 
+[출력 형식]
+반말로 자연스럽고 공감적인 한국어로 답변을 제공해. 중년 여성에게 적합한 따뜻하고 친근한 톤을 유지해.
+"""
+    
     messages = [{"role": "system", "content": system_prompt}]
     
     # Add history (limit to last 10 messages)
@@ -357,7 +410,7 @@ def generate_llm_response(
     reply_text = response.choices[0].message.content
     
     # [DEBUG] Log GPT-4o-mini raw response (before any text processing/splitting)
-    logger.info(f"🤖 [GPT-4o-mini Raw Response]\n{reply_text}")
+    logger.warning(f"🤖 [GPT-4o-mini Raw Response]\n{reply_text}")
     
     return reply_text
 
@@ -366,10 +419,15 @@ async def run_ai_bomi_from_text_v2(
     user_id: int,
     session_id: str = "default",
     stt_quality: str = "success",
-    speaker_id: Optional[str] = None
+    speaker_id: Optional[str] = None,
+    save_to_db: bool = True  # 🆕 Phase 3: DB 저장 여부 제어
 ) -> dict[str, Any]:
     """
     텍스트 입력 기반 AI 봄이 실행 (DeepAgents Prototype Implementation)
+    
+    Args:
+        save_to_db: DB에 메시지 저장 여부 (기본값: True)
+                   WebSocket에서 호출 시 False로 설정하여 중복 저장 방지
     """
     logger.warning("🔥🔥🔥 run_ai_bomi_from_text_v2 CALLED - Phase 2 VERSION")
     logger.info(f"🚀 [DeepAgents] Started processing for user_id: {user_id}")
@@ -381,31 +439,16 @@ async def run_ai_bomi_from_text_v2(
         from db_conversation_store import get_conversation_store
     store = get_conversation_store()
     
-    # 1. Save User Message
-    store.add_message(user_id, session_id, "user", user_text, speaker_id=speaker_id)
+    # 1. Save User Message (조건부)
+    if save_to_db:
+        store.add_message(user_id, session_id, "user", user_text, speaker_id=speaker_id)
     
-    # 2. Fast Track: Emotion Analysis with Caching (Required for prompt)
-    # We await this because it's needed for the immediate response
-    emotion_response = await run_fast_track(user_text, user_id=user_id)
+    # ⚡ 2. Lightweight Classifier Only (for Orchestrator hint)
+    # Full emotion analysis moved to background after LLM response
+    classifier = get_emotion_classifier()
+    classifier_hint = classifier.predict(user_text)
+    logger.info(f"🔍 [Classifier] Hint: {classifier_hint}")
     
-    # Extract actual emotion result (handle caching wrapper)
-    if emotion_response.get("skipped"):
-        # Emotion analysis skipped (neutral content)
-        emotion_result = None
-        logger.info("ℹ️  Emotion analysis skipped (neutral content)")
-    elif emotion_response.get("cached"):
-        # Cache hit - use cached result
-        emotion_result = emotion_response["result"]
-        logger.info(
-            f"💾 Cache hit: {emotion_response.get('similarity', 0):.2%} similarity, "
-            f"{emotion_response.get('age_days', 0)} days old"
-        )
-    else:
-        # Fresh analysis
-        emotion_result = emotion_response["result"]
-    
-    logger.warning(f"🔥 After Fast Track - emotion_result: {type(emotion_result)}")
-    logger.warning(f"🔥 About to enter Orchestrator section...")
     # ========================================
     # [PHASE 2] Orchestrator LLM 통합
     # ========================================
@@ -431,11 +474,11 @@ async def run_ai_bomi_from_text_v2(
             "history": store.get_history(user_id, session_id, limit=3)
         }
         
-        # Call orchestrator LLM
+        # Call orchestrator LLM (with lightweight hint)
         tool_calls = await orchestrator_llm(
             user_text=user_text,
             context=context,
-            classifier_hint=emotion_response.get("classifier_hint", "애매")
+            classifier_hint=classifier_hint  # ✅ Use lightweight classifier hint
         )
         
         orchestrator_tools = [tc.function.name for tc in tool_calls]
@@ -461,43 +504,12 @@ async def run_ai_bomi_from_text_v2(
         import traceback
         logger.error(f"Full traceback:\n{traceback.format_exc()}")
     
-    # 2.5 Save Emotion Analysis + ChromaDB Cache (if fresh analysis)
-    if emotion_result and not emotion_response.get("cached") and not emotion_response.get("skipped"):
-        try:
-            # Generate embedding for DB storage
-            from sentence_transformers import SentenceTransformer
-            import json
-            
-            embedder = SentenceTransformer('jhgan/ko-sroberta-multitask')
-            embedding = embedder.encode(user_text).tolist()
-            embedding_json = json.dumps(embedding)  # JSON string for DB
-            
-            # Save to DB WITH embedding
-            analysis_id = store.save_emotion_analysis(
-                user_id, 
-                user_text, 
-                emotion_result, 
-                check_root="conversation",
-                input_text_embedding=embedding_json  # 추가!
-            )
-            
-            # Save to ChromaDB cache for future use
-            if analysis_id:
-                cache = get_emotion_cache()
-                cache.save(
-                    user_id=user_id,
-                    input_text=user_text,
-                    emotion_result=emotion_result,
-                    analysis_id=analysis_id
-                )
-                logger.info(f"💾 Saved to cache: Analysis ID {analysis_id}")
-        except Exception as e:
-            logger.error(f"Failed to save emotion analysis: {e}")
+    # ⚡ Emotion analysis removed from here - moved to background after response
         
     # 3. Slow Track: Trigger Background Tasks (Routine, Memory Promotion)
     # We create a task and wait with a timeout (Hybrid Approach)
     slow_track_task = asyncio.create_task(
-        run_slow_track(user_text, emotion_result, user_id, session_id)
+        run_slow_track(user_text, None, user_id, session_id)  # ⚡ No emotion_result yet
     )
     
     routine_result = []
@@ -551,14 +563,16 @@ async def run_ai_bomi_from_text_v2(
     
     ai_response_text = generate_llm_response(
         user_text=user_text,
-        emotion_result=emotion_result,
+        emotion_result=None,  # ⚡ No emotion result - LLM uses its own understanding
         conversation_history=conversation_history,
         memory_context=memory_context,
-        rag_context=rag_context
+        rag_context=rag_context,
+        user_id=user_id
     )
     
-    # 6. Save AI Response
-    store.add_message(user_id, session_id, "assistant", ai_response_text)
+    # 6. Save AI Response (조건부)
+    if save_to_db:
+        store.add_message(user_id, session_id, "assistant", ai_response_text)
     
     # Update RAG with AI response
     try:
@@ -569,11 +583,103 @@ async def run_ai_bomi_from_text_v2(
         
     logger.info(f"✅ [DeepAgents] Response generated: {ai_response_text[:50]}...")
     
-    return {
+    # ⚡ Phase 3: Generate response-type only (fast regex, no LLM)
+    response_metadata = {}
+    try:
+        from .response_generator import generate_response_type, parse_alarm_request
+        from datetime import datetime
+        
+        # 기본 response_type 감지
+        response_type = generate_response_type(ai_response_text)
+        logger.info(f"📋 [Response Type] Detected by regex: {response_type}")
+        
+        # 🆕 Alarm 요청 파싱 (항상 실행)
+        logger.info(f"🔍 [Alarm Parser] Checking for alarm requests...")
+        alarm_data = parse_alarm_request(
+            user_text=user_text,
+            llm_response=ai_response_text,
+            current_datetime=datetime.now()
+        )
+        logger.info(f"✅ [Alarm Parser] Result: {alarm_data.get('response_type')} (count: {alarm_data.get('count', 0)})")
+        
+        # Alarm이면 response_type 덮어쓰기
+        if alarm_data.get("response_type") in ["alarm", "warning"]:
+            response_type = alarm_data["response_type"]
+            logger.info(f"🎯 [Response Type] Override to: {response_type}")
+        
+        response_metadata = {
+            "emotion": "happiness",  # ⚡ Default value, no LLM call
+            "response_type": response_type
+        }
+        
+        # Alarm 정보 추가
+        if alarm_data.get("response_type") in ["alarm", "warning"]:
+            response_metadata["alarm_info"] = {
+                "count": alarm_data["count"],
+                "data": alarm_data["data"]
+            }
+            if "message" in alarm_data:
+                response_metadata["alarm_info"]["message"] = alarm_data["message"]
+            logger.info(f"✨ [Alarm Info] Included in response: {response_metadata['alarm_info']}")
+        
+        logger.info(f"✨ [Response Type] Final: {response_type} (emotion=default)")
+    except Exception as e:
+        logger.error(f"Failed to generate response type: {e}", exc_info=True)
+        response_metadata = {"emotion": "happiness", "response_type": "normal"}
+        
+    # ⚡ 6.5. Background Emotion Analysis (after response, for future reports)
+    async def background_emotion_analysis():
+        try:
+            logger.info("🔍 [Background] Starting emotion analysis...")
+            emotion_response = await run_fast_track(user_text, user_id=user_id)
+            
+            if emotion_response.get("skipped"):
+                logger.info("ℹ️  [Background] Emotion analysis skipped")
+                return
+            
+            emotion_result = emotion_response.get("result")
+            if not emotion_result:
+                return
+                
+            # Save to DB + ChromaDB cache (if fresh analysis)
+            if not emotion_response.get("cached"):
+                from sentence_transformers import SentenceTransformer
+                import json
+                
+                embedder = SentenceTransformer('jhgan/ko-sroberta-multitask')
+                embedding = embedder.encode(user_text).tolist()
+                embedding_json = json.dumps(embedding)
+                
+                analysis_id = store.save_emotion_analysis(
+                    user_id, user_text, emotion_result, 
+                    check_root="conversation",
+                    input_text_embedding=embedding_json
+                )
+                
+                if analysis_id:
+                    cache = get_emotion_cache()
+                    cache.save(
+                        user_id=user_id, input_text=user_text,
+                        emotion_result=emotion_result, analysis_id=analysis_id
+                    )
+                    logger.info(f"💾 [Background] Saved: Analysis ID {analysis_id}")
+        except Exception as e:
+            logger.error(f"❌ [Background] Emotion analysis failed: {e}")
+    
+    asyncio.create_task(background_emotion_analysis())
+    logger.info("🚀 [Background] Emotion analysis task created")
+    
+    logger.info(f"✅ [DeepAgents] Response generated: {ai_response_text[:50]}...")
+    
+    # 🆕 Alarm info 추가
+    result = {
         "reply_text": ai_response_text,
         "input_text": user_text,
-        "emotion_result": emotion_result,
+        "emotion_result": None,  # ⚡ Analyzed in background
         "routine_result": routine_result,
+        "emotion": response_metadata.get("emotion", "happiness"),  # 🆕 Phase 3
+        "response_type": response_metadata.get("response_type", "normal"),  # 🆕 Phase 3
+        "tts_audio": None,  # 🆕 Phase 2: TTS toggle (현재는 null, 추후 구현)
         "meta": {
             "model": os.getenv("OPENAI_MODEL_NAME", "gpt-4o-mini"),
             "session_id": session_id,
@@ -581,11 +687,16 @@ async def run_ai_bomi_from_text_v2(
             "memory_used": bool(memory_context),
             "rag_used": bool(rag_context),
             "stt_quality": stt_quality,
-            "cache_hit": emotion_response.get("cached", False),
-            "cache_similarity": emotion_response.get("similarity"),
-            "emotion_skipped": emotion_response.get("skipped", False)
+            "classifier_hint": classifier_hint  # ⚡ Lightweight hint
         }
     }
+    
+    # 🆕 Alarm info 포함
+    if "alarm_info" in response_metadata:
+        result["alarm_info"] = response_metadata["alarm_info"]
+        logger.info(f"✅ [Return] alarm_info added to result: {response_metadata['alarm_info']}")
+    
+    return result
 
 async def run_ai_bomi_from_audio_v2(
     audio_bytes: bytes,

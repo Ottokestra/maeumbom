@@ -1,14 +1,17 @@
 import 'package:kakao_flutter_sdk_user/kakao_flutter_sdk_user.dart';
-import '../../config/oauth_config.dart';
 import '../../utils/logger.dart';
 
 /// Kakao OAuth Service - Handles Kakao Sign-In flow using Native SDK
 class KakaoOAuthService {
   /// Sign in with Kakao and get authorization code
+  /// 주의: 실제 토큰 확인은 AuthService에서 수행되므로, 여기서는 로그인 다이얼로그만 표시합니다.
+  /// AuthService의 loginWithKakao()에서 먼저 저장된 토큰을 확인하므로,
+  /// 이 메서드가 호출되는 경우는 토큰이 없거나 만료된 경우입니다.
   Future<String> signIn() async {
     try {
       appLogger.i('카카오 로그인 요청');
 
+      // 저장된 토큰이 없거나 유효하지 않은 경우 로그인 다이얼로그 표시
       // 카카오톡 설치 여부 확인
       final isTalkInstalled = await isKakaoTalkInstalled();
 

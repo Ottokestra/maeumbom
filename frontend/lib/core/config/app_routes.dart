@@ -12,6 +12,8 @@ import '../../app/survey/menopause_survey_screen.dart';
 import '../../app/example/bubble_screen.dart';
 import '../../app/onboarding/splash_screen.dart';
 import '../../app/chat/bomi_screen.dart';
+import '../../app/training/training_screen.dart';
+import '../../app/chat/chat_list_screen.dart';
 // import '../../app/training/training_screen.dart'; // No longer used if we skip it
 import '../../app/training/relation_training_screen.dart';
 import '../../app/training/relation_training_list_screen.dart'; // Add import
@@ -84,11 +86,6 @@ class AppRoutes {
     builder: BubbleScreen.new,
   );
 
-
-
-  // ...
-
-  // Link to RelationTrainingListScreen
   static const RouteMetadata training = RouteMetadata(
     routeName: '/training',
     builder: RelationTrainingListScreen.new,
@@ -113,12 +110,20 @@ class AppRoutes {
     requiresAuth: true,
   );
 
+  static const RouteMetadata chatList = RouteMetadata(
+    routeName: '/chat_list',
+    builder: ChatListScreen.new,
+    requiresAuth: true,
+  );
+
   /// 모든 라우트 목록
+  // static const List<RouteMetadata> allRoutes = [
   static final List<RouteMetadata> allRoutes = [
     splash,
     home,
     alarm,
     chat,
+    chatList,
     report,
     mypage,
     login,

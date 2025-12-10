@@ -111,6 +111,7 @@ class SileroVAD:
         if current_is_speech:
             if not self.is_speaking:
                 # 발화 시작
+                print(f"[VAD] 🎤 발화 시작 감지! (prob={speech_prob:.3f})", flush=True)
                 self.is_speaking = True
                 self.speech_start_sample = self.current_sample
                 self.speech_buffer = []
@@ -142,9 +143,19 @@ class SileroVAD:
                 
                 # ⭐ 짧은 침묵 감지 (문장 구분용) - 한 번만!
                 if not self.short_pause_triggered and silence_duration >= self.short_silence_samples:
-                    is_short_pause = True
                     self.short_pause_triggered = True  # 플래그 설정
-                    print(f"[VAD 디버그] 짧은 침묵 감지됨! ({silence_duration / self.sample_rate * 1000:.0f}ms)", flush=True)
+                    silence_ms = silence_duration / self.sample_rate * 1000
+                    print(f"[VAD 디버그] 짧은 침묵 감지됨! ({silence_ms:.0f}ms)", flush=True)
+                    
+                    # ✅ CRITICAL: Short pause 시 즉시 speech_audio 반환!
+                    if len(self.speech_buffer) > 0:
+                        speech_audio = np.concatenate(self.speech_buffer)
+                        # ⚠️ 버퍼는 초기화하지 않음! (계속 누적)
+                        print(f"[VAD 디버그] Short pause - speech_audio 반환: {len(speech_audio)} samples", flush=True)
+                        # 이전 상태 업데이트
+                        self.last_was_speech = current_is_speech
+                        self.current_sample += len(audio_chunk)
+                        return False, speech_audio, True
                 
                 if silence_duration >= self.min_silence_samples:
                     # 발화 종료
@@ -171,7 +182,7 @@ class SileroVAD:
         # 이전 상태 업데이트
         self.last_was_speech = current_is_speech
         self.current_sample += len(audio_chunk)
-        return False, None, is_short_pause
+        return False, None, False
         
     def get_speech_probability(self, audio_chunk: np.ndarray) -> float:
         """

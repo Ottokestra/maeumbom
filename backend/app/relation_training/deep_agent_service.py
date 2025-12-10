@@ -1,10 +1,11 @@
 """
-Deep Agent Service - 4-Step Scenario Generation
-Orchestrates scenario generation in 4 separate steps for better quality and stability
+Deep Agent Service - Scenario Generation with Gemini
+Orchestrates scenario generation using scenario_architect.md prompt
 """
 import os
 import json
 import asyncio
+import re
 from pathlib import Path
 from datetime import datetime
 from typing import Dict, Optional, List
@@ -21,7 +22,7 @@ from .deep_agent_schemas import (
     ResultData,
     ScenarioMeta
 )
-from .prompt_utils import load_prompt_sections, extract_json_from_response
+from .prompt_utils import load_prompt_sections, extract_json_from_response, validate_scenario_json
 from .image_generator import generate_start_image, generate_result_images
 from app.db.models import Scenario, ScenarioNode, ScenarioOption, ScenarioResult
 
@@ -49,23 +50,17 @@ def calculate_atmosphere_from_labels(health_level: str, trend: str) -> str:
 
 class DeepAgentService:
     """
-    Deep Agent Pipeline Service - 4-Step Generation
+    Deep Agent Pipeline Service - Single Prompt Generation
     
     Architecture:
-    - Orchestrator (GPT-4o-mini): Plans, validates, and coordinates
-    - Scenario Writer (Qwen 2.5 14B or GPT-4o-mini): Generates scenario text
-    
-    STEP 0: Character Design
-    STEP 1: Nodes (15개)
-    STEP 2: Options (30개)
-    STEP 3: Results (16개)
-    STEP 4: Combine + Validate + Save
+    - Gemini: Generates scenario content (scenario_architect.md 사용)
+    - GPT-4o-mini: Orchestration (프롬프트 준비, 검증, 파싱)
     """
     
     def __init__(self, db: Session):
         self.db = db
         
-        # Orchestrator (GPT-4o-mini) - Always used for planning and validation
+        # OpenAI API - Used for orchestration (프롬프트 준비, 검증, 파싱)
         self.openai_api_key = os.getenv("OPENAI_API_KEY")
         if not self.openai_api_key:
             raise ValueError("OPENAI_API_KEY not found in environment variables")
@@ -73,15 +68,29 @@ class DeepAgentService:
         openai.api_key = self.openai_api_key
         self.orchestrator_model = os.getenv("OPENAI_MODEL_NAME", "gpt-4o-mini")
         
-        # Scenario Writer mode
-        self.scenario_mode = os.getenv("SCENARIO_MODE", "qwen")  # "qwen" or "openai"
+        # Scenario Generation Model - Gemini or OpenAI
+        self.scenario_model_name = os.getenv("SCENARIO_GENERATION_MODEL_NAME", "gemini-1.5-pro")
+        self.use_gemini = self.scenario_model_name.lower().startswith("gemini")
         
-        # Prompt style
-        self.prompt_style = os.getenv("PROMPT_STYLE", "step")  # "step" or "architect"
+        if self.use_gemini:
+            # Gemini API 설정
+            self.gemini_api_key = os.getenv("GEMINI_API_KEY")
+            if not self.gemini_api_key:
+                raise ValueError("GEMINI_API_KEY not found in environment variables (required for Gemini)")
+            
+            try:
+                import google.generativeai as genai
+                genai.configure(api_key=self.gemini_api_key)
+                self.gemini_client = genai
+                print(f"[Deep Agent] Scenario Generation Model: {self.scenario_model_name} (Gemini)")
+            except ImportError:
+                raise ImportError("google-generativeai package not installed. Run: pip install google-generativeai")
+        else:
+            # OpenAI API 사용 (fallback)
+            self.gemini_client = None
+            print(f"[Deep Agent] Scenario Generation Model: {self.scenario_model_name} (OpenAI)")
         
-        print(f"[Deep Agent] Orchestrator: {self.orchestrator_model}")
-        print(f"[Deep Agent] Scenario Writer: {self.scenario_mode}")
-        print(f"[Deep Agent] Prompt Style: {self.prompt_style}")
+        print(f"[Deep Agent] Orchestration Model: {self.orchestrator_model} (GPT-4o-mini)")
     
     # ========================================================================
     # Main Entry Point (Full Pipeline)
@@ -109,17 +118,16 @@ class DeepAgentService:
         print(f"[Deep Agent Pipeline] User: {user_id}, Target: {request.target}, Topic: {request.topic}")
         print(f"{'='*80}\n")
         
-        # Generate folder name
-        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-        folder_name = f"{request.target.lower()}_{timestamp}"
-        
-        # Phase 1: Generate scenario JSON (4 steps)
+        # Phase 1: Generate scenario JSON (scenario_architect.md 사용)
         scenario_json = await self.generate_scenario_json(request.target, request.topic)
         
-        # Phase 2: Generate images (optional, based on env var)
+        # Phase 2: Generate folder name from title (하이브리드 방식)
+        folder_name = self._generate_folder_name_from_title(scenario_json.scenario.title)
+        
+        # Phase 3: Generate images (optional, based on env var)
         image_urls = await self.generate_images(scenario_json, folder_name)
         
-        # Phase 3: Save to JSON file and database
+        # Phase 4: Save to JSON file and database
         scenario_id = await self.save_scenario(scenario_json, user_id, folder_name)
         
         print(f"\n{'='*80}")
@@ -135,13 +143,14 @@ class DeepAgentService:
             "folder_name": folder_name
         }
     
+    @retry(stop=stop_after_attempt(3), wait=wait_exponential(min=1, max=10))
     async def generate_scenario_json(
         self,
         target: str,
         topic: str
     ) -> ScenarioJSON:
         """
-        Generate complete scenario JSON in 4 steps.
+        Generate complete scenario JSON using scenario_architect.md prompt.
         
         Args:
             target: Target relationship type (HUSBAND, CHILD, etc.)
@@ -151,53 +160,147 @@ class DeepAgentService:
             Complete ScenarioJSON object
         """
         print(f"\n{'='*60}")
-        print(f"[Deep Agent] 4단계 시나리오 생성 시작")
+        print(f"[Deep Agent] 시나리오 생성 시작 (scenario_architect.md 사용)")
         print(f"[Deep Agent] Target: {target}, Topic: {topic}")
         print(f"{'='*60}\n")
         
-        # STEP 0: Character Design
-        print("[STEP 0] 캐릭터 디자인 생성 중...")
-        character_design = await self._generate_character_design(target, topic)
-        print(f"[STEP 0] ✅ 완료: {character_design}")
-        
-        # STEP 1: Nodes
-        print("\n[STEP 1] 15개 노드 생성 중...")
-        nodes = await self._generate_nodes(target, topic, character_design)
-        print(f"[STEP 1] ✅ 완료: {len(nodes)}개 노드 생성")
-        
-        # STEP 2: Options
-        print("\n[STEP 2] 30개 옵션 생성 중...")
-        options = await self._generate_options(target, topic, nodes)
-        print(f"[STEP 2] ✅ 완료: {len(options)}개 옵션 생성")
-        
-        # STEP 3: Results
-        print("\n[STEP 3] 16개 결과 생성 중...")
-        results = await self._generate_results(target, topic, nodes, options)
-        print(f"[STEP 3] ✅ 완료: {len(results)}개 결과 생성")
-        
-        # STEP 4: Combine & Validate
-        print("\n[STEP 4] 시나리오 조합 및 검증 중...")
-        scenario_json = self._combine_scenario(
-            target=target,
-            topic=topic,
-            character_design=character_design,
-            nodes=nodes,
-            options=options,
-            results=results
+        # Load scenario_architect.md prompt
+        from .prompt_utils import load_prompt_sections
+        system_prompt, user_prompt = load_prompt_sections(
+            "scenario_architect.md",
+            {
+                "target": target,
+                "topic": topic
+            }
         )
+        
+        # Generate scenario JSON with Gemini or OpenAI
+        print(f"[Deep Agent] 시나리오 생성 중... (Model: {self.scenario_model_name})")
+        
+        if self.use_gemini:
+            content = await self._generate_with_gemini(system_prompt, user_prompt)
+        else:
+            content = await self._generate_with_openai(system_prompt, user_prompt)
+        
+        # Parse JSON response
+        json_str = extract_json_from_response(content)
+        data = json.loads(json_str)
+        
+        # Validate structure
+        validate_scenario_json(data)
+        
+        # Convert to Pydantic models
+        scenario_json = ScenarioJSON(**data)
         
         # Auto-calculate atmosphere from labels
         self._fill_atmosphere_from_labels(scenario_json)
         
         # Final validation
         scenario_json.validate_structure()
-        print(f"[STEP 4] ✅ 완료: 최종 검증 통과")
         
         print(f"\n{'='*60}")
         print(f"[Deep Agent] 시나리오 생성 완료!")
         print(f"{'='*60}\n")
         
         return scenario_json
+    
+    async def _generate_with_gemini(self, system_prompt: str, user_prompt: str) -> str:
+        """Generate scenario using Gemini API."""
+        try:
+            import google.generativeai as genai
+            model = genai.GenerativeModel(self.scenario_model_name)
+            
+            # Gemini는 system prompt와 user prompt를 하나의 프롬프트로 합침
+            # JSON 생성 요청을 명확히 함
+            full_prompt = f"""{system_prompt}
+
+{user_prompt}
+
+중요: 반드시 유효한 JSON 객체만 반환하세요. 마크다운 코드 블록이나 설명 없이 순수 JSON만 반환해야 합니다."""
+            
+            # JSON 생성 모드 설정
+            generation_config = {
+                "temperature": 0.8,
+                "max_output_tokens": 16000,
+            }
+            
+            response = await asyncio.to_thread(
+                model.generate_content,
+                full_prompt,
+                generation_config=generation_config
+            )
+            
+            content = response.text.strip()
+            
+            # Gemini 응답에서 JSON 추출 (코드 블록 제거)
+            if content.startswith('```'):
+                # 마크다운 코드 블록 제거
+                import re
+                pattern = r'```(?:json)?\s*(.*?)\s*```'
+                matches = re.findall(pattern, content, re.DOTALL)
+                if matches:
+                    content = matches[0].strip()
+            
+            print(f"[Gemini] ✅ 생성 완료: {len(content)} 문자")
+            
+            return content
+            
+        except Exception as e:
+            print(f"[Gemini] ❌ 생성 실패: {e}")
+            import traceback
+            traceback.print_exc()
+            raise RuntimeError(f"Gemini generation failed: {e}")
+    
+    async def _generate_with_openai(self, system_prompt: str, user_prompt: str) -> str:
+        """Generate scenario using OpenAI API (fallback)."""
+        try:
+            response = await asyncio.to_thread(
+                openai.chat.completions.create,
+                model=self.scenario_model_name,
+                response_format={"type": "json_object"},
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_prompt}
+                ],
+                temperature=0.8,
+                max_tokens=16000
+            )
+            
+            content = response.choices[0].message.content
+            print(f"[OpenAI] ✅ 생성 완료: {len(content)} 문자")
+            
+            return content
+            
+        except Exception as e:
+            print(f"[OpenAI] ❌ 생성 실패: {e}")
+            raise RuntimeError(f"OpenAI generation failed: {e}")
+    
+    def _generate_folder_name_from_title(self, title: str) -> str:
+        """
+        Generate folder name from scenario title (하이브리드 방식).
+        
+        Args:
+            title: Scenario title (한글 가능)
+        
+        Returns:
+            Folder name in format: {title_변환}_{timestamp}
+        """
+        # 타이틀을 파일명에 적합하게 변환
+        # 1. 특수문자 제거/변환
+        folder_part = re.sub(r'[<>:"/\\|?*]', '', title)  # Windows/Linux 파일명 금지 문자 제거
+        
+        # 2. 공백을 언더스코어로 변경
+        folder_part = re.sub(r'\s+', '_', folder_part)
+        
+        # 3. 길이 제한 (50자)
+        if len(folder_part) > 50:
+            folder_part = folder_part[:50]
+        
+        # 4. 타임스탬프 추가
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        folder_name = f"{folder_part}_{timestamp}"
+        
+        return folder_name
     
     # ========================================================================
     # STEP 0: Character Design
@@ -210,14 +313,9 @@ class DeepAgentService:
         topic: str
     ) -> CharacterDesign:
         """
-        STEP 0: Generate character visual descriptions
-        
-        Flow:
-        1. Orchestrator (this method) prepares prompts
-        2. Writer (Qwen or GPT-4o-mini) generates character design
-        3. Orchestrator validates and parses result
+        STEP 0: Generate character visual descriptions using GPT-4o-mini
         """
-        # 1. Orchestrator: Load and prepare prompts
+        # Load and prepare prompts
         system_prompt, user_prompt = load_prompt_sections(
             "step0_character_design.md",
             {
@@ -227,31 +325,21 @@ class DeepAgentService:
         )
         
         try:
-            # 2. Writer: Generate character design
-            if self.scenario_mode == "qwen":
-                from .scenario_writer import generate_with_qwen
-                content = await generate_with_qwen(
-                    system_prompt=system_prompt,
-                    user_prompt=user_prompt,
-                    max_tokens=500,
-                    temperature=0.8
-                )
-            else:
-                # Fallback: Use GPT-4o-mini
-                response = await asyncio.to_thread(
-                    openai.chat.completions.create,
-                    model=self.orchestrator_model,
-                    response_format={"type": "json_object"},
-                    messages=[
-                        {"role": "system", "content": system_prompt},
-                        {"role": "user", "content": user_prompt}
-                    ],
-                    temperature=0.8,
-                    max_tokens=500
-                )
-                content = response.choices[0].message.content
+            # Generate character design with GPT-4o-mini
+            response = await asyncio.to_thread(
+                openai.chat.completions.create,
+                model=self.orchestrator_model,
+                response_format={"type": "json_object"},
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_prompt}
+                ],
+                temperature=0.8,
+                max_tokens=500
+            )
+            content = response.choices[0].message.content
             
-            # 3. Orchestrator: Parse and validate
+            # Parse and validate
             json_str = extract_json_from_response(content)
             data = json.loads(json_str)
             
@@ -277,14 +365,9 @@ class DeepAgentService:
         character_design: CharacterDesign
     ) -> List[NodeData]:
         """
-        STEP 1: Generate 15 nodes
-        
-        Flow:
-        1. Orchestrator prepares prompts
-        2. Writer generates nodes
-        3. Orchestrator validates quality
+        STEP 1: Generate 15 nodes using GPT-4o-mini
         """
-        # 1. Orchestrator: Load and prepare prompts
+        # Load and prepare prompts
         system_prompt, user_prompt = load_prompt_sections(
             "step1_nodes.md",
             {
@@ -296,31 +379,21 @@ class DeepAgentService:
         )
         
         try:
-            # 2. Writer: Generate nodes
-            if self.scenario_mode == "qwen":
-                from .scenario_writer import generate_with_qwen
-                content = await generate_with_qwen(
-                    system_prompt=system_prompt,
-                    user_prompt=user_prompt,
-                    max_tokens=4000,
-                    temperature=0.8
-                )
-            else:
-                # Fallback: Use GPT-4o-mini
-                response = await asyncio.to_thread(
-                    openai.chat.completions.create,
-                    model=self.orchestrator_model,
-                    response_format={"type": "json_object"},
-                    messages=[
-                        {"role": "system", "content": system_prompt},
-                        {"role": "user", "content": user_prompt}
-                    ],
-                    temperature=0.8,
-                    max_tokens=4000
-                )
-                content = response.choices[0].message.content
+            # Generate nodes with GPT-4o-mini
+            response = await asyncio.to_thread(
+                openai.chat.completions.create,
+                model=self.orchestrator_model,
+                response_format={"type": "json_object"},
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_prompt}
+                ],
+                temperature=0.8,
+                max_tokens=4000
+            )
+            content = response.choices[0].message.content
             
-            # 3. Orchestrator: Parse
+            # Parse
             json_str = extract_json_from_response(content)
             data = json.loads(json_str)
             
@@ -350,7 +423,7 @@ class DeepAgentService:
                 extra = actual_ids - expected_ids
                 raise ValueError(f"Node ID mismatch. Missing: {missing}, Extra: {extra}")
             
-            # 4. Orchestrator: Quality validation
+            # Quality validation
             node_objects = [NodeData(**n) for n in nodes]
             self._validate_nodes(node_objects, target)
             
@@ -362,7 +435,7 @@ class DeepAgentService:
     
     def _validate_nodes(self, nodes: List[NodeData], target: str):
         """
-        Orchestrator validation: Check node quality
+        Validate node quality
         
         Validates:
         - Node count (15)
@@ -437,7 +510,7 @@ Generate ONLY the missing nodes in JSON format:
         
         response = await asyncio.to_thread(
             openai.chat.completions.create,
-            model=self.model_name,
+            model=self.orchestrator_model,
             response_format={"type": "json_object"},
             messages=[
                 {"role": "system", "content": system_prompt},
@@ -507,14 +580,9 @@ Generate ONLY the missing nodes in JSON format:
         nodes: List[NodeData]
     ) -> List[OptionData]:
         """
-        STEP 2: Generate 30 options
-        
-        Flow:
-        1. Orchestrator prepares prompts with node context
-        2. Writer generates options
-        3. Orchestrator validates quality
+        STEP 2: Generate 30 options using GPT-4o-mini
         """
-        # 1. Orchestrator: Prepare prompts
+        # Prepare prompts
         nodes_json = json.dumps(
             {"nodes": [n.dict() for n in nodes]},
             ensure_ascii=False,
@@ -531,31 +599,21 @@ Generate ONLY the missing nodes in JSON format:
         )
         
         try:
-            # 2. Writer: Generate options
-            if self.scenario_mode == "qwen":
-                from .scenario_writer import generate_with_qwen
-                content = await generate_with_qwen(
-                    system_prompt=system_prompt,
-                    user_prompt=user_prompt,
-                    max_tokens=5000,
-                    temperature=0.8
-                )
-            else:
-                # Fallback: Use GPT-4o-mini
-                response = await asyncio.to_thread(
-                    openai.chat.completions.create,
-                    model=self.orchestrator_model,
-                    response_format={"type": "json_object"},
-                    messages=[
-                        {"role": "system", "content": system_prompt},
-                        {"role": "user", "content": user_prompt}
-                    ],
-                    temperature=0.8,
-                    max_tokens=5000
-                )
-                content = response.choices[0].message.content
+            # Generate options with GPT-4o-mini
+            response = await asyncio.to_thread(
+                openai.chat.completions.create,
+                model=self.orchestrator_model,
+                response_format={"type": "json_object"},
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_prompt}
+                ],
+                temperature=0.8,
+                max_tokens=5000
+            )
+            content = response.choices[0].message.content
             
-            # 3. Orchestrator: Parse
+            # Parse
             json_str = extract_json_from_response(content)
             data = json.loads(json_str)
             
@@ -580,7 +638,7 @@ Generate ONLY the missing nodes in JSON format:
             # Convert to Pydantic models
             option_objects = [OptionData(**opt) for opt in options]
             
-            # 4. Orchestrator: Quality validation
+            # Quality validation
             self._validate_options(option_objects, target)
             
             return option_objects
@@ -591,7 +649,7 @@ Generate ONLY the missing nodes in JSON format:
     
     def _validate_options(self, options: List[OptionData], target: str):
         """
-        Orchestrator validation: Check option quality
+        Validate option quality
         
         Validates:
         - Option count (30)
@@ -647,7 +705,7 @@ Output JSON: {{"options": [...]}}
         
         response = await asyncio.to_thread(
             openai.chat.completions.create,
-            model=self.model_name,
+            model=self.orchestrator_model,
             response_format={"type": "json_object"},
             messages=[
                 {"role": "system", "content": system_prompt},
@@ -694,14 +752,9 @@ Output JSON: {{"options": [...]}}
         options: List[OptionData]
     ) -> List[ResultData]:
         """
-        STEP 3: Generate 16 results with labels
-        
-        Flow:
-        1. Orchestrator prepares prompts with path context
-        2. Writer generates results
-        3. Orchestrator validates quality
+        STEP 3: Generate 16 results with labels using GPT-4o-mini
         """
-        # 1. Orchestrator: Prepare prompts
+        # Prepare prompts
         # Define required result codes explicitly
         required_codes = [
             "AAAA", "AAAB", "AABA", "AABB",
@@ -720,31 +773,21 @@ Output JSON: {{"options": [...]}}
         )
         
         try:
-            # 2. Writer: Generate results
-            if self.scenario_mode == "qwen":
-                from .scenario_writer import generate_with_qwen
-                content = await generate_with_qwen(
-                    system_prompt=system_prompt,
-                    user_prompt=user_prompt,
-                    max_tokens=8000,
-                    temperature=0.8
-                )
-            else:
-                # Fallback: Use GPT-4o-mini
-                response = await asyncio.to_thread(
-                    openai.chat.completions.create,
-                    model=self.orchestrator_model,
-                    response_format={"type": "json_object"},
-                    messages=[
-                        {"role": "system", "content": system_prompt},
-                        {"role": "user", "content": user_prompt}
-                    ],
-                    temperature=0.8,
-                    max_tokens=8000
-                )
-                content = response.choices[0].message.content
+            # Generate results with GPT-4o-mini
+            response = await asyncio.to_thread(
+                openai.chat.completions.create,
+                model=self.orchestrator_model,
+                response_format={"type": "json_object"},
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_prompt}
+                ],
+                temperature=0.8,
+                max_tokens=8000
+            )
+            content = response.choices[0].message.content
             
-            # 3. Orchestrator: Parse
+            # Parse
             json_str = extract_json_from_response(content)
             data = json.loads(json_str)
             
@@ -798,7 +841,7 @@ Output JSON: {{"options": [...]}}
             # Convert to Pydantic models
             result_objects = [ResultData(**r) for r in cleaned_results]
             
-            # 4. Orchestrator: Quality validation
+            # Quality validation
             self._validate_results(result_objects, target)
             
             return result_objects
@@ -809,7 +852,7 @@ Output JSON: {{"options": [...]}}
     
     def _validate_results(self, results: List[ResultData], target: str):
         """
-        Orchestrator validation: Check result quality
+        Validate result quality
         
         Validates:
         - Result count (16)
