@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../../app/home/home_screen.dart';
 import '../../app/alarm/alarm_screen.dart';
 import '../../app/chat/chat_screen.dart';
-import '../../app/report/report_screen.dart';
+import '../../app/report/weekly_emotion_report_screen.dart';
 import '../../app/settings/mypage_screen.dart';
 import '../../app/common/login_screen.dart';
 import '../../app/example/example_screen.dart';
@@ -55,7 +55,7 @@ class AppRoutes {
 
   static const RouteMetadata report = RouteMetadata(
     routeName: '/report',
-    builder: ReportScreen.new,
+    builder: WeeklyEmotionReportScreen.new,
     requiresAuth: true,
   );
 

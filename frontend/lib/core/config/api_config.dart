@@ -63,6 +63,10 @@ class ApiConfig {
   static const String recommendationMusic = '$recommendationBase/music';
   static const String recommendationImage = '$recommendationBase/image';
 
+  // Emotion Report Endpoints
+  static const String emotionReportBase = '/api/v1/reports/emotion';
+  static const String emotionWeeklyReport = '$emotionReportBase/weekly';
+
   // Timeout Configuration
   static const Duration connectTimeout = Duration(seconds: 30);
   static const Duration receiveTimeout = Duration(seconds: 30);
