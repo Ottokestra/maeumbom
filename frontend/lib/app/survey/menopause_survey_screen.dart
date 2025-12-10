@@ -93,9 +93,8 @@ class _MenopauseSurveyScreenState extends State<MenopauseSurveyScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: TopBar(
+    return AppFrame(
+      topBar: TopBar(
         title: '',
         leftIcon: Icons.arrow_back,
         onTapLeft: () {
@@ -111,9 +110,8 @@ class _MenopauseSurveyScreenState extends State<MenopauseSurveyScreen> {
         rightIcon: Icons.close,
         onTapRight: () => Navigator.pop(context),
       ),
-      body: SafeArea(
-        child: Column(
-          children: [
+      body: Column(
+        children: [
             // Header Frame (Compact)
             Container(
               padding: const EdgeInsets.fromLTRB(24, 20, 24, 10), // Reduced top/bottom padding
@@ -147,141 +145,183 @@ class _MenopauseSurveyScreenState extends State<MenopauseSurveyScreen> {
             
             // Question PageView
             Expanded(
-              child: PageView.builder(
-                controller: _pageController,
-                // Default physics allows swipe
-                physics: const AlwaysScrollableScrollPhysics(), 
-                onPageChanged: (index) {
-                  setState(() {
-                    _currentPage = index;
-                  });
-                },
-                itemCount: menopauseQuestions.length,
-                itemBuilder: (context, index) {
-                  final question = menopauseQuestions[index];
-                  final selectedValue = _answers[question.id];
-
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 24),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        // Progress
-                        Align(
-                          alignment: Alignment.centerLeft,
-                          child: Text(
-                            '${index + 1} / ${menopauseQuestions.length}',
-                            style: const TextStyle(
-                              color: Color(0xFF233446),
-                              fontSize: 16,
-                              fontFamily: 'Pretendard',
-                            ),
+              child: GestureDetector(
+                onHorizontalDragEnd: (details) {
+                  if (details.primaryVelocity == null) return;
+                  
+                  // Swipe Left (Next)
+                  if (details.primaryVelocity! < 0) {
+                    final currentQuestion = menopauseQuestions[_currentPage];
+                    if (_answers[currentQuestion.id] == null) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: const Text(
+                            '답변을 선택해주세요',
+                            style: TextStyle(fontFamily: 'Pretendard'),
                           ),
+                          backgroundColor: AppColors.errorRed,
+                          behavior: SnackBarBehavior.floating,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          duration: const Duration(seconds: 1),
                         ),
-                        const SizedBox(height: 8),
-                        // Progress Bar
-                        Stack(
-                          children: [
-                            Container(
-                              width: double.infinity,
-                              height: 8,
-                              decoration: BoxDecoration(
-                              color: const Color(0xFFF0EAE8), 
-                                borderRadius: BorderRadius.circular(4),
+                      );
+                    } else {
+                      if (_currentPage < menopauseQuestions.length - 1) {
+                        _pageController.nextPage(
+                          duration: const Duration(milliseconds: 300),
+                          curve: Curves.easeInOut,
+                        );
+                      }
+                    }
+                  } 
+                  // Swipe Right (Back)
+                  else if (details.primaryVelocity! > 0) {
+                    if (_currentPage > 0) {
+                      _pageController.previousPage(
+                        duration: const Duration(milliseconds: 300),
+                        curve: Curves.easeInOut,
+                      );
+                    } else {
+                      Navigator.pop(context);
+                    }
+                  }
+                },
+                child: PageView.builder(
+                  controller: _pageController,
+                  physics: const NeverScrollableScrollPhysics(), 
+                  onPageChanged: (index) {
+                    setState(() {
+                      _currentPage = index;
+                    });
+                  },
+                  itemCount: menopauseQuestions.length,
+                  itemBuilder: (context, index) {
+                    final question = menopauseQuestions[index];
+                    final selectedValue = _answers[question.id];
+
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 24),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          // Progress
+                          Align(
+                            alignment: Alignment.centerLeft,
+                            child: Text(
+                              '${index + 1} / ${menopauseQuestions.length}',
+                              style: const TextStyle(
+                                color: Color(0xFF233446),
+                                fontSize: 16,
+                                fontFamily: 'Pretendard',
                               ),
                             ),
-                            FractionallySizedBox(
-                              widthFactor: (index + 1) / menopauseQuestions.length,
-                              child: Container(
+                          ),
+                          const SizedBox(height: 8),
+                          // Progress Bar
+                          Stack(
+                            children: [
+                              Container(
+                                width: double.infinity,
                                 height: 8,
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFFD7454D),
+                                color: const Color(0xFFF0EAE8), 
                                   borderRadius: BorderRadius.circular(4),
                                 ),
                               ),
-                            ),
-                          ],
-                        ),
-                        
-                        const SizedBox(height: 20), // Reduced spacing
-
-                        // Question Text (Flexible to avoid overflow)
-                        Flexible(
-                          child: SingleChildScrollView(
-                            child: Container(
-                              width: double.infinity,
-                              padding: const EdgeInsets.all(20), // Reduced padding
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(16),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withOpacity(0.05),
-                                    blurRadius: 10,
-                                    offset: const Offset(0, 4),
+                              FractionallySizedBox(
+                                widthFactor: (index + 1) / menopauseQuestions.length,
+                                child: Container(
+                                  height: 8,
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFD7454D),
+                                    borderRadius: BorderRadius.circular(4),
                                   ),
-                                ],
+                                ),
                               ),
-                              child: Column(
-                                children: [
-                                  Text(
-                                    question.text,
-                                    textAlign: TextAlign.center,
-                                    style: const TextStyle(
-                                      color: Color(0xFF243447),
-                                      fontSize: 20,
-                                      fontFamily: 'Inter',
-                                      fontWeight: FontWeight.w600,
-                                      height: 1.3,
+                            ],
+                          ),
+                          
+                          const SizedBox(height: 20), // Reduced spacing
+
+                          // Question Text (Flexible to avoid overflow)
+                          Flexible(
+                            child: SingleChildScrollView(
+                              child: Container(
+                                width: double.infinity,
+                                padding: const EdgeInsets.all(20), // Reduced padding
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(16),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.05),
+                                      blurRadius: 10,
+                                      offset: const Offset(0, 4),
                                     ),
-                                  ),
-                                  const SizedBox(height: 12),
-                                  Text(
-                                    question.description,
-                                    textAlign: TextAlign.center,
-                                    style: const TextStyle(
-                                      color: Color(0xFF6B6B6B),
-                                      fontSize: 14,
-                                      fontFamily: 'Inter',
+                                  ],
+                                ),
+                                child: Column(
+                                  children: [
+                                    Text(
+                                      question.text,
+                                      textAlign: TextAlign.center,
+                                      style: const TextStyle(
+                                        color: Color(0xFF243447),
+                                        fontSize: 20,
+                                        fontFamily: 'Inter',
+                                        fontWeight: FontWeight.w600,
+                                        height: 1.3,
                                       ),
-                                  ),
-                                ],
+                                    ),
+                                    const SizedBox(height: 12),
+                                    Text(
+                                      question.description,
+                                      textAlign: TextAlign.center,
+                                      style: const TextStyle(
+                                        color: Color(0xFF6B6B6B),
+                                        fontSize: 14,
+                                        fontFamily: 'Inter',
+                                        ),
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
                           ),
-                        ),
 
-                        const SizedBox(height: 24), // Reduced spacing
+                          const SizedBox(height: 24), // Reduced spacing
 
-                        // Answer Buttons
-                        Row(
-                          children: [
-                            Expanded(
-                              child: _buildAnswerButton(
-                                text: '예',
-                                isSelected: selectedValue == 1,
-                                onTap: () => _onAnswer(1),
+                          // Answer Buttons
+                          Row(
+                            children: [
+                              Expanded(
+                                child: _buildAnswerButton(
+                                  text: '예',
+                                  isSelected: selectedValue == 1,
+                                  onTap: () => _onAnswer(1),
+                                ),
                               ),
-                            ),
-                            const SizedBox(width: 16),
-                            Expanded(
-                              child: _buildAnswerButton(
-                                text: '아니오',
-                                isSelected: selectedValue == 0,
-                                onTap: () => _onAnswer(0),
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: _buildAnswerButton(
+                                  text: '아니오',
+                                  isSelected: selectedValue == 0,
+                                  onTap: () => _onAnswer(0),
+                                ),
                               ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  );
-                },
+                            ],
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
               ),
             ),
           ],
         ),
-      ),
     );
   }
 
