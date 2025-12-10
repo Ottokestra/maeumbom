@@ -55,3 +55,8 @@ String formatWeekdayLabel(String weekday) {
 String formatShortDate(DateTime date) {
   return '${date.month}/${date.day}';
 }
+
+String formatDateTimeLabel(DateTime dateTime) {
+  String twoDigits(int value) => value.toString().padLeft(2, '0');
+  return '${dateTime.month}/${dateTime.day} ${twoDigits(dateTime.hour)}:${twoDigits(dateTime.minute)}';
+}

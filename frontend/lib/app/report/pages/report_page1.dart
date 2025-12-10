@@ -19,6 +19,7 @@ class ReportPage1 extends StatelessWidget {
       emotionLabel: report.dominantEmotion.label,
     );
     final Color emotionColor = getEmotionPrimaryColor(mainEmotion);
+    final sentimentPoints = report.sentimentTimeline;
 
     return Padding(
       padding: const EdgeInsets.all(AppSpacing.lg),
@@ -180,9 +181,170 @@ class ReportPage1 extends StatelessWidget {
               ],
             ),
           ),
+
+          if (sentimentPoints.isNotEmpty) ...[
+            const SizedBox(height: AppSpacing.lg),
+            _SentimentFlowSummary(points: sentimentPoints),
+          ] else ...[
+            const SizedBox(height: AppSpacing.lg),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(AppSpacing.md),
+              decoration: BoxDecoration(
+                color: AppColors.bgBasic,
+                borderRadius: BorderRadius.circular(AppRadius.md),
+              ),
+              child: Text(
+                '이번 주 감정 흐름 데이터를 불러오는 중입니다.',
+                style: AppTypography.body.copyWith(
+                  color: AppColors.textSecondary,
+                ),
+              ),
+            ),
+          ],
         ],
       ),
     );
+  }
+}
+
+class _SentimentFlowSummary extends StatelessWidget {
+  const _SentimentFlowSummary({required this.points});
+
+  final List<WeeklySentimentPoint> points;
+
+  @override
+  Widget build(BuildContext context) {
+    final highest = points.reduce(
+      (a, b) => a.sentimentScore >= b.sentimentScore ? a : b,
+    );
+    final lowest = points.reduce(
+      (a, b) => a.sentimentScore <= b.sentimentScore ? a : b,
+    );
+
+    final highestEmotion = mapEmotionFromCode(
+      highest.characterCode,
+      emotionLabel: highest.primaryEmotionLabel,
+    );
+    final lowestEmotion = mapEmotionFromCode(
+      lowest.characterCode,
+      emotionLabel: lowest.primaryEmotionLabel,
+    );
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(AppSpacing.md),
+      decoration: BoxDecoration(
+        color: AppColors.bgBasic,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        border: Border.all(color: AppColors.borderLight),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                Icons.show_chart,
+                color: AppColors.accentRed,
+                size: 20,
+              ),
+              const SizedBox(width: AppSpacing.xs),
+              Text(
+                '이번 주 감정 흐름',
+                style: AppTypography.body.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          _SentimentPointRow(
+            label: '최고점',
+            point: highest,
+            emotion: highestEmotion,
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          _SentimentPointRow(
+            label: '최저점',
+            point: lowest,
+            emotion: lowestEmotion,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SentimentPointRow extends StatelessWidget {
+  const _SentimentPointRow({
+    required this.label,
+    required this.point,
+    required this.emotion,
+  });
+
+  final String label;
+  final WeeklySentimentPoint point;
+  final EmotionId emotion;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = getEmotionPrimaryColor(emotion);
+    return Row(
+      children: [
+        Container(
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.sm,
+            vertical: AppSpacing.xs,
+          ),
+          decoration: BoxDecoration(
+            color: color.withOpacity(0.12),
+            borderRadius: BorderRadius.circular(AppRadius.pill),
+          ),
+          child: Text(
+            label,
+            style: AppTypography.caption.copyWith(
+              color: color,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ),
+        const SizedBox(width: AppSpacing.sm),
+        EmotionCharacter(
+          id: emotion,
+          use2d: true,
+          size: 28,
+        ),
+        const SizedBox(width: AppSpacing.sm),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                '${point.primaryEmotionLabel} (${point.sentimentScore.toStringAsFixed(2)})',
+                style: AppTypography.body.copyWith(
+                  color: AppColors.textPrimary,
+                  fontWeight: FontWeight.w600,
+                ),
+                overflow: TextOverflow.ellipsis,
+              ),
+              Text(
+                '${formatShortDate(point.timestamp)} ${_formatTime(point.timestamp)}',
+                style: AppTypography.caption.copyWith(
+                  color: AppColors.textSecondary,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  String _formatTime(DateTime dateTime) {
+    final hour = dateTime.hour.toString().padLeft(2, '0');
+    final minute = dateTime.minute.toString().padLeft(2, '0');
+    return '$hour:$minute';
   }
 }
 

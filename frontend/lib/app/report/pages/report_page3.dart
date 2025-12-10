@@ -205,6 +205,12 @@ class ReportPage3 extends StatelessWidget {
               ],
             ),
           ),
+
+          const SizedBox(height: AppSpacing.xl),
+
+          _HighlightConversationsList(
+            conversations: report.highlightConversations,
+          ),
         ],
       ),
     );
@@ -301,5 +307,262 @@ class ReportPage3 extends StatelessWidget {
         ],
       ),
     );
+  }
+}
+
+class _HighlightConversationsList extends StatelessWidget {
+  const _HighlightConversationsList({required this.conversations});
+
+  final List<HighlightConversation> conversations;
+
+  @override
+  Widget build(BuildContext context) {
+    if (conversations.isEmpty) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(AppSpacing.md),
+        decoration: BoxDecoration(
+          color: AppColors.bgBasic,
+          borderRadius: BorderRadius.circular(AppRadius.md),
+          border: Border.all(color: AppColors.borderLight),
+        ),
+        child: Text(
+          '이번 주 하이라이트 대화가 아직 없어요.',
+          style: AppTypography.body.copyWith(
+            color: AppColors.textSecondary,
+          ),
+        ),
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          '주간 하이라이트 대화',
+          style: AppTypography.h4.copyWith(
+            color: AppColors.textPrimary,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        const SizedBox(height: AppSpacing.sm),
+        Text(
+          '이번 주 감정에 영향을 준 대화를 모았어요.',
+          style: AppTypography.body.copyWith(
+            color: AppColors.textSecondary,
+          ),
+        ),
+        const SizedBox(height: AppSpacing.md),
+        ...conversations.map(
+          (conversation) => Padding(
+            padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+            child: _HighlightConversationTile(conversation: conversation),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _HighlightConversationTile extends StatelessWidget {
+  const _HighlightConversationTile({required this.conversation});
+
+  final HighlightConversation conversation;
+
+  @override
+  Widget build(BuildContext context) {
+    final emotionId = mapEmotionFromCode(
+      conversation.primaryEmotionCode,
+      emotionLabel: conversation.primaryEmotionLabel,
+    );
+    final sentimentLabel = _mapSentiment(conversation.sentimentOverall);
+    final emotionColor = getEmotionPrimaryColor(emotionId);
+
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.sm),
+      decoration: BoxDecoration(
+        color: AppColors.bgBasic,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        border: Border.all(color: AppColors.borderLight),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          EmotionCharacter(
+            id: emotionId,
+            use2d: true,
+            size: 48,
+          ),
+          const SizedBox(width: AppSpacing.sm),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.sm,
+                        vertical: AppSpacing.xs,
+                      ),
+                      decoration: BoxDecoration(
+                        color: emotionColor.withOpacity(0.12),
+                        borderRadius: BorderRadius.circular(AppRadius.pill),
+                      ),
+                      child: Text(
+                        conversation.primaryEmotionLabel,
+                        style: AppTypography.caption.copyWith(
+                          color: emotionColor,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: AppSpacing.xs),
+                    _SentimentTag(sentimentLabel: sentimentLabel),
+                    if (conversation.riskLevel != null) ...[
+                      const SizedBox(width: AppSpacing.xs),
+                      _RiskBadge(level: conversation.riskLevel!),
+                    ],
+                  ],
+                ),
+                const SizedBox(height: AppSpacing.xs),
+                Text(
+                  conversation.text,
+                  style: AppTypography.body.copyWith(
+                    color: AppColors.textPrimary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: AppSpacing.xs),
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 4,
+                  children: conversation.reportTags
+                      .map((tag) => _TagChip(label: tag))
+                      .toList(),
+                ),
+                const SizedBox(height: AppSpacing.xs),
+                Text(
+                  formatDateTimeLabel(conversation.createdAt),
+                  style: AppTypography.caption.copyWith(
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SentimentTag extends StatelessWidget {
+  const _SentimentTag({required this.sentimentLabel});
+
+  final String sentimentLabel;
+
+  @override
+  Widget build(BuildContext context) {
+    Color background = AppColors.bgWarm;
+    Color textColor = AppColors.textSecondary;
+
+    switch (sentimentLabel) {
+      case '긍정':
+        background = AppColors.natureGreen.withOpacity(0.12);
+        textColor = AppColors.natureGreen;
+        break;
+      case '부정':
+        background = AppColors.accentRed.withOpacity(0.12);
+        textColor = AppColors.accentRed;
+        break;
+      default:
+        background = AppColors.bgBasic;
+        textColor = AppColors.textSecondary;
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.sm,
+        vertical: AppSpacing.xs,
+      ),
+      decoration: BoxDecoration(
+        color: background,
+        borderRadius: BorderRadius.circular(AppRadius.pill),
+      ),
+      child: Text(
+        sentimentLabel,
+        style: AppTypography.caption.copyWith(
+          color: textColor,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+    );
+  }
+}
+
+class _RiskBadge extends StatelessWidget {
+  const _RiskBadge({required this.level});
+
+  final String level;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.sm,
+        vertical: AppSpacing.xs,
+      ),
+      decoration: BoxDecoration(
+        color: AppColors.accentRed.withOpacity(0.12),
+        borderRadius: BorderRadius.circular(AppRadius.pill),
+      ),
+      child: Text(
+        level.toUpperCase(),
+        style: AppTypography.caption.copyWith(
+          color: AppColors.accentRed,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+    );
+  }
+}
+
+class _TagChip extends StatelessWidget {
+  const _TagChip({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.sm,
+        vertical: AppSpacing.xs,
+      ),
+      decoration: BoxDecoration(
+        color: AppColors.borderLight.withOpacity(0.3),
+        borderRadius: BorderRadius.circular(AppRadius.pill),
+      ),
+      child: Text(
+        label,
+        style: AppTypography.caption.copyWith(
+          color: AppColors.textSecondary,
+        ),
+      ),
+    );
+  }
+}
+
+String _mapSentiment(String overall) {
+  switch (overall.toLowerCase()) {
+    case 'positive':
+      return '긍정';
+    case 'negative':
+      return '부정';
+    default:
+      return '중립';
   }
 }

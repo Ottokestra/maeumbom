@@ -78,6 +78,96 @@ class DailyMoodSticker {
   }
 }
 
+class WeeklySentimentPoint {
+  final DateTime timestamp;
+  final double sentimentScore; // -1.0 ~ 1.0
+  final String sentimentOverall; // "positive"|"neutral"|"negative"
+  final String primaryEmotionCode;
+  final String primaryEmotionLabel;
+  final String characterCode;
+
+  WeeklySentimentPoint({
+    required this.timestamp,
+    required this.sentimentScore,
+    required this.sentimentOverall,
+    required this.primaryEmotionCode,
+    required this.primaryEmotionLabel,
+    required this.characterCode,
+  });
+
+  factory WeeklySentimentPoint.fromJson(Map<String, dynamic> json) {
+    return WeeklySentimentPoint(
+      timestamp: DateTime.parse(json['timestamp'] as String),
+      sentimentScore: (json['sentiment_score'] as num).toDouble(),
+      sentimentOverall: json['sentiment_overall'] as String,
+      primaryEmotionCode: json['primary_emotion_code'] as String,
+      primaryEmotionLabel: json['primary_emotion_label'] as String,
+      characterCode: json['character_code'] as String,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'timestamp': timestamp.toIso8601String(),
+      'sentiment_score': sentimentScore,
+      'sentiment_overall': sentimentOverall,
+      'primary_emotion_code': primaryEmotionCode,
+      'primary_emotion_label': primaryEmotionLabel,
+      'character_code': characterCode,
+    };
+  }
+}
+
+class HighlightConversation {
+  final int id;
+  final String text;
+  final DateTime createdAt;
+  final String sentimentOverall;
+  final String primaryEmotionCode;
+  final String primaryEmotionLabel;
+  final String? riskLevel;
+  final List<String> reportTags;
+
+  HighlightConversation({
+    required this.id,
+    required this.text,
+    required this.createdAt,
+    required this.sentimentOverall,
+    required this.primaryEmotionCode,
+    required this.primaryEmotionLabel,
+    this.riskLevel,
+    required this.reportTags,
+  });
+
+  factory HighlightConversation.fromJson(Map<String, dynamic> json) {
+    return HighlightConversation(
+      id: json['id'] as int,
+      text: json['text'] as String,
+      createdAt: DateTime.parse(json['created_at'] as String),
+      sentimentOverall: json['sentiment_overall'] as String,
+      primaryEmotionCode: json['primary_emotion_code'] as String,
+      primaryEmotionLabel: json['primary_emotion_label'] as String,
+      riskLevel: json['risk_level'] as String?,
+      reportTags: (json['report_tags'] as List<dynamic>? ?? [])
+          .map((e) => e.toString())
+          .toList(),
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'text': text,
+      'created_at': createdAt.toIso8601String(),
+      'sentiment_overall': sentimentOverall,
+      'primary_emotion_code': primaryEmotionCode,
+      'primary_emotion_label': primaryEmotionLabel,
+      'risk_level': riskLevel,
+      'report_tags': reportTags,
+    };
+  }
+}
+
 class WeeklyMoodReport {
   WeeklyMoodReport({
     required this.weekLabel,
@@ -88,6 +178,8 @@ class WeeklyMoodReport {
     required this.dailyCharacters,
     required this.emotionRankings,
     required this.analysisText,
+    required this.sentimentTimeline,
+    required this.highlightConversations,
   });
 
   final String weekLabel;
@@ -98,10 +190,14 @@ class WeeklyMoodReport {
   final List<DailyMoodSticker> dailyCharacters;
   final List<WeeklyEmotionRanking> emotionRankings;
   final String analysisText;
+  final List<WeeklySentimentPoint> sentimentTimeline;
+  final List<HighlightConversation> highlightConversations;
 
   factory WeeklyMoodReport.fromJson(Map<String, dynamic> json) {
     final dailyList = json['daily_characters'] as List<dynamic>? ?? [];
     final rankingList = json['emotion_rankings'] as List<dynamic>? ?? [];
+    final timelineList = json['sentiment_timeline'] as List<dynamic>? ?? [];
+    final highlightList = json['highlight_conversations'] as List<dynamic>? ?? [];
 
     return WeeklyMoodReport(
       weekLabel: json['week_label'] as String? ?? '',
@@ -126,6 +222,20 @@ class WeeklyMoodReport {
           )
           .toList(),
       analysisText: json['analysis_text'] as String? ?? '',
+      sentimentTimeline: timelineList
+          .map(
+            (raw) => WeeklySentimentPoint.fromJson(
+              raw as Map<String, dynamic>,
+            ),
+          )
+          .toList(),
+      highlightConversations: highlightList
+          .map(
+            (raw) => HighlightConversation.fromJson(
+              raw as Map<String, dynamic>,
+            ),
+          )
+          .toList(),
     );
   }
 
@@ -139,6 +249,10 @@ class WeeklyMoodReport {
       'daily_characters': dailyCharacters.map((e) => e.toJson()).toList(),
       'emotion_rankings': emotionRankings.map((e) => e.toJson()).toList(),
       'analysis_text': analysisText,
+      'sentiment_timeline':
+          sentimentTimeline.map((point) => point.toJson()).toList(),
+      'highlight_conversations':
+          highlightConversations.map((item) => item.toJson()).toList(),
     };
   }
 }

@@ -468,6 +468,46 @@ WeeklyMoodReport _fallbackWeeklyMoodReport() {
     ),
   ];
 
+  final sentimentTimeline = List<WeeklySentimentPoint>.generate(7, (index) {
+    final date = startOfWeek.add(Duration(days: index));
+    final score = -0.5 + index * 0.2;
+    return WeeklySentimentPoint(
+      timestamp: date,
+      sentimentScore: score.clamp(-1.0, 1.0),
+      sentimentOverall: score > 0.2
+          ? 'positive'
+          : score < -0.2
+              ? 'negative'
+              : 'neutral',
+      primaryEmotionCode: score > 0 ? 'JOY' : 'SADNESS',
+      primaryEmotionLabel: score > 0 ? '기쁨' : '슬픔',
+      characterCode: score > 0 ? 'joy' : 'sadness',
+    );
+  });
+
+  final highlightConversations = [
+    HighlightConversation(
+      id: 1,
+      text: '이번 주 가장 기뻤던 순간은 친구와 산책하며 이야기를 나눴을 때였어요.',
+      createdAt: startOfWeek.add(const Duration(days: 2, hours: 18)),
+      sentimentOverall: 'positive',
+      primaryEmotionCode: 'JOY',
+      primaryEmotionLabel: '기쁨',
+      riskLevel: null,
+      reportTags: const ['산책', '친구'],
+    ),
+    HighlightConversation(
+      id: 2,
+      text: '업무가 몰리면서 살짝 지쳤지만, 커피 한 잔으로 마음을 다잡았어요.',
+      createdAt: startOfWeek.add(const Duration(days: 4, hours: 10)),
+      sentimentOverall: 'neutral',
+      primaryEmotionCode: 'STRESS',
+      primaryEmotionLabel: '스트레스',
+      riskLevel: 'low',
+      reportTags: const ['업무', '회복'],
+    ),
+  ];
+
   return WeeklyMoodReport(
     weekLabel: '이번 주',
     weekStart: startOfWeek,
@@ -477,6 +517,8 @@ WeeklyMoodReport _fallbackWeeklyMoodReport() {
     dailyCharacters: daily,
     emotionRankings: rankings,
     analysisText: '이번 주에는 기쁨 감정을 가장 많이 느끼셨네요!',
+    sentimentTimeline: sentimentTimeline,
+    highlightConversations: highlightConversations,
   );
 }
 
