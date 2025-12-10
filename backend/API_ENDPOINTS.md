@@ -1663,20 +1663,6 @@ HTTP 상태 코드:
 |------------|------|----------|------|
 | POST | `/api/menopause-survey/submit` | ❌ | 갱년기 설문 제출 |
 
-### 신조어 퀴즈 (Slang Quiz)
-
-| HTTP 메서드 | 경로 | 인증 필요 | 설명 |
-|------------|------|----------|------|
-| POST | `/api/service/slang-quiz/start-game` | ✅ | 게임 시작 |
-| GET | `/api/service/slang-quiz/games/{game_id}/questions/{question_number}` | ✅ | 문제 조회 |
-| POST | `/api/service/slang-quiz/games/{game_id}/submit-answer` | ✅ | 답안 제출 |
-| POST | `/api/service/slang-quiz/games/{game_id}/end` | ✅ | 게임 종료 |
-| GET | `/api/service/slang-quiz/history` | ✅ | 게임 히스토리 |
-| GET | `/api/service/slang-quiz/statistics` | ✅ | 통계 조회 |
-| DELETE | `/api/service/slang-quiz/games/{game_id}` | ✅ | 게임 삭제 |
-| POST | `/api/service/slang-quiz/admin/questions/generate` | ✅ | 관리자용 문제 생성 |
-| GET | `/api/service/slang-quiz/health` | ❌ | 헬스 체크 |
-
 ### 음성 인식 (STT)
 
 | HTTP 메서드 | 경로 | 인증 필요 | 설명 |
@@ -1708,5 +1694,5 @@ HTTP 상태 코드:
 
 ---
 
-**총 엔드포인트 수**: 72개  
-**인증 필요**: 44개 | **인증 불필요**: 28개
+**총 엔드포인트 수**: 63개  
+**인증 필요**: 36개 | **인증 불필요**: 27개
