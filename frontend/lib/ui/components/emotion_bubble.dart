@@ -137,21 +137,24 @@ class _EmotionBubbleState extends State<EmotionBubble> {
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     final bubbleWidth = screenWidth - (AppSpacing.md * 2); // 좌우 여백 제외
-    const bubbleHeight = 120.0; // 기본 높이 설정 (3줄 크기)
+    const bubbleHeight = 180.0; // 기본 높이 설정 (5줄 크기)
 
     // 색상 결정 로직
-    final Color bgColor = widget.bgGreen ? AppColors.bgSoftMint : BubbleTokens.emotionBg;
-    final Color borderColor = widget.bgGreen ? AppColors.borderLightGray : BubbleTokens.emotionBorder;
-    
+    final Color bgColor =
+        widget.bgGreen ? AppColors.bgSoftMint : BubbleTokens.emotionBg;
+    final Color borderColor =
+        widget.bgGreen ? AppColors.borderLightGray : BubbleTokens.emotionBorder;
+
     // 삼각형 색상: bgGreen이면 natureGreen, 아니면 기본(userBg)
-    final Color triangleColor = widget.bgGreen ? AppColors.natureGreen : BubbleTokens.userBg;
+    final Color triangleColor =
+        widget.bgGreen ? AppColors.natureGreen : BubbleTokens.userBg;
 
     return GestureDetector(
       onTap: widget.onTap,
       child: Center(
         child: Container(
           width: bubbleWidth, // 명확한 너비 지정 (화면 전체 - 좌우 여백)
-          height: bubbleHeight, // 고정 높이 (3줄 크기)
+          height: bubbleHeight, // 고정 높이 (5줄 크기)
           decoration: BoxDecoration(
             color: bgColor,
             border: Border.all(

@@ -124,7 +124,7 @@ class ChatNotifier extends StateNotifier<ChatState> {
     _bomChatService.onSttResult = _handleSttResult; // ✅ STT 결과
   }
 
-  // ✅ STT 결과 처리 - 사용자 메시지 UI에 표시
+  // ✅ STT 결과 처리 - 사용자 메시지 UI에 표시 및 processing 상태로 전환
   void _handleSttResult(String sttText) {
     final userMessage = ChatMessage(
       id: DateTime.now().millisecondsSinceEpoch.toString(),

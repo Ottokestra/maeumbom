@@ -58,40 +58,25 @@ class _HomeContentState extends ConsumerState<HomeContent> {
   }
 
   void _showMoodCheckDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('오늘의 기분은 어떠신가요?'),
-        content: const Text('아직 오늘의 감정 캐릭터를 선택하지 않으셨어요.\n지금 기록하러 가볼까요?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(
-              '나중에',
-              style: AppTypography.body.copyWith(
-                color: AppColors.textSecondary,
-              ),
-            ),
+    MessageDialogHelper.showRedConfirm(
+      context,
+      icon: Icons.sentiment_satisfied_rounded,
+      title: '오늘의 기분은 어떠신가요?',
+      message: '아직 오늘의 감정 캐릭터를 \n선택하지 않으셨어요.\n지금 기록하러 가볼까요?',
+      primaryButtonText: '기록하기',
+      secondaryButtonText: '나중에 할게',
+      onPrimaryPressed: () {
+        Navigator.pop(context);
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const DailyMoodCheckScreen(),
           ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const DailyMoodCheckScreen(),
-                ),
-              );
-            },
-            child: Text(
-              '기록하기',
-              style: AppTypography.body.copyWith(
-                color: AppColors.accentRed,
-              ),
-            ),
-          ),
-        ],
-      ),
+        );
+      },
+      onSecondaryPressed: () {
+        Navigator.pop(context);
+      },
     );
   }
 
