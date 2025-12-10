@@ -80,6 +80,18 @@ class ApiConfig {
       '$relationTrainingBase/scenarios/$scenarioId/start';
   static const String relationTrainingProgress = '$relationTrainingBase/progress';
 
+  // Slang Quiz Endpoints
+  static const String slangQuizBase = '/api/service/slang-quiz';
+  static const String slangQuizStartGame = '$slangQuizBase/start-game';
+  static String slangQuizGetQuestion(int gameId, int questionNumber) =>
+      '$slangQuizBase/games/$gameId/questions/$questionNumber';
+  static String slangQuizSubmitAnswer(int gameId) =>
+      '$slangQuizBase/games/$gameId/submit-answer';
+  static String slangQuizEndGame(int gameId) =>
+      '$slangQuizBase/games/$gameId/end';
+  static const String slangQuizHistory = '$slangQuizBase/history';
+  static const String slangQuizStatistics = '$slangQuizBase/statistics';
+
   // Timeout Configuration
   static const Duration connectTimeout = Duration(seconds: 30);
   static const Duration receiveTimeout = Duration(seconds: 30);

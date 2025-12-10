@@ -16,7 +16,8 @@ from .models import (
 from .service import (
     get_user_profile,
     create_or_update_profile,
-    convert_profile_to_response,
+    check_profile_exists,
+    convert_profile_to_response
 )
 
 
@@ -46,13 +47,8 @@ async def submit_onboarding_survey(
     try:
         profile = create_or_update_profile(db, current_user.ID, request)
         return convert_profile_to_response(profile)
-    except HTTPException:
-        raise
     except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail={"detail": f"온보딩 설문 저장에 실패했습니다: {str(e)}", "code": "ONBOARDING_SAVE_FAILED"},
-        )
+        raise HTTPException(status_code=500, detail=f"Failed to save profile: {str(e)}")
 
 
 @router.get("/me", response_model=OnboardingSurveyResponse)
@@ -78,11 +74,8 @@ async def get_my_profile(
     profile = get_user_profile(db, current_user.ID)
     
     if not profile:
-        raise HTTPException(
-            status_code=404,
-            detail={"detail": "온보딩 설문이 없습니다. 먼저 제출해주세요.", "code": "PROFILE_NOT_FOUND"},
-        )
-
+        raise HTTPException(status_code=404, detail="Profile not found. Please complete the onboarding survey.")
+    
     return convert_profile_to_response(profile)
 
 
@@ -104,30 +97,15 @@ async def get_profile_status(
         Profile completion status
     """
     profile = get_user_profile(db, current_user.ID)
-
+    
     if profile:
         return OnboardingSurveyStatusResponse(
-            completed=True,
-            profile=convert_profile_to_response(profile),
-            missing_fields=[],
+            has_profile=True,
+            profile=convert_profile_to_response(profile)
         )
-
-    required_fields = [
-        "nickname",
-        "age_group",
-        "gender",
-        "marital_status",
-        "children_yn",
-        "living_with",
-        "personality_type",
-        "activity_style",
-        "stress_relief",
-        "hobbies",
-    ]
-
-    return OnboardingSurveyStatusResponse(
-        completed=False,
-        profile=None,
-        missing_fields=required_fields,
-    )
+    else:
+        return OnboardingSurveyStatusResponse(
+            has_profile=False,
+            profile=None
+        )
 

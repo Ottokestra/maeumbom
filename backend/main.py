@@ -1,9 +1,11 @@
-"""팀 프로젝트 메인 FastAPI 애플리케이션"""
+"""
+팀 프로젝트 메인 FastAPI 애플리케이션
+"""
 
-import json
 import os
 import sys
-from io import BytesIO
+import json
+import asyncio  # ✅ Phase 3: 백그라운드 비동기 STT용
 from pathlib import Path
 from typing import List, Optional
 
@@ -12,16 +14,16 @@ import importlib.util
 
 from fastapi import (
     FastAPI,
-    HTTPException,
     WebSocket,
     WebSocketDisconnect,
+    HTTPException,
     Request,
     Depends,
 )
     # noqa
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import StreamingResponse
-from pydantic import BaseModel, ConfigDict
+from fastapi.responses import FileResponse
+from pydantic import BaseModel
 
 # =========================
 # 경로 설정
@@ -45,17 +47,12 @@ from app.menopause_survey.router import router as menopause_survey_router
 from app.weather.routes import router as weather_router
 from app.routine_survey.routers import router as routine_survey_router
 from app.routine_survey.models import seed_default_mr_survey  # 사용 여부와 무관하게 유지
-from app.reports.router import router as reports_router
-from app.reports.emotion_weekly.router import router as emotion_weekly_report_router
-from app.health.router import router as health_router
-from app.emotion.router import router as emotion_v1_router
-from app.recommendations.router import router as recommendations_router
 
 # DB 세션/초기화
 from app.db.database import SessionLocal, init_db
 
-# TTS 엔진 레지스트리
-from engine.text_to_speech import get_tts_engine
+# TTS 모델
+from tts_model import synthesize_to_wav
 
 # 루틴 추천 엔진
 from engine.routine_recommend.engine import RoutineRecommendFromEmotionEngine
@@ -72,7 +69,7 @@ from app.db.models import User
 # Emotion Analysis 라우터 로딩 (옵션)
 # =========================
 
-legacy_emotion_router = None
+emotion_router = None
 try:
     emotion_analysis_path = (
         backend_path / "engine" / "emotion-analysis" / "api" / "routes.py"
@@ -80,18 +77,19 @@ try:
     spec = importlib.util.spec_from_file_location("emotion_routes", emotion_analysis_path)
     emotion_routes = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(emotion_routes)
-    legacy_emotion_router = emotion_routes.router
+    emotion_router = emotion_routes.router
     print("[INFO] Emotion analysis router loaded successfully.")
 except Exception as e:
     print("[WARN] Emotion analysis module load failed:", e)
-    legacy_emotion_router = None
+    emotion_router = None
 
 # =========================
 # 시나리오 자동 Import 플래그
 # =========================
 
-# 🔹 openpyxl 때문에 서버가 죽지 않도록, 기본값은 False
-ENABLE_SCENARIO_AUTOIMPORT = False
+# 환경변수로 설정 가능, 기본값은 True (예전처럼 자동 import)
+# False로 설정하려면: ENABLE_SCENARIO_AUTOIMPORT=false
+ENABLE_SCENARIO_AUTOIMPORT = os.getenv("ENABLE_SCENARIO_AUTOIMPORT", "true").lower() == "true"
 
 # =========================
 # FastAPI 앱 생성
@@ -116,15 +114,10 @@ app.add_middleware(
 # Emotion Analysis 라우터 (옵션)
 # =========================
 
-if legacy_emotion_router is not None:
-    app.include_router(legacy_emotion_router, prefix="/emotion/api", tags=["emotion"])
+if emotion_router is not None:
+    app.include_router(emotion_router, prefix="/emotion/api", tags=["emotion"])
     # 하위 호환성을 위해 /api 경로도 지원
-    app.include_router(legacy_emotion_router, prefix="/api", tags=["emotion"])
-
-# 신규 감정 분석/추천 및 헬스 체크 라우터
-app.include_router(emotion_v1_router, tags=["emotion"])
-app.include_router(recommendations_router, tags=["recommendations"])
-app.include_router(health_router, tags=["health"])
+    app.include_router(emotion_router, prefix="/api", tags=["emotion"])
 
 # =========================
 # Menopause Survey 라우터 (항상 등록)
@@ -191,10 +184,6 @@ except Exception as e:
 
     print(f"[WARN] Routine survey router load failed: {e}")
     traceback.print_exc()
-
-# Reports
-app.include_router(reports_router, prefix="/api", tags=["reports"])
-app.include_router(emotion_weekly_report_router)
 
 # =========================
 # Authentication (Google OAuth + JWT)
@@ -353,10 +342,6 @@ class AgentTextRequest(BaseModel):
     stt_quality: Optional[str] = None  # "success" | "medium" | "low_quality" | "no_speech" | None
 
 
-class AgentTextV2Request(AgentTextRequest):
-    pass
-
-
 class AgentAudioRequest(BaseModel):
     audio_bytes: bytes
     session_id: Optional[str] = None
@@ -374,9 +359,18 @@ async def agent_text_v2_endpoint(
         from engine.langchain_agent.agent_v2 import (
             run_ai_bomi_from_text_v2,
         )
+        import time
 
         user_id = current_user.ID
-        session_id = request.session_id or f"user_{user_id}_default"
+        
+        # Generate unique session_id if not provided by frontend
+        if request.session_id:
+            session_id = request.session_id
+        else:
+            # Create unique session_id: user_{user_id}_{timestamp}
+            timestamp = int(time.time() * 1000)  # milliseconds
+            session_id = f"user_{user_id}_{timestamp}"
+            print(f"🔐 Generated new session_id: {session_id}")
 
         # STT Quality 전처리
         if request.stt_quality == "no_speech":
@@ -954,18 +948,30 @@ async def stt_websocket(websocket: WebSocket):
 
 
 # =====================================================================
-# STT + Agent WebSocket
+# Agent WebSocket (Phase 2 - Audio Stream + Agent)
 # =====================================================================
 
-
 @app.websocket("/agent/stream")
-async def agent_websocket(websocket: WebSocket):
+async def agent_websocket(websocket: WebSocket, user_id: int = 1):
     """
-    통합 STT + Agent WebSocket 엔드포인트
+    Phase 2 WebSocket endpoint for audio streaming + Agent
+    
+    WebSocket 설정:
+    - ping_interval: 20 (기본값, 20초마다 ping)
+    - ping_timeout: 60 (60초 대기, Agent 처리 시간 고려)
     """
+    from starlette.websockets import WebSocketState
+    
+    # ✅ WebSocket ping timeout 증가 (Agent 처리 시간 확보)
+    # uvicorn의 WebSocket은 기본 20초 ping_timeout을 사용
+    # 하지만 starlette WebSocket은 직접 제어 불가
+    # 대신 uvicorn 실행 시 --timeout-keep-alive 60으로 설정 필요
+    
     await websocket.accept()
+    print(f"[Agent WebSocket] 연결 수락 (user_id: {user_id})")
     stt_engine_instance = None
     session_id = None
+    temporary_message_ids = []  # 🆕 Phase 3: 임시 메시지 ID 추적
 
     try:
         await websocket.send_json(
@@ -986,22 +992,56 @@ async def agent_websocket(websocket: WebSocket):
             }
         )
 
+        # WebSocket 메시지 수신 루프
         while True:
             try:
                 data = await websocket.receive()
+                # print(f"[Agent WebSocket DEBUG] Received data keys: {data.keys()}")  # 디버그
             except RuntimeError as e:
                 if "disconnect" in str(e).lower():
                     print("[Agent WebSocket] 클라이언트 연결 종료")
                     break
                 raise
+            except Exception as e:
+                print(f"[Agent WebSocket ERROR] Receive error: {e}")
+                break
 
             if "text" in data:
+                # print(f"[Agent WebSocket DEBUG] Text message received: {data['text'][:100]}")  # 디버그
                 try:
                     message = (
                         json.loads(data["text"])
                         if isinstance(data["text"], str)
                         else data["text"]
                     )
+                    
+                    # 🆕 Phase 3: interrupt 신호 처리
+                    if isinstance(message, dict) and message.get("type") == "interrupt":
+                        reason = message.get("reason", "unknown")
+                        print(f"[Agent WebSocket] ⚠️ Interrupt 수신: {reason}")
+                        
+                        # 1. 임시 메시지 삭제
+                        if temporary_message_ids:
+                            from engine.langchain_agent import get_conversation_store
+                            store = get_conversation_store()
+                            deleted_count = store.delete_messages_by_ids(user_id, temporary_message_ids)
+                            print(f"[Agent WebSocket] 🗑️ 삭제된 임시 메시지: {deleted_count}개 (IDs: {temporary_message_ids})")
+                            temporary_message_ids.clear()
+                        
+                        # 2. VAD 버퍼 초기화
+                        if stt_engine_instance:
+                            stt_engine_instance.vad.reset()
+                            print("[Agent WebSocket] VAD 버퍼 초기화 완료")
+                        
+                        # 3. Client에 응답
+                        await websocket.send_json({
+                            "type": "interrupted",
+                            "message": "파이프라인 중단 완료",
+                            "deleted_messages": deleted_count if temporary_message_ids else 0
+                        })
+                        continue
+                    
+                    # 기존 session_id 처리 로직
                     if isinstance(message, dict) and "session_id" in message:
                         session_id = message["session_id"]
                         print(
@@ -1014,35 +1054,45 @@ async def agent_websocket(websocket: WebSocket):
                             }
                         )
                         continue
-                except Exception:
+                except Exception as e:
+                    # print(f"[Agent WebSocket DEBUG] Text parsing error: {e}")
                     pass
 
             if "bytes" in data:
                 audio_bytes = data["bytes"]
-                audio_chunk = np.frombuffer(audio_bytes, dtype=np.float32)
+                
+                # Int16로 받아서 Float32로 변환 (정규화)
+                audio_chunk_int16 = np.frombuffer(audio_bytes, dtype=np.int16)
+                audio_chunk = audio_chunk_int16.astype(np.float32) / 32768.0  # -1.0 ~ 1.0
 
+                # ✅ CRITICAL: 512 샘플 체크 (32ms @ 16kHz)
                 if len(audio_chunk) != 512:
+                    print(f"[WARNING] Unexpected chunk size: {len(audio_chunk)}, skipping")
                     continue
 
+                # VAD 처리
                 is_speech_end, speech_audio, is_short_pause = (
                     stt_engine_instance.vad.process_chunk(audio_chunk)
                 )
+                
+                # VAD 결과 로깅
+                if is_speech_end:
+                    print(f"[VAD] speech_end=True, audio_len={len(speech_audio) if speech_audio is not None else 0}")
 
+                # Phase 2: Speech end 처리 (최종 발화만 처리)
                 if is_speech_end and speech_audio is not None:
                     print("[Agent WebSocket] 발화 종료 감지, STT + Agent 처리 시작")
 
+                    # STT 실행
                     transcript, quality = (
                         stt_engine_instance.whisper.transcribe(
                             speech_audio, callback=None
                         )
                     )
+                    
                     print(
                         f"[Agent WebSocket] STT 결과: text='{transcript}', quality={quality}"
                     )
-
-                    # ========================================================================
-                    # 🆕 화자 검증 로직 (DB 기반)
-                    # ========================================================================
                     speaker_id = None
                     user_id = 1  # Default user ID for now
                     
@@ -1156,13 +1206,46 @@ async def agent_websocket(websocket: WebSocket):
                                 }
                             )
 
+                            # Generate unique session_id if not provided (same logic as REST API)
+                            import time
+                            if not session_id:
+                                timestamp = int(time.time() * 1000)
+                                session_id = f"user_{user_id}_{timestamp}"
+                                print(f"🔐 [WebSocket] Generated session_id: {session_id}")
+
+                            # 🆕 Phase 3: 사용자 메시지 저장 및 ID 추적
+                            from engine.langchain_agent import get_conversation_store
+                            store = get_conversation_store()
+                            user_msg_id = store.add_message(
+                                user_id, session_id, "user", transcript, speaker_id=speaker_id
+                            )
+                            temporary_message_ids.append(user_msg_id)
+                            print(f"[Agent WebSocket] 임시 메시지 추가: user_msg_id={user_msg_id}")
+
+                            # Agent 호출 (save_to_db=False로 중복 저장 방지)
                             result = await run_ai_bomi_from_text_v2(
                                 user_text=transcript,
                                 user_id=user_id,
-                                session_id=session_id or "websocket_default",
+                                session_id=session_id,
                                 stt_quality=quality,
                                 speaker_id=speaker_id,
+                                save_to_db=False  # 🆕 WebSocket에서 직접 저장하므로 False
                             )
+
+                            # 🆕 Phase 3: AI 응답 저장 및 ID 추적
+                            ai_msg_id = store.add_message(
+                                user_id, session_id, "assistant", result["reply_text"]
+                            )
+                            temporary_message_ids.append(ai_msg_id)
+                            print(f"[Agent WebSocket] 임시 메시지 추가: ai_msg_id={ai_msg_id}")
+
+                            # 🆕 DEBUG: result 내용 확인
+                            print(f"[Agent WebSocket] 🔍 Sending result keys: {result.keys()}")
+                            print(f"[Agent WebSocket] 🔍 Response type: {result.get('response_type')}")
+                            if 'alarm_info' in result:
+                                print(f"[Agent WebSocket] ✅ alarm_info FOUND: {result['alarm_info']}")
+                            else:
+                                print(f"[Agent WebSocket] ❌ alarm_info NOT in result!")
 
                             await websocket.send_json(
                                 {
@@ -1170,6 +1253,10 @@ async def agent_websocket(websocket: WebSocket):
                                     "data": result,
                                 }
                             )
+                            
+                            # 🆕 Phase 3: 성공 시 임시 추적 초기화
+                            temporary_message_ids.clear()
+                            print("[Agent WebSocket] 대화 성공 - 임시 메시지 추적 초기화")
                             print("[Agent WebSocket] Agent 응답 완료")
                         except Exception as e:
                             import traceback
@@ -1185,10 +1272,23 @@ async def agent_websocket(websocket: WebSocket):
                                 }
                             )
 
+                    # VAD 리셋 후 다음 발화 대기
                     stt_engine_instance.vad.reset()
+                    # ✅ continue를 추가하여 다음 오디오 청크 수신 계속
+                    continue
 
     except WebSocketDisconnect:
         print("[Agent WebSocket] 연결 종료")
+        
+        # 🆕 Phase 3: 임시 메시지 정리
+        if temporary_message_ids:
+            try:
+                from engine.langchain_agent import get_conversation_store
+                store = get_conversation_store()
+                deleted_count = store.delete_messages_by_ids(user_id, temporary_message_ids)
+                print(f"[Agent WebSocket] 연결 종료 시 임시 메시지 삭제: {deleted_count}개")
+            except Exception as e:
+                print(f"[Agent WebSocket] 임시 메시지 삭제 실패: {e}")
     except Exception as e:
         import traceback
 
@@ -1258,34 +1358,40 @@ async def health():
     return {"status": "ok"}
 
 
-class TTSRequest(BaseModel):
-    model_config = ConfigDict(extra="allow")
-
-    text: str
-    engine: str | None = None
-    character_id: str | None = None
-    emotion_label: str | None = None
-    tone: str | None = None  # backward compatibility
-
-
 @app.post("/api/tts")
-async def tts_endpoint(payload: TTSRequest):
-    """텍스트 -> 음성 변환 API"""
-
-    if not payload.text.strip():
-        raise HTTPException(status_code=400, detail="text is required")
-
-    emotion_label = payload.emotion_label or payload.tone
-    tone = emotion_label or "neutral"
-    engine_name = payload.engine
-
-    tts_engine = get_tts_engine(engine_name)
+async def tts(request: Request):
+    """
+    텍스트 -> 음성 변환 API (3-7)
+    """
+    raw = await request.body()
 
     try:
-        wav_path = tts_engine.synthesize_to_wav(
-            text=payload.text,
-            voice_id=payload.character_id,
-            emotion=emotion_label,
+        body_str = raw.decode("utf-8")
+    except UnicodeDecodeError:
+        body_str = raw.decode("cp949", errors="replace")
+
+    try:
+        payload = json.loads(body_str)
+    except Exception as e:
+        raise HTTPException(
+            status_code=400,
+            detail=f"json parse error: {e}; body={body_str!r}",
+        )
+
+    text = payload.get("text")
+    speed = payload.get("speed")
+    tone = payload.get("tone", "senior_calm")
+    engine_name = payload.get("engine", "melo")
+
+    if not text or not str(text).strip():
+        raise HTTPException(status_code=400, detail="text is required")
+
+    try:
+        wav_path = synthesize_to_wav(
+            text=str(text),
+            speed=speed,
+            tone=str(tone),
+            engine=str(engine_name),
         )
     except Exception as e:
         import traceback
@@ -1295,12 +1401,10 @@ async def tts_endpoint(payload: TTSRequest):
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"TTS error: {e}")
 
-    audio_bytes = wav_path.read_bytes()
-    filename = f"tts_{tone}.wav"
-    return StreamingResponse(
-        BytesIO(audio_bytes),
+    return FileResponse(
+        path=str(wav_path),
+        filename=wav_path.name,
         media_type="audio/wav",
-        headers={"Content-Disposition": f"attachment; filename=\"{filename}\""},
     )
 
 
@@ -1316,11 +1420,8 @@ async def root():
         "stt": "/stt/stream",
         "tts": "/api/tts",
     }
-    if legacy_emotion_router is not None:
+    if emotion_router is not None:
         modules["emotion_analysis"] = "/emotion/api"
-    modules["emotion_v1"] = "/api/v1/emotion"
-    modules["recommendations"] = "/api/v1/recommendations"
-    modules["health"] = "/api/health"
 
     return {
         "message": "Team Project API",
@@ -1349,4 +1450,12 @@ if __name__ == "__main__":
     print("  2. 필요 시 /emotion/api/init 등 초기화 엔드포인트 호출")
     print("\n" + "=" * 50 + "\n")
 
-    uvicorn.run(app, host="0.0.0.0", port=8000, reload=False)
+    # ✅ timeout-keep-alive 120초로 설정 (WebSocket keepalive timeout 방지)
+    uvicorn.run(
+        app, 
+        host="0.0.0.0", 
+        port=8000, 
+        reload=False,
+        timeout_keep_alive=120  # WebSocket ping timeout 방지
+    )
+

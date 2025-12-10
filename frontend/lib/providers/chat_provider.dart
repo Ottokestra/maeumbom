@@ -7,7 +7,7 @@ import '../data/models/chat/chat_message.dart';
 import '../data/repository/chat/chat_repository.dart';
 import '../data/api/chat/chat_api_client.dart';
 import 'auth_provider.dart';
-import 'alarm_provider.dart'; // 🆕 AlarmProvider import
+import 'alarm_provider.dart';
 
 // ----- Infrastructure Providers -----
 
@@ -79,7 +79,7 @@ class ChatState {
       voiceState: voiceState ?? this.voiceState,
       error: error,
       sessionId: sessionId ?? this.sessionId,
-      sttPartialText: sttPartialText, // 필요 시 명시적으로 넘겨서 갱신
+      sttPartialText: sttPartialText, // ✅ Phase 3
     );
   }
 }
@@ -90,7 +90,7 @@ class ChatNotifier extends StateNotifier<ChatState> {
   final ChatRepository _chatRepository;
   final int _userId;
   final PermissionService _permissionService;
-  final Ref _ref; // 🆕 Ref 추가
+  final Ref _ref;
 
   // ✅ Session 관리
   static const _sessionDuration = Duration(minutes: 5);
@@ -107,7 +107,7 @@ class ChatNotifier extends StateNotifier<ChatState> {
     this._chatRepository, // ✅ ChatRepository 주입
     this._userId,
     this._permissionService,
-    this._ref, // 🆕 Ref 주입
+    this._ref,
   ) : super(ChatState(
           messages: [],
           isLoading: false,
@@ -276,6 +276,7 @@ class ChatNotifier extends StateNotifier<ChatState> {
     state = state.copyWith(voiceState: VoiceInterfaceState.idle);
   }
 
+  /// Send text message (기존 유지 - HTTP API 사용)
   /// Send text message via HTTP API
   Future<void> sendTextMessage(String text) async {
     if (text.trim().isEmpty) return;
@@ -460,7 +461,6 @@ class ChatNotifier extends StateNotifier<ChatState> {
     }
   }
 
-  /// 화면에서 특정 세션을 선택했을 때 사용 (chat_screen.dart 등에서 호출)
   Future<void> loadSession(String sessionId) async {
     // 1. 현재 상태에 세션 ID 적용
     state = state.copyWith(sessionId: sessionId, isLoading: true);
@@ -468,15 +468,14 @@ class ChatNotifier extends StateNotifier<ChatState> {
     try {
       print('📥 Loading session: $sessionId');
 
-      // TODO: 서버에 '이전 대화 내역' API가 생기면 여기서 불러오기
-      // 예:
-      // final history = await _chatRepository.getChatHistory(sessionId);
+      // TODO: 만약 서버에 '이전 대화 내역'을 요청하는 API가 있다면 여기서 호출하세요.
+      // 예: final history = await _chatRepository.getChatHistory(sessionId);
       // state = state.copyWith(messages: history, isLoading: false);
 
-      // 현재는 UI 로딩만 해제
+      // 현재는 API가 없으므로 로딩만 해제합니다.
       state = state.copyWith(isLoading: false);
 
-      // 세션 시간 및 ID 저장
+      // 세션 시간 갱신 (선택 사항)
       await _saveSession(sessionId);
       print('✅ Session loaded: $sessionId');
     } catch (e) {
@@ -492,7 +491,7 @@ class ChatNotifier extends StateNotifier<ChatState> {
     // 1. 화면의 메시지 목록 비우기
     clearMessages();
 
-    // 2. 새로운 세션 ID 발급 및 저장
+    // 2. 새로운 세션 ID 발급 및 저장 (기존 함수 재사용)
     await _createNewSession();
 
     print('✅ Session reset to new id: ${state.sessionId}');
