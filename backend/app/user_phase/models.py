@@ -5,9 +5,6 @@ Request/Response validation
 from pydantic import BaseModel, Field
 from typing import Optional
 from datetime import datetime, date, time
-from typing import Optional
-
-from pydantic import BaseModel, Field
 
 
 class HealthSyncRequest(BaseModel):

@@ -2,13 +2,11 @@
 Business logic for onboarding survey service
 """
 from sqlalchemy.orm import Session
-from typing import Optional
-
-from fastapi import HTTPException
 from sqlalchemy import and_
-from sqlalchemy.orm import Session
+from typing import Optional, Dict, Any
+from fastapi import HTTPException
 
-from app.db.models import UserProfile
+from app.db.models import UserProfile, User
 from .models import OnboardingSurveySubmitRequest, OnboardingSurveyResponse
 
 

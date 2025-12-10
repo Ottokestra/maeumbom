@@ -1,66 +1,54 @@
-"""Database configuration and session helpers."""
-
-from pathlib import Path
+"""
+Database configuration
+Centralized database management for all models
+"""
 import os
-from typing import Optional
-
-from dotenv import load_dotenv
-from sqlalchemy import create_engine, inspect, text
+from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
+from dotenv import load_dotenv
+from pathlib import Path
 
+# Load environment variables
+project_root = Path(__file__).parent.parent.parent
+env_path = project_root / ".env"
+if env_path.exists():
+    load_dotenv(dotenv_path=env_path)
 
-def _load_env() -> None:
-    """Load environment variables from the project root ``.env`` file if present."""
+# Database configuration
+DB_HOST = os.getenv("DB_HOST", "localhost")
+DB_PORT = os.getenv("DB_PORT", "3306")
+DB_USER = os.getenv("DB_USER", "root")
+DB_PASSWORD = os.getenv("DB_PASSWORD", "1111")
+DB_NAME = os.getenv("DB_NAME", "bomdb")
 
-    project_root = Path(__file__).parent.parent.parent
-    env_path = project_root / ".env"
-    if env_path.exists():
-        load_dotenv(dotenv_path=env_path)
+# MySQL connection URL
+DATABASE_URL = f"mysql+pymysql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}?charset=utf8mb4"
 
-
-_load_env()
-
-
-def get_database_url() -> str:
-    """Return the database URL derived from environment variables.
-
-    Preference is given to ``DATABASE_URL``. If absent, build the MySQL connection
-    string from ``DB_HOST``, ``DB_PORT``, ``DB_USER``, ``DB_PASSWORD``, and
-    ``DB_NAME``.
-    """
-
-    explicit_url: Optional[str] = os.getenv("DATABASE_URL")
-    if explicit_url:
-        return explicit_url
-
-    db_host = os.getenv("DB_HOST", "localhost")
-    db_port = os.getenv("DB_PORT", "3306")
-    db_user = os.getenv("DB_USER", "root")
-    db_password = os.getenv("DB_PASSWORD", "")
-    db_name = os.getenv("DB_NAME", "")
-
-    return (
-        f"mysql+pymysql://{db_user}:{db_password}"
-        f"@{db_host}:{db_port}/{db_name}?charset=utf8mb4"
-    )
-
-
-DATABASE_URL = get_database_url()
-
+# Create SQLAlchemy engine
 engine = create_engine(
     DATABASE_URL,
-    pool_pre_ping=True,
-    pool_recycle=3600,
-    echo=False,
+    pool_pre_ping=True,  # Verify connections before using them
+    pool_recycle=3600,   # Recycle connections after 1 hour
+    echo=False,          # Set to True for SQL query logging
 )
+
+# Create SessionLocal class
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+# Create Base class for models
 Base = declarative_base()
 
 
 def get_db():
-    """FastAPI dependency to provide a DB session."""
-
+    """
+    Dependency function to get database session
+    
+    Usage in FastAPI:
+        @app.get("/endpoint")
+        def endpoint(db: Session = Depends(get_db)):
+            ...
+    """
     db = SessionLocal()
     try:
         yield db
@@ -69,80 +57,74 @@ def get_db():
 
 
 def init_db():
-    """Initialize database tables and run lightweight migrations."""
-
-    from . import models  # noqa: F401 - register models
-
+    """
+    Initialize database tables
+    Call this function on application startup
+    """
+    from . import models  # Import models to register them
+    from sqlalchemy import text, inspect
+    
     Base.metadata.create_all(bind=engine)
-
+    
     # 마이그레이션: 컬럼 추가
     try:
         inspector = inspect(engine)
         table_names = inspector.get_table_names()
-
+        
         # TB_SCENARIO_RESULTS에 IMAGE_URL 컬럼 추가
-        if "TB_SCENARIO_RESULTS" in table_names:
-            columns = [col["name"] for col in inspector.get_columns("TB_SCENARIO_RESULTS")]
-            if "IMAGE_URL" not in columns:
+        if 'TB_SCENARIO_RESULTS' in table_names:
+            columns = [col['name'] for col in inspector.get_columns('TB_SCENARIO_RESULTS')]
+            if 'IMAGE_URL' not in columns:
                 with engine.begin() as conn:
-                    conn.execute(
-                        text(
-                            "ALTER TABLE TB_SCENARIO_RESULTS ADD COLUMN IMAGE_URL VARCHAR(500) NULL"
-                        )
-                    )
+                    conn.execute(text("ALTER TABLE TB_SCENARIO_RESULTS ADD COLUMN IMAGE_URL VARCHAR(500) NULL"))
                 print("[DB] Added IMAGE_URL column to TB_SCENARIO_RESULTS")
-
+        
         # TB_SCENARIOS에 START_IMAGE_URL 컬럼 추가
-        if "TB_SCENARIOS" in table_names:
-            columns = [col["name"] for col in inspector.get_columns("TB_SCENARIOS")]
-            if "START_IMAGE_URL" not in columns:
+        if 'TB_SCENARIOS' in table_names:
+            columns = [col['name'] for col in inspector.get_columns('TB_SCENARIOS')]
+            if 'START_IMAGE_URL' not in columns:
                 with engine.begin() as conn:
-                    conn.execute(
-                        text(
-                            "ALTER TABLE TB_SCENARIOS ADD COLUMN START_IMAGE_URL VARCHAR(500) NULL"
-                        )
-                    )
+                    conn.execute(text("ALTER TABLE TB_SCENARIOS ADD COLUMN START_IMAGE_URL VARCHAR(500) NULL"))
                 print("[DB] Added START_IMAGE_URL column to TB_SCENARIOS")
-
-            columns = [col["name"] for col in inspector.get_columns("TB_SCENARIOS")]
-
-            if "UPDATED_AT" not in columns:
+            
+            # 컬럼 목록 다시 가져오기 (이전 변경사항 반영)
+            columns = [col['name'] for col in inspector.get_columns('TB_SCENARIOS')]
+            
+            # TB_SCENARIOS에 UPDATED_AT 컬럼 추가
+            if 'UPDATED_AT' not in columns:
                 with engine.begin() as conn:
-                    conn.execute(
-                        text(
-                            "ALTER TABLE TB_SCENARIOS ADD COLUMN UPDATED_AT DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"
-                        )
-                    )
+                    conn.execute(text("ALTER TABLE TB_SCENARIOS ADD COLUMN UPDATED_AT DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"))
                 print("[DB] Added UPDATED_AT column to TB_SCENARIOS")
-
-            columns = [col["name"] for col in inspector.get_columns("TB_SCENARIOS")]
-
-            if "USER_ID" not in columns:
+            
+            # 컬럼 목록 다시 가져오기 (이전 변경사항 반영)
+            columns = [col['name'] for col in inspector.get_columns('TB_SCENARIOS')]
+            
+            # TB_SCENARIOS에 USER_ID 컬럼 추가 (개인화 시나리오 지원)
+            if 'USER_ID' not in columns:
                 with engine.begin() as conn:
+                    # 컬럼 추가 (이미 존재 체크했으므로 성공해야 함)
                     conn.execute(text("ALTER TABLE TB_SCENARIOS ADD COLUMN USER_ID INT NULL"))
-
+                    
+                    # 인덱스 추가 (이미 존재하면 에러 무시)
                     try:
                         conn.execute(text("ALTER TABLE TB_SCENARIOS ADD INDEX idx_user_id (USER_ID)"))
                     except Exception:
-                        pass
-
+                        pass  # 인덱스가 이미 존재할 수 있음
+                    
+                    # 외래키 제약조건 추가 (이미 존재하면 에러 무시)
                     try:
-                        conn.execute(
-                            text(
-                                "ALTER TABLE TB_SCENARIOS ADD CONSTRAINT fk_scenarios_user_id FOREIGN KEY (USER_ID) REFERENCES TB_USERS(ID) ON DELETE CASCADE"
-                            )
-                        )
+                        conn.execute(text("ALTER TABLE TB_SCENARIOS ADD CONSTRAINT fk_scenarios_user_id FOREIGN KEY (USER_ID) REFERENCES TB_USERS(ID) ON DELETE CASCADE"))
                     except Exception:
-                        pass
-
+                        pass  # 제약조건이 이미 존재할 수 있음
+                    
                 print("[DB] Added USER_ID column to TB_SCENARIOS")
             else:
                 print("[DB] USER_ID column already exists in TB_SCENARIOS")
-
-    except Exception as e:  # pragma: no cover - defensive logging
+                
+    except Exception as e:
         import traceback
-
         print(f"[DB] Migration failed: {e}")
         traceback.print_exc()
-
+    
     print("[DB] All tables created successfully")
+
