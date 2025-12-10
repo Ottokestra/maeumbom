@@ -37,9 +37,8 @@ class _RelationTrainingScreenState extends ConsumerState<RelationTrainingScreen>
         await _handleBack();
         return false;
       },
-      child: Scaffold(
-        backgroundColor: Colors.white,
-        appBar: TopBar(
+      child: AppFrame(
+        topBar: TopBar(
           title: '관계 훈련',
           leftIcon: Icons.arrow_back,
           onTapLeft: _handleBack,
@@ -64,9 +63,8 @@ class _RelationTrainingScreenState extends ConsumerState<RelationTrainingScreen>
   }
 
   Widget _buildScenarioView(ScenarioNode node) {
-    return SafeArea(
-      child: Column(
-        children: [
+    return Column(
+      children: [
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
             alignment: Alignment.centerLeft,
@@ -145,18 +143,16 @@ class _RelationTrainingScreenState extends ConsumerState<RelationTrainingScreen>
             ),
           ),
         ],
-      ),
-    );
+      );
   }
 
   Widget _buildResultView(ScenarioResult result) {
-    return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
+    return Padding(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
             Text(
               result.title,
               textAlign: TextAlign.center,
@@ -184,7 +180,6 @@ class _RelationTrainingScreenState extends ConsumerState<RelationTrainingScreen>
             ),
           ],
         ),
-      ),
-    );
+      );
   }
 }

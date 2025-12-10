@@ -12,9 +12,8 @@ class RelationTrainingListScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final listState = ref.watch(relationTrainingListViewModelProvider);
 
-    return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: TopBar(
+    return AppFrame(
+      topBar: TopBar(
         title: '관계 훈련',
         leftIcon: Icons.arrow_back,
         onTapLeft: () => Navigator.pop(context),
@@ -50,7 +49,7 @@ class RelationTrainingListScreen extends ConsumerWidget {
               crossAxisCount: 2,
               crossAxisSpacing: 16,
               mainAxisSpacing: 16,
-              childAspectRatio: 0.8, // Adjust based on content
+              childAspectRatio: 0.7, // Adjust based on content
             ),
             itemCount: scenarios.length,
             itemBuilder: (context, index) {
