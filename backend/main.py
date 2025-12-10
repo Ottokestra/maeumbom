@@ -313,6 +313,25 @@ except Exception as e:
     traceback.print_exc()
 
 # =========================
+# Slang Quiz Service
+# =========================
+
+try:
+    from app.slang_quiz.routes import router as slang_quiz_router
+
+    app.include_router(
+        slang_quiz_router,
+        prefix="/api/service/slang-quiz",
+        tags=["slang-quiz"],
+    )
+    print("[INFO] Slang quiz router loaded successfully.")
+except Exception as e:
+    import traceback
+
+    print(f"[WARN] Slang quiz module load failed: {e}")
+    traceback.print_exc()
+
+# =========================
 # LangChain Agent V2 API
 # =========================
 
@@ -396,17 +415,6 @@ async def agent_text_v2_endpoint(
             session_id=session_id,
             stt_quality=request.stt_quality,
         )
-        
-        # 🆕 Ensure alarm_info and response_type are in meta for frontend compatibility
-        if "meta" not in result:
-            result["meta"] = {}
-        
-        # Add response_type and alarm_info to meta if present in result
-        if "response_type" in result:
-            result["meta"]["response_type"] = result["response_type"]
-        if "alarm_info" in result:
-            result["meta"]["alarm_info"] = result["alarm_info"]
-        
         return result
     except Exception as e:
         import traceback

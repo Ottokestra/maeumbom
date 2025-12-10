@@ -8,29 +8,32 @@ import 'app/common/login_screen.dart';
 import 'app/home/home_screen.dart';
 import 'core/config/oauth_config.dart';
 import 'package:kakao_flutter_sdk_common/kakao_flutter_sdk_common.dart';
+import 'core/services/alarm/alarm_notification_service.dart';
+import 'debug/db_path_helper.dart';
+import 'app/slang_quiz/slang_quiz_game_screen.dart';
+import 'app/slang_quiz/slang_quiz_result_screen.dart';
+import 'data/dtos/slang_quiz/end_game_response.dart';
 
-// void main() {
-//   // Kakao SDK 초기화
-//   KakaoSdk.init(
-//     nativeAppKey: OAuthConfig.kakaoNativeAppKey,
-//   );
-//   runApp(
-//     const ProviderScope(
-//       child: MaeumBomApp(),
-//     ),
-//   );
-// }
-// :흰색_확인_표시: 이렇게 변경
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   // Kakao SDK 초기화
   KakaoSdk.init(
     nativeAppKey: OAuthConfig.kakaoNativeAppKey,
-    loggingEnabled: true, // 로그 보기 좋게
+    loggingEnabled: true,
   );
-  // :열쇠: 여기서 키 해시(origin) 한 번 출력
+
+  // Kakao origin hash 출력
   final origin = await KakaoSdk.origin;
   debugPrint(':열쇠: Kakao origin hash: $origin');
+
+  // 🔍 DB 파일 경로 출력 (디버그용)
+  await DbPathHelper.printDbPath();
+
+  // 🆕 알람 서비스 초기화
+  final alarmService = AlarmNotificationService();
+  await alarmService.initialize();
+  debugPrint('✅ AlarmNotificationService initialized');
+
   runApp(
     const ProviderScope(
       child: MaeumBomApp(),
@@ -51,6 +54,31 @@ class MaeumBomApp extends ConsumerWidget {
         // RouteGuard를 사용하여 인증 체크
         final routeGuard = ref.read(routeGuardProvider);
         final routeName = settings.name ?? '/';
+
+        // Custom routes with arguments
+        if (routeName == '/training/slang-quiz/game') {
+          final args = settings.arguments as Map<String, dynamic>?;
+          if (args != null) {
+            return MaterialPageRoute(
+              builder: (context) => SlangQuizGameScreen(
+                level: args['level'] as String,
+                quizType: args['quizType'] as String,
+              ),
+              settings: settings,
+            );
+          }
+        }
+
+        if (routeName == '/training/slang-quiz/result') {
+          final result = settings.arguments as EndGameResponse?;
+          if (result != null) {
+            return MaterialPageRoute(
+              builder: (context) => SlangQuizResultScreen(result: result),
+              settings: settings,
+            );
+          }
+        }
+
         // 인증이 필요한 경로인지 확인
         if (routeGuard.requiresAuth(routeName)) {
           // 인증 상태 확인

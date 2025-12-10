@@ -1,0 +1,1 @@
+"""Emotion report domain package."""

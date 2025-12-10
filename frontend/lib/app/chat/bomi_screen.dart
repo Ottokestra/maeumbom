@@ -209,6 +209,14 @@ class _BomiContentState extends ConsumerState<BomiContent> {
   Widget _buildAlarmDialog(Map<String, dynamic> alarmInfo, String replyText) {
     final data = alarmInfo['data'] as List?;
 
+    // 🔍 디버그: 받은 알람 데이터 출력
+    print('[BomiContent] 🔔 Alarm Info: $alarmInfo');
+    if (data != null) {
+      for (var alarm in data) {
+        print('[BomiContent] 📅 Alarm Data: $alarm');
+      }
+    }
+
     return AlertDialog(
       title: const Text('알람 설정'),
       content: Column(
@@ -217,13 +225,41 @@ class _BomiContentState extends ConsumerState<BomiContent> {
           Text(replyText),
           const SizedBox(height: 16),
           if (data != null)
-            ...data.map((alarm) => Text(
-                '${alarm['month']}월 ${alarm['day']}일 ${alarm['am_pm'] == 'am' ? '오전' : '오후'} ${alarm['time']}시 ${alarm['minute']}분')),
+            ...data.map((alarm) {
+              final month = alarm['month'] ?? 0;
+              final day = alarm['day'] ?? 0;
+              final time = alarm['time'] ?? 0;
+              final minute = alarm['minute'] ?? 0;
+              final amPm = alarm['am_pm'] ?? 'am';
+
+              // 🔍 디버그: 각 필드 확인
+              print(
+                  '[BomiContent] 📅 month: $month, day: $day, time: $time, minute: $minute, am_pm: $amPm');
+
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 4),
+                child: Text(
+                  time == 0 && minute == 0
+                      ? '$month월 $day일 (시간 정보 없음)'
+                      : '$month월 $day일 ${amPm == 'am' ? '오전' : '오후'} $time시 $minute분',
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+              );
+            }),
         ],
       ),
       actions: [
         TextButton(
-          onPressed: () => Navigator.pop(context),
+          onPressed: () {
+            Navigator.pop(context);
+            // 🆕 저장 완료 피드백 (TopNotification 사용)
+            TopNotificationManager.show(
+              context,
+              message: '알람이 설정되었습니다.',
+              type: TopNotificationType.green,
+              duration: const Duration(milliseconds: 2000),
+            );
+          },
           child: const Text('확인'),
         ),
       ],
