@@ -2,7 +2,7 @@
 SQLAlchemy models for all database tables
 Centralized model management
 """
-from sqlalchemy import Column, Integer, String, Text, DateTime, Date, Index, ForeignKey, JSON, Float, Boolean, Time
+from sqlalchemy import Column, Integer, String, Text, DateTime, Date, Index, ForeignKey, JSON, Float, Boolean, Time, UniqueConstraint
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 from .database import Base
@@ -144,6 +144,145 @@ class EmotionAnalysis(Base):
     
     def __repr__(self):
         return f"<EmotionAnalysis(ID={self.ID}, CHECK_ROOT={self.CHECK_ROOT}, SENTIMENT_OVERALL={self.SENTIMENT_OVERALL})>"
+
+
+class EmotionLog(Base):
+    """
+    감정 분석 결과 로그
+    
+    Attributes:
+        ID: Primary key
+        USER_ID: Foreign key to users table
+        EMOTION_CODE: 분석 결과 감정 코드
+        SCORE: 감정 점수 (선택 값)
+        CREATED_AT: 로그 생성 시각
+        IS_DELETED: 소프트 삭제 여부
+    """
+    __tablename__ = "TB_EMOTION_LOG"
+    
+    ID = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    USER_ID = Column(Integer, ForeignKey("TB_USERS.ID"), nullable=True, index=True)
+    EMOTION_CODE = Column(String(50), nullable=False)
+    SCORE = Column(Float, nullable=True)
+    CREATED_AT = Column(DateTime(timezone=True), server_default=func.now(), index=True)
+    IS_DELETED = Column(Boolean, default=False, nullable=True)
+    
+    # Relationship to User
+    user = relationship("User", backref="emotion_logs")
+    
+    def __repr__(self):
+        return f"<EmotionLog(ID={self.ID}, USER_ID={self.USER_ID}, EMOTION_CODE={self.EMOTION_CODE})>"
+
+
+# ============================================================================
+# 갱년기 설문 모델 (Menopause Survey)
+# ============================================================================
+
+class MenopauseSurveyQuestion(Base):
+    """
+    갱년기 자가테스트 설문 문항 (성별/코드 기반)
+    
+    Attributes:
+        ID: Primary key
+        GENDER: 성별 구분 (FEMALE / MALE)
+        CODE: 문항 코드 (예: F1~F10, M1~M10)
+        ORDER_NO: 성별 내 표시 순서
+        QUESTION_TEXT: 질문 텍스트
+        RISK_WHEN_YES: "예" 응답 시 위험 여부
+        POSITIVE_LABEL: 긍정 선택지 라벨 (기본값 "예")
+        NEGATIVE_LABEL: 부정 선택지 라벨 (기본값 "아니오")
+        CHARACTER_KEY: 프론트 캐릭터 매핑 키
+        IS_ACTIVE: 활성화 여부
+        IS_DELETED: 소프트 삭제 여부
+        CREATED_AT/UPDATED_AT: 생성/수정 시각
+        CREATED_BY/UPDATED_BY: 생성/수정자 정보
+    """
+    __tablename__ = "TB_MENOPAUSE_SURVEY_QUESTION"
+    
+    ID = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    GENDER = Column(String(10), nullable=False, index=True)
+    CODE = Column(String(10), nullable=False, index=True)
+    ORDER_NO = Column(Integer, nullable=False, index=True)
+    QUESTION_TEXT = Column(Text, nullable=False)
+    RISK_WHEN_YES = Column(Boolean, nullable=False, default=False)
+    POSITIVE_LABEL = Column(String(20), nullable=False, default="예")
+    NEGATIVE_LABEL = Column(String(20), nullable=False, default="아니오")
+    CHARACTER_KEY = Column(String(50), nullable=True)
+    IS_ACTIVE = Column(Boolean, default=True, nullable=True)
+    IS_DELETED = Column(Boolean, default=False, nullable=True)
+    CREATED_AT = Column(DateTime(timezone=True), server_default=func.now(), nullable=True)
+    UPDATED_AT = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=True)
+    CREATED_BY = Column(String(50), nullable=True)
+    UPDATED_BY = Column(String(50), nullable=True)
+    
+    __table_args__ = (
+        UniqueConstraint("CODE", name="uq_menopause_survey_question_code"),
+        Index("idx_menopause_gender_order", "GENDER", "ORDER_NO"),
+    )
+    
+    def __repr__(self):
+        return f"<MenopauseSurveyQuestion(ID={self.ID}, GENDER={self.GENDER}, CODE={self.CODE})>"
+
+
+class MenopauseQuestion(Base):
+    """
+    갱년기 자가테스트 설문 문항
+    
+    Attributes:
+        ID: Primary key
+        ORDER_NO: 표시 순서
+        CATEGORY: 카테고리
+        QUESTION_TEXT: 질문 텍스트
+        POSITIVE_LABEL: 긍정 선택지 라벨
+        NEGATIVE_LABEL: 부정 선택지 라벨
+        CHARACTER_KEY: 프론트 캐릭터 매핑 키
+        IS_ACTIVE: 활성화 여부
+        IS_DELETED: 소프트 삭제 여부
+        CREATED_AT/UPDATED_AT: 생성/수정 시각
+    """
+    __tablename__ = "TB_MENOPAUSE_QUESTION"
+    
+    ID = Column(Integer, primary_key=True, autoincrement=True, index=True)
+    ORDER_NO = Column(Integer, nullable=False, index=True)
+    CATEGORY = Column(String(50), nullable=True)
+    QUESTION_TEXT = Column(String(500), nullable=False)
+    POSITIVE_LABEL = Column(String(50), nullable=False, default="예")
+    NEGATIVE_LABEL = Column(String(50), nullable=False, default="아니오")
+    CHARACTER_KEY = Column(String(50), nullable=True)
+    IS_ACTIVE = Column(Boolean, default=True, nullable=True)
+    IS_DELETED = Column(Boolean, default=False, nullable=True)
+    CREATED_AT = Column(DateTime(timezone=True), server_default=func.now(), nullable=True)
+    UPDATED_AT = Column(DateTime(timezone=True), nullable=True)
+    
+    def __repr__(self):
+        return f"<MenopauseQuestion(ID={self.ID}, ORDER_NO={self.ORDER_NO})>"
+
+
+class MenopauseAnswer(Base):
+    """
+    갱년기 자가테스트 설문 응답
+    
+    Attributes:
+        ID: Primary key
+        USER_ID: Foreign key to users table
+        QUESTION_ID: Foreign key to TB_MENOPAUSE_QUESTION
+        ANSWER_VALUE: 응답 값
+        CREATED_AT: 생성 시각
+    """
+    __tablename__ = "TB_MENOPAUSE_ANSWER"
+    
+    ID = Column(Integer, primary_key=True, autoincrement=True)
+    USER_ID = Column(Integer, ForeignKey("TB_USERS.ID"), nullable=True, index=True)
+    QUESTION_ID = Column(Integer, ForeignKey("TB_MENOPAUSE_QUESTION.ID"), nullable=False, index=True)
+    ANSWER_VALUE = Column(String(10), nullable=False)
+    CREATED_AT = Column(DateTime(timezone=True), server_default=func.now(), nullable=True)
+    
+    # Relationships
+    user = relationship("User", foreign_keys=[USER_ID], backref="menopause_answers")
+    question = relationship("MenopauseQuestion", backref="answers")
+    
+    def __repr__(self):
+        return f"<MenopauseAnswer(ID={self.ID}, USER_ID={self.USER_ID}, QUESTION_ID={self.QUESTION_ID})>"
 
 
 # ============================================================================

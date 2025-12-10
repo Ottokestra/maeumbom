@@ -7,6 +7,7 @@ import '../data/models/chat/chat_message.dart';
 import '../data/repository/chat/chat_repository.dart';
 import '../data/api/chat/chat_api_client.dart';
 import 'auth_provider.dart';
+import 'alarm_provider.dart';
 
 // ----- Infrastructure Providers -----
 
@@ -89,6 +90,7 @@ class ChatNotifier extends StateNotifier<ChatState> {
   final ChatRepository _chatRepository;
   final int _userId;
   final PermissionService _permissionService;
+  final Ref _ref;
 
   // ✅ Session 관리
   static const _sessionDuration = Duration(minutes: 5);
@@ -105,6 +107,7 @@ class ChatNotifier extends StateNotifier<ChatState> {
     this._chatRepository, // ✅ ChatRepository 주입
     this._userId,
     this._permissionService,
+    this._ref,
   ) : super(ChatState(
           messages: [],
           isLoading: false,
