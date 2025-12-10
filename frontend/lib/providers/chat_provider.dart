@@ -284,11 +284,37 @@ class ChatNotifier extends StateNotifier<ChatState> {
       // ✅ Update session time
       await _onMessageSent();
 
+      print('[ChatProvider] 📤 Sending text message...');
+
       // ✅ Call ChatRepository to send text message
-      final aiMessage = await _chatRepository.sendTextMessage(
+      final response = await _chatRepository.sendTextMessageRaw(
         text: text,
         userId: _userId,
         sessionId: state.sessionId,
+      );
+
+      print('[ChatProvider] 📥 Received response: $response');
+
+      // Extract alarm_info and response_type from raw response
+      final replyText = response['reply_text'] as String?;
+      final emotion = response['emotion'] as String?;
+      final responseType = response['response_type'] as String?;
+      final alarmInfo = response['alarm_info'] as Map<String, dynamic>?;
+
+      print('[ChatProvider] 🔍 [TEXT] response_type: $responseType');
+      print('[ChatProvider] 🔍 [TEXT] alarm_info: $alarmInfo');
+
+      // Create AI message with metadata
+      final aiMessage = ChatMessage(
+        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        text: replyText ?? '',
+        isUser: false,
+        timestamp: DateTime.now(),
+        meta: {
+          if (emotion != null) 'emotion': emotion,
+          if (responseType != null) 'response_type': responseType,
+          if (alarmInfo != null) 'alarm_info': alarmInfo,
+        },
       );
 
       // Add AI response to UI
@@ -296,7 +322,19 @@ class ChatNotifier extends StateNotifier<ChatState> {
         messages: [...state.messages, aiMessage],
         isLoading: false,
       );
+
+      print('[ChatProvider] ✅ [TEXT] Message added to state');
+
+      // 🆕 Trigger alarm dialog callbacks if needed
+      if (responseType == 'alarm' && alarmInfo != null && replyText != null) {
+        print('[ChatProvider] 🔔 [TEXT] Triggering alarm dialog callback');
+        onShowAlarmDialog?.call(alarmInfo, replyText);
+      } else if (responseType == 'warning' && alarmInfo != null) {
+        print('[ChatProvider] ⚠️ [TEXT] Triggering warning dialog callback');
+        onShowWarningDialog?.call(alarmInfo);
+      }
     } catch (e) {
+      print('[ChatProvider] ❌ Error in sendTextMessage: $e');
       state = state.copyWith(
         isLoading: false,
         error: '메시지 전송 실패: $e',
@@ -395,6 +433,20 @@ class ChatNotifier extends StateNotifier<ChatState> {
   /// Update session time on message send
   Future<void> _onMessageSent() async {
     await _updateSessionTime();
+  }
+
+  /// Load a specific session (called from chat_screen.dart)
+  Future<void> loadSession(String sessionId) async {
+    state = state.copyWith(sessionId: sessionId);
+    await _saveSession(sessionId);
+    print('✅ Session loaded: $sessionId');
+  }
+
+  /// Reset to a new session (called from chat_screen.dart)
+  Future<void> resetSession() async {
+    await _createNewSession();
+    state = state.copyWith(messages: []);
+    print('✅ Session reset');
   }
 
   @override
