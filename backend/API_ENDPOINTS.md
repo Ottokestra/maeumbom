@@ -13,6 +13,7 @@
 - [관계 훈련 (Relation Training)](#관계-훈련-relation-training)
 - [루틴 설문 (Routine Survey)](#루틴-설문-routine-survey)
 - [갱년기 설문 (Menopause Survey)](#갱년기-설문-menopause-survey)
+- [신조어 퀴즈 (Slang Quiz)](#신조어-퀴즈-slang-quiz)
 - [음성 인식 (STT)](#음성-인식-stt)
 - [음성 합성 (TTS)](#음성-합성-tts)
 - [디버그/정리 (Debug/Cleanup)](#디버그정리-debugcleanup)
@@ -1156,6 +1157,213 @@
 - LOW (0-9점): 비교적 안정적
 - MID (10-19점): 갱년기 관련 신호 보임
 - HIGH (20점 이상): 전문의 상담 권장
+
+---
+
+## 신조어 퀴즈 (Slang Quiz)
+
+### 1. 게임 시작
+**경로**: `POST /api/service/slang-quiz/start-game`  
+**인증**: 필요 (JWT)  
+**설명**: 신조어 퀴즈 게임 시작 (5문제)  
+
+**요청 Body**:
+```json
+{
+  "level": "beginner|intermediate|advanced",
+  "quiz_type": "word_to_meaning|meaning_to_word"
+}
+```
+
+**응답**:
+```json
+{
+  "game_id": 123,
+  "total_questions": 5,
+  "current_question": 1,
+  "question": {
+    "question_number": 1,
+    "word": "킹받네",
+    "question": "자녀가 '킹받네'라고 했다면 무슨 뜻일까요?",
+    "options": ["기분이 좋다", "화가 난다", "배가 고프다", "졸리다"],
+    "time_limit": 40
+  }
+}
+```
+
+### 2. 문제 조회
+**경로**: `GET /api/service/slang-quiz/games/{game_id}/questions/{question_number}`  
+**인증**: 필요 (JWT)  
+**설명**: 특정 문제 조회  
+
+**응답**:
+```json
+{
+  "question_number": 2,
+  "word": "갓생",
+  "question": "자녀가 '갓생'이라고 했다면 무슨 뜻일까요?",
+  "options": ["신처럼 사는 삶", "게으른 삶", "바쁜 삶", "평범한 삶"],
+  "time_limit": 40
+}
+```
+
+### 3. 답안 제출
+**경로**: `POST /api/service/slang-quiz/games/{game_id}/submit-answer`  
+**인증**: 필요 (JWT)  
+**설명**: 답안 제출 및 점수 계산  
+
+**요청 Body**:
+```json
+{
+  "question_number": 1,
+  "user_answer_index": 1,
+  "response_time_seconds": 15
+}
+```
+
+**응답**:
+```json
+{
+  "is_correct": true,
+  "correct_answer_index": 1,
+  "earned_score": 135,
+  "explanation": "'킹받네'는 '열받네'를 강조한 표현이에요...",
+  "reward_card": {
+    "message": "킹받는 일이 있어도 엄마는 네 편이야!",
+    "background_mood": "warm"
+  }
+}
+```
+
+**점수 계산**:
+- 기본 점수: 100점
+- 보너스: 10초 이내 50점, 이후 1초당 -1점 (최대 40초)
+- 오답: 0점
+
+### 4. 게임 종료
+**경로**: `POST /api/service/slang-quiz/games/{game_id}/end`  
+**인증**: 필요 (JWT)  
+**설명**: 게임 종료 및 결과 조회  
+
+**응답**:
+```json
+{
+  "game_id": 123,
+  "total_questions": 5,
+  "correct_count": 4,
+  "total_score": 550,
+  "total_time_seconds": 180,
+  "questions_summary": [
+    {
+      "question_number": 1,
+      "word": "킹받네",
+      "is_correct": true,
+      "earned_score": 150
+    }
+  ]
+}
+```
+
+### 5. 게임 히스토리
+**경로**: `GET /api/service/slang-quiz/history`  
+**인증**: 필요 (JWT)  
+**설명**: 사용자의 게임 히스토리 조회  
+
+**Query Parameters**:
+- `limit` (default: 20): 조회할 게임 수
+- `offset` (default: 0): 페이지네이션 오프셋
+
+**응답**:
+```json
+{
+  "total": 10,
+  "games": [
+    {
+      "game_id": 123,
+      "level": "beginner",
+      "quiz_type": "word_to_meaning",
+      "total_questions": 5,
+      "correct_count": 4,
+      "total_score": 550,
+      "is_completed": true,
+      "created_at": "2025-12-10T10:00:00"
+    }
+  ]
+}
+```
+
+### 6. 통계 조회
+**경로**: `GET /api/service/slang-quiz/statistics`  
+**인증**: 필요 (JWT)  
+**설명**: 사용자의 퀴즈 통계 조회  
+
+**응답**:
+```json
+{
+  "statistics": {
+    "total_games": 10,
+    "total_questions": 50,
+    "correct_answers": 40,
+    "accuracy_rate": 0.8,
+    "total_score": 5500,
+    "average_score": 550.0,
+    "best_score": 700,
+    "beginner_accuracy": 0.85,
+    "intermediate_accuracy": 0.75,
+    "advanced_accuracy": 0.65,
+    "word_to_meaning_accuracy": 0.82,
+    "meaning_to_word_accuracy": 0.78
+  }
+}
+```
+
+### 7. 게임 삭제
+**경로**: `DELETE /api/service/slang-quiz/games/{game_id}`  
+**인증**: 필요 (JWT)  
+**설명**: 게임 히스토리 삭제 (Soft Delete)  
+
+**응답**:
+```json
+{
+  "success": true,
+  "message": "Game 123 deleted successfully",
+  "game_id": 123
+}
+```
+
+### 8. 관리자용 문제 생성
+**경로**: `POST /api/service/slang-quiz/admin/questions/generate`  
+**인증**: 필요 (JWT)  
+**설명**: 관리자용 문제 생성 (나중에 사용)  
+
+**Query Parameters**:
+- `level`: 난이도 (beginner/intermediate/advanced)
+- `quiz_type`: 퀴즈 타입 (word_to_meaning/meaning_to_word)
+- `count`: 생성할 문제 수 (1-50)
+
+**응답**:
+```json
+{
+  "success": true,
+  "message": "Generated 10 questions",
+  "count": 10,
+  "level": "beginner",
+  "quiz_type": "word_to_meaning"
+}
+```
+
+### 9. 헬스 체크
+**경로**: `GET /api/service/slang-quiz/health`  
+**인증**: 불필요  
+**설명**: 서비스 상태 확인  
+
+**응답**:
+```json
+{
+  "status": "ok",
+  "service": "slang-quiz"
+}
+```
 
 ---
 

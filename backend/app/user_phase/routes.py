@@ -1,22 +1,21 @@
-"""
-API routes for User Phase Service
-"""
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session
+"""API routes for User Phase Service."""
 from typing import Dict, Any
 
-from app.db.database import get_db
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.orm import Session
+
 from app.auth.dependencies import get_current_user
 from app.auth.models import User
+from app.db.database import get_db
 
+from . import service
 from .models import (
     HealthSyncRequest,
     UserPhaseResponse,
     UserPatternResponse,
+    UserPatternSettingResponse,
     UserPatternSettingUpdate,
-    UserPatternSettingResponse
 )
-from . import service
 
 router = APIRouter(
     prefix="/api/service/user-phase",
@@ -59,7 +58,10 @@ async def sync_health_data(
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"건강 데이터 동기화 실패: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail={"detail": f"건강 데이터 동기화 실패: {str(e)}", "code": "SYNC_FAILED"},
+        )
 
 
 @router.get("/current", response_model=UserPhaseResponse)
@@ -84,7 +86,10 @@ async def get_current_phase(
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Phase 조회 실패: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail={"detail": f"Phase 조회 실패: {str(e)}", "code": "PHASE_QUERY_FAILED"},
+        )
 
 
 @router.get("/settings", response_model=UserPatternSettingResponse)
@@ -100,7 +105,7 @@ async def get_user_settings(
     if not setting:
         raise HTTPException(
             status_code=404,
-            detail="사용자 설정이 없습니다. 온보딩을 완료하거나 설정을 입력해주세요."
+            detail={"detail": "사용자 설정이 없습니다. 온보딩을 완료하거나 설정을 입력해주세요.", "code": "SETTING_NOT_FOUND"},
         )
     
     return UserPatternSettingResponse(
@@ -152,7 +157,10 @@ async def update_user_settings(
         )
     
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"설정 업데이트 실패: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail={"detail": f"설정 업데이트 실패: {str(e)}", "code": "SETTING_UPDATE_FAILED"},
+        )
 
 
 @router.post("/analyze", response_model=UserPatternResponse)
@@ -173,7 +181,10 @@ async def analyze_pattern(
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"패턴 분석 실패: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail={"detail": f"패턴 분석 실패: {str(e)}", "code": "PATTERN_ANALYSIS_FAILED"},
+        )
 
 
 @router.get("/pattern", response_model=UserPatternResponse)
@@ -189,7 +200,7 @@ async def get_pattern(
     if not setting:
         raise HTTPException(
             status_code=404,
-            detail="패턴 분석 결과가 없습니다. 먼저 분석을 실행해주세요."
+            detail={"detail": "패턴 분석 결과가 없습니다. 먼저 분석을 실행해주세요.", "code": "PATTERN_NOT_FOUND"},
         )
     
     # 인사이트 생성

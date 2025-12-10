@@ -24,7 +24,12 @@ class _RelationTrainingScreenState extends ConsumerState<RelationTrainingScreen>
     final viewModel = ref.read(relationTrainingViewModelProvider(widget.scenarioId).notifier);
     final wentBack = viewModel.navigateBack();
     if (!wentBack) {
-      Navigator.pop(context);
+      if (Navigator.canPop(context)) {
+        Navigator.pop(context);
+      } else {
+        // Fallback to List Screen if history is empty (prevents black screen)
+        Navigator.pushReplacementNamed(context, '/training');
+      }
     }
   }
 
@@ -117,6 +122,8 @@ class _RelationTrainingScreenState extends ConsumerState<RelationTrainingScreen>
                   padding: const EdgeInsets.only(bottom: 12),
                   child: AppButton(
                     text: option.optionText,
+                    height: null,
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
                     onTap: () {
                       if (_selectedOptionCode != null) return;
                       

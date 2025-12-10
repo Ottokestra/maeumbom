@@ -2,7 +2,22 @@
 SQLAlchemy models for all database tables
 Centralized model management
 """
-from sqlalchemy import Column, Integer, String, Text, DateTime, Date, Index, ForeignKey, JSON, Float, Boolean, Time
+from sqlalchemy import (
+    BigInteger,
+    Boolean,
+    Column,
+    Date,
+    DateTime,
+    Float,
+    ForeignKey,
+    Index,
+    Integer,
+    JSON,
+    String,
+    Text,
+    Time,
+    UniqueConstraint,
+)
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 from .database import Base
@@ -145,6 +160,124 @@ class EmotionAnalysis(Base):
     def __repr__(self):
         return f"<EmotionAnalysis(ID={self.ID}, CHECK_ROOT={self.CHECK_ROOT}, SENTIMENT_OVERALL={self.SENTIMENT_OVERALL})>"
 
+
+class EmotionLog(Base):
+    """
+    감정 분석 결과 로그
+
+    Attributes:
+        ID: Primary key
+        USER_ID: Foreign key to users table
+        EMOTION_CODE: 분석 결과 감정 코드
+        SCORE: 감정 점수 (선택 값)
+        CREATED_AT: 로그 생성 시각
+        IS_DELETED: 소프트 삭제 여부
+    """
+
+    __tablename__ = "TB_EMOTION_LOG"
+
+    ID = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    USER_ID = Column(Integer, ForeignKey("TB_USERS.ID"), nullable=True, index=True)
+    EMOTION_CODE = Column(String(50), nullable=False)
+    SCORE = Column(Float, nullable=True)
+    CREATED_AT = Column(DateTime(timezone=True), server_default=func.now(), index=True)
+    IS_DELETED = Column(Boolean, default=False)
+
+
+class MenopauseSurveyQuestion(Base):
+    """
+    갱년기 자가테스트 설문 문항 (성별/코드 기반)
+
+    Attributes:
+        ID: Primary key
+        GENDER: 성별 구분 (FEMALE / MALE)
+        CODE: 문항 코드 (예: F1~F10, M1~M10)
+        ORDER_NO: 성별 내 표시 순서
+        QUESTION_TEXT: 질문 텍스트
+        RISK_WHEN_YES: "예" 응답 시 위험 여부
+        POSITIVE_LABEL: 긍정 선택지 라벨 (기본값 "예")
+        NEGATIVE_LABEL: 부정 선택지 라벨 (기본값 "아니오")
+        CHARACTER_KEY: 프론트 캐릭터 매핑 키
+        IS_ACTIVE: 활성화 여부
+        IS_DELETED: 소프트 삭제 여부
+        CREATED_AT/UPDATED_AT: 생성/수정 시각
+        CREATED_BY/UPDATED_BY: 생성/수정자 정보
+    """
+
+    __tablename__ = "TB_MENOPAUSE_SURVEY_QUESTION"
+
+    ID = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    GENDER = Column(String(10), nullable=False, index=True)
+    CODE = Column(String(10), nullable=False, index=True)
+    ORDER_NO = Column(Integer, nullable=False, index=True)
+    QUESTION_TEXT = Column(Text, nullable=False)
+    RISK_WHEN_YES = Column(Boolean, nullable=False, default=False)
+    POSITIVE_LABEL = Column(String(20), nullable=False, default="예")
+    NEGATIVE_LABEL = Column(String(20), nullable=False, default="아니오")
+    CHARACTER_KEY = Column(String(50), nullable=True)
+    IS_ACTIVE = Column(Boolean, default=True)
+    IS_DELETED = Column(Boolean, default=False)
+    CREATED_AT = Column(DateTime(timezone=True), server_default=func.now())
+    UPDATED_AT = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    CREATED_BY = Column(String(50), nullable=True)
+    UPDATED_BY = Column(String(50), nullable=True)
+
+    __table_args__ = (
+        UniqueConstraint("CODE", name="uq_menopause_survey_question_code"),
+        Index("idx_menopause_gender_order", "GENDER", "ORDER_NO"),
+    )
+
+
+class MenopauseQuestion(Base):
+    """
+    갱년기 자가테스트 설문 문항
+    """
+
+    __tablename__ = "TB_MENOPAUSE_QUESTION"
+
+    ID = Column(Integer, primary_key=True, autoincrement=True, index=True)
+    ORDER_NO = Column(Integer, nullable=False, index=True)
+    CATEGORY = Column(String(50), nullable=True)
+    QUESTION_TEXT = Column(String(500), nullable=False)
+    POSITIVE_LABEL = Column(String(50), nullable=False, default="예")
+    NEGATIVE_LABEL = Column(String(50), nullable=False, default="아니오")
+    CHARACTER_KEY = Column(String(50), nullable=True)
+    IS_ACTIVE = Column(Boolean, default=True)
+    IS_DELETED = Column(Boolean, default=False)
+    CREATED_AT = Column(DateTime(timezone=True), server_default=func.now())
+    UPDATED_AT = Column(DateTime(timezone=True), onupdate=func.now())
+
+
+class MenopauseAnswer(Base):
+    """
+    갱년기 자가테스트 설문 응답
+    """
+
+    __tablename__ = "TB_MENOPAUSE_ANSWER"
+
+    ID = Column(Integer, primary_key=True, autoincrement=True)
+    USER_ID = Column(Integer, ForeignKey("TB_USERS.ID"), nullable=True, index=True)
+    QUESTION_ID = Column(Integer, ForeignKey("TB_MENOPAUSE_QUESTION.ID"), nullable=False)
+    ANSWER_VALUE = Column(String(10), nullable=False)
+    CREATED_AT = Column(DateTime(timezone=True), server_default=func.now())
+
+
+class UserEmotionLog(Base):
+    """사용자 감정 로그 테이블."""
+
+    __tablename__ = "user_emotion_log"
+
+    id = Column(BigInteger, primary_key=True, index=True, autoincrement=True)
+    user_id = Column(BigInteger, index=True, nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), index=True)
+    session_id = Column(String(255), nullable=True)
+    emotion_label = Column(String(50), nullable=False)
+    sentiment_score = Column(Float, nullable=True)
+    raw_meta = Column(JSON, nullable=True)
+
+    __table_args__ = (
+        Index("idx_user_emotion_log_user_created", "user_id", "created_at"),
+    )
 
 # ============================================================================
 # 대화 및 메모리 저장 모델 (Agent 기능)
@@ -762,3 +895,172 @@ class UserProfile(Base):
     
     def __repr__(self):
         return f"<UserProfile(ID={self.ID}, USER_ID={self.USER_ID}, NICKNAME={self.NICKNAME})>"
+
+
+# ============================================================================
+# 신조어 퀴즈 게임 모델 (Slang Quiz Game)
+# ============================================================================
+
+class SlangQuizQuestion(Base):
+    """
+    Slang quiz question pool model
+    Pre-generated questions for slang quiz game
+
+    Attributes:
+        ID: Primary key
+        LEVEL: Difficulty level (beginner/intermediate/advanced)
+        QUIZ_TYPE: Quiz type (word_to_meaning/meaning_to_word)
+        WORD: Slang word
+        QUESTION: Question text
+        OPTIONS: Answer options (JSON array of 4 strings)
+        ANSWER_INDEX: Correct answer index (0-3)
+        EXPLANATION: Explanation text
+        REWARD_MESSAGE: Reward card message
+        REWARD_BACKGROUND_MOOD: Reward card background mood (warm/cheer/cool)
+        IS_ACTIVE: Whether this question is active
+        USAGE_COUNT: How many times this question has been used
+        IS_DELETED: Soft delete flag
+        CREATED_AT: Creation timestamp
+        CREATED_BY: Creator user ID
+        UPDATED_AT: Last update timestamp
+        UPDATED_BY: Last updater user ID
+    """
+    __tablename__ = "TB_SLANG_QUIZ_QUESTIONS"
+
+    ID = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    LEVEL = Column(String(20), nullable=False, index=True)
+    QUIZ_TYPE = Column(String(50), nullable=False, index=True)
+    WORD = Column(String(100), nullable=False)
+    QUESTION = Column(Text, nullable=False)
+    OPTIONS = Column(JSON, nullable=False)
+    ANSWER_INDEX = Column(Integer, nullable=False)
+    EXPLANATION = Column(Text, nullable=False)
+    REWARD_MESSAGE = Column(String(100), nullable=False)
+    REWARD_BACKGROUND_MOOD = Column(String(20), nullable=False)
+    IS_ACTIVE = Column(Boolean, default=True, nullable=False, index=True)
+    USAGE_COUNT = Column(Integer, default=0, nullable=False)
+
+    # Standard fields
+    IS_DELETED = Column(Boolean, default=False, nullable=False, index=True)
+    CREATED_AT = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    CREATED_BY = Column(Integer, ForeignKey("TB_USERS.ID"), nullable=True, index=True)
+    UPDATED_AT = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
+    UPDATED_BY = Column(Integer, ForeignKey("TB_USERS.ID"), nullable=True, index=True)
+
+    # Indexes
+    __table_args__ = (
+        Index('idx_level_type', 'LEVEL', 'QUIZ_TYPE'),
+        Index('idx_active_deleted', 'IS_ACTIVE', 'IS_DELETED'),
+    )
+
+    # Relationships
+    creator = relationship("User", foreign_keys=[CREATED_BY], backref="created_quiz_questions")
+    updater = relationship("User", foreign_keys=[UPDATED_BY], backref="updated_quiz_questions")
+
+    def __repr__(self):
+        return f"<SlangQuizQuestion(ID={self.ID}, LEVEL={self.LEVEL}, WORD={self.WORD})>"
+
+
+class SlangQuizGame(Base):
+    """
+    Slang quiz game session model
+    Represents a single game session with 5 questions
+
+    Attributes:
+        ID: Primary key
+        USER_ID: Foreign key to TB_USERS
+        LEVEL: Difficulty level (beginner/intermediate/advanced)
+        QUIZ_TYPE: Quiz type (word_to_meaning/meaning_to_word)
+        TOTAL_QUESTIONS: Total number of questions (default: 5)
+        CORRECT_COUNT: Number of correct answers
+        TOTAL_SCORE: Total score earned
+        TOTAL_TIME_SECONDS: Total time spent on the game
+        IS_COMPLETED: Whether the game is completed
+        IS_DELETED: Soft delete flag
+        CREATED_AT: Game start timestamp
+        CREATED_BY: Creator user ID
+        UPDATED_AT: Last update timestamp
+        UPDATED_BY: Last updater user ID
+    """
+    __tablename__ = "TB_SLANG_QUIZ_GAMES"
+
+    ID = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    USER_ID = Column(Integer, ForeignKey("TB_USERS.ID"), nullable=False, index=True)
+    LEVEL = Column(String(20), nullable=False)
+    QUIZ_TYPE = Column(String(50), nullable=False)
+    TOTAL_QUESTIONS = Column(Integer, default=5, nullable=False)
+    CORRECT_COUNT = Column(Integer, default=0, nullable=False)
+    TOTAL_SCORE = Column(Integer, default=0, nullable=False)
+    TOTAL_TIME_SECONDS = Column(Integer, nullable=True)
+    IS_COMPLETED = Column(Boolean, default=False, nullable=False)
+
+    # Standard fields
+    IS_DELETED = Column(Boolean, default=False, nullable=False, index=True)
+    CREATED_AT = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    CREATED_BY = Column(Integer, ForeignKey("TB_USERS.ID"), nullable=True, index=True)
+    UPDATED_AT = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
+    UPDATED_BY = Column(Integer, ForeignKey("TB_USERS.ID"), nullable=True, index=True)
+
+    # Relationships
+    user = relationship("User", foreign_keys=[USER_ID], backref="slang_quiz_games")
+    creator = relationship("User", foreign_keys=[CREATED_BY], backref="created_slang_quiz_games")
+    updater = relationship("User", foreign_keys=[UPDATED_BY], backref="updated_slang_quiz_games")
+
+    def __repr__(self):
+        return f"<SlangQuizGame(ID={self.ID}, USER_ID={self.USER_ID}, LEVEL={self.LEVEL}, SCORE={self.TOTAL_SCORE})>"
+
+
+class SlangQuizAnswer(Base):
+    """
+    Slang quiz answer model
+    Stores user's answer for each question in a game
+
+    Attributes:
+        ID: Primary key
+        GAME_ID: Foreign key to TB_SLANG_QUIZ_GAMES
+        USER_ID: Foreign key to TB_USERS
+        QUESTION_ID: Foreign key to TB_SLANG_QUIZ_QUESTIONS
+        QUESTION_NUMBER: Question number in the game (1-5)
+        USER_ANSWER_INDEX: User's selected answer index (0-3)
+        IS_CORRECT: Whether the answer is correct
+        RESPONSE_TIME_SECONDS: Time taken to answer (seconds)
+        EARNED_SCORE: Score earned for this question
+        IS_DELETED: Soft delete flag
+        CREATED_AT: Answer submission timestamp
+        CREATED_BY: Creator user ID
+        UPDATED_AT: Last update timestamp
+        UPDATED_BY: Last updater user ID
+    """
+    __tablename__ = "TB_SLANG_QUIZ_ANSWERS"
+
+    ID = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    GAME_ID = Column(Integer, ForeignKey("TB_SLANG_QUIZ_GAMES.ID"), nullable=False, index=True)
+    USER_ID = Column(Integer, ForeignKey("TB_USERS.ID"), nullable=False, index=True)
+    QUESTION_ID = Column(Integer, ForeignKey("TB_SLANG_QUIZ_QUESTIONS.ID"), nullable=False, index=True)
+    QUESTION_NUMBER = Column(Integer, nullable=False)
+    USER_ANSWER_INDEX = Column(Integer, nullable=True)
+    IS_CORRECT = Column(Boolean, nullable=True)
+    RESPONSE_TIME_SECONDS = Column(Integer, nullable=True)
+    EARNED_SCORE = Column(Integer, nullable=True)
+
+    # Standard fields
+    IS_DELETED = Column(Boolean, default=False, nullable=False, index=True)
+    CREATED_AT = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    CREATED_BY = Column(Integer, ForeignKey("TB_USERS.ID"), nullable=True, index=True)
+    UPDATED_AT = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
+    UPDATED_BY = Column(Integer, ForeignKey("TB_USERS.ID"), nullable=True, index=True)
+
+    # Indexes
+    __table_args__ = (
+        Index('idx_game_question_num', 'GAME_ID', 'QUESTION_NUMBER'),
+    )
+
+    # Relationships
+    game = relationship("SlangQuizGame", backref="answers")
+    user = relationship("User", foreign_keys=[USER_ID], backref="slang_quiz_answers")
+    question = relationship("SlangQuizQuestion", backref="answers")
+    creator = relationship("User", foreign_keys=[CREATED_BY], backref="created_slang_quiz_answers")
+    updater = relationship("User", foreign_keys=[UPDATED_BY], backref="updated_slang_quiz_answers")
+
+    def __repr__(self):
+        return f"<SlangQuizAnswer(ID={self.ID}, GAME_ID={self.GAME_ID}, QUESTION_NUMBER={self.QUESTION_NUMBER}, IS_CORRECT={self.IS_CORRECT})>"

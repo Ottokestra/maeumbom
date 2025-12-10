@@ -79,7 +79,7 @@ class ChatState {
       voiceState: voiceState ?? this.voiceState,
       error: error,
       sessionId: sessionId ?? this.sessionId,
-      sttPartialText: sttPartialText, // ✅ Phase 3
+      sttPartialText: sttPartialText, // 필요 시 명시적으로 넘겨서 갱신
     );
   }
 }
@@ -254,13 +254,9 @@ class ChatNotifier extends StateNotifier<ChatState> {
       }
 
       // ✅ WebSocket 연결 유지! - TTS 재생 후 다시 listening으로 전환
-      // 연속 대화를 위해 답변 후에도 WebSocket을 끊지 않고 계속 듣기 상태로 유지
-      // TODO: TTS 재생 완료 후 listening으로 전환
-      // 현재는 3초 후 자동으로 listening으로 전환 (임시)
       Future.delayed(const Duration(seconds: 3), () {
         if (state.voiceState == VoiceInterfaceState.replying &&
             _bomChatService.isActive) {
-          // ✅ idle이 아닌 listening으로 전환하여 연속 대화 가능
           state = state.copyWith(voiceState: VoiceInterfaceState.listening);
         }
       });
@@ -280,7 +276,6 @@ class ChatNotifier extends StateNotifier<ChatState> {
     state = state.copyWith(voiceState: VoiceInterfaceState.idle);
   }
 
-  /// Send text message (기존 유지 - HTTP API 사용)
   /// Send text message via HTTP API
   Future<void> sendTextMessage(String text) async {
     if (text.trim().isEmpty) return;
@@ -465,6 +460,7 @@ class ChatNotifier extends StateNotifier<ChatState> {
     }
   }
 
+  /// 화면에서 특정 세션을 선택했을 때 사용 (chat_screen.dart 등에서 호출)
   Future<void> loadSession(String sessionId) async {
     // 1. 현재 상태에 세션 ID 적용
     state = state.copyWith(sessionId: sessionId, isLoading: true);
@@ -472,15 +468,17 @@ class ChatNotifier extends StateNotifier<ChatState> {
     try {
       print('📥 Loading session: $sessionId');
 
-      // TODO: 만약 서버에 '이전 대화 내역'을 요청하는 API가 있다면 여기서 호출하세요.
-      // 예: final history = await _chatRepository.getChatHistory(sessionId);
+      // TODO: 서버에 '이전 대화 내역' API가 생기면 여기서 불러오기
+      // 예:
+      // final history = await _chatRepository.getChatHistory(sessionId);
       // state = state.copyWith(messages: history, isLoading: false);
 
-      // 현재는 API가 없으므로 로딩만 해제합니다.
+      // 현재는 UI 로딩만 해제
       state = state.copyWith(isLoading: false);
 
-      // 세션 시간 갱신 (선택 사항)
+      // 세션 시간 및 ID 저장
       await _saveSession(sessionId);
+      print('✅ Session loaded: $sessionId');
     } catch (e) {
       print('❌ Error loading session: $e');
       state = state.copyWith(isLoading: false, error: e.toString());
@@ -494,14 +492,17 @@ class ChatNotifier extends StateNotifier<ChatState> {
     // 1. 화면의 메시지 목록 비우기
     clearMessages();
 
-    // 2. 새로운 세션 ID 발급 및 저장 (기존 함수 재사용)
+    // 2. 새로운 세션 ID 발급 및 저장
     await _createNewSession();
+
+    print('✅ Session reset to new id: ${state.sessionId}');
   }
 
   /// Update session time on message send
   Future<void> _onMessageSent() async {
     await _updateSessionTime();
   }
+
 
   @override
   void dispose() {

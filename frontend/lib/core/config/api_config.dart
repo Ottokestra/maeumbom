@@ -45,6 +45,16 @@ class ApiConfig {
   static const String onboardingSurveyMe = '$onboardingSurveyBase/me';
   static const String onboardingSurveyStatus = '$onboardingSurveyBase/status';
 
+  // Dashboard Endpoints
+  static const String dashboardBase = '/api/dashboard';
+  static const String emotionHistory = '$dashboardBase/emotion-history';
+
+  // Report Endpoints
+  static const String reportBase = '/api/reports/me';
+  static const String dailyReport = '$reportBase/daily';
+  static const String weeklyReport = '$reportBase/weekly';
+  static const String monthlyReport = '$reportBase/monthly';
+
   // User Phase Endpoints
   static const String userPhaseBase = '/api/service/user-phase';
   static const String userPhaseSync = '$userPhaseBase/sync';
@@ -53,12 +63,22 @@ class ApiConfig {
   static const String userPhaseAnalyze = '$userPhaseBase/analyze';
   static const String userPhasePattern = '$userPhaseBase/pattern';
 
+  // Recommendation Endpoints
+  static const String recommendationBase = '/api/v1/recommendations';
+  static const String recommendationQuote = '$recommendationBase/quote';
+  static const String recommendationMusic = '$recommendationBase/music';
+  static const String recommendationImage = '$recommendationBase/image';
+
+  // Emotion Report Endpoints
+  static const String emotionReportBase = '/api/v1/reports/emotion';
+  static const String emotionWeeklyReport = '$emotionReportBase/weekly';
+
   // Relation Training Endpoints
   static const String relationTrainingBase = '/api/service/relation-training';
   static const String relationTrainingScenarios = '$relationTrainingBase/scenarios';
-  static String relationTrainingStart(int scenarioId) => '$relationTrainingScenarios/$scenarioId/start';
+  static String relationTrainingStart(int scenarioId) =>
+      '$relationTrainingBase/scenarios/$scenarioId/start';
   static const String relationTrainingProgress = '$relationTrainingBase/progress';
-  static String relationTrainingScenario(int scenarioId) => '$relationTrainingScenarios/$scenarioId';
 
   // Timeout Configuration
   static const Duration connectTimeout = Duration(seconds: 30);

@@ -8,6 +8,7 @@ import '../core/services/auth/google_oauth_service.dart';
 import '../core/services/auth/kakao_oauth_service.dart';
 import '../core/services/auth/naver_oauth_service.dart';
 import '../core/utils/dio_interceptors.dart';
+import '../core/utils/error_logger.dart';
 import '../data/api/auth/auth_api_client.dart';
 import '../data/api/user_phase/user_phase_api_client.dart';
 import '../data/repository/auth/auth_repository.dart';
@@ -207,7 +208,13 @@ final dioWithAuthProvider = Provider<Dio>((ref) {
   final authService = ref.watch(authServiceProvider);
 
   // Add auth interceptor
-  dio.interceptors.add(AuthInterceptor(authService, dio));
+  dio.interceptors.add(
+    AuthInterceptor(
+      authService,
+      dio,
+      errorLogger: const AppErrorLogger(),
+    ),
+  );
 
   return dio;
 });

@@ -32,7 +32,7 @@ class RelationTrainingListScreen extends ConsumerWidget {
   }
 
   Widget _buildScenarioGrid(BuildContext context, List<TrainingScenario> scenarios) {
-    return SingleChildScrollView(
+    return Padding(
       padding: const EdgeInsets.all(24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -42,19 +42,20 @@ class RelationTrainingListScreen extends ConsumerWidget {
             style: AppTypography.h2,
           ),
           const SizedBox(height: 24),
-          GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              crossAxisSpacing: 16,
-              mainAxisSpacing: 16,
-              childAspectRatio: 0.7, // Adjust based on content
+          Expanded(
+            child: GridView.builder(
+              physics: const BouncingScrollPhysics(),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2,
+                crossAxisSpacing: 16,
+                mainAxisSpacing: 16,
+                childAspectRatio: 0.7, // Adjust based on content
+              ),
+              itemCount: scenarios.length,
+              itemBuilder: (context, index) {
+                return _buildScenarioCard(context, scenarios[index]);
+              },
             ),
-            itemCount: scenarios.length,
-            itemBuilder: (context, index) {
-              return _buildScenarioCard(context, scenarios[index]);
-            },
           ),
         ],
       ),
@@ -115,7 +116,7 @@ class RelationTrainingListScreen extends ConsumerWidget {
                   children: [
                     Text(
                       scenario.title,
-                      style: AppTypography.bodyBold.copyWith(fontSize: 16),
+                      style: AppTypography.bodyBold,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
