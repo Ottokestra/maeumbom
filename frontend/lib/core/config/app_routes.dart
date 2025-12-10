@@ -12,7 +12,7 @@ import '../../app/example/bubble_screen.dart';
 import '../../app/onboarding/splash_screen.dart';
 import '../../app/chat/bomi_screen.dart';
 import '../../app/chat/chat_list_screen.dart';
-import '../../app/training/relation_training_list_screen.dart';
+import '../../app/training/training_screen.dart';
 import '../../app/slang_quiz/slang_quiz_start_screen.dart';
 
 /// 라우트 메타데이터
@@ -85,7 +85,7 @@ class AppRoutes {
 
   static const RouteMetadata training = RouteMetadata(
     routeName: '/training',
-    builder: RelationTrainingListScreen.new,
+    builder: TrainingScreen.new,
   );
 
   // 보호된 경로 (인증 필요)
