@@ -20,9 +20,10 @@
 2. [프로젝트 구조](#-프로젝트-구조)
 3. [디자인 시스템](#-디자인-시스템)
 4. [API 및 상태 관리](#-api-및-상태-관리)
-5. [개발 워크플로우](#-개발-워크플로우)
-6. [코딩 컨벤션](#-코딩-컨벤션)
-7. [문제 해결](#-문제-해결)
+5. [로컬 데이터베이스 (Drift)](#-로컬-데이터베이스-drift)
+6. [개발 워크플로우](#-개발-워크플로우)
+7. [코딩 컨벤션](#-코딩-컨벤션)
+8. [문제 해결](#-문제-해결)
 
 ---
 
@@ -162,14 +163,20 @@ frontend/
 │   │   └── daily_mood_provider.dart    # 일일 감정 체크 provider
 │   │
 │   ├── data/                           # 데이터 계층 (도메인별 분리)
+│   │   ├── local/                      # 로컬 데이터
+│   │   │   └── database/               # Drift 데이터베이스
+│   │   │       ├── app_database.dart   # DB 정의 및 CRUD
+│   │   │       └── app_database.g.dart # 자동 생성 파일
 │   │   ├── models/                     # 도메인 모델
-│   │   │   └── auth/                   
+│   │   │   ├── auth/
+│   │   │   └── alarm/                  # 알람 모델
 │   │   ├── dtos/                       # API DTO
 │   │   │   └── auth/                   
 │   │   ├── api/                        # HTTP 클라이언트
 │   │   │   └── auth/                   
 │   │   └── repository/                 # 데이터 저장소
-│   │       └── auth/                   
+│   │       ├── auth/
+│   │       └── alarm/                  # 알람 레포지토리                   
 │   │
 │   └── core/                           # 핵심 기능
 │       ├── config/                     # 앱 설정
@@ -183,7 +190,12 @@ frontend/
 │       └── services/                   # 서비스 (도메인별 분리)
 │           ├── auth/                   # 인증 서비스
 │           ├── chat/                   # 채팅 서비스
+│           ├── alarm/                  # 알람 서비스
+│           │   └── alarm_notification_service.dart
 │           └── navigation/             # 네비게이션 서비스
+│
+├── debug/                              # 디버그 유틸리티
+│   └── db_path_helper.dart             # DB 경로 확인 헬퍼
 │
 ├── DESIGN_GUIDE.md                     
 └── FRONTEND_GUIDE.md                   
