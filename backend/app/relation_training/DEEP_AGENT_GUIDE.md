@@ -2,7 +2,12 @@
 
 ## 개요
 
-Deep Agent Pipeline은 사용자 입력을 받아 GPT-4o-mini로 시나리오를 생성하고, FLUX.1-schnell로 17장의 이미지를 자동 생성하는 완전 자동화 파이프라인입니다.
+Deep Agent Pipeline은 사용자 입력을 받아 Gemini API로 시나리오를 생성하고, FLUX.1-schnell로 17장의 이미지를 자동 생성하는 완전 자동화 파이프라인입니다.
+
+**최신 업데이트 (2025-12-09)**:
+- Qwen 2.5 14B 모델 제거
+- Gemini로 시나리오 생성 전환 (scenario_architect.md 하나로 전체 시나리오 한 번에 생성)
+- 오케스트레이션은 GPT-4o-mini 계속 사용 (프롬프트 준비, 검증, 파싱)
 
 ## 환경 변수 설정
 
@@ -22,9 +27,13 @@ USE_NVIDIA_GPU=false       # NVIDIA GPU 사용 (학원 컴퓨터)
 MAX_PARALLEL_IMAGE_GENERATION=4    # 동시 생성 이미지 수 (1~8)
 IMAGE_GENERATION_TIMEOUT=300       # 타임아웃 (초)
 
-# OpenAI API (이미 설정되어 있어야 함)
+# OpenAI API (Orchestration - 이미 설정되어 있어야 함)
 OPENAI_API_KEY=sk-xxxxxxxxxxxxx
 OPENAI_MODEL_NAME=gpt-4o-mini
+
+# Gemini API (Scenario Generation)
+SCENARIO_GENERATION_MODEL_NAME=gemini-1.5-pro
+GEMINI_API_KEY=your_gemini_api_key_here
 ```
 
 ## 패키지 설치 (중요!)
@@ -194,9 +203,13 @@ backend/app/relation_training/
 
 ### Phase 1: The Brain (시나리오 생성)
 
-1. `scenario_architect.md` 프롬프트 로드
+1. 프롬프트 로드 (step0~step3)
 2. 변수 치환 (TARGET, TOPIC)
-3. GPT-4o-mini 호출
+3. GPT-4o-mini API 호출 (4단계)
+   - STEP 0: Character Design
+   - STEP 1: Nodes (15개)
+   - STEP 2: Options (30개)
+   - STEP 3: Results (16개)
 4. JSON 파싱 및 검증
 5. Pydantic 모델 변환
 

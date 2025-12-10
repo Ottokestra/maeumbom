@@ -30,8 +30,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-    
-  http: ^1.1.0
+
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
@@ -41,7 +40,7 @@ dependencies:
   flutter_riverpod: ^2.5.1
 
   # HTTP Client
-  dio: ^5.1.0
+  dio: ^5.4.0
 
   # Secure Storage
   flutter_secure_storage: ^10.0.0-beta.5
@@ -53,7 +52,6 @@ dependencies:
   kakao_flutter_sdk_user: ^1.9.6
 
   # Web Auth for Naver (WebView OAuth)
-  # flutter_web_auth_2: ^3.0.0
   flutter_web_auth_2: ^4.1.0
 
   # Utilities
@@ -65,11 +63,9 @@ dependencies:
   record: ^6.1.2
   permission_handler: ^12.0.1
   web_socket_channel: ^3.0.3
-  
+
   # ★ retrofit 추가
-  retrofit: ^4.4.1
-
-
+  retrofit: 4.4.1
 
   # Lottie Animation
   lottie: ^3.0.0
@@ -90,11 +86,8 @@ dev_dependencies:
   freezed: ^2.4.1
   json_serializable: ^6.7.1
 
-
-
   # retrofit generator (★ 딱 한 줄만 남기기)
-  retrofit_generator: ^9.7.0
-
+  retrofit_generator: ^8.2.0
 
 # Override dependencies to fix Linux compatibility issues
 dependency_overrides:
@@ -112,9 +105,14 @@ flutter:
     - assets/characters/normal_2d/
     - assets/characters/animation/
     - assets/characters/animation/happiness/
-    - assets/characters/animation/sedness/
+    - assets/characters/animation/sadness/
     - assets/characters/animation/anger/
     - assets/characters/animation/fear/
+    - assets/characters/animation/basic/
+    - assets/characters/animation/error/
+    - assets/characters/animation/listening/
+    - assets/characters/animation/realization/
+    - assets/characters/animation/thinking/
     - assets/images/icons/
     - assets/images/logo/
 
@@ -131,7 +129,6 @@ flutter:
           weight: 400
         - asset: assets/fonts/Pretendard-SemiBold.ttf
           weight: 600
-          
         - asset: assets/fonts/Pretendard-Bold.ttf
           weight: 700
         - asset: assets/fonts/Pretendard-ExtraBold.ttf

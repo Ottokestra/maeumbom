@@ -40,7 +40,7 @@ class HomeMenuGrid extends ConsumerWidget {
         crossAxisCount: 2,
         crossAxisSpacing: AppSpacing.sm,
         mainAxisSpacing: AppSpacing.sm,
-        childAspectRatio: 1.0, // 정사각형 비율 (오버플로우 방지를 위해 높이 확보)
+        childAspectRatio: 1.1, // 정사각형 비율 (오버플로우 방지를 위해 높이 확보)
       ),
       itemCount: menus.length,
       itemBuilder: (context, index) {
@@ -51,6 +51,8 @@ class HomeMenuGrid extends ConsumerWidget {
   }
 
   Widget _buildMenuCard(BuildContext context, _MenuData menu) {
+    final primaryColor = getEmotionPrimaryColor(menu.emotionId);
+
     return GestureDetector(
       onTap: menu.onTap,
       child: Container(
@@ -60,7 +62,7 @@ class HomeMenuGrid extends ConsumerWidget {
           borderRadius: BorderRadius.circular(AppRadius.lg),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFF000000).withValues(alpha: 0.05),
+              color: const Color(0xFF000000).withOpacity(0.05),
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),

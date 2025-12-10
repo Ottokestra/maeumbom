@@ -351,11 +351,13 @@ class _BomiContentState extends ConsumerState<BomiContent> {
                   // 1. 감정 캐릭터 (중앙, 큰 사이즈) - Lottie 애니메이션
                   AnimatedCharacter(
                     characterId: 'relief',
-                    emotion: 'sedness', // happiness, sedness, anger, fear
+                    emotion: 'anger', // happiness, sadness, anger, fear
                     size: 300,
                     repeat: true,
                     animate: true,
                   ),
+
+                  const SizedBox(height: AppSpacing.xs),
 
                   // 2. Process Indicator
                   //tts 사용 여부 추가 예정

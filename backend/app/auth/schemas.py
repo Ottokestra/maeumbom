@@ -1,7 +1,7 @@
 """
 Pydantic schemas for request/response validation (DTO)
 """
-from pydantic import BaseModel, Field, EmailStr
+from pydantic import BaseModel, Field, EmailStr, model_validator
 from typing import Optional
 from datetime import datetime
 
@@ -11,19 +11,29 @@ class GoogleLoginRequest(BaseModel):
     Request schema for Google OAuth login
     
     Attributes:
-        auth_code: Authorization code from Google OAuth
+        auth_code: Authorization code from Google OAuth (optional, used with serverAuthCode flow)
+        id_token: ID Token from Google OAuth (optional, preferred method for mobile apps)
         redirect_uri: Redirect URI used in OAuth flow (dynamic for web/app support)
     """
-    auth_code: str = Field(..., description="Authorization code from Google OAuth")
+    auth_code: Optional[str] = Field(None, description="Authorization code from Google OAuth")
+    id_token: Optional[str] = Field(None, description="ID Token from Google OAuth")
     redirect_uri: str = Field(..., description="Redirect URI for OAuth callback")
     
     class Config:
         json_schema_extra = {
             "example": {
                 "auth_code": "4/0AY0e-g7xxxxxxxxxxxxxxxxxxx",
+                "id_token": "eyJhbGciOiJSUzI1NiIs...",
                 "redirect_uri": "http://localhost:5173/auth/callback"
             }
         }
+        
+    @model_validator(mode='after')
+    def validate_auth_method(self):
+        """Ensure at least one authentication method is provided"""
+        if not self.auth_code and not self.id_token:
+            raise ValueError("Either auth_code or id_token must be provided")
+        return self
 
 
 class KakaoLoginRequest(BaseModel):

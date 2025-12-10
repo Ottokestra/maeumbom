@@ -15,3 +15,4 @@ export 'components/app_component.dart';
 // charatcters
 export 'characters/app_characters.dart';
 export 'characters/app_animations.dart';
+export 'characters/app_character_colors.dart';

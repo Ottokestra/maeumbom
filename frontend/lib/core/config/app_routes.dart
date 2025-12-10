@@ -13,6 +13,7 @@ import '../../app/example/bubble_screen.dart';
 import '../../app/onboarding/splash_screen.dart';
 import '../../app/chat/bomi_screen.dart';
 import '../../app/training/training_screen.dart';
+import '../../app/chat/chat_list_screen.dart';
 
 /// 라우트 메타데이터
 class RouteMetadata {
@@ -106,12 +107,19 @@ class AppRoutes {
     requiresAuth: true,
   );
 
+  static const RouteMetadata chatList = RouteMetadata(
+    routeName: '/chat_list',
+    builder: ChatListScreen.new,
+    requiresAuth: true,
+  );
+
   /// 모든 라우트 목록
   static const List<RouteMetadata> allRoutes = [
     splash,
     home,
     alarm,
     chat,
+    chatList,
     report,
     mypage,
     login,

@@ -4,7 +4,7 @@ import 'package:lottie/lottie.dart';
 /// 4가지 감정군 카테고리
 enum EmotionCategory {
   happiness,
-  sedness,
+  sadness,
   anger,
   fear,
 }
@@ -34,11 +34,11 @@ const Map<String, AnimationMeta> animationMetaMap = {
     category: EmotionCategory.happiness,
     assetPath: 'assets/characters/animation/happiness/char_relief.json',
   ),
-  'relief_sedness': AnimationMeta(
-    id: 'relief_sedness',
+  'relief_sadness': AnimationMeta(
+    id: 'relief_sadness',
     nameKo: '안심(슬픔)',
-    category: EmotionCategory.sedness,
-    assetPath: 'assets/characters/animation/sedness/char_relief.json',
+    category: EmotionCategory.sadness,
+    assetPath: 'assets/characters/animation/sadness/char_relief.json',
   ),
   'relief_anger': AnimationMeta(
     id: 'relief_anger',
@@ -84,7 +84,7 @@ AnimationMeta? getAnimationByCharacterAndEmotion(
 /// 애니메이션 캐릭터 위젯
 /// Lottie JSON 애니메이션을 표시하는 위젯
 class AnimatedCharacter extends StatelessWidget {
-  final String characterId; // 'relief_happiness', 'relief_sedness' 등 조합 ID
+  final String characterId; // 'relief_happiness', 'relief_sadness' 등 조합 ID
   final double size;
   final BoxFit fit;
   final bool repeat;

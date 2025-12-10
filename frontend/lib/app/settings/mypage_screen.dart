@@ -4,17 +4,16 @@ import '../../ui/app_ui.dart';
 import '../../core/services/navigation/navigation_service.dart';
 import '../../data/api/onboarding/onboarding_survey_api_client.dart';
 import '../../data/api/user_phase/user_phase_api_client.dart';
-import '../../data/api/chat/chat_api_client.dart';
 import '../../data/dtos/onboarding/onboarding_survey_response.dart';
 import '../../data/dtos/user_phase/user_phase_response.dart';
 import '../../data/dtos/user_phase/user_pattern_response.dart';
 import '../../data/dtos/user_phase/user_pattern_setting_update.dart';
 import '../../data/dtos/user_phase/user_pattern_setting_response.dart';
 import '../../data/dtos/user_phase/health_sync_request.dart';
-import '../../data/dtos/chat/sessions_response.dart';
 import '../../providers/auth_provider.dart';
 import '../../core/utils/logger.dart';
 import 'edit_profile_screen.dart';
+import '../chat/chat_list_screen.dart';
 
 class MypageScreen extends ConsumerStatefulWidget {
   const MypageScreen({super.key});
@@ -27,11 +26,9 @@ class _MypageScreenState extends ConsumerState<MypageScreen> {
   bool _isLoadingProfile = true;
   bool _isLoadingPhase = false;
   bool _isLoadingPattern = false;
-  bool _isLoadingSessions = false;
   OnboardingSurveyResponse? _profile;
   UserPhaseResponse? _currentPhase;
   UserPatternResponse? _pattern;
-  SessionsResponse? _sessions;
   String? _errorMessage;
 
   @override
@@ -415,6 +412,10 @@ class _MypageScreenState extends ConsumerState<MypageScreen> {
             _buildChatHistorySection(),
             const SizedBox(height: AppSpacing.xl),
 
+            // 섹션 4: 설정
+            _buildSettingsSection(),
+            const SizedBox(height: AppSpacing.xl),
+
             // 에러 메시지
             if (_errorMessage != null)
               Container(
@@ -638,249 +639,76 @@ class _MypageScreenState extends ConsumerState<MypageScreen> {
           children: [
             Text('대화 히스토리', style: AppTypography.h2),
             AppButton(
-              text: '새로고침',
+              text: '목록',
               variant: ButtonVariant.secondaryRed,
-              onTap: _isLoadingSessions ? null : _loadSessions,
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const ChatListScreen()),
+                );
+              },
             ),
           ],
         ),
-        const SizedBox(height: AppSpacing.md),
-        if (_isLoadingSessions)
-          const Center(child: CircularProgressIndicator())
-        else if (_sessions == null)
-          Container(
-            padding: const EdgeInsets.all(AppSpacing.md),
-            decoration: BoxDecoration(
-              color: AppColors.bgWarm,
-              borderRadius: BorderRadius.circular(AppRadius.md),
-            ),
-            child: Text(
-              '대화 히스토리를 불러오려면 새로고침을 눌러주세요.',
-              style: AppTypography.body,
-            ),
-          )
-        else if (_sessions!.sessions.isEmpty)
-          Container(
-            padding: const EdgeInsets.all(AppSpacing.md),
-            decoration: BoxDecoration(
-              color: AppColors.bgWarm,
-              borderRadius: BorderRadius.circular(AppRadius.md),
-            ),
-            child: Text(
-              '대화 히스토리가 없습니다.',
-              style: AppTypography.body,
-            ),
-          )
-        else
-          Container(
-            padding: const EdgeInsets.all(AppSpacing.md),
-            decoration: BoxDecoration(
-              color: AppColors.bgWarm,
-              borderRadius: BorderRadius.circular(AppRadius.md),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  '총 ${_sessions!.sessionCount}개의 대화',
-                  style: AppTypography.bodyBold,
-                ),
-                const SizedBox(height: AppSpacing.sm),
-                ..._sessions!.sessions.map((session) => _buildSessionItem(session)),
-              ],
-            ),
-          ),
       ],
     );
   }
 
-  Widget _buildSessionItem(SessionItem session) {
-    final dateStr = '${session.createdAt.year}-${session.createdAt.month.toString().padLeft(2, '0')}-${session.createdAt.day.toString().padLeft(2, '0')}';
-    final timeStr = '${session.createdAt.hour.toString().padLeft(2, '0')}:${session.createdAt.minute.toString().padLeft(2, '0')}';
-
-    return InkWell(
-      onTap: () => _showSessionDetail(session.sessionId),
-      child: Container(
-        margin: const EdgeInsets.only(bottom: AppSpacing.sm),
-        padding: const EdgeInsets.all(AppSpacing.md),
-        decoration: BoxDecoration(
-          color: AppColors.pureWhite,
-          borderRadius: BorderRadius.circular(AppRadius.md),
-          border: Border.all(color: AppColors.borderLight),
+  Widget _buildSettingsSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('설정', style: AppTypography.h2),
+        const SizedBox(height: AppSpacing.md),
+        AppButton(
+          text: '로그아웃',
+          variant: ButtonVariant.secondaryRed,
+          onTap: _handleLogout,
         ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    session.sessionId,
-                    style: AppTypography.bodyBold,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: AppSpacing.xs),
-                  Text(
-                    '$dateStr $timeStr',
-                    style: AppTypography.caption.copyWith(color: AppColors.textSecondary),
-                  ),
-                ],
-              ),
-            ),
-            Row(
-              children: [
-                Text(
-                  '${session.messageCount}개',
-                  style: AppTypography.bodySmall.copyWith(color: AppColors.textSecondary),
-                ),
-                const SizedBox(width: AppSpacing.xs),
-                Icon(
-                  Icons.chevron_right,
-                  color: AppColors.textSecondary,
-                  size: 20,
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
+      ],
     );
   }
 
-  Future<void> _loadSessions() async {
-    if (!mounted) return;
-    setState(() {
-      _isLoadingSessions = true;
-      _errorMessage = null;
-    });
-
-    try {
-      final dio = ref.read(dioWithAuthProvider);
-      final apiClient = ChatApiClient(dio);
-      final sessions = await apiClient.getSessions();
-
-      if (!mounted) return;
-      setState(() {
-        _sessions = sessions;
-        _isLoadingSessions = false;
-      });
-    } catch (e) {
-      appLogger.e('Failed to load sessions', error: e);
-      if (!mounted) return;
-      setState(() {
-        _errorMessage = '대화 히스토리 조회 실패: ${e.toString()}';
-        _isLoadingSessions = false;
-      });
-    }
-  }
-
-  Future<void> _showSessionDetail(String sessionId) async {
-    try {
-      final dio = ref.read(dioWithAuthProvider);
-      final apiClient = ChatApiClient(dio);
-      final detail = await apiClient.getSessionHistory(sessionId);
-
-      if (!mounted) return;
-      showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: Text('대화 내역', style: AppTypography.h2),
-          content: SizedBox(
-            width: double.maxFinite,
-            child: SingleChildScrollView(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    '세션 ID: ${detail.sessionId}',
-                    style: AppTypography.caption.copyWith(color: AppColors.textSecondary),
-                  ),
-                  Text(
-                    '메시지 수: ${detail.messageCount}개',
-                    style: AppTypography.caption.copyWith(color: AppColors.textSecondary),
-                  ),
-                  const SizedBox(height: AppSpacing.md),
-                  const Divider(),
-                  const SizedBox(height: AppSpacing.md),
-                  ...detail.messages.map((message) {
-                    final role = message.role ?? 'assistant';
-                    final content = message.content ?? '(내용 없음)';
-                    final timestampStr = message.timestamp ?? message.createdAt ?? '';
-                    DateTime? timestamp;
-                    if (timestampStr.isNotEmpty) {
-                      try {
-                        timestamp = DateTime.parse(timestampStr);
-                      } catch (e) {
-                        timestamp = null;
-                      }
-                    }
-                    final timeStr = timestamp != null
-                        ? '${timestamp.hour.toString().padLeft(2, '0')}:${timestamp.minute.toString().padLeft(2, '0')}'
-                        : '';
-
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: AppSpacing.md),
-                      child: Column(
-                        crossAxisAlignment: role == 'user' 
-                            ? CrossAxisAlignment.end 
-                            : CrossAxisAlignment.start,
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: AppSpacing.sm,
-                              vertical: AppSpacing.xs,
-                            ),
-                            decoration: BoxDecoration(
-                              color: role == 'user' 
-                                  ? AppColors.accentRed 
-                                  : AppColors.bgLightPink,
-                              borderRadius: BorderRadius.circular(AppRadius.md),
-                            ),
-                            child: Text(
-                              content,
-                              style: AppTypography.body.copyWith(
-                                color: role == 'user' 
-                                    ? AppColors.textWhite 
-                                    : AppColors.textPrimary,
-                              ),
-                            ),
-                          ),
-                          if (timeStr.isNotEmpty) ...[
-                            const SizedBox(height: AppSpacing.xs),
-                            Text(
-                              timeStr,
-                              style: AppTypography.caption.copyWith(
-                                color: AppColors.textSecondary,
-                              ),
-                            ),
-                          ],
-                        ],
-                      ),
-                    );
-                  }),
-                ],
-              ),
-            ),
+  Future<void> _handleLogout() async {
+    // 확인 다이얼로그 표시
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('로그아웃'),
+        content: const Text('정말 로그아웃하시겠습니까?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('취소'),
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text('닫기', style: AppTypography.body),
-            ),
-          ],
-        ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('로그아웃', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true) return;
+
+    try {
+      // 로그아웃 실행
+      await ref.read(authProvider.notifier).logout();
+
+      if (!mounted) return;
+
+      // 로그인 화면으로 이동
+      Navigator.pushNamedAndRemoveUntil(
+        context,
+        '/login',
+        (route) => false, // 모든 이전 라우트 제거
       );
     } catch (e) {
-      appLogger.e('Failed to load session detail', error: e);
+      appLogger.e('로그아웃 실패', error: e);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('대화 내역을 불러오는데 실패했습니다: ${e.toString()}'),
-        ),
+        SnackBar(content: Text('로그아웃 중 오류가 발생했습니다: ${e.toString()}')),
       );
     }
   }
-}
+} // End of class

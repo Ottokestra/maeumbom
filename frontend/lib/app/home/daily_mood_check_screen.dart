@@ -53,7 +53,7 @@ class _DailyMoodCheckScreenState extends ConsumerState<DailyMoodCheckScreen> {
       case MoodCategory.good:
         return AppColors.moodGoodYellow;
       case MoodCategory.neutral:
-        return AppColors.moodNeutralPink;
+        return AppColors.moodNormalGreen;
       case MoodCategory.bad:
         return AppColors.moodBadBlue;
     }
@@ -63,11 +63,11 @@ class _DailyMoodCheckScreenState extends ConsumerState<DailyMoodCheckScreen> {
     final category = EmotionClassifier.classify(emotion);
     switch (category) {
       case MoodCategory.good:
-        return const Color(0xFFFDD835); // 진한 노란색
+        return AppColors.homeGoodYellow;
       case MoodCategory.neutral:
-        return const Color(0xFFF06292); // 진한 분홍색
+        return AppColors.homeNormalGreen;
       case MoodCategory.bad:
-        return const Color(0xFF42A5F5); // 진한 파란색
+        return AppColors.homeBadBlue;
     }
   }
 

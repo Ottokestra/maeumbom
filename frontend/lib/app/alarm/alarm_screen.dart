@@ -1,15 +1,69 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'dart:convert';
 import '../../ui/app_ui.dart';
 import '../../core/services/navigation/navigation_service.dart';
-import '../../core/services/chat/bom_chat_service.dart';
 
-class AlarmScreen extends ConsumerWidget {
+// Dummy Model
+class AlarmItemModel {
+  final String id;
+  final String title;
+  final String schedule;
+  bool isEnabled;
+
+  AlarmItemModel({
+    required this.id,
+    required this.title,
+    required this.schedule,
+    this.isEnabled = true,
+  });
+}
+
+class AlarmScreen extends ConsumerStatefulWidget {
   const AlarmScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<AlarmScreen> createState() => _AlarmScreenState();
+}
+
+class _AlarmScreenState extends ConsumerState<AlarmScreen> {
+  // Dummy Data
+  final List<AlarmItemModel> _alarms = [
+    AlarmItemModel(
+      id: '1',
+      title: '혈압약 먹기',
+      schedule: '매일 09:00',
+      isEnabled: true,
+    ),
+    AlarmItemModel(
+      id: '2',
+      title: '아침 운동가기',
+      schedule: '매주 월, 목 10:00',
+      isEnabled: true,
+    ),
+    AlarmItemModel(
+      id: '3',
+      title: '비타민 챙겨먹기',
+      schedule: '매일 13:00',
+      isEnabled: false,
+    ),
+    AlarmItemModel(
+      id: '4',
+      title: '저녁 산책',
+      schedule: '매일 20:00',
+      isEnabled: true,
+    ),
+  ];
+
+  @override
+  void dispose() {
+    // 화면 종료 시 알림도 함께 제거
+    TopNotificationManager.remove();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final navigationService = NavigationService(context, ref);
 
     return AppFrame(
@@ -17,232 +71,109 @@ class AlarmScreen extends ConsumerWidget {
         title: '알람',
       ),
       bottomBar: BottomMenuBar(
-        currentIndex: 1,
+        currentIndex: 2,
         onTap: (index) {
           navigationService.navigateToTab(index);
         },
       ),
-      body: const AlarmContent(),
+      body: _alarms.isEmpty
+          ? Center(
+              child: Text(
+                '등록된 알람이 없습니다.',
+                style: AppTypography.body.copyWith(color: AppColors.textSecondary),
+              ),
+            )
+          : ListView.builder(
+              padding: const EdgeInsets.all(AppSpacing.md),
+              itemCount: _alarms.length,
+              itemBuilder: (context, index) {
+                final alarm = _alarms[index];
+                return _buildAlarmItem(alarm);
+              },
+            ),
     );
   }
-}
 
-class AlarmContent extends StatefulWidget {
-  const AlarmContent({super.key});
-
-  @override
-  State<AlarmContent> createState() => _AlarmContentState();
-}
-
-class _AlarmContentState extends State<AlarmContent> {
-  final TextEditingController _textController = TextEditingController();
-  Map<String, dynamic>? _responseData;
-  bool _isLoading = false;
-  String? _error;
-
-  // WebSocket을 통한 텍스트 전송 (기존 음성 채팅 서비스 활용)
-  Future<void> _sendViaWebSocket() async {
-    if (_textController.text.isEmpty) {
-      setState(() => _error = '텍스트를 입력하세요');
-      return;
-    }
-
-    setState(() {
-      _isLoading = true;
-      _error = null;
-      _responseData = null;
-    });
-
-    try {
-      final service = BomChatService();
-
-      // 응답 수신 리스너
-      service.onResponse = (response) {
-        debugPrint('[AlarmTest] 응답 수신: $response');
+  Widget _buildAlarmItem(AlarmItemModel alarm) {
+    return Dismissible(
+      key: Key(alarm.id),
+      direction: DismissDirection.endToStart,
+      background: Container(
+        alignment: Alignment.centerRight,
+        padding: const EdgeInsets.only(right: AppSpacing.md),
+        margin: const EdgeInsets.only(bottom: AppSpacing.sm),
+        decoration: BoxDecoration(
+          color: AppColors.errorRed,
+          borderRadius: BorderRadius.circular(AppRadius.md),
+        ),
+        child: const Icon(Icons.delete, color: AppColors.pureWhite),
+      ),
+      onDismissed: (direction) {
         setState(() {
-          _responseData = response;
-          _isLoading = false;
+          _alarms.removeWhere((item) => item.id == alarm.id);
         });
-        service.stopVoiceChat();
-      };
-
-      service.onError = (error) {
-        setState(() {
-          _error = error;
-          _isLoading = false;
-        });
-        service.stopVoiceChat();
-      };
-
-      // WebSocket 연결 및 텍스트 전송
-      // Note: 현재 구조는 음성 전용이므로 텍스트 API는 별도 구현 필요
-      setState(() {
-        _error = 'WebSocket은 음성 전용입니다. REST API 구현이 필요합니다.';
-        _isLoading = false;
-      });
-    } catch (e) {
-      setState(() {
-        _error = '전송 실패: $e';
-        _isLoading = false;
-      });
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(AppSpacing.md),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          const Text(
-            '알람 API 테스트',
-            style: AppTypography.h2,
-          ),
-          const SizedBox(height: AppSpacing.md),
-
-          // 입력 필드
-          TextField(
-            controller: _textController,
-            decoration: const InputDecoration(
-              labelText: '텍스트 입력',
-              hintText: '예: 내일 오후 2시에 알람',
-              border: OutlineInputBorder(),
-            ),
-            maxLines: 2,
-          ),
-          const SizedBox(height: AppSpacing.sm),
-
-          // 전송 버튼
-          ElevatedButton(
-            onPressed: _isLoading ? null : _sendViaWebSocket,
-            style: ElevatedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(vertical: 16),
-            ),
-            child: _isLoading
-                ? const SizedBox(
-                    height: 20,
-                    width: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : const Text('전송', style: TextStyle(fontSize: 16)),
-          ),
-          const SizedBox(height: AppSpacing.lg),
-
-          // 에러 표시
-          if (_error != null)
-            Container(
-              padding: const EdgeInsets.all(AppSpacing.sm),
-              decoration: BoxDecoration(
-                color: Colors.red.shade50,
-                border: Border.all(color: Colors.red),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Text(_error!, style: const TextStyle(color: Colors.red)),
-            ),
-
-          // 응답 표시
-          if (_responseData != null) ...[
-            Container(
-              padding: const EdgeInsets.all(AppSpacing.sm),
-              decoration: BoxDecoration(
-                color: Colors.grey.shade100,
-                border: Border.all(color: Colors.grey.shade300),
-                borderRadius: BorderRadius.circular(8),
-              ),
+        // Use reusable TopNotificationManager
+        TopNotificationManager.show(
+          context,
+          message: '${alarm.title} 알람이 삭제되었습니다.',
+          actionLabel: '실행취소',
+          type: TopNotificationType.red, // 기본값 (삭제 등 경고)
+          onActionTap: () {
+            setState(() {
+              _alarms.add(alarm);
+            });
+          },
+        );
+      },
+      child: Container(
+        margin: const EdgeInsets.only(bottom: AppSpacing.sm),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.md,
+          vertical: AppSpacing.md,
+        ),
+        decoration: BoxDecoration(
+          color: AppColors.pureWhite,
+          borderRadius: BorderRadius.circular(AppRadius.md),
+          border: Border.all(color: AppColors.borderLight),
+        ),
+        child: Row(
+          children: [
+            Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'JSON 응답:',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
+                  Text(
+                    alarm.title,
+                    style: AppTypography.h3.copyWith(
+                      color: alarm.isEnabled
+                          ? AppColors.textPrimary
+                          : AppColors.textSecondary,
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: AppSpacing.xs),
                   Text(
-                    _formatJson(_responseData!),
-                    style: const TextStyle(fontFamily: 'monospace'),
+                    alarm.schedule,
+                    style: AppTypography.body.copyWith(
+                      color: alarm.isEnabled
+                          ? AppColors.textSecondary // Was grayNavy
+                          : AppColors.disabledText, // Was textDisabled
+                    ),
                   ),
-                  const SizedBox(height: 12),
-                  _buildResponseChip(),
-                  if (_responseData!['alarm_info'] != null) ...[
-                    const SizedBox(height: 12),
-                    _buildAlarmInfo(),
-                  ],
                 ],
               ),
             ),
+            Switch(
+              value: alarm.isEnabled,
+              activeColor: AppColors.accentRed,
+              onChanged: (value) {
+                setState(() {
+                  alarm.isEnabled = value;
+                });
+              },
+            ),
           ],
-        ],
+        ),
       ),
     );
-  }
-
-  String _formatJson(Map<String, dynamic> json) {
-    try {
-      return const JsonEncoder.withIndent('  ').convert(json);
-    } catch (e) {
-      return json.toString();
-    }
-  }
-
-  Widget _buildResponseChip() {
-    final type = _responseData!['response_type'] ?? 'unknown';
-    Color color;
-    IconData icon;
-
-    switch (type) {
-      case 'alarm':
-        color = Colors.green;
-        icon = Icons.alarm;
-        break;
-      case 'warning':
-        color = Colors.orange;
-        icon = Icons.warning;
-        break;
-      default:
-        color = Colors.grey;
-        icon = Icons.chat;
-    }
-
-    return Chip(
-      avatar: Icon(icon, color: Colors.white, size: 16),
-      label: Text('Type: $type', style: const TextStyle(color: Colors.white)),
-      backgroundColor: color,
-    );
-  }
-
-  Widget _buildAlarmInfo() {
-    final alarmInfo = _responseData!['alarm_info'] as Map<String, dynamic>;
-    final count = alarmInfo['count'] ?? 0;
-    final message = alarmInfo['message'] as String?;
-
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.blue.shade50,
-        border: Border.all(color: Colors.blue.shade200),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            '알람 정보 ($count개)',
-            style: const TextStyle(fontWeight: FontWeight.bold),
-          ),
-          if (message != null)
-            Text(message, style: const TextStyle(color: Colors.orange)),
-        ],
-      ),
-    );
-  }
-
-  @override
-  void dispose() {
-    _textController.dispose();
-    super.dispose();
   }
 }
