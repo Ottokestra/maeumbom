@@ -2,8 +2,9 @@
 Business logic for authentication services
 """
 import os
+import logging
 import httpx
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 from sqlalchemy.orm import Session
 from fastapi import HTTPException, status
 from dotenv import load_dotenv
@@ -13,17 +14,34 @@ from .models import User
 from .utils import create_access_token, create_refresh_token, verify_token
 from .schemas import TokenResponse
 
+# Setup logger
+logger = logging.getLogger(__name__)
+
 # Load environment variables
 project_root = Path(__file__).parent.parent.parent
 env_path = project_root / ".env"
 if env_path.exists():
     load_dotenv(dotenv_path=env_path)
+    logger.info(f"[Auth] Environment variables loaded from: {env_path}")
+else:
+    logger.warning(f"[Auth] .env file not found at: {env_path}")
 
 # Google OAuth configuration
 GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
 GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET")
 GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token"
 GOOGLE_USERINFO_URL = "https://www.googleapis.com/oauth2/v2/userinfo"
+GOOGLE_TOKENINFO_URL = "https://oauth2.googleapis.com/tokeninfo"
+
+# Log Google OAuth configuration status
+if GOOGLE_CLIENT_ID:
+    logger.info(f"[Auth] Google Client ID loaded: {GOOGLE_CLIENT_ID[:20]}...{GOOGLE_CLIENT_ID[-10:]}")
+else:
+    logger.error("[Auth] Google Client ID not found in environment variables")
+if GOOGLE_CLIENT_SECRET:
+    logger.info("[Auth] Google Client Secret loaded (hidden)")
+else:
+    logger.error("[Auth] Google Client Secret not found in environment variables")
 
 # Kakao OAuth configuration
 KAKAO_CLIENT_ID = os.getenv("KAKAO_CLIENT_ID")
@@ -52,7 +70,11 @@ async def get_google_access_token(auth_code: str, redirect_uri: str) -> str:
     Raises:
         HTTPException: If token exchange fails
     """
+    logger.info(f"[Auth] Starting Google access token exchange - redirect_uri: {redirect_uri}")
+    logger.debug(f"[Auth] Auth code length: {len(auth_code) if auth_code else 0}")
+    
     if not GOOGLE_CLIENT_ID or not GOOGLE_CLIENT_SECRET:
+        logger.error("[Auth] Google OAuth credentials not configured")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Google OAuth credentials not configured"
@@ -66,21 +88,100 @@ async def get_google_access_token(auth_code: str, redirect_uri: str) -> str:
         "grant_type": "authorization_code"
     }
     
+    logger.debug(f"[Auth] Token exchange request - client_id: {GOOGLE_CLIENT_ID[:20]}...")
+    
     async with httpx.AsyncClient() as client:
         try:
+            logger.info("[Auth] Sending token exchange request to Google")
             response = await client.post(GOOGLE_TOKEN_URL, data=payload)
+            logger.debug(f"[Auth] Google token exchange response status: {response.status_code}")
             response.raise_for_status()
             data = response.json()
-            return data["access_token"]
+            access_token = data.get("access_token")
+            if access_token:
+                logger.info("[Auth] Successfully obtained Google access token")
+            else:
+                logger.error(f"[Auth] No access_token in response: {data}")
+            return access_token
         except httpx.HTTPStatusError as e:
+            logger.error(f"[Auth] Google token exchange failed - Status: {e.response.status_code}, Response: {e.response.text}")
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=f"Failed to get Google access token: {e.response.text}"
             )
         except Exception as e:
+            logger.exception(f"[Auth] Unexpected error during Google token exchange: {str(e)}")
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f"Error communicating with Google: {str(e)}"
+            )
+
+
+async def verify_google_id_token(id_token: str) -> Dict[str, Any]:
+    """
+    Verify Google ID Token and extract user information
+    
+    Args:
+        id_token: Google ID Token (JWT)
+        
+    Returns:
+        Dictionary containing verified user info from token claims
+        
+    Raises:
+        HTTPException: If token verification fails
+    """
+    logger.info("[Auth] Verifying Google ID Token")
+    
+    if not GOOGLE_CLIENT_ID:
+        logger.error("[Auth] Google Client ID not configured")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Google OAuth credentials not configured"
+        )
+    
+    async with httpx.AsyncClient() as client:
+        try:
+            logger.debug("[Auth] Sending ID Token verification request to Google")
+            response = await client.get(
+                GOOGLE_TOKENINFO_URL,
+                params={"id_token": id_token}
+            )
+            logger.debug(f"[Auth] Google tokeninfo response status: {response.status_code}")
+            response.raise_for_status()
+            token_info = response.json()
+            
+            # Verify the audience (aud) matches our client ID
+            aud = token_info.get("aud")
+            if aud != GOOGLE_CLIENT_ID:
+                logger.error(f"[Auth] ID Token audience mismatch - expected: {GOOGLE_CLIENT_ID}, got: {aud}")
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Invalid ID Token: audience mismatch"
+                )
+            
+            # Extract user information from token claims
+            user_info = {
+                "sub": token_info.get("sub"),  # Google user ID
+                "email": token_info.get("email"),
+                "name": token_info.get("name"),
+                "picture": token_info.get("picture"),
+                "email_verified": token_info.get("email_verified", False),
+            }
+            
+            logger.info(f"[Auth] Successfully verified ID Token - email: {user_info.get('email', 'N/A')}, sub: {user_info.get('sub', 'N/A')}")
+            return user_info
+            
+        except httpx.HTTPStatusError as e:
+            logger.error(f"[Auth] ID Token verification failed - Status: {e.response.status_code}, Response: {e.response.text}")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Failed to verify Google ID Token: {e.response.text}"
+            )
+        except Exception as e:
+            logger.exception(f"[Auth] Unexpected error during ID Token verification: {str(e)}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Error verifying Google ID Token: {str(e)}"
             )
 
 
@@ -97,39 +198,55 @@ async def get_google_user_info(access_token: str) -> Dict[str, Any]:
     Raises:
         HTTPException: If user info retrieval fails
     """
+    logger.info("[Auth] Fetching user info from Google")
     headers = {"Authorization": f"Bearer {access_token}"}
     
     async with httpx.AsyncClient() as client:
         try:
             response = await client.get(GOOGLE_USERINFO_URL, headers=headers)
+            logger.debug(f"[Auth] Google userinfo response status: {response.status_code}")
             response.raise_for_status()
-            return response.json()
+            user_info = response.json()
+            logger.info(f"[Auth] Successfully retrieved user info - email: {user_info.get('email', 'N/A')}, sub: {user_info.get('sub', 'N/A')}")
+            return user_info
         except httpx.HTTPStatusError as e:
+            logger.error(f"[Auth] Failed to get Google user info - Status: {e.response.status_code}, Response: {e.response.text}")
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=f"Failed to get Google user info: {e.response.text}"
             )
         except Exception as e:
+            logger.exception(f"[Auth] Unexpected error during Google userinfo retrieval: {str(e)}")
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f"Error communicating with Google: {str(e)}"
             )
 
 
-async def google_login(auth_code: str, redirect_uri: str, db: Session) -> TokenResponse:
+async def google_login(
+    auth_code: Optional[str] = None,
+    id_token: Optional[str] = None,
+    redirect_uri: str = "",
+    db: Session = None
+) -> TokenResponse:
     """
-    Handle Google OAuth login
+    Handle Google OAuth login with either authorization code or ID Token
+    
+    Supports two authentication methods:
+    1. Authorization Code Flow: Exchange auth_code for access token, then get user info
+    2. ID Token Flow: Verify ID Token directly and extract user info from token claims
     
     Process:
-    1. Exchange auth_code for Google access token
-    2. Get user info from Google
+    1. Verify ID Token OR exchange auth_code for access token
+    2. Get user info from Google (from token or API)
     3. Find or create user in database
     4. Generate JWT tokens
     5. Store refresh token in database (Whitelist)
     
     Args:
-        auth_code: Authorization code from Google
-        redirect_uri: Redirect URI for OAuth callback
+        auth_code: Authorization code from Google (optional, used with serverAuthCode flow)
+        id_token: ID Token from Google (optional, preferred for mobile apps)
+        redirect_uri: Redirect URI for OAuth callback (required for auth_code flow)
         db: Database session
         
     Returns:
@@ -138,27 +255,53 @@ async def google_login(auth_code: str, redirect_uri: str, db: Session) -> TokenR
     Raises:
         HTTPException: If login process fails
     """
-    # Step 1: Get Google access token
-    google_access_token = await get_google_access_token(auth_code, redirect_uri)
+    logger.info("[Auth] ===== Google OAuth Login Started =====")
     
-    # Step 2: Get user info from Google
-    user_info = await get_google_user_info(google_access_token)
+    # Determine authentication method
+    if id_token:
+        logger.info("[Auth] Using ID Token authentication method")
+        logger.debug(f"[Auth] ID Token length: {len(id_token)}")
+        
+        # Step 1: Verify ID Token and extract user info
+        user_info = await verify_google_id_token(id_token)
+        
+    elif auth_code:
+        logger.info("[Auth] Using Authorization Code authentication method")
+        logger.info(f"[Auth] Step 1: Exchange auth_code for access token - redirect_uri: {redirect_uri}")
+        
+        # Step 1: Get Google access token
+        google_access_token = await get_google_access_token(auth_code, redirect_uri)
+        
+        logger.info("[Auth] Step 2: Get user info from Google")
+        # Step 2: Get user info from Google
+        user_info = await get_google_user_info(google_access_token)
+    else:
+        logger.error("[Auth] Neither auth_code nor id_token provided")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Either auth_code or id_token must be provided"
+        )
     
     social_id = user_info.get("sub") or user_info.get("id")  # Google's unique user ID (sub)
     email = user_info.get("email")
     name = user_info.get("name", email.split("@")[0] if email else "User")  # Use email prefix if name not available
     
+    logger.info(f"[Auth] Step 3: Process user info - social_id: {social_id}, email: {email}, name: {name}")
+    
     if not social_id or not email:
+        logger.error(f"[Auth] Missing required user info - social_id: {social_id}, email: {email}")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Failed to get required user information from Google"
         )
     
     # Step 3: Find or create user
+    logger.info(f"[Auth] Step 4: Find or create user in database - social_id: {social_id}")
     user = db.query(User).filter(User.SOCIAL_ID == social_id, User.PROVIDER == "google").first()
     
     if not user:
         # Create new user (회원가입)
+        logger.info(f"[Auth] Creating new user - email: {email}")
         user = User(
             SOCIAL_ID=social_id,
             PROVIDER="google",
@@ -168,23 +311,27 @@ async def google_login(auth_code: str, redirect_uri: str, db: Session) -> TokenR
         db.add(user)
         db.commit()
         db.refresh(user)
-        print(f"[Auth] New user created: {user.ID} ({user.EMAIL})")
+        logger.info(f"[Auth] New user created: {user.ID} ({user.EMAIL})")
     else:
         # Update existing user info (로그인)
+        logger.info(f"[Auth] Updating existing user - user_id: {user.ID}, email: {email}")
         user.EMAIL = email
         user.NICKNAME = name
         db.commit()
         db.refresh(user)
-        print(f"[Auth] User logged in: {user.ID} ({user.EMAIL})")
+        logger.info(f"[Auth] User logged in: {user.ID} ({user.EMAIL})")
     
     # Step 4: Generate JWT tokens
+    logger.info(f"[Auth] Step 5: Generate JWT tokens for user_id: {user.ID}")
     access_token = create_access_token(user.ID)
     refresh_token = create_refresh_token(user.ID)
     
     # Step 5: Store refresh token in database (Whitelist)
+    logger.info(f"[Auth] Step 6: Store refresh token in database")
     user.REFRESH_TOKEN = refresh_token
     db.commit()
     
+    logger.info(f"[Auth] ===== Google OAuth Login Completed Successfully =====")
     return TokenResponse(
         access_token=access_token,
         refresh_token=refresh_token,

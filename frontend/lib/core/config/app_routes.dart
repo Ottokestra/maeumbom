@@ -7,10 +7,13 @@ import '../../app/settings/mypage_screen.dart';
 import '../../app/common/login_screen.dart';
 import '../../app/example/example_screen.dart';
 import '../../app/sign/sign_up_slide_screen.dart';
+import '../../app/sign/sign_up1.dart';
+import '../../app/survey/menopause_survey_screen.dart';
 import '../../app/example/bubble_screen.dart';
 import '../../app/onboarding/splash_screen.dart';
 import '../../app/chat/bomi_screen.dart';
 import '../../app/training/training_screen.dart';
+import '../../app/chat/chat_list_screen.dart';
 
 /// 라우트 메타데이터
 class RouteMetadata {
@@ -94,8 +97,20 @@ class AppRoutes {
 
   static const RouteMetadata signUpSlide = RouteMetadata(
     routeName: '/sign_up_slide',
-    builder: SignUpSlideScreen.new,
+    builder: SignUp1Screen.new,
     requiresAuth: true, // 로그인 직후 진입하므로 인증 필요
+  );
+
+  static const RouteMetadata menopauseSurvey = RouteMetadata(
+    routeName: '/menopause_survey',
+    builder: MenopauseSurveyScreen.new,
+    requiresAuth: true,
+  );
+
+  static const RouteMetadata chatList = RouteMetadata(
+    routeName: '/chat_list',
+    builder: ChatListScreen.new,
+    requiresAuth: true,
   );
 
   /// 모든 라우트 목록
@@ -104,6 +119,7 @@ class AppRoutes {
     home,
     alarm,
     chat,
+    chatList,
     report,
     mypage,
     login,
@@ -112,6 +128,7 @@ class AppRoutes {
     bubbleTest,
     bomi,
     training,
+    menopauseSurvey,
   ];
 
   /// 경로 이름으로 라우트 찾기

@@ -1,6 +1,7 @@
 """
 API endpoints for authentication (Controller layer)
 """
+import logging
 from fastapi import APIRouter, Depends, HTTPException, status, Request
 from starlette.responses import RedirectResponse
 from sqlalchemy.orm import Session
@@ -19,6 +20,9 @@ from .schemas import (
 from .services import google_login, kakao_login, naver_login, refresh_access_token, logout
 from .dependencies import get_current_user
 from .models import User
+
+# Setup logger
+logger = logging.getLogger(__name__)
 
 # Create router
 router = APIRouter()
@@ -50,7 +54,39 @@ async def login_with_google(
     Returns:
         TokenResponse with access_token and refresh_token
     """
-    return await google_login(request.auth_code, request.redirect_uri, db)
+    logger.info("=" * 80)
+    logger.info("[Auth Router] Google OAuth login request received")
+    logger.info(f"[Auth Router] Redirect URI: {request.redirect_uri}")
+    logger.info(f"[Auth Router] Auth code provided: {request.auth_code is not None}")
+    logger.info(f"[Auth Router] ID Token provided: {request.id_token is not None}")
+    if request.auth_code:
+        logger.info(f"[Auth Router] Auth code length: {len(request.auth_code)}")
+        logger.info(f"[Auth Router] Auth code (first 20 chars): {request.auth_code[:20]}...")
+    if request.id_token:
+        logger.info(f"[Auth Router] ID Token length: {len(request.id_token)}")
+        logger.info(f"[Auth Router] ID Token (first 20 chars): {request.id_token[:20]}...")
+    
+    try:
+        result = await google_login(
+            auth_code=request.auth_code,
+            id_token=request.id_token,
+            redirect_uri=request.redirect_uri,
+            db=db
+        )
+        logger.info("[Auth Router] Google OAuth login completed successfully")
+        logger.info("=" * 80)
+        return result
+    except HTTPException as e:
+        logger.error(f"[Auth Router] Google OAuth login failed - Status: {e.status_code}, Detail: {e.detail}")
+        logger.info("=" * 80)
+        raise
+    except Exception as e:
+        logger.exception(f"[Auth Router] Unexpected error during Google OAuth login: {str(e)}")
+        logger.info("=" * 80)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Internal server error: {str(e)}"
+        )
 
 
 @router.post(

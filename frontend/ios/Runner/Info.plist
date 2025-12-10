@@ -53,16 +53,16 @@
 			<string>Editor</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
-				<!-- Reversed client ID from Google -->
-				<string>com.googleusercontent.apps.758124085502-7so94snakhcj5bj5o1242o6ktg48eqqj</string>
+				<!-- Reversed iOS client ID from Google -->
+				<string>com.googleusercontent.apps.758124085502-umcpgll7m378fgtdkq25s66srdk99sui</string>
 				<!-- Deep link scheme -->
 				<string>com.maeumbom.app</string>
 			</array>
 		</dict>
 	</array>
-	<!-- Google Sign-In Client ID -->
+	<!-- Google Sign-In Client ID (iOS) -->
 	<key>GIDClientID</key>
-	<string>758124085502-7so94snakhcj5bj5o1242o6ktg48eqqj.apps.googleusercontent.com</string>
+	<string>758124085502-umcpgll7m378fgtdkq25s66srdk99sui.apps.googleusercontent.com</string>
 	<!-- Microphone Permission -->
 	<key>NSMicrophoneUsageDescription</key>
 	<string>마음봄이 음성 대화를 위해 마이크 권한이 필요합니다.</string>

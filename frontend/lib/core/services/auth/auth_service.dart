@@ -28,30 +28,35 @@ class AuthService {
   /// Login with Google OAuth
   Future<User> loginWithGoogle() async {
     try {
-      appLogger.i('구글 로그인 요청 (DUMMY MODE)');
+      appLogger.i('구글 로그인 요청');
 
-      // 더미 모드: 실제 Google OAuth 호출 없이 더미 데이터 생성
-      // TODO: 개발 완료 후 실제 OAuth 플로우로 교체
-      final dummyTokens = TokenPair(
-        accessToken:
-            'dummy-google-access-token-${DateTime.now().millisecondsSinceEpoch}',
-        refreshToken:
-            'dummy-google-refresh-token-${DateTime.now().millisecondsSinceEpoch}',
+      // 먼저 저장된 토큰이 유효한지 확인
+      final existingUser = await getCurrentUser();
+      if (existingUser != null) {
+        appLogger.i('이미 로그인된 상태입니다. 저장된 토큰 사용: ${existingUser.email}');
+        return existingUser;
+      }
+
+      // Step 1: Get ID Token (or auth code) from Google SDK
+      // ID Token is preferred as it's more reliable than serverAuthCode
+      final tokenOrCode = await _googleOAuth.signIn();
+      
+      // Determine if it's an ID Token (starts with "eyJ") or auth code
+      final isIdToken = tokenOrCode.startsWith('eyJ');
+      
+      // Step 2: Send ID Token or auth code to backend for verification and user creation
+      // 백엔드에서 ID Token을 검증하거나 auth code로 Google 사용자 정보를 가져와서 처리
+      final (tokens, user) = await _repository.loginWithGoogle(
+        authCode: isIdToken ? null : tokenOrCode,
+        idToken: isIdToken ? tokenOrCode : null,
+        redirectUri: OAuthConfig.googleRedirectUri,
       );
 
-      final dummyUser = User(
-        id: 1,
-        email: 'google-test@example.com',
-        nickname: '구글테스트',
-        provider: 'google',
-        createdAt: DateTime.now(),
-      );
+      // Step 3: Store tokens securely
+      await _tokenStorage.saveTokens(tokens);
 
-      // Store tokens securely
-      await _tokenStorage.saveTokens(dummyTokens);
-
-      appLogger.i('구글 로그인 완료: ${dummyUser.email}');
-      return dummyUser;
+      appLogger.i('구글 로그인 완료: ${user.email}');
+      return user;
     } catch (e) {
       appLogger.e('구글 로그인 실패', error: e);
       // Clean up on failure
@@ -68,6 +73,13 @@ class AuthService {
 
     try {
       appLogger.i('카카오 로그인 요청');
+
+      // 먼저 저장된 토큰이 유효한지 확인
+      final existingUser = await getCurrentUser();
+      if (existingUser != null) {
+        appLogger.i('이미 로그인된 상태입니다. 저장된 토큰 사용: ${existingUser.email}');
+        return existingUser;
+      }
 
       // Step 1: Get access token from Kakao SDK
       final accessToken = await _kakaoOAuth!.signIn();
@@ -110,6 +122,13 @@ class AuthService {
 
     try {
       appLogger.i('네이버 로그인 요청');
+
+      // 먼저 저장된 토큰이 유효한지 확인
+      final existingUser = await getCurrentUser();
+      if (existingUser != null) {
+        appLogger.i('이미 로그인된 상태입니다. 저장된 토큰 사용: ${existingUser.email}');
+        return existingUser;
+      }
 
       // Step 1: Get authorization code and state from Naver
       final (authCode, state) = await _naverOAuth!.signIn();

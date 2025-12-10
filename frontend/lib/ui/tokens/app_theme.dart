@@ -68,6 +68,16 @@ class AppTheme {
       centerTitle: true,
       titleTextStyle: AppTypography.h2,
     ),
+
+    // SnackBar 스타일 (Global)
+    snackBarTheme: const SnackBarThemeData(
+      behavior: SnackBarBehavior.floating, // 플로팅 스타일
+      backgroundColor: AppColors.darkBlack, // 다크 배경
+      contentTextStyle: AppTypography.body, // 텍스트 스타일
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.all(Radius.circular(AppRadius.md)),
+      ),
+    ),
   );
 
   /// -----------------------

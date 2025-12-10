@@ -116,7 +116,7 @@ class DBConversationStore:
         content: str,
         metadata: Optional[Dict] = None,
         speaker_id: Optional[str] = None
-    ) -> None:
+    ) -> int:
         """
         Add a message to the conversation history
         
@@ -127,6 +127,9 @@ class DBConversationStore:
             content: Message content
             metadata: Additional metadata (optional, not stored currently)
             speaker_id: Specific speaker identifier (e.g., "user-A")
+        
+        Returns:
+            ID of the created conversation record
         """
         db = self._get_db()
         try:
@@ -150,12 +153,17 @@ class DBConversationStore:
             
             db.add(conversation)
             db.commit()
+            db.refresh(conversation)  # 🆕 Get ID from database
+            
+            conversation_id = conversation.ID
             
             # Apply message limit (FIFO - delete oldest)
             self.cleanup_old_messages(user_id, session_id, db)
             
             # Apply session limit (LRU - delete least recently used)
             self.cleanup_old_sessions(user_id, db)
+            
+            return conversation_id  # 🆕 Return ID for tracking
             
         finally:
             db.close()
@@ -559,6 +567,54 @@ class DBConversationStore:
             print(f"[DBConversationStore] ⚠️ Failed to update speaker profile: {e}")
             db.rollback()
             return False
+        finally:
+            db.close()
+
+    # ============================================================================
+    # Phase 3: Temporary Message Management
+    # ============================================================================
+
+    def confirm_messages(self, conversation_ids: List[int]) -> None:
+        """
+        Confirm messages (remove temporary flag)
+        
+        Currently a no-op placeholder for future METADATA column implementation.
+        When METADATA column is added, this will update records to remove
+        {"temporary": true} flag.
+        
+        Args:
+            conversation_ids: List of conversation IDs to confirm
+        """
+        pass  # No-op for now (memory-based tracking in WebSocket)
+
+    def delete_messages_by_ids(self, user_id: int, message_ids: List[int]) -> int:
+        """
+        Delete messages by their IDs (Hard delete for temporary messages)
+        
+        Args:
+            user_id: User ID (for authorization check)
+            message_ids: List of message IDs to delete
+        
+        Returns:
+            Number of deleted messages
+        """
+        if not message_ids:
+            return 0
+            
+        db = self._get_db()
+        try:
+            count = db.query(Conversation).filter(
+                and_(
+                    Conversation.USER_ID == user_id,
+                    Conversation.ID.in_(message_ids)
+                )
+            ).delete(synchronize_session=False)
+            db.commit()
+            return count
+        except Exception as e:
+            print(f"[DBConversationStore] ⚠️ Failed to delete messages: {e}")
+            db.rollback()
+            return 0
         finally:
             db.close()
 

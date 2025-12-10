@@ -94,68 +94,58 @@ UI는 감정 상태를 시각적으로 표현합니다.
 
 #### 긍정 감정 (7개)
 
-| ID | 이름 | 캐릭터 | 컬러 힌트 | 사용 예시 |
+| ID | 이름 | 캐릭터 | Primary 컬러 | Secondary 컬러 |
 |----|------|---------|----------|----------|
-| `joy` | 기쁨 | 해바라기 | Yellow `#FFD54F` | 행복한 순간 |
-| `excitement` | 흥분 | 별 | Orange `#FF9800` | 기대감, 설렘 |
-| `confidence` | 자신감 | 사자 | Gold `#FFC107` | 성취, 당당함 |
-| `love` | 사랑 | 펭귄 | Pink `#F06292` | 애정, 사랑 |
-| `relief` | 안심 | 사슴 | Mint `#80CBC4` | 평온, 안정 |
-| `enlightenment` | 깨달음 | 전구 | LightBlue `#4FC3F7` | 통찰, 이해 |
-| `interest` | 흥미 | 부엉이 | Purple `#AB47BC` | 호기심, 관심 |
+| `joy` | 기쁨 | 해바라기 | #FFB84C | #FFD749 |
+| `excitement` | 흥분 | 별 | #FF9800 | #FFB74D |
+| `confidence` | 자신감 | 사자 | #FFC107 | #FFD54F |
+| `love` | 사랑 | 펭귄 | #FF6FAE | #FF8EC3 |
+| `relief` | 안심 | 사슴 | #76D6FF | #A1E8FF |
+| `enlightenment` | 깨달음 | 전구 | #4FC3F7 | #81D4FA |
+| `interest` | 흥미 | 부엉이 | #AB47BC | #BA68C8 |
 
 #### 부정 감정 (10개)
 
-| ID | 이름 | 캐릭터 | 컬러 힌트 | 사용 예시 |
+| ID | 이름 | 캐릭터 | Primary 컬러 | Secondary 컬러 |
 |----|------|---------|----------|----------|
-| `discontent` | 불만 | 당근 | Brown `#8D6E63` | 거슬림, 짜증 |
-| `shame` | 수치 | 복숭아 | PeachPink `#FFAB91` | 창피함, 부끄러움 |
-| `sadness` | 슬픔 | 고래 | DeepBlue `#5C6BC0` | 상실, 우울 |
-| `guilt` | 죄책감 | 곰 | DarkBrown `#6D4C41` | 미안함, 후회 |
-| `depression` | 우울 | 돌 | Gray `#78909C` | 무기력, 침체 |
-| `boredom` | 무료 | 나무늘보 | LightGray `#B0BEC5` | 심심함, 무료함 |
-| `contempt` | 경멸 | 가지 | Purple `#7E57C2` | 무시, 경멸 |
-| `anger` | 화 | 불 | Red `#E53935` | 분노, 화남 |
-| `fear` | 공포 | 쥐 | DarkGray `#546E7A` | 두려움, 불안 |
-| `confusion` | 혼란 | 로봇 | Silver `#90A4AE` | 갈피 상실 |
+| `discontent` | 불만 | 당근 | #8D6E63 | #A1887F |
+| `shame` | 수치 | 복숭아 | #FFAB91 | #FFCCBC |
+| `sadness` | 슬픔 | 고래 | #5C6BC0 | #7986CB |
+| `guilt` | 죄책감 | 곰 | #6D4C41 | #8D6E63 |
+| `depression` | 우울 | 돌 | #6C8CD5 | #8AA7E2 |
+| `boredom` | 무료 | 나무늘보 | #B0BEC5 | #CFD8DC |
+| `contempt` | 경멸 | 가지 | #7E57C2 | #9575CD |
+| `anger` | 화 | 불 | #FF5E4A | #FF7A5C |
+| `fear` | 공포 | 쥐 | #546E7A | #78909C |
+| `confusion` | 혼란 | 로봇 | #B28CFF | #C7A4FF |
 
 ---
 
-### 1.2 캐릭터 사용 패턴
+### 1.2 캐릭터 컬러 시스템
 
-#### 홈 화면 - 주간 대표 캐릭터
+**파일:** `lib/ui/characters/app_character_colors.dart`
+
+각 감정별로 Primary/Secondary 컬러가 정의되어 있습니다.
 
 ```dart
-// 백엔드 API에서 대표 감정 받아오기
-EmotionCharacter(
-  id: EmotionId.joy,  // API 응답으로 받은 감정 ID
-  use2d: false,       // normal 또는 2d 버전 선택
-  size: 180,          // 큰 사이즈로 표시
+// 컬러 가져오기
+final colors = emotionColorMap[EmotionId.joy]!;
+Container(
+  decoration: BoxDecoration(
+    gradient: LinearGradient(
+      colors: [colors.primary, colors.secondary],
+    ),
+  ),
 )
-```
 
-**홈 화면 구조 예시:**
-```
-     🌟 금주의 감정 캐릭터 🌟
-             [기쁨 😊]
-
-          (해바라기 캐릭터)
-           (180x180)
-
-       "오늘 하루 어떠셨나요?"
-         (AppTypography.h2)
-
-    (~ 음성 파동 애니메이션 ~)
-
-    🎤    [ 음성 입력 ]    ✏️
-     (마이크)  (버튼)   (텍스트)
+// 헬퍼 함수 사용
+final primaryColor = getEmotionPrimaryColor(EmotionId.love);
+final secondaryColor = getEmotionSecondaryColor(EmotionId.love);
 ```
 
 ---
 
 ### 1.3 캐릭터 에셋 구조
-
-#### 현재 구조 (정적 PNG)
 
 ```
 assets/characters/
@@ -167,27 +157,28 @@ assets/characters/
   │   ├─ char_joy.png
   │   ├─ char_anger.png
   │   └─ ... (18개)
-  └─ animation/  (Lottie 애니메이션 - 별도 시스템)
+  └─ animation/  (Lottie 애니메이션)
       ├─ happiness/
       │   └─ char_relief.json
-      ├─ sedness/
+      ├─ sadness/
       │   └─ char_relief.json
       ├─ anger/
       │   └─ char_relief.json
-      └─ fear/
-          └─ char_relief.json
+      ├─ fear/
+      │   └─ char_relief.json
+      ├─ basic/
+      ├─ error/
+      ├─ listening/
+      ├─ realization/
+      └─ thinking/
 ```
-
-**참고:** 
-- `normal/`과 `normal_2d/`는 정적 PNG 이미지
-- `animation/`은 별도 Lottie 애니메이션 시스템 (`AnimatedCharacter` 사용)
 
 ---
 
 ### 1.4 구현 위치
 
 #### 정적 캐릭터 (PNG)
-**파일:** [lib/ui/characters/app_characters.dart](lib/ui/characters/app_characters.dart)
+**파일:** `lib/ui/characters/app_characters.dart`
 
 **주요 클래스:**
 - `EmotionId`: 18개 감정 enum (17개 + test)
@@ -209,88 +200,37 @@ EmotionCharacter(
   size: 120,
 )
 
-// 큰 사이즈 (홈 화면)
-EmotionCharacter(
+// 컬러 배경과 함께
+EmotionCharacterWithColor(
   id: EmotionId.joy,
-  size: 180,
+  size: 120,
+  showColorBackground: true,
+  backgroundOpacity: 0.1,
 )
 ```
 
-**EmotionMeta 구조:**
-```dart
-class EmotionMeta {
-  final EmotionId id;
-  final String nameKo;        // 한글 이름 (예: '기쁨')
-  final String nameEn;        // 영문 이름 (예: 'joy')
-  final String characterKo;   // 캐릭터 한글 (예: '해바라기')
-  final String characterEn;   // 캐릭터 영문 (예: 'sunflower')
-  final String shortDesc;     // 짧은 설명
-  final String assetNormal;   // normal 버전 PNG 경로
-  final String assetNormal2d; // normal_2d 버전 PNG 경로
-}
-```
-
-#### 애니메이션 캐릭터 (Lottie) - 별도 시스템 ✅
-**파일:** [lib/ui/characters/app_animations.dart](lib/ui/characters/app_animations.dart)
+#### 애니메이션 캐릭터 (Lottie)
+**파일:** `lib/ui/characters/app_animations.dart`
 
 **주요 클래스:**
-- `EmotionCategory`: 4가지 감정군 enum (happiness, sedness, anger, fear)
+- `EmotionCategory`: 감정군 enum (happiness, sadness, anger, fear 등)
 - `AnimationMeta`: 애니메이션 메타데이터
 - `AnimatedCharacter`: Lottie 애니메이션 위젯
 
 **사용 예시:**
 ```dart
-// 기본 사용 - emotion을 String으로 지정
+// 기본 사용
 AnimatedCharacter(
   characterId: 'relief',
-  emotion: 'happiness',  // 'happiness', 'sedness', 'anger', 'fear'
+  emotion: 'happiness',
   size: 350,
 )
 
-// 조합 ID 직접 사용
-AnimatedCharacter.fromId(
-  characterId: 'relief_happiness',
-  size: 350,
-)
-
-// EmotionCategory enum 사용
+// 카테고리로 지정
 AnimatedCharacter.withCategory(
   characterId: 'relief',
   category: EmotionCategory.happiness,
   size: 350,
-)
-```
-
-**참고:** `EmotionCharacter`(정적)와 `AnimatedCharacter`(애니메이션)는 별도 시스템입니다.
-
----
-
-### 1.5 API 연동 예시
-
-#### 주간 대표 감정 조회
-
-```dart
-// API 엔드포인트 (예시)
-GET /api/emotion/weekly-representative
-
-// 응답
-{
-  "emotionId": "joy",
-  "use2d": false,  // normal 또는 2d 버전 선택
-  "message": "이번 주는 기쁨이 가득했어요!"
-}
-
-// 사용 예시
-final response = await emotionService.getWeeklyEmotion();
-final emotionId = EmotionId.values.firstWhere(
-  (e) => e.name == response.emotionId,
-  orElse: () => EmotionId.confusion,  // Fallback
-);
-
-EmotionCharacter(
-  id: emotionId,
-  use2d: response.use2d,
-  size: 180,
 )
 ```
 
@@ -310,11 +250,11 @@ EmotionCharacter(
 
 ---
 
-### 2.2 슬라이드 액션 버튼 (구현 완료 ✅)
+### 2.2 SlideToActionButton
 
 **파일:** `lib/ui/components/slide_to_action_button.dart`
 
-#### 기본 사용
+양방향 슬라이딩 액션 버튼으로 음성/텍스트 입력을 통합 관리합니다.
 
 ```dart
 SlideToActionButton(
@@ -327,104 +267,33 @@ SlideToActionButton(
 ```
 
 **특징:**
-- 양방향 슬라이딩 지원
-  - 왼쪽(마이크) → 오른쪽: 음성 녹음 시작
-  - 오른쪽(텍스트) → 왼쪽: 텍스트 입력 활성화
-- 도착 상태 관리 (버튼이 반대편에 도착하면 고정)
+- 양방향 슬라이딩 지원 (왼쪽 마이크, 오른쪽 텍스트)
+- 도착 상태 관리
 - 녹음 중 시각적 피드백
 - 클릭하여 리셋 가능
 
 ---
 
-### 2.3 BottomInputBar 사용 패턴 (Legacy)
+### 2.3 VoiceWaveform 애니메이션
 
-> ⚠️ **참고**: 현재는 `SlideToActionButton`을 사용하여 음성/텍스트 입력을 통합 관리합니다.
+**파일:** `lib/ui/components/voice_waveform.dart`
 
----
-
-### 2.4 VoiceWaveform 애니메이션 (향후 구현 예정)
-
-**위치:** `lib/ui/components/voice_waveform.dart` (신규 예정)
-
-**사용 예시:**
+음성 입력 중 파동을 시각화하는 위젯입니다.
 
 ```dart
-// 홈 화면에서 음성 파동 표시
 VoiceWaveform(
   isActive: isRecording,
   color: AppColors.accentRed,
   height: 40,
-)
-
-// 채팅 화면에서 작게 표시
-VoiceWaveform(
-  isActive: isRecording,
-  color: AppColors.accentCoral,
-  height: 24,
 )
 ```
 
 **디자인 스펙:**
 - 높이: 40px (기본)
 - 색상: `AppColors.accentRed` (기본)
-- 파동: 3-5개 바 (Sine wave 형태)
-- 주기: 1.5초
-- 이징: `Curves.easeInOut`
-
----
-
-### 2.5 권한 처리
-
-#### 이미 구현됨
-
-**파일:**
-- [lib/core/services/chat/permission_service.dart](lib/core/services/chat/permission_service.dart)
-- [lib/core/services/chat/audio_service.dart](lib/core/services/chat/audio_service.dart)
-
-#### 권한 요청 흐름
-
-1. 마이크 버튼 슬라이드
-2. 권한 확인 (`PermissionService`)
-3. 권한 없으면 다이얼로그 표시
-4. 권한 있으면 녹음 시작 (`AudioService`)
-
----
-
-### 2.6 음성 입력 Best Practices
-
-#### ✅ 권장사항
-
-```dart
-// Good: 명확한 상태 표시 - SlideToActionButton 사용
-SlideToActionButton(
-  onVoiceActivated: _handleVoiceInput,
-  onTextActivated: _handleTextInputToggle,
-  isRecording: _isRecording,
-)
-
-// Good: 사용자에게 피드백 제공
-SlideToActionButton(
-  isRecording: true,  // 녹음 중 시각적 피드백 자동 제공
-)
-```
-
-#### ❌ 피해야 할 사항
-
-```dart
-// Bad: 상태 표시 없음
-IconButton(
-  icon: Icon(Icons.mic),
-  onPressed: toggleRecording,  // 녹음 중인지 알 수 없음
-)
-
-// Bad: 음성 입력 없이 텍스트만 제공
-TextField(
-  decoration: InputDecoration(
-    hintText: '메시지 입력',
-    // 마이크 버튼 없음
-  ),
-)
-```
+- 파동: Sine wave (5개 주기)
+- 애니메이션: 1.5초 주기로 반복
+- 진폭: 높이의 30%
 
 ---
 
@@ -432,7 +301,7 @@ TextField(
 
 ### 3.1 말풍선 디자인 철학
 
-마음봄은 카드 대신 **말풍선(Bubble)**으로 주로 정보를 전달합니다.
+마음봄은 카드 대신 **말풍선(Bubble)**으로 정보를 전달합니다.
 
 #### 왜 말풍선인가?
 
@@ -444,16 +313,11 @@ TextField(
 
 ### 3.2 Bubble 타입
 
-#### 3.2.1 ChatBubble (User/Bot)
+#### 3.2.1 ChatBubble
 
-**현재 구현:** [lib/app/chat/chat_screen.dart](lib/app/chat/chat_screen.dart) (404-478줄)
+**파일:** `lib/ui/components/chat_bubble.dart`
 
-**특징:**
-- User: 우측 정렬, `accentRed` 배경, 흰색 텍스트
-- Bot: 좌측 정렬, 흰색 배경, `borderLight` 테두리
-- 하단 모서리 한쪽만 각짐 (꼬리 효과)
-
-**사용 예시:**
+사용자와 봄이(봇)의 메시지를 말풍선 형태로 표시합니다.
 
 ```dart
 // 사용자 메시지
@@ -468,69 +332,65 @@ ChatBubble(
 // 봄이 메시지
 ChatBubble(
   message: ChatMessage(
-    text: '좋은 하루를 보내셨군요! 어떤 일이 있었나요?',
+    text: '좋은 하루를 보내셨군요!',
     isUser: false,
     timestamp: DateTime.now(),
   ),
 )
 ```
 
+**특징:**
+- User: 우측 정렬, `accentRed` 배경, 흰색 텍스트
+- Bot: 좌측 정렬, 흰색 배경, `borderLight` 테두리
+- 하단 모서리 한쪽만 각짐 (꼬리 효과)
+
+---
+
+#### 3.2.2 SystemBubble
+
+**파일:** `lib/ui/components/system_bubble.dart`
+
+시스템 메시지를 표시하는 말풍선입니다.
 
 ```dart
-// 신규 파일: lib/ui/components/chat_bubble.dart
-class ChatBubble extends StatelessWidget {
-  final ChatMessage message;
+// 정보 메시지
+SystemBubble(
+  text: '금주의 감정: 기쁨 😊',
+  type: SystemBubbleType.info,
+)
 
-  const ChatBubble({required this.message});
+// 성공 메시지
+SystemBubble(
+  text: '감정 기록이 저장되었습니다',
+  type: SystemBubbleType.success,
+)
 
-  @override
-  Widget build(BuildContext context) {
-    // 기존 구현 이동
-  }
-}
+// 경고 메시지
+SystemBubble(
+  text: '네트워크 연결을 확인해주세요',
+  type: SystemBubbleType.warning,
+)
 ```
 
----
-
-#### 3.2.2 SystemBubble (미사용)
-
-**목적:** 시스템 메시지 표시 (안내, 피드백, 시간)
-
-**상태:** 현재 프로젝트에서 사용하지 않음
+**타입:**
+- `info`: 정보성 메시지 (warmWhite 배경)
+- `success`: 성공 메시지 (softMint 배경)
+- `warning`: 경고 메시지 (lightPink 배경)
 
 ---
 
-#### 3.2.3 EmotionBubble (구현 완료 ✅)
-
-**목적:** 봄이의 대화 말풍선 (타이핑 애니메이션, 스크롤 지원)
+#### 3.2.3 EmotionBubble
 
 **파일:** `lib/ui/components/emotion_bubble.dart`
 
-**인터페이스:**
-
-```dart
-class EmotionBubble extends StatefulWidget {
-  final String message;
-  final VoidCallback? onTap;
-  final bool enableTypingAnimation;
-  final int typingSpeed;  // 기본값: 50ms
-
-  const EmotionBubble({
-    required this.message,
-    this.onTap,
-    this.enableTypingAnimation = false,
-    this.typingSpeed = 50,
-  });
-}
-```
-
-**사용 예시:**
+봄이의 대화 말풍선으로 타이핑 애니메이션과 스크롤을 지원합니다.
 
 ```dart
 // 타이핑 애니메이션 있음
 EmotionBubble(
-  message: '오늘 하루 어떠셨나요? 대화를 진행해볼까요?',
+  message: '오늘 하루 어떠셨나요?',
   enableTypingAnimation: true,
+  typingSpeed: 50,
 )
 
 // 즉시 표시
@@ -548,11 +408,11 @@ EmotionBubble(
 
 ---
 
-### 3.3 BubbleTokens (구현 완료 ✅)
+### 3.3 BubbleTokens
 
 **파일:** `lib/ui/tokens/bubbles.dart`
 
-**목적:** 말풍선 스타일 일관성 유지
+말풍선 스타일 일관성을 유지하는 토큰입니다.
 
 ```dart
 class BubbleTokens {
@@ -600,505 +460,27 @@ class BubbleTokens {
 
 ---
 
-### 3.4 구현 위치 정리
-
-| 컴포넌트 | 상태 | 파일 경로 |
-|---------|------|----------|
-| ChatBubble | ✅ 구현됨 | `lib/app/chat/chat_screen.dart` (404-478줄) |
-| ChatBubble (독립) | ⚠️ 이동 필요 | `lib/ui/components/chat_bubble.dart` |
-| SystemBubble | ⚠️ 미사용 | - |
-| EmotionBubble | ✅ 구현됨 | `lib/ui/components/emotion_bubble.dart` |
-| BubbleTokens | ✅ 구현됨 | `lib/ui/tokens/bubbles.dart` |
-
----
-
-### 3.5 Bubble 사용 원칙
-
-#### ✅ 권장사항
-
-```dart
-// Good: 적절한 타입 선택
-ChatBubble(message: userMessage)        // 대화
-EmotionBubble(message: '기쁨')           // 봄이 대화
-
-// Good: 일관된 스타일
-Container(
-  padding: BubbleTokens.chatPadding,
-  decoration: BoxDecoration(
-    borderRadius: BorderRadius.circular(BubbleTokens.chatRadius),
-  ),
-)
-```
-
-#### ❌ 피해야 할 사항
-
-```dart
-// Bad: 카드 사용
-Card(
-  child: ListTile(title: Text('메시지')),
-)
-
-// Bad: 하드코딩된 스타일
-Container(
-  padding: EdgeInsets.all(16),  // BubbleTokens 사용
-  decoration: BoxDecoration(
-    borderRadius: BorderRadius.circular(12),  // BubbleTokens 사용
-  ),
-)
-```
-
----
-
 ## 🎞 4. Animation Guide
 
-### 4.1 현재 상태 (2025-12-08 업데이트)
+### 4.1 현재 구현 상태
 
-#### 정적 이미지 (PNG) - 현재 사용 중 ✅
+#### 정적 이미지 (PNG)
+
 - 에셋: `assets/characters/normal/*.png`, `assets/characters/normal_2d/*.png`
 - 18개 감정 캐릭터 (17개 + test) 모두 정적 PNG 이미지 제공
 - 위젯: `EmotionCharacter` (app_characters.dart)
 - 렌더링: `Image.asset`
 
-**사용 예시:**
-```dart
-// 기본 사용 (normal 버전)
-EmotionCharacter(
-  id: EmotionId.joy,
-  size: 120,
-)
+#### Lottie 애니메이션
 
-// 2D 버전 사용
-EmotionCharacter(
-  id: EmotionId.joy,
-  use2d: true,
-  size: 120,
-)
-```
-
-#### Lottie 애니메이션 - 별도 시스템 ✅
 - 에셋: `assets/characters/animation/{emotion}/char_{character}.json`
-- 현재 `relief` 캐릭터의 4가지 감정 애니메이션 구현
-  - happiness, sedness, anger, fear
+- 현재 `relief` 캐릭터의 여러 감정 애니메이션 구현
 - 위젯: `AnimatedCharacter` (app_animations.dart)
 - 패키지: `lottie: ^3.0.0`
 
-**사용 예시:**
-```dart
-// 봄이 화면에서 애니메이션 캐릭터 표시
-AnimatedCharacter(
-  characterId: 'relief',
-  emotion: 'happiness',  // 감정 변경 가능
-  size: 350,
-  repeat: true,
-  animate: true,
-)
-
-// 감정 변경 예시
-AnimatedCharacter(
-  characterId: 'relief',
-  emotion: 'anger',  // happiness, sedness, anger, fear
-  size: 350,
-)
-```
-
-**참고:** 
-- `EmotionCharacter`: 정적 PNG 이미지 (일반 UI 사용)
-- `AnimatedCharacter`: Lottie 애니메이션 (특별한 인터랙션 필요 시)
-
 ---
 
-### 4.2 AnimatedCharacter 위젯 상세
-
-**파일:** `lib/ui/characters/app_animations.dart`
-
-#### EmotionCategory Enum
-```dart
-enum EmotionCategory {
-  happiness,  // 기쁨
-  sedness,    // 슬픔
-  anger,      // 분노
-  fear,       // 공포
-}
-```
-
-#### 3가지 생성자
-
-**1. 기본 생성자 (권장)**
-```dart
-AnimatedCharacter(
-  characterId: 'relief',
-  emotion: 'happiness',  // String으로 감정 지정
-  size: 120,
-  repeat: true,
-  animate: true,
-)
-```
-
-**2. fromId - 조합 ID 직접 사용**
-```dart
-AnimatedCharacter.fromId(
-  characterId: 'relief_happiness',
-  size: 120,
-)
-```
-
-**3. withCategory - Enum 사용**
-```dart
-AnimatedCharacter.withCategory(
-  characterId: 'relief',
-  category: EmotionCategory.happiness,
-  size: 120,
-)
-```
-
-#### 파라미터
-
-| 파라미터 | 타입 | 기본값 | 설명 |
-|---------|------|--------|------|
-| `characterId` | `String` | - | 캐릭터 ID (예: 'relief') |
-| `emotion` | `String` | `'happiness'` | 감정 (happiness/sedness/anger/fear) |
-| `size` | `double` | `120` | 애니메이션 크기 |
-| `fit` | `BoxFit` | `BoxFit.contain` | 크기 맞춤 방식 |
-| `repeat` | `bool` | `true` | 반복 재생 여부 |
-| `animate` | `bool` | `true` | 애니메이션 활성화 |
-
-#### 에러 처리
-- 캐릭터를 찾을 수 없을 경우: 에러 아이콘 표시
-- Lottie 파일 로딩 실패: broken_image 아이콘 표시
-
----
-
-### 4.3 향후 확장 계획
-
-#### 추가 캐릭터 구현
-현재 `relief` 캐릭터만 구현되어 있으며, 향후 다른 캐릭터 추가 시:
-
-```dart
-// app_animations.dart의 animationMetaMap에 추가
-'joy_happiness': AnimationMeta(
-  id: 'joy_happiness',
-  nameKo: '기쁨(기쁨)',
-  category: EmotionCategory.happiness,
-  assetPath: 'assets/characters/animation/happiness/char_joy.json',
-),
-```
-
-패턴: `{characterId}_{emotion}` 형식으로 추가
-
----
-
-### 4.4 애니메이션 타입 (향후)
-
-| 타입 | 설명 | 타이밍 | 우선순위 |
-|------|------|--------|---------|
-| **Idle Loop** | 대기 중 자연스러운 움직임 | 항시 재생 | P2 |
-| **Voice Reaction** | 음성 입력 시 반응 | 음성 감지 시 | P0 |
-| **Emotion Burst** | 감정 변화 시 폭발 효과 | 감정 전환 시 | P1 |
-| **Transition** | 캐릭터 교체 전환 | 주간 업데이트 시 | P2 |
-
-**우선순위 설명:**
-- P0: 즉시 필요 (음성 피드백)
-- P1: 중요 (감정 표현)
-- P2: 선택 (품질 향상)
-
----
-
-### 4.4 애니메이션 타입 (향후)
-
-| 타입 | 설명 | 타이밍 | 우선순위 | 상태 |
-|------|------|--------|---------|------|
-| **Emotion Animation** | 감정별 캐릭터 애니메이션 | 상시 | P0 | ✅ 구현 완료 (relief 캐릭터) |
-| **Voice Reaction** | 음성 입력 시 반응 | 음성 감지 시 | P1 | ⏳ 예정 |
-| **Idle Loop** | 대기 중 자연스러운 움직임 | 항시 재생 | P2 | ⏳ 예정 |
-| **Transition** | 캐릭터 교체 전환 | 주간 업데이트 시 | P2 | ⏳ 예정 |
-
-**우선순위 설명:**
-- P0: 완료됨 (감정 표현)
-- P1: 중요 (음성 피드백)
-- P2: 선택 (품질 향상)
-
----
-
-### 4.5 구현 방식
-
-**현재 사용: Lottie ✅**
-
-- **장점**: 가볍고 빠름, After Effects 연동, 성숙한 생태계
-- **단점**: 인터랙티브 제한적
-- **패키지**: `lottie: ^3.1.0` (pubspec.yaml)
-- **구현 위치**: `lib/ui/characters/app_animations.dart`
-
-**향후 고려: Rive / Live2D**
-
----
-
-### 4.6 EmotionCharacter 시스템 구조
-
-**현재 구조 (2개의 독립적인 시스템):**
-
-```dart
-// 1. 정적 이미지 시스템 (app_characters.dart) ✅ 현재 사용
-class EmotionCharacter extends StatelessWidget {
-  final EmotionId id;
-  final bool use2d;      // normal 또는 2d 버전 선택
-  final double size;
-
-  @override
-  Widget build(BuildContext context) {
-    final meta = emotionMetaMap[id]!;
-    final assetPath = use2d ? meta.assetNormal2d : meta.assetNormal;
-    
-    return Image.asset(
-      assetPath,  // PNG 파일
-      width: size,
-      height: size,
-      fit: BoxFit.contain,
-    );
-  }
-}
-
-// 2. 애니메이션 시스템 (app_animations.dart) ✅ 별도 사용
-class AnimatedCharacter extends StatelessWidget {
-  AnimatedCharacter({
-    required String characterId,
-    String emotion = 'happiness',
-    this.size = 120,
-    this.repeat = true,
-    this.animate = true,
-  }) : characterId = '${characterId}_$emotion';
-  
-  @override
-  Widget build(BuildContext context) {
-    return Lottie.asset(
-      meta.assetPath,  // JSON 파일
-      width: size,
-      height: size,
-      repeat: repeat,
-      animate: animate,
-    );
-  }
-}
-```
-
-**사용 시나리오:**
-- **일반 UI**: `EmotionCharacter` 사용 (가볍고 빠름)
-- **특별한 인터랙션**: `AnimatedCharacter` 사용 (생동감 있는 애니메이션)
-
----
-
-### 4.7 VoiceWaveform 애니메이션 (우선순위 P1 - 예정)
-
-**Option 1: Lottie (현재 사용 중 ✅)**
-
-- **장점**: 가볍고 빠름, After Effects 연동, 성숙한 생태계
-- **단점**: 인터랙티브 제한적
-- **패키지**: `lottie: ^3.1.0` (pub.dev)
-- **현재 구현**: relief 캐릭터 4가지 감정 애니메이션
-- **사용 예시**:
-  ```dart
-  AnimatedCharacter(
-    characterId: 'relief',
-    emotion: 'happiness',
-    size: 350,
-  )
-  ```
-
-**Option 2: Live2D**
-
-- **장점**: 고품질 2D 애니메이션, 인터랙티브, 부드러운 움직임
-- **단점**: 무겁고 복잡, 라이센스 비용, Flutter 통합 어려움
-- **패키지**: Custom Native Plugin 필요
-
-**Option 3: Rive**
-
-- **장점**: 실시간 인터랙티브 애니메이션, State Machine 지원
-- **단점**: 디자인 툴 학습 곡선
-- **패키지**: `rive` (pub.dev)
-
-**권장 순서:**
-1. **Lottie (P0) ✅ 구현 완료**: 감정 캐릭터 애니메이션 (relief)
-2. **VoiceWaveform (P1)**: 음성 파동 시각화 (예정)
-3. **Rive (P2)**: 복잡한 인터랙티브 애니메이션 (필요 시)
-4. **Live2D (P3)**: 최고 품질 필요 시 (선택적)
-
----
-
-#### 4.2.3 EmotionCharacter 시스템 구조
-
-현재 `EmotionCharacter`는 정적 PNG 이미지를 사용하는 단순한 위젯입니다.
-
-**현재 구현 (정적 이미지):**
-
-```dart
-class EmotionCharacter extends StatelessWidget {
-  final EmotionId id;
-  final bool use2d;      // normal 또는 2d 버전
-  final double size;
-
-  @override
-  Widget build(BuildContext context) {
-    final meta = emotionMetaMap[id]!;
-    final assetPath = use2d ? meta.assetNormal2d : meta.assetNormal;
-    
-    return Image.asset(
-      assetPath,  // PNG 파일
-      width: size,
-      height: size,
-      fit: BoxFit.contain,
-    );
-  }
-}
-```
-
-**애니메이션이 필요한 경우:**
-
-별도의 `AnimatedCharacter` 위젯 사용 (app_animations.dart):
-
-```dart
-AnimatedCharacter(
-  characterId: 'relief',
-  emotion: 'happiness',
-  size: 350,
-)
-```
-
-**참고:** 
-- `EmotionCharacter`: 정적 PNG (일반 UI)
-- `AnimatedCharacter`: Lottie 애니메이션 (특별한 경우)
-
----
-
-#### 4.2.4 VoiceWaveform 애니메이션 (우선순위 P0)
-
-**위치:** `lib/ui/components/voice_waveform.dart` (신규)
-
-**구현 방식:**
-
-```dart
-class VoiceWaveform extends StatefulWidget {
-  final bool isActive;
-  final Color color;
-  final double height;
-
-  const VoiceWaveform({
-    this.isActive = true,
-    this.color = AppColors.accentRed,
-    this.height = 40,
-  });
-
-  @override
-  _VoiceWaveformState createState() => _VoiceWaveformState();
-}
-
-class _VoiceWaveformState extends State<VoiceWaveform>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: Duration(milliseconds: 1500),
-    );
-
-    if (widget.isActive) {
-      _controller.repeat();
-    }
-  }
-
-  @override
-  void didUpdateWidget(VoiceWaveform oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (widget.isActive && !_controller.isAnimating) {
-      _controller.repeat();
-    } else if (!widget.isActive && _controller.isAnimating) {
-      _controller.stop();
-    }
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _controller,
-      builder: (context, child) {
-        return CustomPaint(
-          size: Size(double.infinity, widget.height),
-          painter: WaveformPainter(
-            progress: _controller.value,
-            color: widget.color,
-            isActive: widget.isActive,
-          ),
-        );
-      },
-    );
-  }
-}
-
-class WaveformPainter extends CustomPainter {
-  final double progress;
-  final Color color;
-  final bool isActive;
-
-  WaveformPainter({
-    required this.progress,
-    required this.color,
-    required this.isActive,
-  });
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    if (!isActive) return;
-
-    final paint = Paint()
-      ..color = color
-      ..strokeWidth = 2
-      ..style = PaintingStyle.stroke;
-
-    final path = Path();
-    final waveHeight = size.height * 0.5;
-    final waveCount = 5;
-
-    for (var i = 0; i < size.width; i++) {
-      final x = i.toDouble();
-      final phase = progress * 2 * pi;
-      final y = size.height / 2 +
-          sin((x / size.width) * waveCount * 2 * pi + phase) * waveHeight;
-
-      if (i == 0) {
-        path.moveTo(x, y);
-      } else {
-        path.lineTo(x, y);
-      }
-    }
-
-    canvas.drawPath(path, paint);
-  }
-
-  @override
-  bool shouldRepaint(WaveformPainter oldDelegate) {
-    return oldDelegate.progress != progress ||
-        oldDelegate.isActive != isActive;
-  }
-}
-```
-
-**디자인 스펙:**
-- 높이: 40px (기본)
-- 색상: `AppColors.accentRed`
-- 파동: Sine wave (5개 주기)
-- 애니메이션: 1.5초 주기로 반복
-- 이징: `Curves.easeInOut`
-
----
-
-### 4.3 애니메이션 원칙
+### 4.2 애니메이션 원칙
 
 #### 1. Subtle & Natural
 과하지 않게, 자연스럽게 움직입니다.
@@ -1108,12 +490,6 @@ class WaveformPainter extends CustomPainter {
 AnimationController(
   duration: Duration(milliseconds: 800),
   curve: Curves.easeInOut,
-)
-
-// Bad: 급격한 애니메이션
-AnimationController(
-  duration: Duration(milliseconds: 100),
-  curve: Curves.linear,
 )
 ```
 
@@ -1133,19 +509,6 @@ if (shouldAnimate) {
 #### 3. Purposeful
 모든 애니메이션은 목적이 있어야 합니다.
 
-```dart
-// Good: 사용자 액션에 대한 피드백
-void onButtonTap() {
-  _animationController.forward();  // 버튼 탭 피드백
-  _handleAction();
-}
-
-// Bad: 의미 없는 애니메이션
-Timer.periodic(Duration(seconds: 1), (_) {
-  _randomAnimation();  // 무의미한 반복
-});
-```
-
 #### 4. Consistent
 타이밍과 이징을 일관되게 유지합니다.
 
@@ -1161,31 +524,207 @@ Timer.periodic(Duration(seconds: 1), (_) {
 
 ---
 
-### 4.4 패키지 설치 (향후 필요 시)
+## 🏠 5. Home Screen Design
 
-#### Lottie
+### 5.1 홈 화면 개요
 
-```yaml
-# pubspec.yaml
-dependencies:
-  lottie: ^3.0.0
+홈 화면은 사용자의 현재 감정 상태를 시각적으로 표현하는 핵심 화면입니다.
+
+#### 디자인 철학
+- **기분 기반 배경**: 감정 카테고리에 따라 배경색이 동적으로 변경됩니다
+- **캐릭터 중심**: 240×240 크기의 감정 캐릭터가 화면 중앙에 배치됩니다
+- **미니멀 UI**: 필수 정보만 표시하여 감정에 집중할 수 있도록 합니다
+
+---
+
+### 5.2 화면 구조
+
 ```
-
-#### Rive
-
-```yaml
-# pubspec.yaml
-dependencies:
-  rive: ^0.13.0
+┌─────────────────────────────┐
+│                             │ ← 상태바 (흰색 아이콘)
+│  닉네임님,                   │
+│  오늘 하루도 응원해요!        │
+│  [나는 어떤 상태일까?]       │ ← 헤더 섹션
+│                             │
+│         [캐릭터]             │ ← 감정 캐릭터 (240×240)
+│                             │
+│     [대화 온도 막대]          │ ← 3단계 인디케이터
+│                             │
+├─────────────────────────────┤
+│  [봄이] [알람] [리포트] [연습실] │ ← 하단 메뉴 (4개)
+└─────────────────────────────┘
 ```
 
 ---
 
-## 🧭 5. Navigation Structure
+### 5.3 배경색 시스템
 
-### 5.1 현재 네비게이션 (5탭)
+감정 분류(`MoodCategory`)에 따라 배경색이 변경됩니다.
 
-#### BottomMenuBar (기존)
+| 기분 카테고리 | 배경색 | Hex 코드 | 적용 감정 |
+|--------------|--------|----------|----------|
+| **좋음** (good) | homeGoodYellow | #FFB84C | joy, excitement, confidence, love |
+| **보통** (neutral) | homeNormalGreen | #63C96B | relief, enlightenment, interest |
+| **나쁨** (bad) | homeBadBlue | #6C8CD5 | sadness, depression, fear, anger |
+
+**구현:**
+```dart
+final moodCategory = EmotionClassifier.classify(currentEmotion);
+final backgroundColor = _getBackgroundColor(moodCategory);
+
+Color _getBackgroundColor(MoodCategory category) {
+  switch (category) {
+    case MoodCategory.good:
+      return AppColors.homeGoodYellow;
+    case MoodCategory.neutral:
+      return AppColors.homeNormalGreen;
+    case MoodCategory.bad:
+      return AppColors.homeBadBlue;
+  }
+}
+```
+
+---
+
+### 5.4 컴포넌트 상세
+
+#### 5.4.1 HomeHeaderSection
+
+**파일:** `lib/app/home/components/home_header_section.dart`
+
+상단 헤더 영역으로 사용자 정보와 설문 버튼을 표시합니다.
+
+**구성 요소:**
+- 닉네임 인사 (h1, 흰색 100%, 700 bold)
+- 인사말 메시지 (h3, 흰색 70%)
+- 설문 버튼 (pill 형태, 흰색 20% 배경)
+
+```dart
+HomeHeaderSection()
+```
+
+---
+
+#### 5.4.2 ConversationTemperatureBar
+
+**파일:** `lib/app/home/components/conversation_temperature_bar.dart`
+
+봄이와의 대화 온도를 3단계로 시각화합니다.
+
+**구성 요소:**
+- 제목: "봄이와의 대화 온도" (bodyBold, 흰색, 중앙 정렬)
+- 3개 가로 막대 (8px 높이, pill 형태)
+  - 활성: 흰색 90% 투명도
+  - 비활성: 흰색 30% 투명도
+- 라벨: "나쁨", "보통", "좋음" (caption, 흰색 70%)
+
+```dart
+ConversationTemperatureBar(
+  currentMood: moodCategory,
+)
+```
+
+---
+
+#### 5.4.3 HomeBottomMenu
+
+**파일:** `lib/app/home/components/home_bottom_menu.dart`
+
+하단 4개 메뉴 버튼 (인라인 버전).
+
+**구성 요소:**
+- 4개 원형 아이콘 버튼 (56×56)
+- 아이콘 배경: 흰색 20% 투명도
+- 아이콘 크기: 28×28
+- 라벨: caption, 흰색 100%
+
+```dart
+HomeBottomMenu()
+```
+
+---
+
+### 5.5 일일 기분 체크 다이얼로그
+
+홈 화면 진입 시 아직 오늘의 감정을 선택하지 않은 경우 자동으로 표시됩니다.
+
+**동작:**
+- `dailyMoodProvider.hasChecked`가 `false`일 때 500ms 후 표시
+- 현재 화면이 최상위(`ModalRoute.isCurrent`)일 때만 표시
+- "나중에" / "기록하기" 버튼 제공
+
+---
+
+### 5.6 완전한 구현 예시
+
+```dart
+class HomeScreen extends ConsumerWidget {
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return AppFrame(
+      topBar: null,
+      useSafeArea: false,
+      statusBarStyle: SystemUiOverlayStyle.light,
+      body: const HomeContent(),
+    );
+  }
+}
+
+class HomeContent extends ConsumerStatefulWidget {
+  @override
+  Widget build(BuildContext context) {
+    final dailyState = ref.watch(dailyMoodProvider);
+    final currentEmotion = dailyState.selectedEmotion ?? EmotionId.joy;
+    final moodCategory = EmotionClassifier.classify(currentEmotion);
+    final backgroundColor = _getBackgroundColor(moodCategory);
+
+    return Container(
+      color: backgroundColor,
+      child: SafeArea(
+        child: Column(
+          children: [
+            Expanded(
+              child: Padding(
+                padding: EdgeInsets.symmetric(
+                  horizontal: AppSpacing.md,
+                  vertical: AppSpacing.lg,
+                ),
+                child: Column(
+                  children: [
+                    const HomeHeaderSection(),
+                    const SizedBox(height: AppSpacing.md),
+                    Center(
+                      child: EmotionCharacter(
+                        id: currentEmotion,
+                        size: 240,
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.xl),
+                    ConversationTemperatureBar(
+                      currentMood: moodCategory,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const HomeBottomMenu(),
+          ],
+        ),
+      ),
+    );
+  }
+}
+```
+
+---
+
+## 🧭 6. Navigation Structure
+
+### 6.1 현재 네비게이션
+
+#### BottomMenuBar (5탭)
+
+**파일:** `lib/ui/layout/bottom_menu_bars.dart`
 
 ```
 ┌─────┬─────┬─────┬─────┬─────┐
@@ -1200,102 +739,23 @@ dependencies:
 - 탭 3: 리포트
 - 탭 4: 마이페이지
 
-**문제점:**
-- 너무 많은 탭 (5개)
-- 캐릭터 중심 철학과 불일치
-- 복잡한 구조
-
----
-
-### 5.2 새로운 네비게이션 제안
-
-#### Option A: 2-Icon Minimal (추천)
-
-```
-        [🎙️ 말하기]
-    (중앙 플로팅 버튼, 56x56)
-
-[홈]                    [더보기]
-  (icon-home)         (icon-menu)
-```
-
-**장점:**
-- 극도로 심플
-- 캐릭터/음성 중심 인터랙션 강조
-- 화이트 스페이스 극대화
-
-**구현 상태:** ✅ 구현 완료 (`MoreMenuSheet` 포함)
-
----
-
-#### Option B: 3-Icon Balanced (참고용)
-
-```
-┌─────┬─────┬─────┐
-│ 홈  │ 🎙️  │기록 │
-└─────┴─────┴─────┘
-```
-
-**장점:**
-- 기록에 바로 접근 가능
-- 균형잡힌 레이아웃
-- 주요 기능 직접 노출
-
-**구현:**
-
+**사용 예시:**
 ```dart
 BottomMenuBar(
-  items: [
-    BottomMenuItem(icon: icon-home, label: '홈'),
-    BottomMenuItem(icon: icon-mic, label: '말하기', isCenter: true),
-    BottomMenuItem(icon: icon-chart, label: '기록'),
-  ],
+  currentIndex: 0,
+  onTap: (index) {
+    // 탭 전환 로직
+  },
 )
 ```
 
 ---
 
-### 5.3 네비게이션 흐름
-
-#### 홈 화면 → 대화
-
-```
-[홈 화면]
-  - 감정 캐릭터 표시
-  - "오늘 하루 어떠셨나요?"
-   ↓ (음성 입력 버튼 탭)
-[대화 화면]
-  - 음성 입력 시작
-  - 실시간 파동 표시
-   ↓ (자동 감정 분석)
-[감정 피드백]
-  - 분석 결과 표시
-  - 캐릭터 반응
-  - 관련 추천
-```
-
----
-
-#### 더보기 메뉴 (Option A - 구현 완료 ✅)
+### 6.2 MoreMenuSheet
 
 **파일:** `lib/ui/components/more_menu_sheet.dart`
 
-```
-더보기 버튼 탭
-   ↓
-[BottomSheet - 2열 그리드]
-┌─────────────────────┐
-│  📋 마음봄 메뉴      │
-├──────────┬──────────┤
-│ ⏰ 똑똑알람 │ 📊 마음연습실 │
-├──────────┼──────────┤
-│ 📈 마음리포트│ 👤 마이페이지 │
-├──────────┼──────────┤
-│ ⚙️  설정   │ ❓ 도움말   │
-└──────────┴──────────┘
-```
-
-**구현:**
+더보기 버튼 탭 시 표시되는 BottomSheet입니다.
 
 ```dart
 // 사용 예시
@@ -1310,79 +770,11 @@ MoreMenuSheet.show(context);
 
 ---
 
-### 5.5 마이그레이션 전략 (참고용)
+## 🎨 7. Design Tokens
 
-#### Phase 1: 병행 운영
+### 7.1 Colors
 
-```dart
-// Feature Flag로 전환 제어
-final useSimpleNav = ref.watch(featureFlagProvider).simpleNavigation;
-
-if (useSimpleNav) {
-  // 신규 2-3 아이콘 네비게이션
-  return BottomMenuBar(items: _simpleItems);
-} else {
-  // 기존 5탭 네비게이션
-  return BottomMenuBar(items: _fullItems);
-}
-```
-
-**장점:**
-- 안전한 전환
-- A/B 테스트 가능
-- 롤백 용이
-
-#### Phase 2: 완전 전환
-
-- 사용자 피드백 수집 후
-- 신규 네비게이션만 사용
-- 기존 코드 제거
-
-#### Phase 3: 캐릭터 인터랙션 네비게이션
-
-- 홈 화면에서 캐릭터 탭 → 해당 감정 관련 기능
-- 네비게이션 바 최소화 또는 제거
-- 제스처 기반 네비게이션 (스와이프 등)
-
----
-
-### 5.6 네비게이션 Best Practices
-
-#### ✅ 권장사항
-
-```dart
-// Good: 명확한 액션
-if (index == centerButtonIndex) {
-  _startVoiceInput();  // 음성 입력 즉시 시작
-  return;  // 탭 전환 안 함
-}
-
-// Good: 피드백 제공
-void onNavigate(int index) {
-  HapticFeedback.lightImpact();  // 햅틱 피드백
-  setState(() => _currentIndex = index);
-}
-```
-
-#### ❌ 피해야 할 사항
-
-```dart
-// Bad: 너무 많은 탭
-BottomMenuBar(
-  items: [/* 6개 이상의 탭 */],
-)
-
-// Bad: 불명확한 아이콘
-Icon(Icons.square)  // 의미 불명
-```
-
----
-
-## 🎨 6. Design Tokens
-
-### 6.1 Colors
-
-**파일:** [lib/ui/tokens/colors.dart](lib/ui/tokens/colors.dart)
+**파일:** `lib/ui/tokens/colors.dart`
 
 #### Primary Colors
 
@@ -1404,6 +796,40 @@ Icon(Icons.square)  // 의미 불명
 | `softGray` | `#8F8F8F` | 보조 그레이 |
 | `darkBlack` | `#000000` | 다크 모드, 강조 텍스트 |
 
+#### Emotion Colors
+
+각 감정별 Primary/Secondary 컬러가 정의되어 있습니다.
+
+```dart
+// 기쁨 (Happiness)
+AppColors.emotionHappinessPrimary    // #FFB84C
+AppColors.emotionHappinessSecondary  // #FFD749
+
+// 사랑 (Love)
+AppColors.emotionLovePrimary         // #FF6FAE
+AppColors.emotionLoveSecondary       // #FF8EC3
+
+// 안정 (Stability)
+AppColors.emotionStabilityPrimary    // #76D6FF
+AppColors.emotionStabilitySecondary  // #A1E8FF
+
+// 의욕 (Motivation)
+AppColors.emotionMotivationPrimary   // #63C96B
+AppColors.emotionMotivationSecondary // #8EE89C
+
+// 분노 (Anger)
+AppColors.emotionAngerPrimary        // #FF5E4A
+AppColors.emotionAngerSecondary      // #FF7A5C
+
+// 걱정/우울 (Worry/Depression)
+AppColors.emotionWorryPrimary        // #6C8CD5
+AppColors.emotionWorrySecondary      // #8AA7E2
+
+// 혼란 (Confusion)
+AppColors.emotionConfusionPrimary    // #B28CFF
+AppColors.emotionConfusionSecondary  // #C7A4FF
+```
+
 #### Semantic Colors
 
 ```dart
@@ -1414,6 +840,11 @@ AppColors.bgLightPink  // 핑크 배경
 AppColors.bgSoftMint   // 민트 배경
 AppColors.bgRed        // 레드 배경 (accentRed)
 AppColors.bgGreen      // 그린 배경 (natureGreen)
+
+// Home Screen Mood-based Backgrounds
+AppColors.homeGoodYellow   // #FFB84C (좋은 기분)
+AppColors.homeNormalGreen  // #63C96B (보통 기분)
+AppColors.homeBadBlue      // #6C8CD5 (나쁜 기분)
 
 // Text
 AppColors.textWhite     // 흰색 텍스트
@@ -1437,24 +868,24 @@ AppColors.disabledText    // #B0B0B0
 
 ---
 
-### 6.2 Typography
+### 7.2 Typography
 
-**파일:** [lib/ui/tokens/typography.dart](lib/ui/tokens/typography.dart)
+**파일:** `lib/ui/tokens/typography.dart`
 
 **폰트:** Pretendard
 
 | 스타일 | 크기 | 굵기 | Letter Spacing | 용도 |
 |--------|------|------|----------------|------|
-| `display` | 56px | 700 | -1.68 | 대형 제목, 감정 리포트 타이틀 |
+| `display` | 56px | 700 | -1.68 | 대형 제목 |
 | `h1` | 40px | 700 | -0.8 | 페이지 제목 |
 | `h2` | 32px | 600 | -0.32 | 섹션 제목 |
 | `h3` | 24px | 600 | -0.24 | 서브섹션 제목 |
 | `bodyLarge` | 18px | 400 | 0 | 봄이 대사, 말풍선 |
 | `body` | 16px | 400 | 0 | 기본 본문 |
-| `bodyBold` | 16px | 600 | 0 | 강조 본문, 선택지 |
+| `bodyBold` | 16px | 600 | 0 | 강조 본문 |
 | `bodySmall` | 14px | 600 | 0 | 작은 본문 |
 | `caption` | 14px | 400 | 0 | 캡션, 설명 |
-| `label` | 8px | 500 | 0 | 라벨, 작은 안내 |
+| `label` | 8px | 500 | 0 | 라벨 |
 
 **사용 예시:**
 
@@ -1475,9 +906,9 @@ Text(
 
 ---
 
-### 6.3 Spacing
+### 7.3 Spacing
 
-**파일:** [lib/ui/tokens/spacing.dart](lib/ui/tokens/spacing.dart)
+**파일:** `lib/ui/tokens/spacing.dart`
 
 | 이름 | 값 | 용도 |
 |------|-----|------|
@@ -1492,22 +923,24 @@ Text(
 
 ---
 
-### 6.4 Radius
+### 7.4 Radius
 
-**파일:** [lib/ui/tokens/radius.dart](lib/ui/tokens/radius.dart)
+**파일:** `lib/ui/tokens/radius.dart`
 
 | 이름 | 값 | 용도 |
 |------|-----|------|
 | `sm` | 8px | 작은 둥근 모서리 |
 | `md` | 12px | 중간 둥근 모서리 (기본) |
 | `lg` | 16px | 큰 둥근 모서리 |
+| `xl` | 24px | 아주 큰 둥근 모서리 |
+| `xxl` | 32px | 매우 큰 둥근 모서리 |
 | `pill` | 999px | 완전한 pill 형태 |
 
 ---
 
-### 6.5 Icon Sizes
+### 7.5 Icon Sizes
 
-**파일:** [lib/ui/tokens/icon.dart](lib/ui/tokens/icon.dart)
+**파일:** `lib/ui/tokens/icon_size.dart`
 
 | 이름 | 크기 | 용도 |
 |------|------|------|
@@ -1520,11 +953,11 @@ Text(
 
 ---
 
-## 🏗️ 7. Layout System
+## 🏗️ 8. Layout System
 
-### 7.1 AppFrame
+### 8.1 AppFrame
 
-**파일:** [lib/ui/layout/app_frame.dart](lib/ui/layout/app_frame.dart)
+**파일:** `lib/ui/layout/app_frame.dart`
 
 화면의 기본 레이아웃 구조를 제공하는 최상위 프레임입니다.
 
@@ -1541,14 +974,6 @@ Text(
 │    Bottom Bar       │ ← bottomBar (optional)
 └─────────────────────┘
 ```
-
-#### 파라미터
-
-| 파라미터 | 타입 | 필수 | 설명 |
-|----------|------|------|------|
-| `topBar` | `PreferredSizeWidget?` | ❌ | 상단 바 (TopBar 위젯) |
-| `bottomBar` | `Widget?` | ❌ | 하단 바 (BottomBar 위젯) |
-| `body` | `Widget` | ✅ | 메인 컨텐츠 영역 |
 
 #### 사용 예시
 
@@ -1569,34 +994,15 @@ AppFrame(
 )
 ```
 
-#### SafeArea 자동 적용
-
-- **Top Bar**: 상태 바(status bar) 영역 자동 회피
-- **Body**: SafeArea로 감싸져 있음
-- **Bottom Bar**: 홈 인디케이터 영역 자동 계산
-
 ---
 
-### 7.2 Top Bar
+### 8.2 Top Bar
 
-**파일:** [lib/ui/layout/top_bars.dart](lib/ui/layout/top_bars.dart)
+**파일:** `lib/ui/layout/top_bars.dart`
 
 #### TopBar
 
 단일 클래스로 모든 형태 지원. 아이콘과 콜백 제공 시 표시됩니다.
-
-**파라미터:**
-
-| 파라미터 | 타입 | 기본값 | 설명 |
-|----------|------|--------|------|
-| `title` | `String` | - | 중앙 타이틀 (필수) |
-| `leftIcon` | `IconData?` | `null` | 좌측 아이콘 |
-| `rightIcon` | `IconData?` | `null` | 우측 아이콘 |
-| `onTapLeft` | `VoidCallback?` | `null` | 좌측 버튼 탭 콜백 |
-| `onTapRight` | `VoidCallback?` | `null` | 우측 버튼 탭 콜백 |
-| `height` | `double` | `80` | 바 높이 |
-| `backgroundColor` | `Color` | `AppColors.pureWhite` | 배경색 |
-| `foregroundColor` | `Color` | `AppColors.textPrimary` | 텍스트/아이콘 색상 |
 
 **사용 예시:**
 
@@ -1630,51 +1036,35 @@ TopBar(
 
 ---
 
-### 7.3 Bottom Bar
+### 8.3 Bottom Bar
 
-#### 7.3.1 BottomMenuBar
+#### 8.3.1 BottomMenuBar
 
-**파일:** [lib/ui/layout/bottom_menu_bars.dart](lib/ui/layout/bottom_menu_bars.dart)
+**파일:** `lib/ui/layout/bottom_menu_bars.dart`
 
 5개 탭 메인 네비게이션 바.
 
-**구조:**
+```dart
+BottomMenuBar(
+  currentIndex: 0,
+  onTap: (index) {
+    // 탭 전환 로직
+  },
+)
 ```
-┌─────┬─────┬─────┬─────┬─────┐
-│ 홈  │알람 │ 🎙️  │리포트│마이 │
-└─────┴─────┴─────┴─────┴─────┘
-```
-
-**파라미터:**
-
-| 파라미터 | 타입 | 기본값 | 설명 |
-|----------|------|--------|------|
-| `currentIndex` | `int` | `0` | 현재 선택된 탭 (0~4) |
-| `onTap` | `ValueChanged<int>?` | `null` | 탭 선택 콜백 |
-| `backgroundColor` | `Color` | `AppColors.pureWhite` | 배경색 |
-| `foregroundColor` | `Color` | `AppColors.textPrimary` | 비선택 색상 |
-| `accentColor` | `Color` | `AppColors.accentRed` | 선택 색상 |
 
 **탭 인덱스:**
 - `0`: 홈
-- `1`: 알람
 - `2`: 녹음 (중앙 버튼)
-- `3`: 리포트
 - `4`: 마이페이지
 
 ---
 
-#### 7.3.2 BottomButtonBar
+#### 8.3.2 BottomButtonBar
 
-**파일:** [lib/ui/layout/bottom_button_bars.dart](lib/ui/layout/bottom_button_bars.dart)
+**파일:** `lib/ui/layout/bottom_button_bars.dart`
 
 1~2개 액션 버튼 제공.
-
-**스타일:**
-- `pill`: 둥근 버튼 (기본)
-- `block`: 전체 폭 블록 버튼
-
-**사용 예시:**
 
 ```dart
 // Pill 스타일
@@ -1695,49 +1085,61 @@ BottomButtonBar(
 
 ---
 
-#### 7.3.3 BottomInputBar
+#### 8.3.3 BottomInputBar
 
-**파일:** [lib/ui/layout/bottom_input_bars.dart](lib/ui/layout/bottom_input_bars.dart)
+**파일:** `lib/ui/layout/bottom_input_bars.dart`
 
 텍스트 입력 + 음성 입력.
 
-**사용 예시:**
-
 ```dart
-class ChatScreen extends StatefulWidget {
-  @override
-  _ChatScreenState createState() => _ChatScreenState();
-}
-
-class _ChatScreenState extends State<ChatScreen> {
-  final _controller = TextEditingController();
-
-  @override
-  Widget build(BuildContext context) {
-    return AppFrame(
-      bottomBar: BottomInputBar(
-        controller: _controller,
-        hintText: '메시지를 입력하세요',
-        onSend: () {
-          if (_controller.text.isNotEmpty) {
-            _sendMessage(_controller.text);
-            _controller.clear();
-          }
-        },
-      ),
-      body: ChatMessageList(),
-    );
-  }
-}
+BottomInputBar(
+  controller: _controller,
+  hintText: '메시지를 입력하세요',
+  onSend: () {
+    if (_controller.text.isNotEmpty) {
+      _sendMessage(_controller.text);
+      _controller.clear();
+    }
+  },
+)
 ```
 
 ---
 
-## 🧩 8. Component Library
+#### 8.3.4 BottomHomeBar
 
-### 8.1 AppButton
+**파일:** `lib/ui/layout/bottom_home_bar.dart`
 
-**파일:** [lib/ui/components/app_button.dart](lib/ui/components/app_button.dart)
+홈 화면 전용 Bottom Bar. 4개의 원형 아이콘 메뉴 제공.
+
+```dart
+BottomHomeBar()
+```
+
+**특징:**
+- 투명 배경 (`Colors.transparent`)
+- 4개 메뉴: 봄이 채팅, 똑똑 알람, 마음리포트, 마음연습실
+- 원형 아이콘 컨테이너 (56×56, 흰색 20% 투명도)
+- 아이콘 크기: 28×28
+- 자동 SafeArea bottom padding 적용
+- NavigationService를 통한 라우팅
+
+**사용 예시:**
+```dart
+AppFrame(
+  topBar: null,
+  bottomBar: const BottomHomeBar(),
+  body: HomeContent(),
+)
+```
+
+---
+
+## 🧩 9. Component Library
+
+### 9.1 AppButton
+
+**파일:** `lib/ui/components/app_button.dart`
 
 **Variants:**
 - `primaryRed`: 빨간색 주 버튼
@@ -1755,9 +1157,9 @@ AppButton(
 
 ---
 
-### 8.2 AppInput
+### 9.2 AppInput
 
-**파일:** [lib/ui/components/app_input.dart](lib/ui/components/app_input.dart)
+**파일:** `lib/ui/components/app_input.dart`
 
 **States:**
 - `normal`: 기본 상태
@@ -1774,7 +1176,7 @@ AppInput(
   controller: _emailController,
 )
 
-// Error 상태 (명확한 표시)
+// Error 상태
 AppInput(
   caption: '비밀번호',
   value: '',
@@ -1783,117 +1185,57 @@ AppInput(
 )
 ```
 
-**Error 상태 강화:**
-- 테두리: `errorRed`, 2px 이상
-- 레이블/텍스트: `errorRed`
-- 하단에 에러 메시지 표시 (`caption` 스타일)
-
 ---
 
-### 8.3 ChatBubble
+### 9.3 TopNotification
 
-**파일:** [lib/app/chat/chat_screen.dart](lib/app/chat/chat_screen.dart) (404-478줄)
+**파일:** `lib/ui/components/top_notification.dart`
 
-> ⚠️ **독립화 권장:** `lib/ui/components/chat_bubble.dart`로 이동
+상단 알림 배너 (Alert/Success).
+
+**타입:**
+- `red`: 경고, 삭제, 중요한 알림 (`accentRed`)
+- `green`: 성공, 완료 (`natureGreen`)
 
 ```dart
-ChatBubble(
-  message: ChatMessage(
-    text: '오늘 기분이 좋아요!',
-    isUser: true,
-  ),
-)
+// 표시
+TopNotificationManager.show(
+  context,
+  message: '알람이 삭제되었습니다.',
+  actionLabel: '실행취소',
+  type: TopNotificationType.red,
+  onActionTap: () => _undo(),
+);
 ```
 
 ---
 
-### 8.4 EmotionCharacter
+### 9.4 CircularRipple
 
-**파일:** [lib/ui/characters/app_characters.dart](lib/ui/characters/app_characters.dart)
+**파일:** `lib/ui/components/circular_ripple.dart`
 
-```dart
-// 큰 사이즈 (홈 화면)
-EmotionCharacter(
-  id: EmotionId.joy,
-  size: 180,
-)
-
-// 2D 버전 사용
-EmotionCharacter(
-  id: EmotionId.joy,
-  use2d: true,
-  size: 180,
-)
-
-// 작은 사이즈 (말풍선)
-EmotionCharacter(
-  id: EmotionId.sadness,
-  size: 32,
-)
-```
-
----
-
-### 8.5 신규 컴포넌트
-
-#### SlideToActionButton
-**파일:** `lib/ui/components/slide_to_action_button.dart`
-
-양방향 슬라이딩 액션 버튼.
+원형 파동 애니메이션 위젯입니다.
 
 ```dart
-SlideToActionButton(
-  onVoiceActivated: _handleVoiceInput,
-  onTextActivated: _handleTextInputToggle,
-  onVoiceReset: _handleVoiceInput,
-  onTextReset: _handleTextInputToggle,
-  isRecording: _isRecording,
-)
-```
-
----
-
-#### SystemBubble (미사용)
-**상태:** 현재 프로젝트에서 사용하지 않음
-
----
-
-#### EmotionBubble
-**파일:** `lib/ui/components/emotion_bubble.dart`
-
-봄이의 대화 말풍선.
-
-```dart
-EmotionBubble(
-  message: '오늘 하루 어떠셨나요?',
-  enableTypingAnimation: true,
-)
-```
-
----
-
-#### VoiceWaveform (향후 구현 예정)
-**파일:** `lib/ui/components/voice_waveform.dart` (신규 예정)
-
-음성 파동 시각화.
-
-```dart
-VoiceWaveform(
+CircularRipple(
   isActive: isRecording,
   color: AppColors.accentRed,
-  height: 40,
 )
 ```
 
 ---
 
-#### MoreMenuSheet
-**파일:** `lib/ui/components/more_menu_sheet.dart`
+### 9.5 ProcessIndicator
 
-더보기 BottomSheet.
+**파일:** `lib/ui/components/process_indicator.dart`
+
+프로세스 진행 상태를 표시하는 인디케이터입니다.
 
 ```dart
-MoreMenuSheet.show(context);
+ProcessIndicator(
+  currentStep: 2,
+  totalSteps: 5,
+)
 ```
 
 ---
@@ -1915,8 +1257,8 @@ MoreMenuSheet.show(context);
 ### 확장성 (Scalability)
 
 - 토큰 기반 시스템으로 테마 변경 용이
-- 향후 애니메이션 시스템 추가 대비
 - 감정 캐릭터 확장 가능
+- 컴포넌트 조합으로 새로운 UI 구성
 
 ---
 
@@ -1931,8 +1273,8 @@ import 'package:frontend/ui/app_ui.dart';
 위 한 줄로 모든 디자인 시스템 요소 접근:
 - Layout (AppFrame, TopBar, BottomBar)
 - Tokens (Colors, Typography, Spacing, Radius, Icons)
-- Components (AppButton, AppInput)
-- Characters (EmotionCharacter)
+- Components (AppButton, AppInput, Bubbles)
+- Characters (EmotionCharacter, AnimatedCharacter, EmotionColors)
 
 ---
 
@@ -1977,6 +1319,10 @@ AppFrame(
 
 // Good: 말풍선 사용
 ChatBubble(message: message)
+
+// Good: 감정별 컬러 사용
+final primaryColor = getEmotionPrimaryColor(EmotionId.joy);
+Container(color: primaryColor)
 ```
 
 ### ❌ 피해야 할 사항
@@ -2007,5 +1353,4 @@ Card(
 
 디자인 시스템 관련 문의사항이나 개선 제안은 팀 채널로 연락해주세요.
 
-**마지막 업데이트**: 2025-12-08
-
+**마지막 업데이트**: 2025-12-09
