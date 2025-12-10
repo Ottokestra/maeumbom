@@ -12,6 +12,7 @@ import 'core/services/alarm/alarm_notification_service.dart';
 import 'debug/db_path_helper.dart';
 import 'app/slang_quiz/slang_quiz_game_screen.dart';
 import 'app/slang_quiz/slang_quiz_result_screen.dart';
+import 'app/slang_quiz/slang_quiz_admin_screen.dart';
 import 'data/dtos/slang_quiz/end_game_response.dart';
 
 Future<void> main() async {
@@ -68,7 +69,7 @@ class MaeumBomApp extends ConsumerWidget {
             );
           }
         }
-
+        
         if (routeName == '/training/slang-quiz/result') {
           final result = settings.arguments as EndGameResponse?;
           if (result != null) {
@@ -77,6 +78,13 @@ class MaeumBomApp extends ConsumerWidget {
               settings: settings,
             );
           }
+        }
+        
+        if (routeName == '/training/slang-quiz/admin') {
+          return MaterialPageRoute(
+            builder: (context) => const SlangQuizAdminScreen(),
+            settings: settings,
+          );
         }
 
         // 인증이 필요한 경로인지 확인
