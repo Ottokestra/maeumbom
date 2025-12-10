@@ -199,8 +199,8 @@ class _SignUp1ScreenState extends ConsumerState<SignUp1Screen> {
         atmosphere: [_selectedAtmosphere!],
       );
 
-      final apiClient = ref.read(onboardingSurveyApiClientProvider);
-      await apiClient.submitSurvey(request);
+      final onboardingRepository = ref.read(onboardingSurveyRepositoryProvider);
+      await onboardingRepository.submitSurvey(request);
 
       if (mounted) Navigator.pop(context); // Close loading
       if (mounted) {
