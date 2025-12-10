@@ -1,9 +1,10 @@
 """
 Pydantic models for onboarding survey request/response validation
 """
-from pydantic import BaseModel, Field
-from typing import List, Optional
 from datetime import datetime
+from typing import List, Optional
+
+from pydantic import BaseModel, Field
 
 
 class OnboardingSurveySubmitRequest(BaseModel):
@@ -79,10 +80,12 @@ class OnboardingSurveyResponse(BaseModel):
 
 
 class OnboardingSurveyStatusResponse(BaseModel):
-    """
-    Onboarding survey status response
-    Indicates whether user has completed the survey
-    """
-    has_profile: bool
+    """온보딩 설문 완료 여부 응답"""
+
+    completed: bool
     profile: Optional[OnboardingSurveyResponse] = None
+    missing_fields: Optional[List[str]] = None
+
+    class Config:
+        from_attributes = True
 

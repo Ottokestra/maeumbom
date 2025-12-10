@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../ui/app_ui.dart';
 import '../../core/services/navigation/navigation_service.dart';
-import '../../data/api/onboarding/onboarding_survey_api_client.dart';
 import '../../data/api/user_phase/user_phase_api_client.dart';
 import '../../data/dtos/onboarding/onboarding_survey_response.dart';
 import '../../data/dtos/user_phase/user_phase_response.dart';
@@ -12,6 +11,7 @@ import '../../data/dtos/user_phase/user_pattern_setting_response.dart';
 import '../../data/dtos/user_phase/health_sync_request.dart';
 import '../../providers/auth_provider.dart';
 import '../../core/utils/logger.dart';
+import '../../providers/onboarding_provider.dart';
 import 'edit_profile_screen.dart';
 import '../chat/chat_list_screen.dart';
 
@@ -39,16 +39,8 @@ class _MypageScreenState extends ConsumerState<MypageScreen> {
 
   Future<void> _loadProfile() async {
     try {
-      final dio = ref.read(dioWithAuthProvider);
-      final apiClient = OnboardingSurveyApiClient(dio);
-      
-      // dioWithAuthProvider를 사용하면 AuthInterceptor가 자동으로 토큰을 추가하므로
-      // accessToken을 직접 전달할 필요 없음
-      // 하지만 기존 API 클라이언트가 accessToken을 요구하므로 빈 문자열 전달
-      // (실제로는 AuthInterceptor가 처리)
-      final authService = ref.read(authServiceProvider);
-      final accessToken = await authService.getAccessToken() ?? '';
-      final profile = await apiClient.getMyProfile(accessToken);
+      final onboardingRepository = ref.read(onboardingSurveyRepositoryProvider);
+      final profile = await onboardingRepository.getMySurvey();
 
       if (!mounted) return;
       setState(() {
