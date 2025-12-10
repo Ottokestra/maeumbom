@@ -5,7 +5,7 @@ enum ButtonVariant { primaryRed, secondaryRed, primaryGreen, secondaryGreen }
 
 class ButtonTokens {
   // 공통
-  static const double height = 44;
+  static const double height = 48;
   static const double radius = 30;
   static const EdgeInsets padding = EdgeInsets.symmetric(horizontal: 20);
 

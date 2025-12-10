@@ -7,6 +7,7 @@ import '../data/models/chat/chat_message.dart';
 import '../data/repository/chat/chat_repository.dart';
 import '../data/api/chat/chat_api_client.dart';
 import 'auth_provider.dart';
+import 'alarm_provider.dart';
 
 // ----- Infrastructure Providers -----
 
@@ -89,6 +90,7 @@ class ChatNotifier extends StateNotifier<ChatState> {
   final ChatRepository _chatRepository;
   final int _userId;
   final PermissionService _permissionService;
+  final Ref _ref;
 
   // ✅ Session 관리
   static const _sessionDuration = Duration(minutes: 5);
@@ -105,6 +107,7 @@ class ChatNotifier extends StateNotifier<ChatState> {
     this._chatRepository, // ✅ ChatRepository 주입
     this._userId,
     this._permissionService,
+    this._ref,
   ) : super(ChatState(
           messages: [],
           isLoading: false,
@@ -229,19 +232,31 @@ class ChatNotifier extends StateNotifier<ChatState> {
       if (responseType == 'alarm' && alarmInfo != null) {
         print('[ChatProvider] 🔔 Triggering alarm dialog callback');
         onShowAlarmDialog?.call(alarmInfo, replyText);
+
+        // 🆕 AlarmProvider에 알람 데이터 전달
+        final alarmDataList = alarmInfo['data'] as List<dynamic>?;
+        if (alarmDataList != null && alarmDataList.isNotEmpty) {
+          // 유효한 알람만 필터링
+          final validAlarms = alarmDataList
+              .cast<Map<String, dynamic>>()
+              .where((alarm) => alarm['is_valid_alarm'] == true)
+              .toList();
+
+          if (validAlarms.isNotEmpty) {
+            _ref.read(alarmProvider.notifier).addAlarms(validAlarms);
+            print(
+                '[ChatProvider] 📝 ${validAlarms.length} valid alarms sent to AlarmProvider');
+          }
+        }
       } else if (responseType == 'warning' && alarmInfo != null) {
         print('[ChatProvider] ⚠️ Triggering warning dialog callback');
         onShowWarningDialog?.call(alarmInfo);
       }
 
       // ✅ WebSocket 연결 유지! - TTS 재생 후 다시 listening으로 전환
-      // 연속 대화를 위해 답변 후에도 WebSocket을 끊지 않고 계속 듣기 상태로 유지
-      // TODO: TTS 재생 완료 후 listening으로 전환
-      // 현재는 3초 후 자동으로 listening으로 전환 (임시)
       Future.delayed(const Duration(seconds: 3), () {
         if (state.voiceState == VoiceInterfaceState.replying &&
             _bomChatService.isActive) {
-          // ✅ idle이 아닌 listening으로 전환하여 연속 대화 가능
           state = state.copyWith(voiceState: VoiceInterfaceState.listening);
         }
       });
@@ -329,6 +344,22 @@ class ChatNotifier extends StateNotifier<ChatState> {
       if (responseType == 'alarm' && alarmInfo != null && replyText != null) {
         print('[ChatProvider] 🔔 [TEXT] Triggering alarm dialog callback');
         onShowAlarmDialog?.call(alarmInfo, replyText);
+
+        // 🆕 AlarmProvider에 알람 데이터 전달
+        final alarmDataList = alarmInfo['data'] as List<dynamic>?;
+        if (alarmDataList != null && alarmDataList.isNotEmpty) {
+          // 유효한 알람만 필터링
+          final validAlarms = alarmDataList
+              .cast<Map<String, dynamic>>()
+              .where((alarm) => alarm['is_valid_alarm'] == true)
+              .toList();
+
+          if (validAlarms.isNotEmpty) {
+            _ref.read(alarmProvider.notifier).addAlarms(validAlarms);
+            print(
+                '[ChatProvider] 📝 [TEXT] ${validAlarms.length} valid alarms sent to AlarmProvider');
+          }
+        }
       } else if (responseType == 'warning' && alarmInfo != null) {
         print('[ChatProvider] ⚠️ [TEXT] Triggering warning dialog callback');
         onShowWarningDialog?.call(alarmInfo);
@@ -446,6 +477,7 @@ class ChatNotifier extends StateNotifier<ChatState> {
 
       // 세션 시간 갱신 (선택 사항)
       await _saveSession(sessionId);
+      print('✅ Session loaded: $sessionId');
     } catch (e) {
       print('❌ Error loading session: $e');
       state = state.copyWith(isLoading: false, error: e.toString());
@@ -461,6 +493,8 @@ class ChatNotifier extends StateNotifier<ChatState> {
 
     // 2. 새로운 세션 ID 발급 및 저장 (기존 함수 재사용)
     await _createNewSession();
+
+    print('✅ Session reset to new id: ${state.sessionId}');
   }
 
   /// Update session time on message send
@@ -492,5 +526,6 @@ final chatProvider = StateNotifierProvider<ChatNotifier, ChatState>((ref) {
     chatRepository, // ✅ ChatRepository 주입
     currentUser.id,
     permissionService,
+    ref, // 🆕 Ref 주입
   );
 });

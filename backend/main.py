@@ -329,6 +329,25 @@ except Exception as e:
     traceback.print_exc()
 
 # =========================
+# Slang Quiz Service
+# =========================
+
+try:
+    from app.slang_quiz.routes import router as slang_quiz_router
+
+    app.include_router(
+        slang_quiz_router,
+        prefix="/api/service/slang-quiz",
+        tags=["slang-quiz"],
+    )
+    print("[INFO] Slang quiz router loaded successfully.")
+except Exception as e:
+    import traceback
+
+    print(f"[WARN] Slang quiz module load failed: {e}")
+    traceback.print_exc()
+
+# =========================
 # LangChain Agent V2 API
 # =========================
 
@@ -442,7 +461,7 @@ async def agent_text_v2_endpoint(
             result["meta"]["response_type"] = result["response_type"]
         if "alarm_info" in result:
             result["meta"]["alarm_info"] = result["alarm_info"]
-        
+
         # 🆕 TTS 처리 (동기 방식, 7초 타임아웃)
         if request.tts_enabled:
             try:
@@ -463,7 +482,7 @@ async def agent_text_v2_endpoint(
                 result["tts_audio_url"] = None
                 result["tts_status"] = "error"
                 print(f"[TTS] 생성 오류: {e}")
-        
+
         return result
     except Exception as e:
         import traceback
@@ -1074,7 +1093,7 @@ async def agent_websocket(websocket: WebSocket, user_id: int = 1):
                             "tts_enabled": tts_enabled
                         })
                         continue
-                    
+
                     # 🆕 Phase 3: interrupt 신호 처리
                     if isinstance(message, dict) and message.get("type") == "interrupt":
                         reason = message.get("reason", "unknown")
@@ -1342,7 +1361,7 @@ async def agent_websocket(websocket: WebSocket, user_id: int = 1):
                                         "message": str(e)
                                     })
                                     print(f"[Agent WebSocket] TTS 생성 오류: {e}")
-                            
+
                             # 🆕 Phase 3: 성공 시 임시 추적 초기화
                             temporary_message_ids.clear()
                             print("[Agent WebSocket] 대화 성공 - 임시 메시지 추적 초기화")
