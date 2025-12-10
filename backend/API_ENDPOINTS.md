@@ -1419,6 +1419,7 @@ HTTP 상태 코드:
 |------------|------|----------|------|
 | GET | `/api/dashboard/emotion-history` | ✅ | 감정 이력 조회 |
 | GET | `/api/dashboard/weekly-mood-report` | ✅ | 주간 감정 리포트 조회 (대표 감정, 요일별 캐릭터, 감정 랭킹, 분석 문단) |
+주간 감정 상/하 곡선(timeline) 데이터와 대표 대화 목록(highlight_conversations)을 함께 반환한다.
 
 ### 사용자 페이즈 (User Phase)
 
