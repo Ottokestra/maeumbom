@@ -1695,6 +1695,502 @@ TopNotificationManager.show(context, message: '두 번째'); // 첫 번째가 �
 
 ---
 
+## 💬 팝업 메시지 (MessageDialog)
+
+### 개요
+
+사용자에게 중요한 메시지를 전달하거나 확인이 필요한 액션을 수행할 때 **MessageDialog**를 사용하세요.
+
+### 언제 사용하나요?
+
+- ✅ 삭제 확인 등 중요한 액션 전 확인
+- ✅ 권한 요청 안내
+- ✅ 작업 완료 알림 (성공/실패)
+- ✅ 네트워크 오류 등 에러 메시지
+- ✅ 사용자 선택이 필요한 상황
+
+### 기본 사용법
+
+#### Confirm 다이얼로그 (2개 버튼 - 확인 필요)
+
+사용자의 확인이 필요한 경우 사용합니다.
+
+```dart
+import '../../ui/app_ui.dart';
+
+// Red Confirm - 삭제, 권한 요청 등
+MessageDialogHelper.showRedConfirm(
+  context,
+  icon: Icons.sentiment_satisfied_rounded,
+  title: '알 수도 있는 사람 찾기👀',
+  message: '내가 아는 사람의 루틴이\n궁금하지 않나요?',
+  primaryButtonText: '좋아, 찾아줘!',
+  secondaryButtonText: '나중에 할게',
+  onPrimaryPressed: () {
+    Navigator.pop(context);
+    // 메인 액션 실행
+  },
+  onSecondaryPressed: () {
+    Navigator.pop(context);
+  },
+);
+
+// Green Confirm - 저장 확인, 공유 선택 등
+MessageDialogHelper.showGreenConfirm(
+  context,
+  icon: Icons.check_circle_outline_rounded,
+  title: '저장 완료!',
+  message: '데이터가 성공적으로 저장되었습니다.',
+  primaryButtonText: '확인',
+  secondaryButtonText: '공유하기',
+  onPrimaryPressed: () {
+    Navigator.pop(context);
+  },
+  onSecondaryPressed: () {
+    Navigator.pop(context);
+    _shareData();
+  },
+);
+```
+
+#### Alert 다이얼로그 (1개 버튼 - 단순 알림)
+
+단순 알림이나 에러 메시지를 표시할 때 사용합니다.
+
+```dart
+// Red Alert - 에러, 경고 등
+MessageDialogHelper.showRedAlert(
+  context,
+  icon: Icons.error_outline_rounded,
+  title: '네트워크 오류',
+  message: '인터넷 연결을 확인해주세요.',
+  onPressed: () {
+    Navigator.pop(context);
+    // 추가 액션 (선택사항)
+  },
+);
+
+// Green Alert - 성공, 완료 등
+MessageDialogHelper.showGreenAlert(
+  context,
+  icon: Icons.check_circle_outline_rounded,
+  title: '저장 완료!',
+  message: '변경사항이 저장되었습니다.',
+  // onPressed 생략 시 자동으로 닫기
+);
+```
+
+### 타입별 사용 가이드
+
+#### 🔴 Red Confirm (경고, 삭제 확인)
+
+```dart
+// 삭제 확인
+MessageDialogHelper.showRedConfirm(
+  context,
+  icon: Icons.delete_outline_rounded,
+  title: '정말 삭제하시겠습니까?',
+  message: '삭제된 데이터는 복구할 수 없습니다.',
+  primaryButtonText: '삭제',
+  secondaryButtonText: '취소',
+  onPrimaryPressed: () {
+    Navigator.pop(context);
+    _deleteItem();
+  },
+  onSecondaryPressed: () {
+    Navigator.pop(context);
+  },
+);
+
+// 권한 요청
+MessageDialogHelper.showRedConfirm(
+  context,
+  icon: Icons.location_on_outlined,
+  title: '위치 권한 필요',
+  message: '이 기능을 사용하려면\n위치 권한이 필요합니다.',
+  primaryButtonText: '권한 설정',
+  secondaryButtonText: '나중에',
+  onPrimaryPressed: () {
+    Navigator.pop(context);
+    _openAppSettings();
+  },
+  onSecondaryPressed: () {
+    Navigator.pop(context);
+  },
+);
+```
+
+#### 🔴 Red Alert (에러, 경고 알림)
+
+```dart
+// 네트워크 오류
+MessageDialogHelper.showRedAlert(
+  context,
+  icon: Icons.wifi_off_rounded,
+  title: '네트워크 오류',
+  message: '인터넷 연결을 확인해주세요.',
+);
+
+// 권한 없음
+MessageDialogHelper.showRedAlert(
+  context,
+  icon: Icons.lock_outline_rounded,
+  title: '권한이 필요합니다',
+  message: '이 기능을 사용하려면 카메라 권한이 필요합니다.',
+  onPressed: () {
+    Navigator.pop(context);
+    _openSettings();
+  },
+);
+```
+
+#### 🟢 Green Confirm (저장 확인, 공유 선택)
+
+```dart
+// 저장 후 공유 선택
+MessageDialogHelper.showGreenConfirm(
+  context,
+  icon: Icons.check_circle_outline_rounded,
+  title: '저장 완료!',
+  message: '변경사항이 저장되었습니다.',
+  primaryButtonText: '확인',
+  secondaryButtonText: '공유하기',
+  onPrimaryPressed: () {
+    Navigator.pop(context);
+  },
+  onSecondaryPressed: () {
+    Navigator.pop(context);
+    _shareData();
+  },
+);
+
+// 업로드 후 파일 보기
+MessageDialogHelper.showGreenConfirm(
+  context,
+  icon: Icons.cloud_done_outlined,
+  title: '업로드 완료',
+  message: '파일이 성공적으로 업로드되었습니다.',
+  primaryButtonText: '확인',
+  secondaryButtonText: '파일 보기',
+  onPrimaryPressed: () {
+    Navigator.pop(context);
+  },
+  onSecondaryPressed: () {
+    Navigator.pop(context);
+    _viewFile();
+  },
+);
+```
+
+#### 🟢 Green Alert (성공, 완료 알림)
+
+```dart
+// 저장 완료
+MessageDialogHelper.showGreenAlert(
+  context,
+  icon: Icons.check_circle_outline_rounded,
+  title: '저장 완료!',
+  message: '변경사항이 저장되었습니다.',
+);
+
+// 업로드 완료
+MessageDialogHelper.showGreenAlert(
+  context,
+  icon: Icons.cloud_done_outlined,
+  title: '업로드 완료',
+  message: '파일이 성공적으로 업로드되었습니다.',
+  onPressed: () {
+    Navigator.pop(context);
+    _refreshList();
+  },
+);
+```
+
+### 실전 예시
+
+#### 예시 1: 폼 제출 전 확인
+
+```dart
+class ProfileEditScreen extends ConsumerWidget {
+  Future<void> _saveProfile(WidgetRef ref) async {
+    // 확인 다이얼로그 표시
+    MessageDialogHelper.showRedConfirm(
+      context,
+      icon: Icons.save_outlined,
+      title: '프로필 저장',
+      message: '변경사항을 저장하시겠습니까?',
+      primaryButtonText: '저장',
+      secondaryButtonText: '취소',
+      onPrimaryPressed: () async {
+        Navigator.pop(context);
+        
+        try {
+          await ref.read(profileProvider.notifier).updateProfile(profileData);
+          
+          // 성공 알림
+          MessageDialogHelper.showGreenAlert(
+            context,
+            icon: Icons.check_circle_outline_rounded,
+            title: '저장 완료!',
+            message: '프로필이 저장되었습니다.',
+            onPressed: () {
+              Navigator.pop(context);
+              Navigator.pop(context); // 편집 화면 닫기
+            },
+          );
+        } catch (e) {
+          // 실패 알림
+          MessageDialogHelper.showRedAlert(
+            context,
+            icon: Icons.error_outline_rounded,
+            title: '저장 실패',
+            message: '저장에 실패했습니다. 다시 시도해주세요.',
+          );
+        }
+      },
+      onSecondaryPressed: () {
+        Navigator.pop(context);
+      },
+    );
+  }
+}
+```
+
+#### 예시 2: 삭제 with 실행취소
+
+```dart
+class AlarmScreen extends ConsumerWidget {
+  Future<void> _deleteAlarm(WidgetRef ref, int alarmId) async {
+    MessageDialogHelper.showRedConfirm(
+      context,
+      icon: Icons.delete_outline_rounded,
+      title: '알람 삭제',
+      message: '정말 삭제하시겠습니까?',
+      primaryButtonText: '삭제',
+      secondaryButtonText: '취소',
+      onPrimaryPressed: () async {
+        Navigator.pop(context);
+        
+        // 삭제 실행
+        await ref.read(alarmProvider.notifier).deleteAlarm(alarmId);
+        
+        // TopNotification으로 실행취소 제공
+        TopNotificationManager.show(
+          context,
+          message: '알람이 삭제되었습니다.',
+          actionLabel: '실행취소',
+          type: TopNotificationType.red,
+          onActionTap: () async {
+            await ref.read(alarmProvider.notifier).restoreAlarm(alarmId);
+          },
+        );
+      },
+      onSecondaryPressed: () {
+        Navigator.pop(context);
+      },
+    );
+  }
+}
+```
+
+#### 예시 3: 네트워크 오류
+
+```dart
+void _handleNetworkError(BuildContext context) {
+  MessageDialogHelper.showRedConfirm(
+    context,
+    icon: Icons.wifi_off_rounded,
+    title: '네트워크 오류',
+    message: '인터넷 연결을 확인해주세요.',
+    primaryButtonText: '다시 시도',
+    secondaryButtonText: '취소',
+    onPrimaryPressed: () {
+      Navigator.pop(context);
+      _retry();
+    },
+    onSecondaryPressed: () {
+      Navigator.pop(context);
+    },
+  );
+}
+```
+
+#### 예시 4: 단순 에러 알림
+
+```dart
+void _showError(BuildContext context, String errorMessage) {
+  MessageDialogHelper.showRedAlert(
+    context,
+    icon: Icons.error_outline_rounded,
+    title: '오류 발생',
+    message: errorMessage,
+  );
+}
+```
+
+#### 예시 5: 성공 알림
+
+```dart
+void _showSuccess(BuildContext context) {
+  MessageDialogHelper.showGreenAlert(
+    context,
+    icon: Icons.check_circle_outline_rounded,
+    title: '완료!',
+    message: '작업이 성공적으로 완료되었습니다.',
+    onPressed: () {
+      Navigator.pop(context);
+      _refreshData();
+    },
+  );
+}
+```
+
+### 메서드 종류
+
+#### Confirm 다이얼로그 (2개 버튼)
+- `showRedConfirm()` - Red 타입, 확인 필요
+- `showGreenConfirm()` - Green 타입, 확인 필요
+
+#### Alert 다이얼로그 (1개 버튼)
+- `showRedAlert()` - Red 타입, 단순 알림
+- `showGreenAlert()` - Green 타입, 단순 알림
+
+### 파라미터 상세
+
+#### Confirm 다이얼로그
+
+```dart
+MessageDialogHelper.showRedConfirm(
+  BuildContext context,                 // 필수: BuildContext
+  {
+    IconData? icon,                     // 선택: 상단 아이콘
+    required String title,              // 필수: 제목
+    required String message,            // 필수: 본문 메시지
+    required String primaryButtonText,  // 필수: 메인 버튼 텍스트
+    required String secondaryButtonText,// 필수: 보조 버튼 텍스트
+    VoidCallback? onPrimaryPressed,     // 선택: 메인 버튼 콜백
+    VoidCallback? onSecondaryPressed,   // 선택: 보조 버튼 콜백
+  }
+)
+```
+
+#### Alert 다이얼로그
+
+```dart
+MessageDialogHelper.showRedAlert(
+  BuildContext context,                 // 필수: BuildContext
+  {
+    IconData? icon,                     // 선택: 상단 아이콘
+    required String title,              // 필수: 제목
+    required String message,            // 필수: 본문 메시지
+    String primaryButtonText = '확인',   // 선택: 버튼 텍스트 (기본값: '확인')
+    VoidCallback? onPressed,            // 선택: 버튼 콜백 (기본: 다이얼로그 닫기)
+  }
+)
+```
+
+### Best Practices
+
+#### ✅ 권장
+
+```dart
+// 1. 확인이 필요한 경우 Confirm 사용
+MessageDialogHelper.showRedConfirm(
+  context,
+  title: '삭제 확인',
+  message: '정말 삭제하시겠습니까?',
+  primaryButtonText: '삭제',
+  secondaryButtonText: '취소',
+  onPrimaryPressed: () {
+    Navigator.pop(context);
+    _deleteItem();
+  },
+  onSecondaryPressed: () {
+    Navigator.pop(context);
+  },
+);
+
+// 2. 단순 알림은 Alert 사용
+MessageDialogHelper.showGreenAlert(
+  context,
+  icon: Icons.check_circle_outline_rounded,
+  title: '완료',
+  message: '작업이 완료되었습니다.',
+);
+
+// 3. 적절한 아이콘 사용
+// 에러: Icons.error_outline_rounded
+// 성공: Icons.check_circle_outline_rounded
+// 삭제: Icons.delete_outline_rounded
+// 네트워크: Icons.wifi_off_rounded
+
+// 4. 타입에 맞는 용도
+// Red: 경고, 삭제, 에러
+// Green: 성공, 완료
+```
+
+#### ❌ 비권장
+
+```dart
+// 1. 너무 긴 메시지 ❌
+MessageDialogHelper.showRedAlert(
+  context,
+  title: '알림',
+  message: '매우 긴 메시지가 여기에 들어가면 가독성이 떨어집니다...',
+);
+
+// 2. 부적절한 타입 사용 ❌
+// 삭제 알림에 Green 타입 사용
+MessageDialogHelper.showGreenAlert(
+  context,
+  title: '삭제',
+  message: '삭제되었습니다.',
+);
+
+// 3. Confirm이 필요한데 Alert 사용 ❌
+MessageDialogHelper.showRedAlert(
+  context,
+  title: '삭제 확인',
+  message: '정말 삭제하시겠습니까?',
+  primaryButtonText: '삭제',
+);
+// → showRedConfirm 사용해야 함
+
+// 4. Alert인데 불필요한 콜백 제공 ❌
+MessageDialogHelper.showGreenAlert(
+  context,
+  title: '완료',
+  message: '저장되었습니다.',
+  onPressed: () {
+    Navigator.pop(context); // 자동으로 닫히므로 불필요
+  },
+);
+```
+
+### 선택 가이드
+
+#### TopNotification 사용
+- 간단한 피드백 (저장 완료, 삭제 완료)
+- 사용자 액션이 필요 없는 알림
+- 자동으로 사라지는 메시지
+
+#### MessageDialog Confirm 사용
+- 중요한 확인이 필요한 경우 (삭제, 권한 요청)
+- 사용자 선택이 필요한 상황 (저장/취소, 공유/닫기)
+- 되돌릴 수 없는 액션
+
+#### MessageDialog Alert 사용
+- 에러 메시지, 경고 알림
+- 성공/완료 메시지 (상세 설명 필요)
+- 사용자가 반드시 확인해야 하는 정보
+
+### 참고 문서
+
+- **구현 파일**: `lib/ui/components/message_dialog.dart`
+- **테스트 화면**: `lib/app/example/message_dialog_test_screen.dart`
+
+---
+
 ## 🔨 개발 워크플로우
 
 ### 새로운 화면 추가
@@ -2142,6 +2638,398 @@ flutter run
 
 ---
 
-**마지막 업데이트**: 2025-12-09
+---
+
+## 🎨 에러 및 알림 처리 (TopNotification)
+
+### 개요
+
+화면 개발 시 오류나 처리에 대한 안내 메시지가 필요할 때는 **TopNotification**을 사용하세요.
+
+디자인 가이드에 정의된 TopNotification을 사용하면 일관된 UX를 제공할 수 있습니다.
+
+### 언제 사용하나요?
+
+- ✅ API 요청 실패 시 에러 메시지
+- ✅ 권한 거부 등 일반 에러 안내
+- ✅ 네트워크 오류 등 즉각적인 피드백
+- ✅ 사용자 액션 실패 알림
+- ✅ 작업 성공/완료 알림
+
+### 기본 사용법
+
+#### 에러 알림 헬퍼 메서드
+
+```dart
+/// 에러 알림 표시 (TopNotification)
+void _showErrorNotification(String message) {
+  if (!mounted) return;
+
+  TopNotificationManager.show(
+    context,
+    message: message,
+    type: TopNotificationType.red,
+    duration: const Duration(milliseconds: 3000),
+  );
+}
+```
+
+#### 성공 알림
+
+```dart
+/// 성공 알림 표시
+void _showSuccessNotification(String message) {
+  if (!mounted) return;
+
+  TopNotificationManager.show(
+    context,
+    message: message,
+    type: TopNotificationType.green,
+    duration: const Duration(milliseconds: 2000),
+  );
+}
+```
+
+### 실전 예시
+
+#### 예시 1: API 요청 실패 (bomi_screen.dart)
+
+```dart
+// lib/app/chat/bomi_screen.dart
+class _BomiScreenState extends ConsumerState<BomiScreen> {
+  /// 에러 알림 표시 (TopNotification)
+  void _showErrorNotification(String message) {
+    if (!mounted) return;
+
+    TopNotificationManager.show(
+      context,
+      message: message,
+      type: TopNotificationType.red,
+      duration: const Duration(milliseconds: 3000),
+    );
+  }
+
+  Future<void> _handleVoiceInput() async {
+    final chatNotifier = ref.read(chatProvider.notifier);
+    final chatState = ref.read(chatProvider);
+
+    if (chatState.voiceState == VoiceInterfaceState.listening ||
+        chatState.voiceState == VoiceInterfaceState.processing ||
+        chatState.voiceState == VoiceInterfaceState.replying) {
+      // 진행 중인 작업 중지
+      try {
+        await chatNotifier.stopAudioRecording();
+      } catch (e) {
+        if (mounted) {
+          _showErrorNotification('중지 실패: ${e.toString()}');
+        }
+      }
+    } else {
+      // 녹음 시작
+      try {
+        await chatNotifier.startAudioRecording();
+      } catch (e) {
+        if (!mounted) return;
+
+        if (e.toString().contains('PERMANENTLY_DENIED')) {
+          _showPermissionDialog();
+        } else {
+          _showErrorNotification(e.toString());
+        }
+      }
+    }
+  }
+
+  Future<void> _handleSendMessage() async {
+    final text = _textController.text.trim();
+    if (text.isEmpty) return;
+
+    final chatNotifier = ref.read(chatProvider.notifier);
+    _textController.clear();
+
+    try {
+      await chatNotifier.sendTextMessage(text);
+    } catch (e) {
+      if (mounted) {
+        _showErrorNotification('메시지 전송 실패: ${e.toString()}');
+      }
+    }
+  }
+}
+```
+
+#### 예시 2: 데이터 저장 성공
+
+```dart
+Future<void> _saveData() async {
+  try {
+    await repository.saveData(data);
+    
+    // 성공 알림
+    TopNotificationManager.show(
+      context,
+      message: '저장되었습니다.',
+      type: TopNotificationType.green,
+    );
+  } catch (e) {
+    // 실패 알림
+    TopNotificationManager.show(
+      context,
+      message: '저장 실패: ${e.toString()}',
+      type: TopNotificationType.red,
+    );
+  }
+}
+```
+
+#### 예시 3: 실행취소 액션 포함
+
+```dart
+Future<void> _deleteItem(int id) async {
+  await repository.deleteItem(id);
+  
+  TopNotificationManager.show(
+    context,
+    message: '삭제되었습니다.',
+    actionLabel: '실행취소',
+    type: TopNotificationType.red,
+    onActionTap: () async {
+      await repository.restoreItem(id);
+      TopNotificationManager.show(
+        context,
+        message: '복구되었습니다.',
+        type: TopNotificationType.green,
+      );
+    },
+  );
+}
+```
+
+### 타입별 사용 가이드
+
+#### 🔴 Red (에러, 경고, 삭제)
+
+```dart
+// 에러 메시지
+TopNotificationManager.show(
+  context,
+  message: '네트워크 연결을 확인해주세요.',
+  type: TopNotificationType.red,
+);
+
+// 삭제 완료
+TopNotificationManager.show(
+  context,
+  message: '알람이 삭제되었습니다.',
+  actionLabel: '실행취소',
+  type: TopNotificationType.red,
+  onActionTap: () => _undoDelete(),
+);
+```
+
+#### 🟢 Green (성공, 완료)
+
+```dart
+// 저장 완료
+TopNotificationManager.show(
+  context,
+  message: '저장되었습니다.',
+  type: TopNotificationType.green,
+);
+
+// 설정 변경 완료
+TopNotificationManager.show(
+  context,
+  message: '설정이 변경되었습니다.',
+  type: TopNotificationType.green,
+);
+```
+
+### 디자인 스펙
+
+#### 위치 및 스타일
+- **위치**: TopBar 바로 아래 (상단 패딩 + 60px)
+- **너비**: 전체 너비
+- **배경색**: 
+  - Red: `AppColors.accentRed`
+  - Green: `AppColors.natureGreen`
+- **텍스트 색상**: `AppColors.pureWhite`
+- **타이포그래피**: `AppTypography.body`
+- **패딩**: 가로 `AppSpacing.md`, 세로 12px
+
+#### 동작
+- **duration**: 기본 2000ms (2초)
+- **자동 닫힘**: duration 후 자동으로 사라짐
+- **오버레이**: 화면 최상단에 오버레이로 표시
+- **중복 방지**: 새 알림 표시 시 이전 알림 자동 제거
+
+### 파라미터 상세
+
+```dart
+TopNotificationManager.show(
+  BuildContext context,           // 필수: BuildContext
+  {
+    required String message,      // 필수: 표시할 메시지
+    String? actionLabel,          // 선택: 액션 버튼 텍스트
+    VoidCallback? onActionTap,    // 선택: 액션 버튼 콜백
+    TopNotificationType type,     // 선택: red(기본) 또는 green
+    Duration duration,            // 선택: 표시 시간 (기본 2000ms)
+  }
+)
+```
+
+### Best Practices
+
+#### ✅ 권장
+
+```dart
+// 1. 헬퍼 메서드로 중복 코드 제거
+void _showErrorNotification(String message) {
+  if (!mounted) return;
+  TopNotificationManager.show(
+    context,
+    message: message,
+    type: TopNotificationType.red,
+  );
+}
+
+// 2. mounted 체크
+if (mounted) {
+  _showErrorNotification('에러 메시지');
+}
+
+// 3. 짧고 명확한 메시지
+TopNotificationManager.show(
+  context,
+  message: '저장되었습니다.',
+  type: TopNotificationType.green,
+);
+
+// 4. 적절한 타입 선택
+// - 에러/경고/삭제 → red
+// - 성공/완료 → green
+
+// 5. try-catch와 함께 사용
+try {
+  await apiCall();
+  TopNotificationManager.show(context, message: '성공', type: TopNotificationType.green);
+} catch (e) {
+  TopNotificationManager.show(context, message: '실패', type: TopNotificationType.red);
+}
+```
+
+#### ❌ 비권장
+
+```dart
+// 1. SnackBar 사용 ❌
+ScaffoldMessenger.of(context).showSnackBar(
+  SnackBar(content: Text('메시지')),
+);
+// → TopNotificationManager.show() 사용
+
+// 2. mounted 체크 없이 사용 ❌
+TopNotificationManager.show(context, message: '에러');
+
+// 3. 너무 긴 메시지 ❌
+TopNotificationManager.show(
+  context,
+  message: '매우 긴 에러 메시지가 여기에 들어가면 가독성이 떨어집니다...',
+);
+
+// 4. 부적절한 타입 사용 ❌
+// 삭제 알림에 Green 타입
+TopNotificationManager.show(
+  context,
+  message: '삭제되었습니다.',
+  type: TopNotificationType.green,  // red 사용해야 함
+);
+```
+
+### 참고 문서
+
+- **[DESIGN_GUIDE.md - TopNotification](./DESIGN_GUIDE.md#93-topnotification)** - 디자인 상세 가이드
+- **구현 파일**: `lib/ui/components/top_notification.dart`
+- **사용 예시**: `lib/app/chat/bomi_screen.dart`
+
+---
+
+## 🎭 캐릭터 애니메이션 크기 조정
+
+### 개요
+
+봄이 화면에서 캐릭터 애니메이션 전환 시 크기 차이를 조정하여 자연스러운 UX를 제공합니다.
+
+### 구현 상세
+
+#### 캐릭터 크기 조정 (BomiContent)
+
+```dart
+// lib/app/chat/components/bomi_content.dart
+
+Widget _buildCharacterLayer({
+  required ProcessMode mode,
+  required ProcessStep currentStep,
+  required String animationState,
+}) {
+  return SizedBox(
+    height: 360,
+    child: Stack(
+      alignment: Alignment.center,
+      clipBehavior: Clip.none,
+      children: [
+        Positioned(
+          top: 50,
+          child: AnimatedSwitcher(
+            duration: const Duration(milliseconds: 300),
+            switchInCurve: Curves.easeInOut,
+            switchOutCurve: Curves.easeInOut,
+            transitionBuilder: (Widget child, Animation<double> animation) {
+              return FadeTransition(
+                opacity: animation,
+                child: ScaleTransition(
+                  scale: Tween<double>(begin: 0.95, end: 1.0).animate(animation),
+                  child: child,
+                ),
+              );
+            },
+            child: AnimatedCharacter(
+              key: ValueKey(animationState),
+              characterId: 'relief',
+              emotion: animationState,
+              size: animationState == 'basic' ? 270 : 300,  // 크기 조정
+              repeat: true,
+              animate: true,
+            ),
+          ),
+        ),
+        // Process Indicator...
+      ],
+    ),
+  );
+}
+```
+
+### 크기 스펙
+
+| 애니메이션 상태 | 크기 | 비고 |
+|--------------|------|------|
+| `basic` | 270 | 기본 상태 (크기 축소) |
+| 기타 (`happiness`, `sadness`, `anger`, `fear`) | 300 | 감정 애니메이션 (기본 크기) |
+
+### 애니메이션 전환
+
+- **duration**: 300ms
+- **curve**: `Curves.easeInOut`
+- **transition**: FadeTransition + ScaleTransition
+- **scale**: 0.95 → 1.0 (부드러운 확대 효과)
+
+### 참고 구현
+
+- **구현 파일**: `lib/app/chat/components/bomi_content.dart`
+- **애니메이션 헬퍼**: `lib/app/chat/helpers/animation_state_helper.dart`
+
+---
+
+**마지막 업데이트**: 2025-12-10
 
 **문의**: 개발팀 채널
