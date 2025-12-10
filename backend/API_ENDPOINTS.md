@@ -1418,6 +1418,7 @@ HTTP 상태 코드:
 | HTTP 메서드 | 경로 | 인증 필요 | 설명 |
 |------------|------|----------|------|
 | GET | `/api/dashboard/emotion-history` | ✅ | 감정 이력 조회 |
+| GET | `/api/dashboard/weekly-mood-report` | ✅ | 주간 감정 리포트 조회 (대표 감정, 요일별 캐릭터, 감정 랭킹, 분석 문단) |
 
 ### 사용자 페이즈 (User Phase)
 
