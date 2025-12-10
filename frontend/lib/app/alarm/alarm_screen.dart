@@ -3,21 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../ui/app_ui.dart';
 import '../../core/services/navigation/navigation_service.dart';
-
-// Dummy Model
-class AlarmItemModel {
-  final String id;
-  final String title;
-  final String schedule;
-  bool isEnabled;
-
-  AlarmItemModel({
-    required this.id,
-    required this.title,
-    required this.schedule,
-    this.isEnabled = true,
-  });
-}
+import '../../providers/alarm_provider.dart';
+import '../../data/models/alarm/alarm_model.dart';
 
 class AlarmScreen extends ConsumerStatefulWidget {
   const AlarmScreen({super.key});
@@ -27,33 +14,12 @@ class AlarmScreen extends ConsumerStatefulWidget {
 }
 
 class _AlarmScreenState extends ConsumerState<AlarmScreen> {
-  // Dummy Data
-  final List<AlarmItemModel> _alarms = [
-    AlarmItemModel(
-      id: '1',
-      title: '혈압약 먹기',
-      schedule: '매일 09:00',
-      isEnabled: true,
-    ),
-    AlarmItemModel(
-      id: '2',
-      title: '아침 운동가기',
-      schedule: '매주 월, 목 10:00',
-      isEnabled: true,
-    ),
-    AlarmItemModel(
-      id: '3',
-      title: '비타민 챙겨먹기',
-      schedule: '매일 13:00',
-      isEnabled: false,
-    ),
-    AlarmItemModel(
-      id: '4',
-      title: '저녁 산책',
-      schedule: '매일 20:00',
-      isEnabled: true,
-    ),
-  ];
+  @override
+  void initState() {
+    super.initState();
+    // 알람 목록 로드
+    Future.microtask(() => ref.read(alarmProvider.notifier).loadAlarms());
+  }
 
   @override
   void dispose() {
@@ -65,6 +31,7 @@ class _AlarmScreenState extends ConsumerState<AlarmScreen> {
   @override
   Widget build(BuildContext context) {
     final navigationService = NavigationService(context, ref);
+    final alarmState = ref.watch(alarmProvider);
 
     return AppFrame(
       topBar: TopBar(
@@ -76,27 +43,42 @@ class _AlarmScreenState extends ConsumerState<AlarmScreen> {
           navigationService.navigateToTab(index);
         },
       ),
-      body: _alarms.isEmpty
-          ? Center(
-              child: Text(
-                '등록된 알람이 없습니다.',
-                style: AppTypography.body.copyWith(color: AppColors.textSecondary),
-              ),
-            )
-          : ListView.builder(
-              padding: const EdgeInsets.all(AppSpacing.md),
-              itemCount: _alarms.length,
-              itemBuilder: (context, index) {
-                final alarm = _alarms[index];
-                return _buildAlarmItem(alarm);
-              },
-            ),
+      body: alarmState.when(
+        data: (alarms) => _buildAlarmList(alarms),
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (error, stack) => Center(
+          child: Text(
+            '오류가 발생했습니다: $error',
+            style: AppTypography.body.copyWith(color: AppColors.errorRed),
+          ),
+        ),
+      ),
     );
   }
 
-  Widget _buildAlarmItem(AlarmItemModel alarm) {
+  Widget _buildAlarmList(List<AlarmModel> alarms) {
+    if (alarms.isEmpty) {
+      return Center(
+        child: Text(
+          '등록된 알람이 없습니다.',
+          style: AppTypography.body.copyWith(color: AppColors.textSecondary),
+        ),
+      );
+    }
+
+    return ListView.builder(
+      padding: const EdgeInsets.all(AppSpacing.md),
+      itemCount: alarms.length,
+      itemBuilder: (context, index) {
+        final alarm = alarms[index];
+        return _buildAlarmItem(alarm);
+      },
+    );
+  }
+
+  Widget _buildAlarmItem(AlarmModel alarm) {
     return Dismissible(
-      key: Key(alarm.id),
+      key: Key(alarm.id.toString()),
       direction: DismissDirection.endToStart,
       background: Container(
         alignment: Alignment.centerRight,
@@ -109,28 +91,20 @@ class _AlarmScreenState extends ConsumerState<AlarmScreen> {
         child: const Icon(Icons.delete, color: AppColors.pureWhite),
       ),
       onDismissed: (direction) {
-        setState(() {
-          _alarms.removeWhere((item) => item.id == alarm.id);
-        });
-        // Use reusable TopNotificationManager
+        ref.read(alarmProvider.notifier).deleteAlarm(alarm.id);
         TopNotificationManager.show(
           context,
-          message: '${alarm.title} 알람이 삭제되었습니다.',
+          message: '알람이 삭제되었습니다.',
           actionLabel: '실행취소',
-          type: TopNotificationType.red, // 기본값 (삭제 등 경고)
+          type: TopNotificationType.red,
           onActionTap: () {
-            setState(() {
-              _alarms.add(alarm);
-            });
+            // TODO: 실행취소 구현 (삭제된 알람 복구)
           },
         );
       },
       child: Container(
         margin: const EdgeInsets.only(bottom: AppSpacing.sm),
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.md,
-          vertical: AppSpacing.md,
-        ),
+        padding: const EdgeInsets.all(AppSpacing.md),
         decoration: BoxDecoration(
           color: AppColors.pureWhite,
           borderRadius: BorderRadius.circular(AppRadius.md),
@@ -143,7 +117,7 @@ class _AlarmScreenState extends ConsumerState<AlarmScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    alarm.title,
+                    alarm.timeString,
                     style: AppTypography.h3.copyWith(
                       color: alarm.isEnabled
                           ? AppColors.textPrimary
@@ -152,23 +126,32 @@ class _AlarmScreenState extends ConsumerState<AlarmScreen> {
                   ),
                   const SizedBox(height: AppSpacing.xs),
                   Text(
-                    alarm.schedule,
+                    alarm.dateString,
                     style: AppTypography.body.copyWith(
                       color: alarm.isEnabled
-                          ? AppColors.textSecondary // Was grayNavy
-                          : AppColors.disabledText, // Was textDisabled
+                          ? AppColors.textSecondary
+                          : AppColors.disabledText,
                     ),
                   ),
+                  if (alarm.week.isNotEmpty) ...[
+                    const SizedBox(height: AppSpacing.xxs),
+                    Text(
+                      alarm.weekString,
+                      style: AppTypography.caption.copyWith(
+                        color: alarm.isEnabled
+                            ? AppColors.textSecondary
+                            : AppColors.disabledText,
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),
             Switch(
               value: alarm.isEnabled,
-              activeColor: AppColors.accentRed,
+              activeTrackColor: AppColors.accentRed,
               onChanged: (value) {
-                setState(() {
-                  alarm.isEnabled = value;
-                });
+                ref.read(alarmProvider.notifier).toggleAlarm(alarm.id, value);
               },
             ),
           ],
