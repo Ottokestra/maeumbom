@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../ui/app_ui.dart';
-import '../../core/services/api_client.dart';
-import '../../data/api/onboarding/onboarding_survey_api_client.dart';
 import '../../data/dtos/onboarding/onboarding_survey_request.dart';
-import '../../providers/auth_provider.dart';
 import '../../core/utils/logger.dart';
+import '../../providers/onboarding_provider.dart';
 
 /// 설문 수정 화면
 class EditProfileScreen extends ConsumerStatefulWidget {
@@ -89,14 +87,8 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
 
   Future<void> _loadProfile() async {
     try {
-      final dio = ref.read(dioWithAuthProvider);
-      final apiClient = OnboardingSurveyApiClient(ApiClient(dio));
-      
-      // dioWithAuthProvider를 사용하면 AuthInterceptor가 자동으로 토큰을 추가하므로
-      // accessToken을 빈 문자열로 전달 (실제로는 AuthInterceptor가 처리)
-      final authService = ref.read(authServiceProvider);
-      final accessToken = await authService.getAccessToken() ?? '';
-      final profile = await apiClient.getMyProfile(accessToken);
+      final apiClient = ref.read(onboardingSurveyApiClientProvider);
+      final profile = await apiClient.getMyProfile();
 
       setState(() {
         _nicknameController.text = profile.nickname;
@@ -132,14 +124,6 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     });
 
     try {
-      final dio = ref.read(dioWithAuthProvider);
-      final apiClient = OnboardingSurveyApiClient(ApiClient(dio));
-
-      // dioWithAuthProvider를 사용하면 AuthInterceptor가 자동으로 토큰을 추가하므로
-      // accessToken을 빈 문자열로 전달 (실제로는 AuthInterceptor가 처리)
-      final authService = ref.read(authServiceProvider);
-      final accessToken = await authService.getAccessToken() ?? '';
-
       final request = OnboardingSurveyRequest(
         nickname: _nicknameController.text.trim(),
         ageGroup: _selectedAgeGroup!,
@@ -154,7 +138,8 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
         atmosphere: _atmosphere.toList(),
       );
 
-      await apiClient.submitSurvey(request, accessToken);
+      final apiClient = ref.read(onboardingSurveyApiClientProvider);
+      await apiClient.submitSurvey(request);
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

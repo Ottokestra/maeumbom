@@ -1,17 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:dio/dio.dart';
 import 'package:flutter/services.dart';
 import '../../ui/app_ui.dart';
 import '../../ui/layout/app_frame.dart';
 import '../../ui/layout/bottom_button_bars.dart';
 import 'survey_data_holder.dart';
-import '../../core/services/api_client.dart';
-import '../../data/api/onboarding/onboarding_survey_api_client.dart';
 import '../../data/dtos/onboarding/onboarding_survey_request.dart';
 import '../../core/utils/logger.dart';
 import '../../providers/auth_provider.dart';
-import '../../core/config/api_config.dart';
+import '../../providers/onboarding_provider.dart';
 
 /// 통합 회원가입 화면
 ///
@@ -188,9 +185,6 @@ class _SignUp1ScreenState extends ConsumerState<SignUp1Screen> {
 
       if (accessToken == null) throw Exception('로그인이 필요합니다.');
 
-      final dio = Dio(BaseOptions(baseUrl: ApiConfig.baseUrl));
-      final apiClient = OnboardingSurveyApiClient(ApiClient(dio));
-
       final request = OnboardingSurveyRequest(
         nickname: _nicknameController.text,
         ageGroup: _selectedAge!,
@@ -205,7 +199,8 @@ class _SignUp1ScreenState extends ConsumerState<SignUp1Screen> {
         atmosphere: [_selectedAtmosphere!],
       );
 
-      await apiClient.submitSurvey(request, accessToken);
+      final apiClient = ref.read(onboardingSurveyApiClientProvider);
+      await apiClient.submitSurvey(request);
 
       if (mounted) Navigator.pop(context); // Close loading
       if (mounted) {

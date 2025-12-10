@@ -20,7 +20,7 @@ class WeeklyEmotionBadges extends StatelessWidget {
       children: [
         Text(
           '이번 주 감정 뱃지',
-          style: AppTypography.h4.copyWith(fontWeight: FontWeight.bold),
+          style: AppTypography.h3.copyWith(fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: AppSpacing.sm),
         Container(

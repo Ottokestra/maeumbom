@@ -164,7 +164,8 @@ class _ReportError extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.sm),
           AppButton(
-            label: '다시 시도',
+            text: '다시 시도',
+            variant: ButtonVariant.secondaryRed,
             onTap: onRetry,
           ),
         ],

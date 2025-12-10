@@ -28,7 +28,7 @@ class WeeklyTemperatureGauge extends StatelessWidget {
       children: [
         Text(
           '주간 감정 온도',
-          style: AppTypography.h4.copyWith(fontWeight: FontWeight.bold),
+          style: AppTypography.h3.copyWith(fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: AppSpacing.sm),
         TweenAnimationBuilder<double>(
