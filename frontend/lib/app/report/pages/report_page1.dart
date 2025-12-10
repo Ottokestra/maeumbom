@@ -1,24 +1,24 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import '../../../data/models/report/weekly_mood_report.dart';
 import '../../../ui/app_ui.dart';
+import 'report_page_utils.dart';
 
 /// 페이지 1: 이번주 감정 온도
 class ReportPage1 extends StatelessWidget {
-  const ReportPage1({super.key});
+  const ReportPage1({super.key, required this.report});
+
+  final WeeklyMoodReport report;
 
   @override
   Widget build(BuildContext context) {
-    // TODO: API에서 데이터 가져오기
-    final double temperaturePercentage = 0.75; // 75% (임시 데이터)
-    final EmotionId mainEmotion = EmotionId.love; // 임시 캐릭터
-    final Color emotionColor = const Color(0xFFFFB84C); // 기쁨 색상 (임시)
-
-    // 감정 순위 (임시 데이터)
-    final List<EmotionRank> emotionRanks = [
-      EmotionRank(rank: 1, emotion: EmotionId.love, label: '기쁨'),
-      EmotionRank(rank: 2, emotion: EmotionId.relief, label: '안심'),
-      EmotionRank(rank: 3, emotion: EmotionId.excitement, label: '흥분'),
-    ];
+    final double temperaturePercentage =
+        (report.overallScorePercent.clamp(0, 100)) / 100;
+    final EmotionId mainEmotion = mapEmotionFromCode(
+      report.dominantEmotion.characterCode,
+      emotionLabel: report.dominantEmotion.label,
+    );
+    final Color emotionColor = getEmotionPrimaryColor(mainEmotion);
 
     return Padding(
       padding: const EdgeInsets.all(AppSpacing.lg),
@@ -130,7 +130,7 @@ class ReportPage1 extends StatelessWidget {
               borderRadius: BorderRadius.circular(24),
             ),
             child: Text(
-              emotionRanks.first.label,
+              report.dominantEmotion.label,
               style: AppTypography.h3.copyWith(
                 color: emotionColor,
                 fontWeight: FontWeight.w700,
@@ -169,7 +169,9 @@ class ReportPage1 extends StatelessWidget {
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  '이번 주에는 ${emotionRanks.first.label} 감정을 가장 많이 느끼셨네요! 감정 온도가 ${(temperaturePercentage * 100).toInt()}%로 안정적인 상태를 유지하고 있습니다.',
+                  report.analysisText.isNotEmpty
+                      ? report.analysisText
+                      : '이번 주에는 ${report.dominantEmotion.label} 감정을 가장 많이 느끼셨네요! 감정 온도가 ${(temperaturePercentage * 100).toInt()}%로 안정적인 상태를 유지하고 있습니다.',
                   style: AppTypography.body.copyWith(
                     color: AppColors.textPrimary,
                     height: 1.5,
@@ -257,17 +259,4 @@ class SemicircleProgressPainter extends CustomPainter {
   bool shouldRepaint(SemicircleProgressPainter oldDelegate) {
     return oldDelegate.progress != progress || oldDelegate.color != color;
   }
-}
-
-/// 감정 순위 데이터 모델
-class EmotionRank {
-  final int rank;
-  final EmotionId emotion;
-  final String label;
-
-  EmotionRank({
-    required this.rank,
-    required this.emotion,
-    required this.label,
-  });
 }

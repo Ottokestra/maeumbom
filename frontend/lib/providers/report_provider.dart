@@ -6,6 +6,7 @@ import '../data/dtos/dashboard/emotion_history_entry.dart';
 import '../data/dtos/recommendation/recommendation_response.dart';
 import '../data/dtos/user_phase/user_pattern_setting_response.dart';
 import '../data/dtos/user_phase/user_phase_response.dart';
+import '../data/models/report/weekly_mood_report.dart';
 import '../data/repository/dashboard/dashboard_repository.dart';
 import '../data/repository/recommendation/recommendation_repository.dart';
 import '../data/repository/user_phase/user_phase_repository.dart';
@@ -39,6 +40,8 @@ final recommendationRepositoryProvider = Provider<RecommendationRepository>((ref
   final apiClient = RecommendationApiClient(ref.watch(apiClientProvider));
   return RecommendationRepository(apiClient);
 });
+
+final weeklyMoodWeekOffsetProvider = StateProvider<int>((ref) => 0);
 
 final emotionHistoryProvider =
     FutureProvider.autoDispose.family<List<EmotionHistoryEntry>, EmotionHistoryRange>(
@@ -75,4 +78,10 @@ final imageRecommendationProvider = FutureProvider.autoDispose
     .family<RecommendationResponse, Map<String, dynamic>>((ref, payload) {
   final repository = ref.watch(recommendationRepositoryProvider);
   return repository.fetchImage(payload);
+});
+
+final weeklyMoodReportProvider = FutureProvider.autoDispose
+    .family<WeeklyMoodReport, int>((ref, weekOffset) {
+  final repository = ref.watch(dashboardRepositoryProvider);
+  return repository.fetchWeeklyMoodReport(weekOffset: weekOffset);
 });
