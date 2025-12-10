@@ -324,6 +324,25 @@ except Exception as e:
     traceback.print_exc()
 
 # =========================
+# Slang Quiz Service
+# =========================
+
+try:
+    from app.slang_quiz.routes import router as slang_quiz_router
+
+    app.include_router(
+        slang_quiz_router,
+        prefix="/api/service/slang-quiz",
+        tags=["slang-quiz"],
+    )
+    print("[INFO] Slang quiz router loaded successfully.")
+except Exception as e:
+    import traceback
+
+    print(f"[WARN] Slang quiz module load failed: {e}")
+    traceback.print_exc()
+
+# =========================
 # LangChain Agent V2 API
 # =========================
 

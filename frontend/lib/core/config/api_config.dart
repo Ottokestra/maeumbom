@@ -73,6 +73,13 @@ class ApiConfig {
   static const String emotionReportBase = '/api/v1/reports/emotion';
   static const String emotionWeeklyReport = '$emotionReportBase/weekly';
 
+  // Relation Training Endpoints
+  static const String relationTrainingBase = '/api/service/relation-training';
+  static const String relationTrainingScenarios = '$relationTrainingBase/scenarios';
+  static String relationTrainingStart(int scenarioId) =>
+      '$relationTrainingBase/scenarios/$scenarioId/start';
+  static const String relationTrainingProgress = '$relationTrainingBase/progress';
+
   // Timeout Configuration
   static const Duration connectTimeout = Duration(seconds: 30);
   static const Duration receiveTimeout = Duration(seconds: 30);
