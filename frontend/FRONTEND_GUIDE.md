@@ -37,6 +37,9 @@
 ```bash
 cd frontend
 flutter pub get
+
+# build_runner 실행
+flutter pub run build_runner build --delete-conflicting-outputs
 ```
 
 ### 실행 방법
