@@ -42,6 +42,7 @@ class RelationTrainingState {
   final String currentPath;
   final bool isFinished;
   final ScenarioResult? result;
+  final String? scenarioImage;
   final List<ScenarioNode> history;
 
   RelationTrainingState({
@@ -49,6 +50,7 @@ class RelationTrainingState {
     this.currentPath = '',
     this.isFinished = false,
     this.result,
+    this.scenarioImage,
     this.history = const [],
   });
 
@@ -57,6 +59,7 @@ class RelationTrainingState {
     String? currentPath,
     bool? isFinished,
     ScenarioResult? result,
+    String? scenarioImage,
     List<ScenarioNode>? history,
   }) {
     return RelationTrainingState(
@@ -64,6 +67,7 @@ class RelationTrainingState {
       currentPath: currentPath ?? this.currentPath,
       isFinished: isFinished ?? this.isFinished,
       result: result ?? this.result,
+      scenarioImage: scenarioImage ?? this.scenarioImage,
       history: history ?? this.history,
     );
   }
@@ -88,6 +92,7 @@ class RelationTrainingViewModel
         RelationTrainingState(
           currentNode: response.currentNode,
           currentPath: '',
+          scenarioImage: response.imageUrl,
         ),
       );
     } catch (e, st) {

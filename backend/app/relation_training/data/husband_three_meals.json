@@ -98,36 +98,216 @@
     }
   ],
   "options": [
-    { "from_node_id": "node_1", "option_code": "A", "text": "\"방금 설거지했는데 또 밥 타령이야? 내가 밥 하는 기계야? 좀 알아서 찾아 먹어!\" (비난)", "to_node_id": "node_2_a", "result_code": null },
-    { "from_node_id": "node_1", "option_code": "B", "text": "\"어머, 벌써 시간이 그렇네? 나도 좀 쉬고 싶은데, 오늘 점심은 간단하게 냉동 볶음밥 어때요?\" (대안)", "to_node_id": "node_2_b", "result_code": null },
-    { "from_node_id": "node_2_a", "option_code": "A", "text": "\"누가 밥 달라는 게 죄래? 삼시세끼 꼬박꼬박 차려달라니까 내가 숨이 막혀서 그래!\" (폭발)", "to_node_id": "node_3_aa", "result_code": null },
-    { "from_node_id": "node_2_a", "option_code": "B", "text": "(한숨을 쉬며) \"...알았어요. 당신 고생한 거 아는데, 나도 늙어서 체력이 예전 같지 않아서 그래요.\" (진정)", "to_node_id": "node_3_ab", "result_code": null },
-    { "from_node_id": "node_2_b", "option_code": "A", "text": "\"됐어, 라면은 무슨. 당신이 끓이면 주방 다 어지럽히잖아. 비켜, 내가 할게.\" (무시)", "to_node_id": "node_3_ba", "result_code": null },
-    { "from_node_id": "node_2_b", "option_code": "B", "text": "\"정말? 당신이 끓여주게? 아이고 고마워라. 그럼 나는 김치 꺼낼게.\" (칭찬)", "to_node_id": "node_3_bb", "result_code": null },
-    { "from_node_id": "node_3_aa", "option_code": "A", "text": "\"나가! 밥이고 뭐고 다 꼴 보기 싫으니까 당장 나가!\" (파국 선언)", "to_node_id": "node_4_aaa", "result_code": "AAAA" },
-    { "from_node_id": "node_3_aa", "option_code": "B", "text": "(방문 잡으며) \"...여보, 잠깐만. 그만하자. 밥 때문에 우리가 이렇게까지 싸워야 해? 내가 말이 심했어.\" (뒤늦은 사과)", "to_node_id": "node_4_aab", "result_code": "AAAB" },
-    { "from_node_id": "node_3_ab", "option_code": "A", "text": "\"찬밥 신세? 당신이 언제 찬밥 먹었어? 말은 바로 해!\" (말꼬리 잡기)", "to_node_id": "node_4_aba", "result_code": "AABA" },
-    { "from_node_id": "node_3_ab", "option_code": "B", "text": "\"그래, 당신도 서운했겠네. 나도 힘들어서 투정 부린 거야. 같이 냉장고 털어서 비빔밥 해 먹을까?\" (화해 시도)", "to_node_id": "node_4_abb", "result_code": "AABB" },
-    { "from_node_id": "node_3_ba", "option_code": "A", "text": "\"라면 하나 끓이는 게 뭐 대수라고 생색은. 그냥 비켜, 내가 해!\" (비난 지속)", "to_node_id": "node_4_baa", "result_code": "BAAA" },
-    { "from_node_id": "node_3_ba", "option_code": "B", "text": "\"아휴... 알았어. 내가 좀 예민했네. 냄비 줘봐, 내가 할게. 미안.\"", "to_node_id": "node_4_bab", "result_code": "BAAB" },
-    { "from_node_id": "node_3_bb", "option_code": "A", "text": "\"근데 당신, 라면 먹는데 그 옷이 뭐야? 국물 튀면 어쩌려고. 좀 갈아입고 먹어.\" (잔소리)", "to_node_id": "node_4_bba", "result_code": "BBBA" },
-    { "from_node_id": "node_3_bb", "option_code": "B", "text": "\"와, 냄새 좋다! 역시 남이 끓여주는 라면이 최고야. 잘 먹을게 여보.\" (감사)", "to_node_id": "node_4_bbb", "result_code": "BBBB" },
-    { "from_node_id": "node_4_aaa", "option_code": "A", "text": "(끝까지 화가 안 풀려) \"됐어! 당신이랑 무슨 말을 하니. 나 나갈 거니까 찾지 마!\"", "to_node_id": null, "result_code": "AAAA" },
-    { "from_node_id": "node_4_aaa", "option_code": "B", "text": "(아차 싶어서) \"...하, 아니다. 내가 너무 흥분했네. 일단 진정 좀 하자.\"", "to_node_id": null, "result_code": "AAAB" },
-    { "from_node_id": "node_4_aab", "option_code": "A", "text": "(혼잣말로 들리게) \"아이고 내 팔자야. 늙어서 이게 무슨 꼴이람.\"", "to_node_id": null, "result_code": "AABA" },
-    { "from_node_id": "node_4_aab", "option_code": "B", "text": "(조용히 주방으로 가서) \"...나와서 밥 먹어요. 싸우더라도 밥은 먹어야지.\"", "to_node_id": null, "result_code": "AABB" },
-    { "from_node_id": "node_4_aba", "option_code": "A", "text": "\"라면 냄새 풍기지 말고 빨리 먹고 치워. 나 머리 아파서 들어갈 거야.\"", "to_node_id": null, "result_code": "ABAA" },
-    { "from_node_id": "node_4_aba", "option_code": "B", "text": "(슬그머니 김치를 꺼내주며) \"...체하겠다. 천천히 먹어.\"", "to_node_id": null, "result_code": "ABAB" },
-    { "from_node_id": "node_4_abb", "option_code": "A", "text": "\"근데 당신은 손이 없어? 비빔밥 정도는 혼자 해 먹을 수 있잖아.\"", "to_node_id": null, "result_code": "ABBA" },
-    { "from_node_id": "node_4_abb", "option_code": "B", "text": "\"자, 아~ 해봐. 당신 좋아하는 참기름 듬뿍 넣었어.\"", "to_node_id": null, "result_code": "ABBB" },
-    { "from_node_id": "node_4_baa", "option_code": "A", "text": "(라면 봉지를 식탁에 던져두고) \"됐어! 먹기 싫으면 관둬!\" 하고 방으로 들어간다.", "to_node_id": null, "result_code": "BAAA" },
-    { "from_node_id": "node_4_baa", "option_code": "B", "text": "(아무 말 없이 냄비를 받아들고 묵묵히 라면을 끓인다)", "to_node_id": null, "result_code": "BAAB" },
-    { "from_node_id": "node_4_bab", "option_code": "A", "text": "\"이번만 해주는 거야. 다음부턴 진짜 알아서 챙겨 먹어. 알았지?\" (조건부 수용)", "to_node_id": null, "result_code": "BABA" },
-    { "from_node_id": "node_4_bab", "option_code": "B", "text": "\"남편이 식탁도 닦고 다 컸네~ 앞으로 점심 준비는 같이 하자, 그럼 안 힘들겠어.\" (격려)", "to_node_id": null, "result_code": "BABB" },
-    { "from_node_id": "node_4_bba", "option_code": "A", "text": "\"아니 내 말은 옷 버릴까 봐 그렇지! 왜 성질이야?\" (말대꾸)", "to_node_id": null, "result_code": "BBAA" },
-    { "from_node_id": "node_4_bba", "option_code": "B", "text": "\"알았어, 잔소리 그만 할게. 얼른 와서 먹자. 불겠다.\"", "to_node_id": null, "result_code": "BBAB" },
-    { "from_node_id": "node_4_bbb", "option_code": "A", "text": "\"근데 물이 좀 많은 거 아니야? 다음엔 물 좀 적게 잡아.\" (지적)", "to_node_id": null, "result_code": "BBBA" },
-    { "from_node_id": "node_4_bbb", "option_code": "B", "text": "\"당신이 끓여줘서 그런가 진짜 꿀맛이다. 설거지는 내가 할게.\"", "to_node_id": null, "result_code": "BBBB" }
+    {
+      "from_node_id": "node_1",
+      "option_code": "A",
+      "text": "\"방금 설거지했는데 또 밥 타령이야? 내가 밥 하는 기계야? 좀 알아서 찾아 먹어!\" (비난)",
+      "to_node_id": "node_2_a",
+      "result_code": null
+    },
+    {
+      "from_node_id": "node_1",
+      "option_code": "B",
+      "text": "\"어머, 벌써 시간이 그렇네? 나도 좀 쉬고 싶은데, 오늘 점심은 간단하게 냉동 볶음밥 어때요?\" (대안)",
+      "to_node_id": "node_2_b",
+      "result_code": null
+    },
+    {
+      "from_node_id": "node_2_a",
+      "option_code": "A",
+      "text": "\"누가 밥 달라는 게 죄래? 삼시세끼 꼬박꼬박 차려달라니까 내가 숨이 막혀서 그래!\" (폭발)",
+      "to_node_id": "node_3_aa",
+      "result_code": null
+    },
+    {
+      "from_node_id": "node_2_a",
+      "option_code": "B",
+      "text": "(한숨을 쉬며) \"...알았어요. 당신 고생한 거 아는데, 나도 늙어서 체력이 예전 같지 않아서 그래요.\" (진정)",
+      "to_node_id": "node_3_ab",
+      "result_code": null
+    },
+    {
+      "from_node_id": "node_2_b",
+      "option_code": "A",
+      "text": "\"됐어, 라면은 무슨. 당신이 끓이면 주방 다 어지럽히잖아. 비켜, 내가 할게.\" (무시)",
+      "to_node_id": "node_3_ba",
+      "result_code": null
+    },
+    {
+      "from_node_id": "node_2_b",
+      "option_code": "B",
+      "text": "\"정말? 당신이 끓여주게? 아이고 고마워라. 그럼 나는 김치 꺼낼게.\" (칭찬)",
+      "to_node_id": "node_3_bb",
+      "result_code": null
+    },
+    {
+      "from_node_id": "node_3_aa",
+      "option_code": "A",
+      "text": "\"나가! 밥이고 뭐고 다 꼴 보기 싫으니까 당장 나가!\" (파국 선언)",
+      "to_node_id": "node_4_aaa",
+      "result_code": "AAAA"
+    },
+    {
+      "from_node_id": "node_3_aa",
+      "option_code": "B",
+      "text": "(방문 잡으며) \"...여보, 잠깐만. 그만하자. 밥 때문에 우리가 이렇게까지 싸워야 해? 내가 말이 심했어.\" (뒤늦은 사과)",
+      "to_node_id": "node_4_aab",
+      "result_code": "AAAB"
+    },
+    {
+      "from_node_id": "node_3_ab",
+      "option_code": "A",
+      "text": "\"찬밥 신세? 당신이 언제 찬밥 먹었어? 말은 바로 해!\" (말꼬리 잡기)",
+      "to_node_id": "node_4_aba",
+      "result_code": "AABA"
+    },
+    {
+      "from_node_id": "node_3_ab",
+      "option_code": "B",
+      "text": "\"그래, 당신도 서운했겠네. 나도 힘들어서 투정 부린 거야. 같이 냉장고 털어서 비빔밥 해 먹을까?\" (화해 시도)",
+      "to_node_id": "node_4_abb",
+      "result_code": "AABB"
+    },
+    {
+      "from_node_id": "node_3_ba",
+      "option_code": "A",
+      "text": "\"라면 하나 끓이는 게 뭐 대수라고 생색은. 그냥 비켜, 내가 해!\" (비난 지속)",
+      "to_node_id": "node_4_baa",
+      "result_code": "BAAA"
+    },
+    {
+      "from_node_id": "node_3_ba",
+      "option_code": "B",
+      "text": "\"아휴... 알았어. 내가 좀 예민했네. 냄비 줘봐, 내가 할게. 미안.\"",
+      "to_node_id": "node_4_bab",
+      "result_code": "BAAB"
+    },
+    {
+      "from_node_id": "node_3_bb",
+      "option_code": "A",
+      "text": "\"근데 당신, 라면 먹는데 그 옷이 뭐야? 국물 튀면 어쩌려고. 좀 갈아입고 먹어.\" (잔소리)",
+      "to_node_id": "node_4_bba",
+      "result_code": "BBBA"
+    },
+    {
+      "from_node_id": "node_3_bb",
+      "option_code": "B",
+      "text": "\"와, 냄새 좋다! 역시 남이 끓여주는 라면이 최고야. 잘 먹을게 여보.\" (감사)",
+      "to_node_id": "node_4_bbb",
+      "result_code": "BBBB"
+    },
+    {
+      "from_node_id": "node_4_aaa",
+      "option_code": "A",
+      "text": "(끝까지 화가 안 풀려) \"됐어! 당신이랑 무슨 말을 하니. 나 나갈 거니까 찾지 마!\"",
+      "to_node_id": null,
+      "result_code": "AAAA"
+    },
+    {
+      "from_node_id": "node_4_aaa",
+      "option_code": "B",
+      "text": "(아차 싶어서) \"...하, 아니다. 내가 너무 흥분했네. 일단 진정 좀 하자.\"",
+      "to_node_id": null,
+      "result_code": "AAAB"
+    },
+    {
+      "from_node_id": "node_4_aab",
+      "option_code": "A",
+      "text": "(혼잣말로 들리게) \"아이고 내 팔자야. 늙어서 이게 무슨 꼴이람.\"",
+      "to_node_id": null,
+      "result_code": "AABA"
+    },
+    {
+      "from_node_id": "node_4_aab",
+      "option_code": "B",
+      "text": "(조용히 주방으로 가서) \"...나와서 밥 먹어요. 싸우더라도 밥은 먹어야지.\"",
+      "to_node_id": null,
+      "result_code": "AABB"
+    },
+    {
+      "from_node_id": "node_4_aba",
+      "option_code": "A",
+      "text": "\"라면 냄새 풍기지 말고 빨리 먹고 치워. 나 머리 아파서 들어갈 거야.\"",
+      "to_node_id": null,
+      "result_code": "ABAA"
+    },
+    {
+      "from_node_id": "node_4_aba",
+      "option_code": "B",
+      "text": "(슬그머니 김치를 꺼내주며) \"...체하겠다. 천천히 먹어.\"",
+      "to_node_id": null,
+      "result_code": "ABAB"
+    },
+    {
+      "from_node_id": "node_4_abb",
+      "option_code": "A",
+      "text": "\"근데 당신은 손이 없어? 비빔밥 정도는 혼자 해 먹을 수 있잖아.\"",
+      "to_node_id": null,
+      "result_code": "ABBA"
+    },
+    {
+      "from_node_id": "node_4_abb",
+      "option_code": "B",
+      "text": "\"자, 아~ 해봐. 당신 좋아하는 참기름 듬뿍 넣었어.\"",
+      "to_node_id": null,
+      "result_code": "ABBB"
+    },
+    {
+      "from_node_id": "node_4_baa",
+      "option_code": "A",
+      "text": "(라면 봉지를 식탁에 던져두고) \"됐어! 먹기 싫으면 관둬!\" 하고 방으로 들어간다.",
+      "to_node_id": null,
+      "result_code": "BAAA"
+    },
+    {
+      "from_node_id": "node_4_baa",
+      "option_code": "B",
+      "text": "(아무 말 없이 냄비를 받아들고 묵묵히 라면을 끓인다)",
+      "to_node_id": null,
+      "result_code": "BAAB"
+    },
+    {
+      "from_node_id": "node_4_bab",
+      "option_code": "A",
+      "text": "\"이번만 해주는 거야. 다음부턴 진짜 알아서 챙겨 먹어. 알았지?\" (조건부 수용)",
+      "to_node_id": null,
+      "result_code": "BABA"
+    },
+    {
+      "from_node_id": "node_4_bab",
+      "option_code": "B",
+      "text": "\"남편이 식탁도 닦고 다 컸네~ 앞으로 점심 준비는 같이 하자, 그럼 안 힘들겠어.\" (격려)",
+      "to_node_id": null,
+      "result_code": "BABB"
+    },
+    {
+      "from_node_id": "node_4_bba",
+      "option_code": "A",
+      "text": "\"아니 내 말은 옷 버릴까 봐 그렇지! 왜 성질이야?\" (말대꾸)",
+      "to_node_id": null,
+      "result_code": "BBAA"
+    },
+    {
+      "from_node_id": "node_4_bba",
+      "option_code": "B",
+      "text": "\"알았어, 잔소리 그만 할게. 얼른 와서 먹자. 불겠다.\"",
+      "to_node_id": null,
+      "result_code": "BBAB"
+    },
+    {
+      "from_node_id": "node_4_bbb",
+      "option_code": "A",
+      "text": "\"근데 물이 좀 많은 거 아니야? 다음엔 물 좀 적게 잡아.\" (지적)",
+      "to_node_id": null,
+      "result_code": "BBBA"
+    },
+    {
+      "from_node_id": "node_4_bbb",
+      "option_code": "B",
+      "text": "\"당신이 끓여줘서 그런가 진짜 꿀맛이다. 설거지는 내가 할게.\"",
+      "to_node_id": null,
+      "result_code": "BBBB"
+    }
   ],
   "results": [
     {
