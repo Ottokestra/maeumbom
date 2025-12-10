@@ -732,6 +732,37 @@ async def cleanup_global_memories(
                 "message": f"Deleted {count} global memory records",
                 "user_id": user_id,
             }
+
+            # 🆕 Ensure alarm_info and response_type are in meta for frontend compatibility
+            if "meta" not in result:
+                result["meta"] = {}
+            
+            # Add response_type and alarm_info to meta if present in result
+            if "response_type" in result:
+                result["meta"]["response_type"] = result["response_type"]
+            if "alarm_info" in result:
+                result["meta"]["alarm_info"] = result["alarm_info"]
+            
+            # 🆕 TTS 처리 (동기 방식, 7초 타임아웃)
+            if request.tts_enabled:
+                try:
+                    # TTS 생성 (최대 7초 대기)
+                    audio_path = await asyncio.wait_for(
+                        generate_tts_async(result["reply_text"]),
+                        timeout=7.0
+                    )
+                    # 상대 경로로 URL 생성
+                    result["tts_audio_url"] = f"/tts-outputs/{audio_path.name}"
+                    result["tts_status"] = "ready"
+                    print(f"[TTS] 음성 파일 생성 완료: {audio_path.name}")
+                except asyncio.TimeoutError:
+                    result["tts_audio_url"] = None
+                    result["tts_status"] = "timeout"
+                    print("[TTS] 타임아웃: 7초 내에 음성 생성 실패")
+                except Exception as e:
+                    result["tts_audio_url"] = None
+                    result["tts_status"] = "error"
+                    print(f"[TTS] 생성 오류: {e}")
         finally:
             db.close()
     except Exception as e:
