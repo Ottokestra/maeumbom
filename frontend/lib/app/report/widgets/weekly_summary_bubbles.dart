@@ -18,7 +18,7 @@ class WeeklySummaryBubbles extends StatelessWidget {
       children: [
         Text(
           '이번 주 대화 요약',
-          style: AppTypography.h4.copyWith(fontWeight: FontWeight.bold),
+          style: AppTypography.h3.copyWith(fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: AppSpacing.sm),
         if (summaryBubbles.isEmpty)

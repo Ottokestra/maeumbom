@@ -468,19 +468,6 @@ class ChatNotifier extends StateNotifier<ChatState> {
     await _updateSessionTime();
   }
 
-  /// Load a specific session (called from chat_screen.dart)
-  Future<void> loadSession(String sessionId) async {
-    state = state.copyWith(sessionId: sessionId);
-    await _saveSession(sessionId);
-    print('✅ Session loaded: $sessionId');
-  }
-
-  /// Reset to a new session (called from chat_screen.dart)
-  Future<void> resetSession() async {
-    await _createNewSession();
-    state = state.copyWith(messages: []);
-    print('✅ Session reset');
-  }
 
   @override
   void dispose() {

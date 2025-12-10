@@ -1,11 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:dio/dio.dart';
 import '../../ui/app_ui.dart';
 import '../../providers/auth_provider.dart';
-import '../../core/config/api_config.dart';
-import '../../core/services/api_client.dart';
-import '../../data/api/onboarding/onboarding_survey_api_client.dart';
+import '../../providers/onboarding_provider.dart';
 
 /// 로그인 화면
 ///
@@ -74,15 +71,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       }
 
       // 설문 상태 확인
-      final dio = Dio(
-        BaseOptions(
-          baseUrl: ApiConfig.baseUrl,
-          connectTimeout: ApiConfig.connectTimeout,
-          receiveTimeout: ApiConfig.receiveTimeout,
-        ),
-      );
-      final apiClient = OnboardingSurveyApiClient(dio);
-      final statusResponse = await apiClient.getProfileStatus(accessToken);
+      final apiClient = ref.read(onboardingSurveyApiClientProvider);
+      final statusResponse = await apiClient.getProfileStatus();
 
       if (!mounted) return;
 
@@ -308,15 +298,8 @@ class _SocialLoginButtons extends ConsumerWidget {
       }
 
       // 설문 상태 확인
-      final dio = Dio(
-        BaseOptions(
-          baseUrl: ApiConfig.baseUrl,
-          connectTimeout: ApiConfig.connectTimeout,
-          receiveTimeout: ApiConfig.receiveTimeout,
-        ),
-      );
-      final apiClient = OnboardingSurveyApiClient(ApiClient(dio));
-      final statusResponse = await apiClient.getProfileStatus(accessToken);
+      final apiClient = ref.read(onboardingSurveyApiClientProvider);
+      final statusResponse = await apiClient.getProfileStatus();
 
       if (!context.mounted) return;
 
