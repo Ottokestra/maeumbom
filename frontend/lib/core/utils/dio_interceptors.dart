@@ -1,13 +1,19 @@
 import 'package:dio/dio.dart';
 import '../services/auth/auth_service.dart';
+import 'error_logger.dart';
 import 'logger.dart';
 
 /// Auth Interceptor - Automatically adds access token and handles refresh
 class AuthInterceptor extends Interceptor {
   final AuthService _authService;
   final Dio _dio;
+  final ErrorLogger? _errorLogger;
 
-  AuthInterceptor(this._authService, this._dio);
+  AuthInterceptor(
+    this._authService,
+    this._dio, {
+    ErrorLogger? errorLogger,
+  }) : _errorLogger = errorLogger;
 
   @override
   void onRequest(
@@ -33,6 +39,13 @@ class AuthInterceptor extends Interceptor {
     DioException err,
     ErrorInterceptorHandler handler,
   ) async {
+    _errorLogger?.logError(
+      err,
+      err.stackTrace ?? StackTrace.current,
+      err.requestOptions,
+      err.response,
+    );
+
     // Handle 401 Unauthorized - Token expired
     if (err.response?.statusCode == 401 &&
         !_isAuthEndpoint(err.requestOptions.path)) {
