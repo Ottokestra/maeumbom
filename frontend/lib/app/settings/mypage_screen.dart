@@ -39,8 +39,8 @@ class _MypageScreenState extends ConsumerState<MypageScreen> {
 
   Future<void> _loadProfile() async {
     try {
-      final apiClient = ref.read(onboardingSurveyApiClientProvider);
-      final profile = await apiClient.getMyProfile();
+      final onboardingRepository = ref.read(onboardingSurveyRepositoryProvider);
+      final profile = await onboardingRepository.getMySurvey();
 
       if (!mounted) return;
       setState(() {

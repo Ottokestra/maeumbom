@@ -71,8 +71,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       }
 
       // 설문 상태 확인
-      final apiClient = ref.read(onboardingSurveyApiClientProvider);
-      final statusResponse = await apiClient.getProfileStatus();
+      final onboardingRepository = ref.read(onboardingSurveyRepositoryProvider);
+      final statusResponse = await onboardingRepository.getSurveyStatus();
 
       if (!mounted) return;
 
@@ -298,8 +298,8 @@ class _SocialLoginButtons extends ConsumerWidget {
       }
 
       // 설문 상태 확인
-      final apiClient = ref.read(onboardingSurveyApiClientProvider);
-      final statusResponse = await apiClient.getProfileStatus();
+      final onboardingRepository = ref.read(onboardingSurveyRepositoryProvider);
+      final statusResponse = await onboardingRepository.getSurveyStatus();
 
       if (!context.mounted) return;
 

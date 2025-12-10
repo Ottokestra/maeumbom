@@ -87,8 +87,8 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
 
   Future<void> _loadProfile() async {
     try {
-      final apiClient = ref.read(onboardingSurveyApiClientProvider);
-      final profile = await apiClient.getMyProfile();
+      final onboardingRepository = ref.read(onboardingSurveyRepositoryProvider);
+      final profile = await onboardingRepository.getMySurvey();
 
       setState(() {
         _nicknameController.text = profile.nickname;
@@ -138,8 +138,8 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
         atmosphere: _atmosphere.toList(),
       );
 
-      final apiClient = ref.read(onboardingSurveyApiClientProvider);
-      await apiClient.submitSurvey(request);
+      final onboardingRepository = ref.read(onboardingSurveyRepositoryProvider);
+      await onboardingRepository.submitSurvey(request);
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
