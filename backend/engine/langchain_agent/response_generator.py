@@ -280,6 +280,23 @@ def parse_alarm_request(
         
         print(f"[ALARM PARSER] Step 3: Current time formatted: {current_str}")
         
+        # 🆕 Pre-filter: 알람 관련 키워드가 없으면 조기 반환
+        alarm_keywords = ["알람", "알림", "기상", "깨워", "시간", "시", "분", "am", "pm", "오전", "오후"]
+        user_and_response = (user_text + " " + llm_response).lower()
+        
+        has_alarm_keyword = any(keyword in user_and_response for keyword in alarm_keywords)
+        
+        if not has_alarm_keyword:
+            print("[ALARM PARSER] Step 3.5: No alarm keywords found, skipping LLM call")
+            return {
+                "response_type": None,
+                "count": 0,
+                "data": []
+            }
+        
+        print("[ALARM PARSER] Step 3.5: Alarm keywords detected, proceeding with LLM parsing")
+        
+        # LLM을 이용한 알람 파싱
         prompt = f"""현재 시간: {current_str} ({current_weekday_kr})
 
 사용자 요청: "{user_text}"
@@ -288,10 +305,12 @@ AI 응답: "{llm_response}"
 이 요청이 알람 설정 요청인지 판단하고, 맞다면 시간 정보를 추출하세요.
 
 **중요 규칙 (반드시 준수!):**
-1. time, minute, am_pm 필드는 **절대 null 불가** - 반드시 값 제공
-2. minute이 언급 안 되면 무조건 0
-3. 여러 알람의 경우 각각 완전한 정보 (time, minute, am_pm 모두 필수)
-4. am_pm 추론: 5시/6시/7시 → 문맥상 오후로 판단
+1. **알람 설정 요청이 아니면 반드시 {{"is_alarm": false}} 반환**
+2. **시간 정보가 명확하지 않으면 {{"is_alarm": false}} 반환**
+3. time, minute, am_pm 필드는 **절대 null 불가** - 반드시 숫자/문자열로 제공
+4. minute이 언급 안 되면 무조건 0
+5. 여러 알람의 경우 각각 완전한 정보 (time, minute, am_pm 모두 필수)
+6. am_pm 추론: 5시/6시/7시 → 문맥상 오후로 판단
 
 **반환 형식:**
 {{
@@ -309,9 +328,17 @@ AI 응답: "{llm_response}"
   ]
 }}
 
-**예시:**
-- "5시, 6시, 7시" → time:5/minute:0/am_pm:"pm", time:6/minute:0/am_pm:"pm", time:7/minute:0/am_pm:"pm"
-- "오후 2시 30분" → time:2/minute:30/am_pm:"pm"
+**알람 요청 예시 (is_alarm: true):**
+- "5시, 6시, 7시 알람"
+- "내일 오후 2시 30분에 깨워줘"
+- "오전 9시 알림 설정"
+
+**일반 대화 예시 (is_alarm: false):**
+- "안녕" → {{"is_alarm": false}}
+- "고마워" → {{"is_alarm": false}}
+- "오늘 하루 어땠어?" → {{"is_alarm": false}}
+- "날씨 어때?" → {{"is_alarm": false}}
+- "좋은 하루 보내" → {{"is_alarm": false}}
 
 **기본값:**
 - 연도/월/일/요일: 지정 안 하면 현재 기준
@@ -389,38 +416,69 @@ AI 응답: "{llm_response}"
         for i, alarm in enumerate(alarms):
             print(f"[ALARM PARSER] Step 12.{i}: Processing alarm {i+1}/{len(alarms)}: {alarm}")
             
+            # 🆕 Null 값 검증 - time이나 minute이 None이면 스킵
+            time_val = alarm.get("time")
+            minute_val = alarm.get("minute")
+            am_pm_val = alarm.get("am_pm")
+            
+            if time_val is None or minute_val is None or am_pm_val is None:
+                logger.warning(f"⚠️ [Alarm] Skipping alarm {i+1}: null values detected (time={time_val}, minute={minute_val}, am_pm={am_pm_val})")
+                print(f"[ALARM PARSER] Step 12.{i}: SKIPPED - null values")
+                continue
+            
+            # Type validation
+            if not isinstance(time_val, int) or not isinstance(minute_val, int):
+                logger.warning(f"⚠️ [Alarm] Skipping alarm {i+1}: invalid types (time={type(time_val)}, minute={type(minute_val)})")
+                print(f"[ALARM PARSER] Step 12.{i}: SKIPPED - invalid types")
+                continue
+            
             # 알람 시간 생성
-            alarm_dt = datetime(
-                year=alarm.get("year", current_datetime.year),
-                month=alarm.get("month", current_datetime.month),
-                day=alarm.get("day", current_datetime.day),
-                hour=_convert_to_24h(alarm.get("time", 0), alarm.get("am_pm", "am")),
-                minute=alarm.get("minute", 0)
-            )
+            try:
+                alarm_dt = datetime(
+                    year=alarm.get("year", current_datetime.year),
+                    month=alarm.get("month", current_datetime.month),
+                    day=alarm.get("day", current_datetime.day),
+                    hour=_convert_to_24h(time_val, am_pm_val),
+                    minute=minute_val
+                )
+            except Exception as e:
+                logger.warning(f"⚠️ [Alarm] Skipping alarm {i+1}: datetime creation failed - {e}")
+                print(f"[ALARM PARSER] Step 12.{i}: SKIPPED - datetime error")
+                continue
             
             # 과거 날짜 검증
             is_valid = alarm_dt > current_datetime
             
             print(f"[ALARM PARSER] Step 13.{i}: alarm_dt={alarm_dt}, current={current_datetime}, is_valid={is_valid}")
             
-            processed_alarm = {
-                "year": alarm.get("year", current_datetime.year),
-                "month": alarm.get("month", current_datetime.month),
-                "week": alarm.get("week", [current_datetime.strftime('%A')]),
-                "day": alarm.get("day", current_datetime.day),
-                "is_valid_alarm": is_valid
-            }
-            
-            # 유효한 알람만 시간 정보 포함
+            # 🆕 유효한 알람만 추가 (time/minute 포함)
             if is_valid:
-                processed_alarm["time"] = alarm.get("time", 12)
-                processed_alarm["minute"] = alarm.get("minute", 0)
-                processed_alarm["am_pm"] = alarm.get("am_pm", "am")
-            
-            processed_alarms.append(processed_alarm)
-            print(f"[ALARM PARSER] Step 14.{i}: Processed alarm: {processed_alarm}")
+                processed_alarms.append({
+                    "year": alarm_dt.year,
+                    "month": alarm_dt.month,
+                    "week": alarm.get("week", [current_datetime.strftime('%A')]),
+                    "day": alarm_dt.day,
+                    "is_valid_alarm": True,
+                    "time": time_val,
+                    "minute": minute_val,
+                    "am_pm": am_pm_val
+                })
+                print(f"[ALARM PARSER] Step 14.{i}: ADDED - valid alarm")
+            else:
+                print(f"[ALARM PARSER] Step 14.{i}: SKIPPED - past datetime")
         
-        logger.info(f"✅ [Alarm] Parsed {len(processed_alarms)} alarms")
+        # 🆕 최종 검증: 유효한 알람이 하나도 없으면 None 반환
+        if not processed_alarms:
+            logger.warning(f"⚠️ [Alarm] No valid alarms after processing")
+            print("[ALARM PARSER] Step 15: NO VALID ALARMS - returning None")
+            return {
+                "response_type": None,
+                "count": 0,
+                "data": []
+            }
+        
+        logger.info(f"✅ [Alarm] Parsed {len(processed_alarms)} valid alarms")
+        print(f"[ALARM PARSER] Step 15: SUCCESS! Returning {len(processed_alarms)} alarm(s)")
         
         result = {
             "response_type": "alarm",

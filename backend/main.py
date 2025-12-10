@@ -111,6 +111,22 @@ app.add_middleware(
 )
 
 # =========================
+# Static Files (TTS Outputs)
+# =========================
+
+from fastapi.staticfiles import StaticFiles
+
+# TTS outputs 폴더를 정적 파일로 제공
+tts_outputs_dir = backend_path / "engine" / "text-to-speech" / "outputs"
+tts_outputs_dir.mkdir(parents=True, exist_ok=True)  # 폴더가 없으면 생성
+app.mount(
+    "/tts-outputs",
+    StaticFiles(directory=str(tts_outputs_dir)),
+    name="tts_outputs"
+)
+print(f"[INFO] TTS outputs static files mounted at /tts-outputs -> {tts_outputs_dir}")
+
+# =========================
 # Emotion Analysis 라우터 (옵션)
 # =========================
 
@@ -340,11 +356,31 @@ class AgentTextRequest(BaseModel):
     user_text: str
     session_id: Optional[str] = None
     stt_quality: Optional[str] = None  # "success" | "medium" | "low_quality" | "no_speech" | None
+    tts_enabled: bool = False  # 🆕 TTS 활성화 여부
 
 
 class AgentAudioRequest(BaseModel):
     audio_bytes: bytes
     session_id: Optional[str] = None
+
+
+# =====================================================================
+# TTS Helper Function
+# =====================================================================
+
+async def generate_tts_async(text: str) -> Path:
+    """비동기로 TTS 생성 (동기 함수를 asyncio.to_thread로 실행)"""
+    loop = asyncio.get_event_loop()
+    # synthesize_to_wav는 동기 함수이므로 스레드에서 실행
+    audio_path = await loop.run_in_executor(
+        None,  # 기본 executor 사용
+        synthesize_to_wav,
+        text,
+        None,  # speed
+        "neutral",  # tone
+        None  # engine
+    )
+    return audio_path
 
 
 @app.post("/api/agent/v2/text")
@@ -415,6 +451,38 @@ async def agent_text_v2_endpoint(
             session_id=session_id,
             stt_quality=request.stt_quality,
         )
+        
+        # 🆕 Ensure alarm_info and response_type are in meta for frontend compatibility
+        if "meta" not in result:
+            result["meta"] = {}
+        
+        # Add response_type and alarm_info to meta if present in result
+        if "response_type" in result:
+            result["meta"]["response_type"] = result["response_type"]
+        if "alarm_info" in result:
+            result["meta"]["alarm_info"] = result["alarm_info"]
+
+        # 🆕 TTS 처리 (동기 방식, 7초 타임아웃)
+        if request.tts_enabled:
+            try:
+                # TTS 생성 (최대 7초 대기)
+                audio_path = await asyncio.wait_for(
+                    generate_tts_async(result["reply_text"]),
+                    timeout=7.0
+                )
+                # 상대 경로로 URL 생성
+                result["tts_audio_url"] = f"/tts-outputs/{audio_path.name}"
+                result["tts_status"] = "ready"
+                print(f"[TTS] 음성 파일 생성 완료: {audio_path.name}")
+            except asyncio.TimeoutError:
+                result["tts_audio_url"] = None
+                result["tts_status"] = "timeout"
+                print("[TTS] 타임아웃: 7초 내에 음성 생성 실패")
+            except Exception as e:
+                result["tts_audio_url"] = None
+                result["tts_status"] = "error"
+                print(f"[TTS] 생성 오류: {e}")
+
         return result
     except Exception as e:
         import traceback
@@ -972,6 +1040,7 @@ async def agent_websocket(websocket: WebSocket, user_id: int = 1):
     stt_engine_instance = None
     session_id = None
     temporary_message_ids = []  # 🆕 Phase 3: 임시 메시지 ID 추적
+    tts_enabled = False  # 🆕 TTS 활성화 여부
 
     try:
         await websocket.send_json(
@@ -1015,6 +1084,16 @@ async def agent_websocket(websocket: WebSocket, user_id: int = 1):
                         else data["text"]
                     )
                     
+                    # 🆕 TTS 설정 수신
+                    if isinstance(message, dict) and message.get("type") == "config":
+                        tts_enabled = message.get("tts_enabled", False)
+                        print(f"[Agent WebSocket] TTS 설정: {tts_enabled}")
+                        await websocket.send_json({
+                            "type": "config_ack",
+                            "tts_enabled": tts_enabled
+                        })
+                        continue
+
                     # 🆕 Phase 3: interrupt 신호 처리
                     if isinstance(message, dict) and message.get("type") == "interrupt":
                         reason = message.get("reason", "unknown")
@@ -1254,6 +1333,35 @@ async def agent_websocket(websocket: WebSocket, user_id: int = 1):
                                 }
                             )
                             
+                            # 🆕 TTS 처리
+                            if tts_enabled:
+                                try:
+                                    # TTS 생성 (최대 7초 대기)
+                                    audio_path = await asyncio.wait_for(
+                                        generate_tts_async(result["reply_text"]),
+                                        timeout=7.0
+                                    )
+                                    await websocket.send_json({
+                                        "type": "tts_ready",
+                                        "audio_url": f"/tts-outputs/{audio_path.name}",
+                                        "session_id": session_id
+                                    })
+                                    print(f"[Agent WebSocket] TTS 음성 파일 생성 완료: {audio_path.name}")
+                                except asyncio.TimeoutError:
+                                    await websocket.send_json({
+                                        "type": "tts_error",
+                                        "error": "timeout",
+                                        "message": "TTS 생성 시간 초과 (7초)"
+                                    })
+                                    print("[Agent WebSocket] TTS 타임아웃")
+                                except Exception as e:
+                                    await websocket.send_json({
+                                        "type": "tts_error",
+                                        "error": "generation_failed",
+                                        "message": str(e)
+                                    })
+                                    print(f"[Agent WebSocket] TTS 생성 오류: {e}")
+
                             # 🆕 Phase 3: 성공 시 임시 추적 초기화
                             temporary_message_ids.clear()
                             print("[Agent WebSocket] 대화 성공 - 임시 메시지 추적 초기화")
