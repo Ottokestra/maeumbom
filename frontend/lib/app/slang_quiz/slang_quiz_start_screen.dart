@@ -13,6 +13,30 @@ class SlangQuizStartScreen extends ConsumerStatefulWidget {
 class _SlangQuizStartScreenState extends ConsumerState<SlangQuizStartScreen> {
   String _selectedLevel = 'beginner';
   String _selectedQuizType = 'word_to_meaning';
+  int _tapCount = 0;
+
+  void _onCharacterTap() {
+    setState(() {
+      _tapCount++;
+    });
+
+    if (_tapCount >= 5) {
+      // 5번 탭하면 관리자 화면으로 이동
+      Navigator.pushNamed(context, '/training/slang-quiz/admin');
+      setState(() {
+        _tapCount = 0;
+      });
+    }
+
+    // 3초 후 카운트 리셋
+    Future.delayed(const Duration(seconds: 3), () {
+      if (mounted) {
+        setState(() {
+          _tapCount = 0;
+        });
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -24,6 +48,10 @@ class _SlangQuizStartScreenState extends ConsumerState<SlangQuizStartScreen> {
         title: '글자 빨리 누르기',
         leftIcon: Icons.arrow_back,
         onTapLeft: () => Navigator.pop(context),
+        rightIcon: Icons.settings,
+        onTapRight: () {
+          Navigator.pushNamed(context, '/training/slang-quiz/admin');
+        },
       ),
       body: Padding(
         padding: const EdgeInsets.all(AppSpacing.lg),
@@ -33,13 +61,16 @@ class _SlangQuizStartScreenState extends ConsumerState<SlangQuizStartScreen> {
             // 상단 여백
             const SizedBox(height: AppSpacing.xl),
             
-            // 캐릭터
+            // 캐릭터 (5번 탭하면 관리자 화면)
             Expanded(
               child: Center(
-                child: EmotionCharacter(
-                  id: currentEmotion,
-                  use2d: true,
-                  size: 240,
+                child: GestureDetector(
+                  onTap: _onCharacterTap,
+                  child: EmotionCharacter(
+                    id: currentEmotion,
+                    use2d: true,
+                    size: 240,
+                  ),
                 ),
               ),
             ),

@@ -91,6 +91,7 @@ class ApiConfig {
       '$slangQuizBase/games/$gameId/end';
   static const String slangQuizHistory = '$slangQuizBase/history';
   static const String slangQuizStatistics = '$slangQuizBase/statistics';
+  static const String slangQuizAdminGenerate = '$slangQuizBase/admin/questions/generate';
 
   // Timeout Configuration
   static const Duration connectTimeout = Duration(seconds: 30);

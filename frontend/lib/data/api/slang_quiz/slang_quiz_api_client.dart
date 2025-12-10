@@ -68,6 +68,28 @@ class SlangQuizApiClient {
     }
   }
 
+  /// 관리자용 문제 생성 (개발용)
+  Future<Map<String, dynamic>> generateQuestionsAdmin({
+    required String level,
+    required String quizType,
+    required int count,
+  }) async {
+    try {
+      final response = await _dio.post(
+        ApiConfig.slangQuizAdminGenerate,
+        queryParameters: {
+          'level': level,
+          'quiz_type': quizType,
+          'count': count,
+        },
+      );
+      print('[SlangQuiz API] Admin Generate Response: ${response.data}');
+      return response.data as Map<String, dynamic>;
+    } on DioException catch (e) {
+      throw _handleError(e);
+    }
+  }
+
   Exception _handleError(DioException e) {
     if (e.response != null) {
       final message = e.response!.data?['detail'] ?? 'Unknown error';
