@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../ui/app_ui.dart';
+import 'relation_training_screen.dart';
 
 class TrainingScreen extends ConsumerWidget {
   const TrainingScreen({super.key});
@@ -28,10 +29,35 @@ class TrainingContent extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: const [
-          Text(
-            '관계 연습하기',
-            style: AppTypography.h2,
+        children: [
+          GestureDetector(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const RelationTrainingScreen(scenarioId: 1),
+                ),
+              );
+            },
+            child: Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: const Text(
+                '관계 연습하기',
+                textAlign: TextAlign.center,
+                style: AppTypography.h2,
+              ),
+            ),
           ),
         ],
       ),

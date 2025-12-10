@@ -114,41 +114,43 @@ class _HomeContentState extends ConsumerState<HomeContent> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // 상단 콘텐츠 영역
+            // 상단 콘텐츠 영역 (스크롤 가능)
             Expanded(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.md,
-                  vertical: AppSpacing.lg,
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    // 1. 헤더 영역
-                    const HomeHeaderSection(),
+              child: SingleChildScrollView(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.md,
+                    vertical: AppSpacing.lg,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      // 1. 헤더 영역
+                      const HomeHeaderSection(),
 
-                    const SizedBox(height: AppSpacing.xxl),
+                      const SizedBox(height: AppSpacing.xxl),
 
-                    // 2. 캐릭터 (240x240, 중앙)
-                    Center(
-                      child: EmotionCharacter(
-                        id: currentEmotion,
-                        size: 240,
+                      // 2. 캐릭터 (240x240, 중앙)
+                      Center(
+                        child: EmotionCharacter(
+                          id: currentEmotion,
+                          size: 240,
+                        ),
                       ),
-                    ),
 
-                    const SizedBox(height: AppSpacing.xl),
+                      const SizedBox(height: AppSpacing.xl),
 
-                    // 3. 대화 온도 막대
-                    ConversationTemperatureBar(
-                      currentMood: moodCategory,
-                    ),
-                  ],
+                      // 3. 대화 온도 막대
+                      ConversationTemperatureBar(
+                        currentMood: moodCategory,
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
 
-            // 4. 하단 메뉴
+            // 4. 하단 메뉴 (고정)
             const HomeBottomMenu(),
           ],
         ),

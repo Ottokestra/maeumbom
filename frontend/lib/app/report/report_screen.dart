@@ -12,6 +12,9 @@ import '../../providers/report_provider.dart';
 import '../../ui/app_ui.dart';
 import '../../ui/characters/app_characters.dart';
 import 'widgets/top_emotions_chart.dart';
+import 'pages/report_page1.dart';
+import 'pages/report_page2.dart';
+import 'pages/report_page3.dart';
 
 /// Report Screen - 마음리포트 화면
 class ReportScreen extends ConsumerWidget {
@@ -34,6 +37,9 @@ class ReportScreen extends ConsumerWidget {
           ref.refresh(currentPhaseProvider);
           ref.refresh(phaseSettingsProvider);
         },
+        title: '마음리포트',
+        rightIcon: Icons.close,
+        onTapRight: () => Navigator.pop(context),
       ),
       bottomBar: BottomMenuBar(
         currentIndex: 3,
@@ -276,7 +282,68 @@ class _PhaseStatusCard extends StatelessWidget {
           Text(
             phase.message,
             style: AppTypography.body.copyWith(color: AppColors.textSecondary),
+/// Report Content with Vertical Scroll
+class ReportContent extends StatelessWidget {
+  const ReportContent({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      child: Column(
+        children: [
+          // 날짜 표시 헤더 (화살표 네비게이션)
+          Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.md,
+              vertical: AppSpacing.md,
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                // 왼쪽 화살표
+                IconButton(
+                  icon: const Icon(Icons.chevron_left),
+                  color: AppColors.textSecondary,
+                  onPressed: () {
+                    // TODO: 이전 주로 이동
+                  },
+                ),
+
+                // 중앙 날짜 표시
+                Text(
+                  '2025년 1월 1주차',
+                  style: AppTypography.h3.copyWith(
+                    color: AppColors.textPrimary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+
+                // 오른쪽 화살표
+                IconButton(
+                  icon: const Icon(Icons.chevron_right),
+                  color: AppColors.textSecondary,
+                  onPressed: () {
+                    // TODO: 다음 주로 이동
+                  },
+                ),
+              ],
+            ),
           ),
+
+          // 페이지 1: 이번주 감정 온도
+          const ReportPage1(),
+
+          const SizedBox(height: AppSpacing.xl),
+
+          // 페이지 2: 요일별 감정 캐릭터
+          const ReportPage2(),
+
+          const SizedBox(height: AppSpacing.xl),
+
+          // 페이지 3: 이번주 감정 분석 상세
+          const ReportPage3(),
+
+          const SizedBox(height: AppSpacing.xl),
         ],
       ),
     );
