@@ -7,11 +7,15 @@ class AppButton extends StatelessWidget {
     required this.text,
     required this.variant,
     this.onTap,
+    this.height = ButtonTokens.height,
+    this.padding = ButtonTokens.padding,
   });
 
   final String text;
   final ButtonVariant variant;
   final VoidCallback? onTap;
+  final double? height;
+  final EdgeInsetsGeometry padding;
 
   @override
   Widget build(BuildContext context) {
@@ -22,18 +26,19 @@ class AppButton extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        height: ButtonTokens.height,
-        padding: ButtonTokens.padding,
+        height: height,
+        constraints: height == null ? const BoxConstraints(minHeight: ButtonTokens.height) : null,
+        padding: padding,
         decoration: BoxDecoration(
           color: bg,
           borderRadius: BorderRadius.circular(ButtonTokens.radius),
           border: border,
         ),
-        child: Center(
-          child: Text(
-            text,
-            style: ButtonTokens.textStyle.copyWith(color: textColor),
-          ),
+        alignment: Alignment.center,
+        child: Text(
+          text,
+          textAlign: TextAlign.center,
+          style: ButtonTokens.textStyle.copyWith(color: textColor),
         ),
       ),
     );

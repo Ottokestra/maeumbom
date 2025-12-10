@@ -1453,8 +1453,8 @@ HTTP 상태 코드:
 
 | HTTP 메서드 | 경로 | 인증 필요 | 설명 |
 |------------|------|----------|------|
-| POST | `/api/menopause-survey/submit` | ❌ | 갱년기 설문 제출 |
-
+| POST | `/api/menopause-survey/submit` | ✅ | 갱년기 설문 제출 |
+| GET | `/api/menopause-survey/questions` | ✅ | 갱년기 설문 질문 조회 |
 ### 음성 인식 (STT)
 
 | HTTP 메서드 | 경로 | 인증 필요 | 설명 |
