@@ -468,6 +468,7 @@ class ChatNotifier extends StateNotifier<ChatState> {
     await _updateSessionTime();
   }
 
+
   @override
   void dispose() {
     _bomChatService.dispose();
