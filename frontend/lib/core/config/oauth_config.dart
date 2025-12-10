@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'api_config.dart';
 
 /// OAuth Configuration - Client IDs and redirect URIs
 class OAuthConfig {
@@ -35,28 +36,19 @@ class OAuthConfig {
   static const String naverClientId = 'Y4gXSib6V678m2gYoa9C';
 
   // HTTP Redirect URIs (백엔드에서 앱 스킴으로 리다이렉트)
-  // 네이버 개발자 콘솔에 두 URL 모두 등록 필요:
-  // - http://localhost:8000/auth/callback/naver (iOS/웹용)
-  // - http://10.0.2.2:8000/auth/callback/naver (Android 에뮬레이터용)
+  // ApiConfig.baseUrl을 사용하여 플랫폼별로 자동으로 적절한 주소 사용
+  // - 에뮬레이터: http://10.0.2.2:8000/auth/callback/...
+  // - 실제 디바이스: http://localhost:8000/auth/callback/... (또는 환경 변수로 설정한 IP)
   static String get googleRedirectUri {
-    if (Platform.isAndroid) {
-      return 'http://localhost:8000/auth/callback/google';
-    }
-    return 'http://localhost:8000/auth/callback/google';
+    return '${ApiConfig.baseUrl}/auth/callback/google';
   }
 
   static String get kakaoRedirectUri {
-    if (Platform.isAndroid) {
-      return 'http://localhost:8000/auth/callback/kakao';
-    }
-    return 'http://localhost:8000/auth/callback/kakao';
+    return '${ApiConfig.baseUrl}/auth/callback/kakao';
   }
 
   static String get naverRedirectUri {
-    if (Platform.isAndroid) {
-      return 'http://localhost:8000/auth/callback/naver';
-    }
-    return 'http://localhost:8000/auth/callback/naver';
+    return '${ApiConfig.baseUrl}/auth/callback/naver';
   }
 
   // App Scheme (앱이 받을 deep link)
