@@ -433,17 +433,17 @@ class ChatNotifier extends StateNotifier<ChatState> {
   Future<void> loadSession(String sessionId) async {
     // 1. 현재 상태에 세션 ID 적용
     state = state.copyWith(sessionId: sessionId, isLoading: true);
-    
+
     try {
       print('📥 Loading session: $sessionId');
-      
+
       // TODO: 만약 서버에 '이전 대화 내역'을 요청하는 API가 있다면 여기서 호출하세요.
       // 예: final history = await _chatRepository.getChatHistory(sessionId);
       // state = state.copyWith(messages: history, isLoading: false);
 
       // 현재는 API가 없으므로 로딩만 해제합니다.
       state = state.copyWith(isLoading: false);
-      
+
       // 세션 시간 갱신 (선택 사항)
       await _saveSession(sessionId);
     } catch (e) {
@@ -455,10 +455,10 @@ class ChatNotifier extends StateNotifier<ChatState> {
   /// 화면에서 '세션 초기화' 버튼 등을 눌렀을 때 사용
   Future<void> resetSession() async {
     print('🔄 Resetting session manually...');
-    
+
     // 1. 화면의 메시지 목록 비우기
     clearMessages();
-    
+
     // 2. 새로운 세션 ID 발급 및 저장 (기존 함수 재사용)
     await _createNewSession();
   }
@@ -466,20 +466,6 @@ class ChatNotifier extends StateNotifier<ChatState> {
   /// Update session time on message send
   Future<void> _onMessageSent() async {
     await _updateSessionTime();
-  }
-
-  /// Load a specific session (called from chat_screen.dart)
-  Future<void> loadSession(String sessionId) async {
-    state = state.copyWith(sessionId: sessionId);
-    await _saveSession(sessionId);
-    print('✅ Session loaded: $sessionId');
-  }
-
-  /// Reset to a new session (called from chat_screen.dart)
-  Future<void> resetSession() async {
-    await _createNewSession();
-    state = state.copyWith(messages: []);
-    print('✅ Session reset');
   }
 
   @override
