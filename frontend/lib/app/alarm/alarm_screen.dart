@@ -71,7 +71,7 @@ class _AlarmScreenState extends ConsumerState<AlarmScreen> {
         title: '알람',
       ),
       bottomBar: BottomMenuBar(
-        currentIndex: 2, 
+        currentIndex: 2,
         onTap: (index) {
           navigationService.navigateToTab(index);
         },
@@ -120,7 +120,7 @@ class _AlarmScreenState extends ConsumerState<AlarmScreen> {
           type: TopNotificationType.red, // 기본값 (삭제 등 경고)
           onActionTap: () {
             setState(() {
-              _alarms.add(alarm); 
+              _alarms.add(alarm);
             });
           },
         );

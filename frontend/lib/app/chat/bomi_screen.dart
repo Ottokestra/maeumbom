@@ -79,7 +79,7 @@ class _BomiScreenState extends ConsumerState<BomiScreen> {
 
   Future<void> _showPermissionDialog() async {
     if (!mounted) return;
-    
+
     // 네이티브 스타일의 다이얼로그 표시
     await showAdaptiveDialog(
       context: context,
@@ -176,11 +176,74 @@ class BomiContent extends ConsumerStatefulWidget {
 class _BomiContentState extends ConsumerState<BomiContent> {
   Timer? _textCompletionTimer;
   bool _showTextCompletion = false;
+  bool _callbacksRegistered = false; // 🆕 Alarm callback registration flag
 
   @override
   void dispose() {
     _textCompletionTimer?.cancel();
     super.dispose();
+  }
+
+  // 🆕 Alarm dialog display methods
+  void _showAlarmDialog(Map<String, dynamic> alarmInfo, String replyText) {
+    if (!mounted) return;
+
+    print('[BomiContent] 🔔 Showing alarm dialog!');
+    showDialog(
+      context: context,
+      builder: (context) => _buildAlarmDialog(alarmInfo, replyText),
+    );
+  }
+
+  void _showWarningDialog(Map<String, dynamic> alarmInfo) {
+    if (!mounted) return;
+
+    print('[BomiContent] ⚠️ Showing warning dialog!');
+    showDialog(
+      context: context,
+      builder: (context) => _buildWarningDialog(alarmInfo),
+    );
+  }
+
+  // 🆕 Alarm dialog builder (copied from alarm_dialog.dart logic)
+  Widget _buildAlarmDialog(Map<String, dynamic> alarmInfo, String replyText) {
+    final data = alarmInfo['data'] as List?;
+
+    return AlertDialog(
+      title: const Text('알람 설정'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(replyText),
+          const SizedBox(height: 16),
+          if (data != null)
+            ...data.map((alarm) => Text(
+                '${alarm['month']}월 ${alarm['day']}일 ${alarm['am_pm'] == 'am' ? '오전' : '오후'} ${alarm['time']}시 ${alarm['minute']}분')),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('확인'),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildWarningDialog(Map<String, dynamic> alarmInfo) {
+    final message =
+        alarmInfo['message'] as String? ?? '알람은 한번의 요청에서 세개까지만 등록이 가능합니다.';
+
+    return AlertDialog(
+      title: const Text('경고'),
+      content: Text(message),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('확인'),
+        ),
+      ],
+    );
   }
 
   @override
@@ -189,9 +252,18 @@ class _BomiContentState extends ConsumerState<BomiContent> {
     final voiceState = chatState.voiceState;
     final isLoading = chatState.isLoading;
 
+    // 🆕 Register alarm dialog callbacks once
+    if (!_callbacksRegistered) {
+      ref.read(chatProvider.notifier).onShowAlarmDialog = _showAlarmDialog;
+      ref.read(chatProvider.notifier).onShowWarningDialog = _showWarningDialog;
+      _callbacksRegistered = true;
+      print('[BomiContent] ✅ Alarm dialog callbacks registered');
+    }
+
     // Determine Mode
     ProcessMode mode;
-    if (widget.showInputBar || (isLoading && voiceState == VoiceInterfaceState.idle)) {
+    if (widget.showInputBar ||
+        (isLoading && voiceState == VoiceInterfaceState.idle)) {
       mode = ProcessMode.text;
     } else {
       mode = ProcessMode.voice;
@@ -202,6 +274,9 @@ class _BomiContentState extends ConsumerState<BomiContent> {
 
     if (mode == ProcessMode.voice) {
       switch (voiceState) {
+        case VoiceInterfaceState.loading:
+          currentStep = ProcessStep.standby; // Backend 로딩 중에는 대기 상태로 표시
+          break;
         case VoiceInterfaceState.idle:
           currentStep = ProcessStep.standby;
           break;
@@ -300,6 +375,42 @@ class _BomiContentState extends ConsumerState<BomiContent> {
                     key: ValueKey(latestBotMessage?.id ?? 'default'),
                   ),
 
+                  // ✅ Phase 3: STT Partial 결과 표시
+                  if (chatState.sttPartialText != null &&
+                      chatState.sttPartialText!.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(top: AppSpacing.sm),
+                      child: Container(
+                        padding: const EdgeInsets.all(AppSpacing.md),
+                        decoration: BoxDecoration(
+                          color: AppColors.bgLightPink.withOpacity(0.5),
+                          borderRadius: BorderRadius.circular(AppRadius.lg),
+                          border: Border.all(
+                            color: AppColors.accentRed.withOpacity(0.3),
+                            width: 1,
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.mic,
+                              size: 16,
+                              color: AppColors.accentRed,
+                            ),
+                            const SizedBox(width: AppSpacing.xs),
+                            Expanded(
+                              child: Text(
+                                chatState.sttPartialText!,
+                                style: AppTypography.caption.copyWith(
+                                  color: AppColors.textSecondary,
+                                  fontStyle: FontStyle.italic,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
                 ],
               ),
             ),

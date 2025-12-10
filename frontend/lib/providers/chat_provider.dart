@@ -1,70 +1,56 @@
 import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../core/services/chat/chat_service.dart';
-import '../core/services/chat/audio_service.dart';
+import 'package:shared_preferences/shared_preferences.dart'; // ✅ Session 저장
+import '../core/services/chat/bom_chat_service.dart';
 import '../core/services/chat/permission_service.dart';
-import '../data/api/chat/chat_api_client.dart';
-import '../data/api/chat/chat_websocket_client.dart';
-import '../data/repository/chat/chat_repository.dart';
 import '../data/models/chat/chat_message.dart';
+import '../data/repository/chat/chat_repository.dart';
+import '../data/api/chat/chat_api_client.dart';
 import 'auth_provider.dart';
 
 // ----- Infrastructure Providers -----
-
-/// Chat API Client provider
-final chatApiClientProvider = Provider<ChatApiClient>((ref) {
-  final dio = ref.watch(dioWithAuthProvider);
-  return ChatApiClient(dio);
-});
-
-/// Chat WebSocket Client provider
-final chatWebSocketClientProvider = Provider<ChatWebSocketClient>((ref) {
-  return ChatWebSocketClient();
-});
-
-/// Chat Repository provider
-final chatRepositoryProvider = Provider<ChatRepository>((ref) {
-  final apiClient = ref.watch(chatApiClientProvider);
-  final webSocketClient = ref.watch(chatWebSocketClientProvider);
-  return ChatRepository(apiClient, webSocketClient);
-});
-
-/// Audio Service provider
-final audioServiceProvider = Provider<AudioService>((ref) {
-  return AudioService();
-});
 
 /// Permission Service provider
 final permissionServiceProvider = Provider<PermissionService>((ref) {
   return PermissionService();
 });
 
-/// Chat Service provider
-final chatServiceProvider = Provider<ChatService>((ref) {
-  final repository = ref.watch(chatRepositoryProvider);
-  final audioService = ref.watch(audioServiceProvider);
-  final permissionService = ref.watch(permissionServiceProvider);
+/// Bom Chat Service provider (Phase 2 - Big Endian)
+final bomChatServiceProvider = Provider<BomChatService>((ref) {
+  return BomChatService();
+});
 
-  return ChatService(repository, audioService, permissionService);
+/// Chat API Client provider
+final chatApiClientProvider = Provider<ChatApiClient>((ref) {
+  final dio = ref.watch(dioWithAuthProvider); // ✅ Authenticated Dio
+  return ChatApiClient(dio);
+});
+
+/// Chat Repository provider (✅ 텍스트 대화용)
+final chatRepositoryProvider = Provider<ChatRepository>((ref) {
+  final apiClient = ref.watch(chatApiClientProvider);
+  return ChatRepository(apiClient);
 });
 
 // ----- State Providers -----
 
 /// Voice Interface State
 enum VoiceInterfaceState {
-  idle,       // 대기 중
-  listening,  // 사용자가 말하는 중
+  idle, // 대기 중
+  loading, // Backend 모델 로딩 중 (잠시만 기다려주세요)
+  listening, // 사용자가 말하는 중 (말씀하세요!)
   processing, // AI가 생각하는 중
-  replying,   // 봄이가 대답하는 중
+  replying, // 봄이가 대답하는 중
 }
 
 /// Chat state
 class ChatState {
   final List<ChatMessage> messages;
   final bool isLoading;
-  final VoiceInterfaceState voiceState; // isRecording 대체 및 고도화
+  final VoiceInterfaceState voiceState;
   final String? error;
   final String sessionId;
+  final String? sttPartialText; // ✅ Phase 3: STT 부분 결과
 
   ChatState({
     required this.messages,
@@ -72,6 +58,7 @@ class ChatState {
     this.voiceState = VoiceInterfaceState.idle,
     this.error,
     required this.sessionId,
+    this.sttPartialText, // ✅ Phase 3
   });
 
   // 하위 호환성을 위한 getter
@@ -83,6 +70,7 @@ class ChatState {
     VoiceInterfaceState? voiceState,
     String? error,
     String? sessionId,
+    String? sttPartialText, // ✅ Phase 3
   }) {
     return ChatState(
       messages: messages ?? this.messages,
@@ -90,33 +78,195 @@ class ChatState {
       voiceState: voiceState ?? this.voiceState,
       error: error,
       sessionId: sessionId ?? this.sessionId,
+      sttPartialText: sttPartialText, // ✅ Phase 3
     );
   }
 }
 
-/// Chat Notifier
+/// Chat Notifier (Phase 2 - BomChatService 사용)
 class ChatNotifier extends StateNotifier<ChatState> {
-  final ChatService _chatService;
+  final BomChatService _bomChatService;
+  final ChatRepository _chatRepository;
   final int _userId;
   final PermissionService _permissionService;
-  StreamSubscription<Map<String, dynamic>>? _audioSubscription;
+
+  // ✅ Session 관리
+  static const _sessionDuration = Duration(minutes: 5);
+  static const _sessionIdKey = 'chat_session_id';
+  static const _sessionTimeKey = 'chat_session_time';
+
+  // 🆕 Alarm dialog callback
+  void Function(Map<String, dynamic> alarmInfo, String replyText)?
+      onShowAlarmDialog;
+  void Function(Map<String, dynamic> alarmInfo)? onShowWarningDialog;
 
   ChatNotifier(
-    this._chatService,
+    this._bomChatService,
+    this._chatRepository, // ✅ ChatRepository 주입
     this._userId,
     this._permissionService,
   ) : super(ChatState(
           messages: [],
           isLoading: false,
           voiceState: VoiceInterfaceState.idle,
-          sessionId: 'user_${_userId}_default',
-        ));
+          sessionId: 'user_${_userId}_default', // 초기값, 나중에 업데이트됨
+        )) {
+    // ✅ Session 복원 또는 생성
+    _initializeSession();
+    // BomChatService 콜백 설정
+    _bomChatService.onResponse = _handleAgentResponse;
+    _bomChatService.onError = _handleError;
+    _bomChatService.onSessionEnd = _handleSessionEnd;
+    _bomChatService.onPartialText = _handlePartialText; // Phase 3 (비활성화)
+    _bomChatService.onSttResult = _handleSttResult; // ✅ STT 결과
+  }
 
-  /// Send text message
+  // ✅ STT 결과 처리 - 사용자 메시지 UI에 표시
+  void _handleSttResult(String sttText) {
+    final userMessage = ChatMessage(
+      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      text: sttText,
+      isUser: true,
+      timestamp: DateTime.now(),
+    );
+
+    state = state.copyWith(
+      messages: [...state.messages, userMessage],
+    );
+  }
+
+  // Phase 3: STT partial 결과 처리 (비활성화)
+  void _handlePartialText(String partialText) {
+    state = state.copyWith(sttPartialText: partialText);
+  }
+
+  /// Start audio recording (Phase 2)
+  Future<void> startAudioRecording() async {
+    try {
+      // 권한 확인
+      final hasPermission = await _permissionService.hasMicrophonePermission();
+      if (!hasPermission) {
+        // 권한 요청
+        final (isGranted, isPermanentlyDenied) =
+            await _permissionService.requestMicrophonePermission();
+        if (!isGranted) {
+          if (isPermanentlyDenied) {
+            throw Exception('PERMANENTLY_DENIED');
+          }
+          throw Exception('마이크 권한이 필요합니다. 설정에서 권한을 허용해주세요.');
+        }
+      }
+
+      // ✅ Backend 모델 로딩 중 상태 (사용자: "잠시만 기다려주세요")
+      state = state.copyWith(
+        voiceState: VoiceInterfaceState.loading,
+        error: null,
+      );
+
+      // ✅ BomChatService로 음성 채팅 시작 (내부에서 Backend ready 대기)
+      await _bomChatService.startVoiceChat(
+        userId: _userId.toString(),
+        sessionId: state.sessionId,
+      );
+
+      // ✅ Ready 완료 후 listening으로 전환 (사용자: "말씀하세요!")
+      state = state.copyWith(
+        voiceState: VoiceInterfaceState.listening,
+      );
+    } catch (e) {
+      state = state.copyWith(
+        voiceState: VoiceInterfaceState.idle,
+        error: null,
+      );
+      rethrow;
+    }
+  }
+
+  /// Stop audio recording
+  Future<void> stopAudioRecording() async {
+    await _bomChatService.stopVoiceChat();
+    state = state.copyWith(voiceState: VoiceInterfaceState.idle);
+  }
+
+  /// Handle agent response from BomChatService
+  void _handleAgentResponse(Map<String, dynamic> response) {
+    final replyText = response['reply_text'] as String?;
+    final emotion = response['emotion'] as String?;
+    final responseType = response['response_type'] as String?;
+    final alarmInfo =
+        response['alarm_info'] as Map<String, dynamic>?; // 🆕 alarm_info
+
+    print('[ChatProvider] 🔍 _handleAgentResponse called');
+    print('[ChatProvider] 🔍 response_type: $responseType');
+    print('[ChatProvider] 🔍 alarm_info: $alarmInfo');
+
+    if (replyText != null && replyText.isNotEmpty) {
+      // AI 응답 추가
+      final aiMessage = ChatMessage(
+        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        text: replyText,
+        isUser: false,
+        timestamp: DateTime.now(),
+        meta: {
+          'emotion': emotion,
+          'response_type': responseType,
+          if (alarmInfo != null) 'alarm_info': alarmInfo, // 🆕 alarm_info 포함
+        },
+      );
+
+      print(
+          '[ChatProvider] ✅ ChatMessage created with meta: ${aiMessage.meta}');
+
+      state = state.copyWith(
+        messages: [...state.messages, aiMessage],
+        voiceState: VoiceInterfaceState.replying,
+      );
+
+      print(
+          '[ChatProvider] ✅ State updated, messages count: ${state.messages.length}');
+
+      // 🆕 Alarm dialog callback trigger
+      if (responseType == 'alarm' && alarmInfo != null) {
+        print('[ChatProvider] 🔔 Triggering alarm dialog callback');
+        onShowAlarmDialog?.call(alarmInfo, replyText);
+      } else if (responseType == 'warning' && alarmInfo != null) {
+        print('[ChatProvider] ⚠️ Triggering warning dialog callback');
+        onShowWarningDialog?.call(alarmInfo);
+      }
+
+      // ✅ WebSocket 연결 유지! - TTS 재생 후 다시 listening으로 전환
+      // 연속 대화를 위해 답변 후에도 WebSocket을 끊지 않고 계속 듣기 상태로 유지
+      // TODO: TTS 재생 완료 후 listening으로 전환
+      // 현재는 3초 후 자동으로 listening으로 전환 (임시)
+      Future.delayed(const Duration(seconds: 3), () {
+        if (state.voiceState == VoiceInterfaceState.replying &&
+            _bomChatService.isActive) {
+          // ✅ idle이 아닌 listening으로 전환하여 연속 대화 가능
+          state = state.copyWith(voiceState: VoiceInterfaceState.listening);
+        }
+      });
+    }
+  }
+
+  /// Handle error
+  void _handleError(String error) {
+    state = state.copyWith(
+      voiceState: VoiceInterfaceState.idle,
+      error: error,
+    );
+  }
+
+  /// Handle session end
+  void _handleSessionEnd() {
+    state = state.copyWith(voiceState: VoiceInterfaceState.idle);
+  }
+
+  /// Send text message (기존 유지 - HTTP API 사용)
+  /// Send text message via HTTP API
   Future<void> sendTextMessage(String text) async {
     if (text.trim().isEmpty) return;
 
-    // Add user message immediately
+    // Add user message to UI
     final userMessage = ChatMessage(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
       text: text,
@@ -131,13 +281,17 @@ class ChatNotifier extends StateNotifier<ChatState> {
     );
 
     try {
-      // Get AI response
-      final aiMessage = await _chatService.sendTextMessage(
+      // ✅ Update session time
+      await _onMessageSent();
+
+      // ✅ Call ChatRepository to send text message
+      final aiMessage = await _chatRepository.sendTextMessage(
         text: text,
         userId: _userId,
         sessionId: state.sessionId,
       );
 
+      // Add AI response to UI
       state = state.copyWith(
         messages: [...state.messages, aiMessage],
         isLoading: false,
@@ -145,153 +299,8 @@ class ChatNotifier extends StateNotifier<ChatState> {
     } catch (e) {
       state = state.copyWith(
         isLoading: false,
-        error: e.toString(),
+        error: '메시지 전송 실패: $e',
       );
-    }
-  }
-
-  /// Load specific session history
-  Future<void> loadSession(String sessionId) async {
-    state = state.copyWith(
-      isLoading: true,
-      messages: [],
-      sessionId: sessionId,
-      error: null,
-    );
-
-    try {
-      final messages = await _chatService.getSessionHistory(sessionId);
-      state = state.copyWith(
-        isLoading: false,
-        messages: messages,
-      );
-    } catch (e) {
-      state = state.copyWith(
-        isLoading: false,
-        error: e.toString(),
-      );
-    }
-  }
-
-  /// Reset session to default
-  void resetSession() {
-    state = state.copyWith(
-      sessionId: 'user_${_userId}_default',
-      messages: [],
-      error: null,
-    );
-  }
-
-  /// Start audio recording
-  Future<void> startAudioRecording() async {
-    try {
-      // 기존 구독 취소하여 중복 방지 (두 번째 턴 버그 수정)
-      await _audioSubscription?.cancel();
-      _audioSubscription = null;
-
-      state = state.copyWith(
-        voiceState: VoiceInterfaceState.listening,
-        error: null,
-      );
-
-      _audioSubscription = await _chatService.startAudioChat(
-        userId: _userId,
-        sessionId: state.sessionId,
-      );
-
-      if (_audioSubscription == null) {
-        throw Exception('마이크 권한이 필요합니다. 설정에서 권한을 허용해주세요.');
-      }
-
-      // Listen to audio responses
-      _audioSubscription?.onData((message) {
-        _handleAudioResponse(message);
-      });
-
-      _audioSubscription?.onError((error) {
-        state = state.copyWith(
-          voiceState: VoiceInterfaceState.idle,
-          error: 'Audio error: $error',
-        );
-      });
-    } catch (e) {
-      state = state.copyWith(
-        voiceState: VoiceInterfaceState.idle,
-        error: null, // 에러는 UI에서 직접 처리하므로 상태에 저장하지 않음
-      );
-      rethrow; // UI에서 에러를 처리할 수 있도록 다시 throw
-    }
-  }
-
-  /// Stop audio recording
-  Future<void> stopAudioRecording() async {
-    await _audioSubscription?.cancel();
-    _audioSubscription = null;
-    await _chatService.stopAudioChat();
-    state = state.copyWith(voiceState: VoiceInterfaceState.idle);
-  }
-
-  /// Handle audio response from WebSocket
-  void _handleAudioResponse(Map<String, dynamic> message) {
-    final type = message['type'];
-
-    if (type == 'status') {
-      // Handle status messages
-      final status = message['status'] as String?;
-      if (status == 'listening') {
-        // 이미 startAudioRecording에서 처리됨
-      } else if (status == 'processing') {
-        state = state.copyWith(voiceState: VoiceInterfaceState.processing);
-      } else if (status == 'speaking') {
-        state = state.copyWith(voiceState: VoiceInterfaceState.replying);
-      }
-    } else if (type == 'stt_result') {
-      // Handle STT result - add user message
-      final userText = message['text'] as String?;
-      final isFinal = message['is_final'] as bool? ?? false;
-      
-      if (userText != null && userText.isNotEmpty) {
-        if (state.voiceState == VoiceInterfaceState.listening && isFinal) {
-           // 사용자가 말을 마치면 처리 상태로 전환
-           state = state.copyWith(voiceState: VoiceInterfaceState.processing);
-        }
-
-        // 중복 추가 방지 로직 필요 (임시로 항상 추가)
-        final userMessage = ChatMessage(
-          id: DateTime.now().millisecondsSinceEpoch.toString(),
-          text: userText,
-          isUser: true,
-          timestamp: DateTime.now(),
-        );
-        state = state.copyWith(
-          messages: [...state.messages, userMessage],
-        );
-      }
-    } else if (type == 'agent_response') {
-      // Handle agent response - add AI message
-      final data = message['data'] as Map<String, dynamic>?;
-      if (data != null) {
-        // 응답 오면 speaking 상태로
-        state = state.copyWith(voiceState: VoiceInterfaceState.replying);
-
-        final replyText = data['reply_text'] as String?;
-        if (replyText != null) {
-          final aiMessage = ChatMessage(
-            id: DateTime.now().millisecondsSinceEpoch.toString(),
-            text: replyText,
-            isUser: false,
-            timestamp: DateTime.now(),
-            meta: data['meta'] as Map<String, dynamic>?,
-          );
-          state = state.copyWith(
-            messages: [...state.messages, aiMessage],
-            // 응답이 완료되면 idle로 돌아가야 하는데, 
-            // 현재 구조에선 오디오 재생 완료 시점을 알기 어려우므로 
-            // 추가적인 'audio_finished' 이벤트가 필요하거나 사용자 상호작용으로 끊어야 함.
-            // 우선은 replying 상태 유지 -> 사용자가 다시 마이크 누르거나 텍스트 입력하면 초기화
-          );
-        }
-      }
     }
   }
 
@@ -320,17 +329,86 @@ class ChatNotifier extends StateNotifier<ChatState> {
     return await _permissionService.isNeverRequested();
   }
 
+  // ============================================================================
+  // Session Management (5분 유지)
+  // ============================================================================
+
+  /// Initialize or restore session
+  Future<void> _initializeSession() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final savedSessionId = prefs.getString(_sessionIdKey);
+      final savedTimeStr = prefs.getString(_sessionTimeKey);
+
+      if (savedSessionId != null && savedTimeStr != null) {
+        final savedTime = DateTime.parse(savedTimeStr);
+        final elapsed = DateTime.now().difference(savedTime);
+
+        // 5분 이내면 기존 session 재사용
+        if (elapsed < _sessionDuration) {
+          state = state.copyWith(sessionId: savedSessionId);
+          await _updateSessionTime();
+          print(
+              '✅ Session restored: $savedSessionId (${elapsed.inMinutes}m ago)');
+          return;
+        }
+      }
+
+      // 새 session 생성
+      await _createNewSession();
+    } catch (e) {
+      print('❌ Session init failed: $e');
+      await _createNewSession();
+    }
+  }
+
+  /// Create new session
+  Future<void> _createNewSession() async {
+    final newSessionId =
+        'user_${_userId}_${DateTime.now().millisecondsSinceEpoch}';
+    state = state.copyWith(sessionId: newSessionId);
+    await _saveSession(newSessionId);
+    print('🆕 New session created: $newSessionId');
+  }
+
+  /// Save session to SharedPreferences
+  Future<void> _saveSession(String sessionId) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_sessionIdKey, sessionId);
+      await prefs.setString(_sessionTimeKey, DateTime.now().toIso8601String());
+    } catch (e) {
+      print('❌ Session save failed: $e');
+    }
+  }
+
+  /// Update session last used time
+  Future<void> _updateSessionTime() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_sessionTimeKey, DateTime.now().toIso8601String());
+    } catch (e) {
+      print('❌ Session time update failed: $e');
+    }
+  }
+
+  /// Update session time on message send
+  Future<void> _onMessageSent() async {
+    await _updateSessionTime();
+  }
+
   @override
   void dispose() {
-    _audioSubscription?.cancel();
-    _chatService.dispose();
-    // super.dispose();
+    _bomChatService.dispose();
+    super.dispose();
   }
 }
 
-/// Chat provider
+/// Chat provider (Phase 2 - BomChatService 사용)
 final chatProvider = StateNotifierProvider<ChatNotifier, ChatState>((ref) {
-  final chatService = ref.watch(chatServiceProvider);
+  final bomChatService = ref.watch(bomChatServiceProvider);
+  final chatRepository =
+      ref.watch(chatRepositoryProvider); // ✅ ChatRepository 추가
   final permissionService = ref.watch(permissionServiceProvider);
   final currentUser = ref.watch(currentUserProvider);
 
@@ -338,5 +416,10 @@ final chatProvider = StateNotifierProvider<ChatNotifier, ChatState>((ref) {
     throw Exception('User not authenticated');
   }
 
-  return ChatNotifier(chatService, currentUser.id, permissionService);
+  return ChatNotifier(
+    bomChatService,
+    chatRepository, // ✅ ChatRepository 주입
+    currentUser.id,
+    permissionService,
+  );
 });

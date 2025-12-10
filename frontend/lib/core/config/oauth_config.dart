@@ -40,21 +40,21 @@ class OAuthConfig {
   // - http://10.0.2.2:8000/auth/callback/naver (Android 에뮬레이터용)
   static String get googleRedirectUri {
     if (Platform.isAndroid) {
-      return 'http://10.0.2.2:8000/auth/callback/google';
+      return 'http://localhost:8000/auth/callback/google';
     }
     return 'http://localhost:8000/auth/callback/google';
   }
 
   static String get kakaoRedirectUri {
     if (Platform.isAndroid) {
-      return 'http://10.0.2.2:8000/auth/callback/kakao';
+      return 'http://localhost:8000/auth/callback/kakao';
     }
     return 'http://localhost:8000/auth/callback/kakao';
   }
 
   static String get naverRedirectUri {
     if (Platform.isAndroid) {
-      return 'http://10.0.2.2:8000/auth/callback/naver';
+      return 'http://localhost:8000/auth/callback/naver';
     }
     return 'http://localhost:8000/auth/callback/naver';
   }

@@ -1,16 +1,14 @@
-import 'dart:typed_data';
 import '../../api/chat/chat_api_client.dart';
-import '../../api/chat/chat_websocket_client.dart';
 import '../../dtos/chat/text_chat_request.dart';
 import '../../models/chat/chat_message.dart';
 import '../../../core/utils/logger.dart';
 
 /// Chat Repository - Abstracts data sources
+/// Phase 2: 음성 채팅은 BomChatService로 이동, 텍스트 채팅만 유지
 class ChatRepository {
   final ChatApiClient _apiClient;
-  final ChatWebSocketClient _webSocketClient;
 
-  ChatRepository(this._apiClient, this._webSocketClient);
+  ChatRepository(this._apiClient);
 
   /// Send text message and return ChatMessage
   Future<ChatMessage> sendTextMessage({
@@ -38,48 +36,11 @@ class ChatRepository {
     );
   }
 
-  /// Connect to audio WebSocket
-  Future<void> connectAudioStream() async {
-    await _webSocketClient.connect();
-  }
-
-  /// Disconnect audio WebSocket
-  Future<void> disconnectAudioStream() async {
-    await _webSocketClient.disconnect();
-  }
-
-  /// Set session for audio streaming
-  void setAudioSessionId(String sessionId) {
-    _webSocketClient.setSessionId(sessionId);
-  }
-
-  /// Send audio chunk
-  void sendAudioChunk(Float32List audioChunk) {
-    _webSocketClient.sendAudioChunk(audioChunk);
-  }
-
-  /// Stream of audio responses
-  Stream<Map<String, dynamic>>? get audioMessageStream =>
-      _webSocketClient.messageStream;
-
-  /// Get session history
-  Future<List<ChatMessage>> getSessionHistory(String sessionId) async {
-    final response = await _apiClient.getSessionHistory(sessionId);
-
-    return response.messages
-        .map((dto) => ChatMessage(
-              id: dto.messageId?.toString() ??
-                  DateTime.now().millisecondsSinceEpoch.toString(),
-              text: dto.content ?? '',
-              isUser: dto.role == 'user',
-              timestamp: dto.timestamp != null
-                  ? DateTime.parse(dto.timestamp!)
-                  : DateTime.now(),
-              meta: null, // Meta data processing if needed
-            ))
-        .toList();
-  }
-
-  /// Check if audio is connected
-  bool get isAudioConnected => _webSocketClient.isConnected;
+  // ❌ 삭제: 음성 채팅 관련 메서드는 BomChatService로 이동
+  // - connectAudioStream()
+  // - disconnectAudioStream()
+  // - setAudioSessionId()
+  // - sendAudioChunk()
+  // - audioMessageStream
+  // - isAudioConnected
 }
