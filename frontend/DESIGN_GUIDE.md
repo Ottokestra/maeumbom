@@ -957,7 +957,7 @@ Text(
 
 ### 8.1 AppFrame
 
-**파일:** `lib/ui/layout/app_frame.dart`
+**파일:** `lib/ui/layout/`
 
 화면의 기본 레이아웃 구조를 제공하는 최상위 프레임입니다.
 
