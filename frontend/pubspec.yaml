@@ -116,6 +116,7 @@ flutter:
     - assets/images/icons/
     - assets/images/logo/
 
+
   fonts:
     - family: Pretendard
       fonts:

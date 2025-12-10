@@ -44,6 +44,7 @@ class ScenarioResult with _$ScenarioResult {
 class ScenarioStartResponse with _$ScenarioStartResponse {
   const factory ScenarioStartResponse({
     @JsonKey(name: 'scenario_id') required int scenarioId,
+    @JsonKey(name: 'start_image_url') String? imageUrl,
     // API returns 'first_node' but we map it to 'currentNode' domain model
     @JsonKey(name: 'first_node') ScenarioNode? currentNode,
   }) = _ScenarioStartResponse;
