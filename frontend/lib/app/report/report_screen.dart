@@ -17,8 +17,10 @@ class ReportScreen extends ConsumerWidget {
     return AppFrame(
       topBar: TopBar(
         title: '마음리포트',
-        rightIcon: Icons.close,
-        onTapRight: () => Navigator.pop(context),
+        leftIcon: Icons.arrow_back_ios,
+        rightIcon: Icons.more_horiz,
+        onTapLeft: () => navigationService.navigateToTab(0),
+        onTapRight: () => MoreMenuSheet.show(context),
       ),
       bottomBar: BottomMenuBar(
         currentIndex: 3,

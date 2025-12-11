@@ -16,14 +16,17 @@ class ChatRepository {
     required int userId,
     String? sessionId,
     String? sttQuality,
+    bool? ttsEnabled, // ✅ TTS 활성화 여부
   }) async {
     final request = TextChatRequest(
       userText: text,
       sessionId: sessionId ?? 'user_${userId}_default',
       sttQuality: sttQuality,
+      ttsEnabled: ttsEnabled, // ✅ TTS 활성화 여부 전달
     );
 
-    appLogger.i('Sending text message via repository');
+    appLogger
+        .i('Sending text message via repository (ttsEnabled: $ttsEnabled)');
     final response = await _apiClient.sendTextMessage(request);
 
     // Convert response to ChatMessage
@@ -42,14 +45,17 @@ class ChatRepository {
     required int userId,
     String? sessionId,
     String? sttQuality,
+    bool? ttsEnabled, // ✅ TTS 활성화 여부
   }) async {
     final request = TextChatRequest(
       userText: text,
       sessionId: sessionId ?? 'user_${userId}_default',
       sttQuality: sttQuality,
+      ttsEnabled: ttsEnabled, // ✅ TTS 활성화 여부 전달
     );
 
-    appLogger.i('Sending text message via repository (raw)');
+    appLogger.i(
+        'Sending text message via repository (raw, ttsEnabled: $ttsEnabled)');
     final response = await _apiClient.sendTextMessage(request);
 
     print('[ChatRepository] Raw response meta: ${response.meta}');
@@ -61,6 +67,8 @@ class ChatRepository {
       'emotion': response.meta?['emotion'],
       'response_type': response.meta?['response_type'],
       'alarm_info': response.meta?['alarm_info'],
+      'tts_audio_url': response.meta?['tts_audio_url'], // ✅ TTS 오디오 URL
+      'tts_status': response.meta?['tts_status'], // ✅ TTS 상태
     };
 
     print('[ChatRepository] Returning result: $result');

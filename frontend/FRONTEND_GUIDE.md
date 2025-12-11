@@ -210,21 +210,23 @@ frontend/
 **모든 UI 개발 시 [DESIGN_GUIDE.md](./DESIGN_GUIDE.md)를 필수로 참고하세요.**
 
 디자인 가이드에는 다음 내용이 포함되어 있습니다:
-- ✅ 디자인 토큰 (Colors, Typography, Spacing, Radius, Icons, Bubbles)
+- ✅ 디자인 토큰 (Colors, Typography, Spacing, Radius, Icons, Bubbles, Toggles)
 - ✅ Layout 시스템 (AppFrame, Top Bar, 3가지 Bottom Bar)
-- ✅ 컴포넌트 사용법 (AppButton, AppInput, Bubbles, Voice, Ripple)
+- ✅ 컴포넌트 사용법 (AppButton, AppInput, Bubbles, Voice, Ripple, Toggle)
 - ✅ 실제 사용 예시 (홈, 폼, 채팅 화면)
 - ✅ Best Practices
 
 ** 컴포넌트 **:
 - ✅ ChatBubble - 사용자/봇 채팅 말풍선
 - ✅ SystemBubble - 시스템 메시지 (info/success/warning)
-- ✅ EmotionBubble - 감정 말풍선 (캐릭터 + 메시지)
+- ✅ EmotionBubble - 감정 말풍선 (TTS 토글 지원)
+- ✅ ListBubble - 선택형 답변 말풍선 (response_type: list)
 - ✅ VoiceWaveform - 음성 녹음 파동 애니메이션
 - ✅ CircularRipple - 캐릭터 원형 파동 효과
 - ✅ MoreMenuSheet - 더보기 메뉴 시트
-- [x] SlideToActionButton - 슬라이드 액션 버튼
-- [x] TopNotification - 상단 알림 배너 (Red/Green 테마)
+- ✅ SlideToActionButton - 슬라이드 액션 버튼
+- ✅ TopNotification - 상단 알림 배너 (Red/Green 테마)
+- ✅ MessageDialog - 확인/알림 다이얼로그
 
 ** 캐릭터 **:
 - ✅ EmotionCharacter - 정적 감정 캐릭터 (PNG, 17개)
@@ -266,6 +268,38 @@ class NewScreen extends StatelessWidget {
 }
 ```
 
+**투명 상태바/TopBar 패턴 (Home/Alarm):**
+```dart
+class TranslucentScreen extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return AppFrame(
+      topBar: null, // 프레임의 TopBar는 사용 안함
+      useSafeArea: false, // 배경색 확장
+      statusBarStyle: SystemUiOverlayStyle.light, // 흰색 아이콘
+      body: Container(
+        color: dynamicBackgroundColor, // 배경색
+        child: SafeArea(
+          bottom: false, // 하단 배경 확장
+          child: Column(
+            children: [
+              // 본문 내에 TopBar 배치
+              TopBar(
+                title: 'Title',
+                backgroundColor: Colors.transparent, 
+                foregroundColor: AppColors.pureWhite,
+                // ...
+              ),
+              Expanded(child: Content()),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+```
+
 **애니메이션 캐릭터 사용:**
 ```dart
 // 봄이 화면에서 감정 캐릭터 애니메이션
@@ -302,6 +336,47 @@ Container(
     borderRadius: BorderRadius.circular(12),  // 하드코딩 ❌
   ),
 )
+```
+
+#### 4. 토글 사용
+
+```dart
+// ✅ 권장: Toggle 토큰 사용
+_buildToggle(
+  value: ttsEnabled,
+  onChanged: (value) => toggleTts(),
+  style: ToggleStyle.primary(), // 빨간색 토글
+)
+
+_buildToggle(
+  value: isEnabled,
+  onChanged: (value) => toggle(),
+  style: ToggleStyle.secondary(), // 초록색 토글
+)
+
+// ❌ 비권장: 하드코딩
+Switch(
+  value: isEnabled,
+  onChanged: (value) => toggle(),
+  activeColor: Colors.white,  // 하드코딩 ❌
+  activeTrackColor: Colors.red,  // 하드코딩 ❌
+)
+```
+
+#### 5. 선택형 답변 사용
+
+```dart
+// response_type이 'list'일 때
+if (responseType == 'list') {
+  ListBubble(
+    items: parseListItems(replyText),
+    selectedIndex: selectedIndex,
+    onItemSelected: (index, item) {
+      // 선택한 항목을 서버로 전송
+      sendMessage(item);
+    },
+  )
+}
 ```
 
 ---
@@ -2950,6 +3025,231 @@ TopNotificationManager.show(
 - **[DESIGN_GUIDE.md - TopNotification](./DESIGN_GUIDE.md#93-topnotification)** - 디자인 상세 가이드
 - **구현 파일**: `lib/ui/components/top_notification.dart`
 - **사용 예시**: `lib/app/chat/bomi_screen.dart`
+
+---
+
+## 🔊 TTS 및 선택형 답변 기능
+
+### 개요
+
+봄이 채팅 화면에서 TTS(Text-to-Speech) 토글과 선택형 답변 UI를 제공합니다.
+
+### TTS 토글 기능
+
+#### 구현 위치
+- **EmotionBubble 외부**, 우측 정렬로 배치
+- "목소리 듣기" 레이블 + Switch 토글
+- `BomiContent`에서 관리 (일반 답변과 선택형 답변 모두)
+
+#### 상태 관리
+```dart
+// ChatState에 ttsEnabled 필드
+class ChatState {
+  final bool ttsEnabled; // TTS 활성화 여부
+  // ...
+}
+
+// SharedPreferences에 저장하여 앱 재시작 시에도 유지
+final prefs = await SharedPreferences.getInstance();
+await prefs.setBool('chat_tts_enabled', ttsEnabled);
+```
+
+#### 사용 예시
+```dart
+// BomiContent에서 TTS 토글 배치
+Row(
+  mainAxisAlignment: MainAxisAlignment.end,
+  children: [
+    Text(
+      '목소리 듣기',
+      style: AppTypography.caption.copyWith(
+        color: AppColors.textSecondary,
+        fontWeight: FontWeight.w500,
+      ),
+    ),
+    const SizedBox(width: 8),
+    _buildToggle(
+      value: chatState.ttsEnabled,
+      onChanged: (value) {
+        ref.read(chatProvider.notifier).toggleTtsEnabled();
+      },
+      style: ToggleStyle.primary(),
+    ),
+  ],
+),
+// 그 아래 EmotionBubble 배치
+EmotionBubble(
+  message: '오늘 하루 어떠셨나요?',
+  enableTypingAnimation: true,
+)
+```
+
+#### API 연동
+```dart
+// 메시지 전송 시 tts_enabled 파라미터 포함
+final response = await _chatRepository.sendTextMessageRaw(
+  text: text,
+  userId: _userId,
+  sessionId: state.sessionId,
+  ttsEnabled: state.ttsEnabled, // ✅ TTS 활성화 여부 전달
+);
+
+// 응답에서 TTS 오디오 URL 수신
+{
+  "reply_text": "string",
+  "tts_audio_url": "string",  // TTS 오디오 URL
+  "tts_status": "ready",      // TTS 상태
+  "meta": { ... }
+}
+```
+
+### 선택형 답변 (ListBubble)
+
+#### 개요
+`response_type: "list"`일 때 사용자가 선택할 수 있는 항목 리스트를 표시합니다.
+
+#### 데이터 구조
+```json
+{
+  "reply_text": "갱년기에 좋은 운동 추천해줄게!\n\n1. 요가 - 스트레칭과 명상을 통해 몸과 마음을 편안하게 해줘\n2. 산책 - 가벼운 유산산소 운동으로 기분 전환에 좋아\n3. 수영 - 관절에 무리 없이 전신 운동을 할 수 있어",
+  "emotion": "happiness",
+  "response_type": "list",
+  "meta": {
+    "model": "gpt-4o-mini",
+    "session_id": "user_2_1765330968438",
+    "response_type": "list"
+  }
+}
+```
+
+#### 구현 예시
+```dart
+// response_type 확인
+final responseType = latestBotMessage?.responseType;
+final isListType = responseType == 'list';
+
+// list 타입일 때 요약 텍스트만 추출
+String getSummaryText(String fullText) {
+  if (!isListType) return fullText;
+  
+  final lines = fullText.split('\n');
+  final summaryLines = <String>[];
+  
+  for (final line in lines) {
+    final trimmed = line.trim();
+    // 번호 리스트가 시작되면 중단
+    if (RegExp(r'^\d+\.\s+').hasMatch(trimmed)) {
+      break;
+    }
+    if (trimmed.isNotEmpty) {
+      summaryLines.add(trimmed);
+    }
+  }
+  
+  return summaryLines.isEmpty ? fullText : summaryLines.join('\n');
+}
+
+// 조건부 렌더링
+if (isListType) {
+  // TTS 토글
+  Row(
+    mainAxisAlignment: MainAxisAlignment.end,
+    children: [
+      Text('목소리 듣기', ...),
+      _buildToggle(...),
+    ],
+  ),
+  
+  // 안내 메시지 (요약만 표시)
+  EmotionBubble(
+    message: getSummaryText(botMessageText),
+    enableTypingAnimation: true,
+  ),
+  
+  // 선택 가능한 리스트
+  ListBubble(
+    items: parseListItems(botMessageText),
+    selectedIndex: _selectedListIndex,
+    disabled: _selectedListIndex != -1,
+    onItemSelected: (index, item) {
+      setState(() {
+        _selectedListIndex = index;
+      });
+      // 선택한 항목을 서버로 전송
+      _handleListItemSelected(item);
+    },
+  ),
+}
+```
+
+#### 텍스트 파싱
+```dart
+// parseListItems 유틸리티 함수
+final items = parseListItems(replyText);
+// 입력: "1. 요가\n2. 산책\n3. 수영"
+// 출력: ['요가', '산책', '수영']
+```
+
+#### ListBubble 특징
+- 아웃라인 스타일 (테두리만 있는 버블)
+- 번호 표시 (원형 배지)
+- 선택 시 강조 표시 (빨간색 테두리 + 배경 + 체크 아이콘)
+- 선택 후 다른 항목 비활성화 (연한 회색 처리)
+- 각 항목은 독립적으로 클릭 가능
+- 자동으로 서버에 선택 항목 전송
+
+#### UI 개선 사항
+- **스크롤바**: list 타입일 때만 표시 (`thumbVisibility: isListType`)
+- **키보드 대응**: 텍스트 입력 시 자동으로 스크롤 하단 이동
+- **EmotionBubble 동적 높이**: 
+  - 최소 60px ~ 최대 144px (4줄)
+  - 짧은 텍스트는 작게, 긴 텍스트는 최대 4줄까지
+  - 4줄 초과 시 스크롤 가능
+
+### Toggle 토큰 시스템
+
+#### 토큰 정의
+```dart
+// Primary Toggle (빨간색) - TTS 등
+ToggleStyle.primary()
+
+// Secondary Toggle (초록색) - 보조 기능
+ToggleStyle.secondary()
+
+// 크기 조정
+ToggleStyle.primary(size: ToggleSize.large)
+```
+
+#### 사용 예시
+```dart
+Widget _buildToggle({
+  required bool value,
+  required ValueChanged<bool>? onChanged,
+  required ToggleStyle style,
+}) {
+  return Transform.scale(
+    scale: style.scale,
+    child: Switch(
+      value: value,
+      onChanged: onChanged,
+      activeColor: style.activeThumb,
+      activeTrackColor: style.activeTrack,
+      inactiveThumbColor: style.inactiveThumb,
+      inactiveTrackColor: style.inactiveTrack,
+    ),
+  );
+}
+```
+
+### 주요 파일
+- `lib/providers/chat_provider.dart` - TTS 상태 관리
+- `lib/ui/components/emotion_bubble.dart` - TTS 토글 UI
+- `lib/ui/components/list_bubble.dart` - 선택형 버블
+- `lib/ui/tokens/toggles.dart` - 토글 토큰
+- `lib/app/chat/components/bomi_content.dart` - 조건부 렌더링
+- `lib/data/models/chat/chat_message.dart` - responseType getter
+- `lib/data/dtos/chat/text_chat_request.dart` - tts_enabled 필드
+- `lib/data/repository/chat/chat_repository.dart` - API 파라미터 전달
 
 ---
 

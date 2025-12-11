@@ -170,7 +170,7 @@ class _SlideToActionButtonState extends State<SlideToActionButton>
         targetText = '준비 중...'; // ✅ 새로 추가!
         break;
       case VoiceInterfaceState.listening:
-        targetText = '말씀해주세요...';
+        targetText = '나에게 얘기해줘...';
         break;
       case VoiceInterfaceState.processing:
         targetText = '생각하는 중...';

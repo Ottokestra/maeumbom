@@ -31,10 +31,13 @@ class _BomiContentState extends ConsumerState<BomiContent> {
   Timer? _textCompletionTimer;
   bool _showTextCompletion = false;
   bool _callbacksRegistered = false;
+  int _selectedListIndex = -1; // 선택된 리스트 항목 인덱스
+  final ScrollController _scrollController = ScrollController();
 
   @override
   void dispose() {
     _textCompletionTimer?.cancel();
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -57,6 +60,25 @@ class _BomiContentState extends ConsumerState<BomiContent> {
       context,
       alarmInfo: alarmInfo,
     );
+  }
+
+  /// 리스트 항목 선택 핸들러
+  Future<void> _handleListItemSelected(String item) async {
+    if (!mounted) return;
+
+    // 선택한 항목을 서버로 전송
+    try {
+      await ref.read(chatProvider.notifier).sendTextMessage(item);
+    } catch (e) {
+      print('[BomiContent] ❌ Error sending list item: $e');
+      if (mounted) {
+        TopNotificationManager.show(
+          context,
+          message: '전송 실패: ${e.toString()}',
+          type: TopNotificationType.red,
+        );
+      }
+    }
   }
 
   @override
@@ -113,6 +135,14 @@ class _BomiContentState extends ConsumerState<BomiContent> {
           });
         }
       }
+
+      // 새 메시지가 추가되면 선택 상태 초기화
+      if (previous != null &&
+          previous.messages.length != next.messages.length) {
+        setState(() {
+          _selectedListIndex = -1;
+        });
+      }
     });
 
     // 최신 AI 메시지
@@ -121,6 +151,61 @@ class _BomiContentState extends ConsumerState<BomiContent> {
 
     final botMessageText = latestBotMessage?.text ??
         '오늘 하루 어떠셨나요? 대화를 진행해볼까요? 아래 마이크나 텍스트 버튼을 눌러 시작해보세요.';
+
+    // response_type 확인
+    final responseType = latestBotMessage?.responseType;
+    final isListType = responseType == 'list';
+
+    // list 타입일 때 요약 텍스트 추출 (첫 번째 줄 또는 번호 리스트 이전 텍스트)
+    String getSummaryText(String fullText) {
+      if (!isListType) return fullText;
+
+      final lines = fullText.split('\n');
+      final summaryLines = <String>[];
+
+      for (final line in lines) {
+        final trimmed = line.trim();
+        // 번호 리스트가 시작되면 중단
+        if (RegExp(r'^\d+\.\s+').hasMatch(trimmed)) {
+          break;
+        }
+        // 빈 줄이 아니면 추가
+        if (trimmed.isNotEmpty) {
+          summaryLines.add(trimmed);
+        }
+      }
+
+      return summaryLines.isEmpty ? fullText : summaryLines.join('\n');
+    }
+
+    final displayText = getSummaryText(botMessageText);
+
+    // 디버깅 로그
+    if (latestBotMessage != null) {
+      print('[BomiContent] 🔍 Latest message meta: ${latestBotMessage.meta}');
+      print('[BomiContent] 🔍 responseType: $responseType');
+      print('[BomiContent] 🔍 isListType: $isListType');
+      if (isListType) {
+        print('[BomiContent] 📝 Summary text: $displayText');
+      }
+    }
+
+    // 키보드 높이 감지
+    final keyboardHeight = MediaQuery.of(context).viewInsets.bottom;
+
+    // 알람 패널 높이 고려 (패널이 있을 때 하단 여백 추가)
+    final bottomPadding = keyboardHeight > 0 ? 0.0 : 80.0; // 패널 접힌 상태 높이
+
+    // 키보드가 나타날 때 스크롤 이동
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (keyboardHeight > 0 && _scrollController.hasClients) {
+        _scrollController.animateTo(
+          _scrollController.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 200),
+          curve: Curves.easeOut,
+        );
+      }
+    });
 
     return GestureDetector(
       onTap: () {
@@ -131,37 +216,128 @@ class _BomiContentState extends ConsumerState<BomiContent> {
       child: Container(
         color: AppColors.bgBasic,
         child: SafeArea(
-          child: SingleChildScrollView(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppSpacing.md,
-                vertical: AppSpacing.sm,
-              ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  // 1. 캐릭터 + Process Indicator 레이어
-                  _buildCharacterLayer(
-                    mode: mode,
-                    currentStep: currentStep,
-                    animationState: animationState,
-                  ),
+          child: Scrollbar(
+            thumbVisibility: isListType, // list 타입일 때만 스크롤바 표시
+            thickness: 4.0,
+            radius: const Radius.circular(8.0),
+            controller: _scrollController,
+            child: SingleChildScrollView(
+              controller: _scrollController,
+              child: Padding(
+                padding: EdgeInsets.only(
+                  left: AppSpacing.md,
+                  right: AppSpacing.md,
+                  top: AppSpacing.sm,
+                  bottom: AppSpacing.sm + bottomPadding,
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    // 1. 캐릭터 + Process Indicator 레이어
+                    _buildCharacterLayer(
+                      mode: mode,
+                      currentStep: currentStep,
+                      animationState: animationState,
+                    ),
 
-                  const SizedBox(height: AppSpacing.sm),
+                    // 2. AI 봄이 메시지 버블 (일반 답변)
+                    if (!isListType) ...[
+                      // TTS 토글
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          Text(
+                            '목소리 듣기',
+                            style: AppTypography.caption.copyWith(
+                              color: AppColors.textSecondary,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          _buildToggle(
+                            value: chatState.ttsEnabled,
+                            onChanged: (value) {
+                              ref
+                                  .read(chatProvider.notifier)
+                                  .toggleTtsEnabled();
+                            },
+                            style: ToggleStyle.primary(),
+                          ),
+                        ],
+                      ),
+                      // 메시지 버블
+                      EmotionBubble(
+                        message: displayText,
+                        enableTypingAnimation: latestBotMessage != null,
+                        key: ValueKey(latestBotMessage?.id ?? 'default'),
+                        showTtsToggle: false,
+                      ),
+                    ],
 
-                  // 2. AI 봄이 메시지 버블
-                  EmotionBubble(
-                    message: botMessageText,
-                    enableTypingAnimation: latestBotMessage != null,
-                    key: ValueKey(latestBotMessage?.id ?? 'default'),
-                  ),
+                    // 2-1. 선택형 답변 (response_type: list)
+                    if (isListType) ...[
+                      // TTS 토글
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          Text(
+                            '목소리 듣기',
+                            style: AppTypography.caption.copyWith(
+                              color: AppColors.textSecondary,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          _buildToggle(
+                            value: chatState.ttsEnabled,
+                            onChanged: (value) {
+                              ref
+                                  .read(chatProvider.notifier)
+                                  .toggleTtsEnabled();
+                            },
+                            style: ToggleStyle.primary(),
+                          ),
+                        ],
+                      ),
+                      // 안내 메시지 버블 (요약만 표시)
+                      EmotionBubble(
+                        message: displayText,
+                        enableTypingAnimation: latestBotMessage != null,
+                        key: ValueKey(
+                            '${latestBotMessage?.id ?? 'default'}_intro'),
+                      ),
+                      const SizedBox(height: AppSpacing.md),
+                      // 선택 가능한 리스트 버블
+                      Builder(
+                        builder: (context) {
+                          final items = parseListItems(botMessageText);
+                          print('[BomiContent] 📋 Parsed list items: $items');
+                          print(
+                              '[BomiContent] 📋 Items count: ${items.length}');
 
-                  // 3. STT Partial 결과 표시
-                  if (chatState.sttPartialText != null &&
-                      chatState.sttPartialText!.isNotEmpty)
-                    _buildSttPartialText(chatState.sttPartialText!),
-                ],
+                          return ListBubble(
+                            items: items,
+                            selectedIndex: _selectedListIndex,
+                            disabled: _selectedListIndex != -1,
+                            onItemSelected: (index, item) {
+                              setState(() {
+                                _selectedListIndex = index;
+                              });
+                              // 선택한 항목을 서버로 전송
+                              _handleListItemSelected(item);
+                            },
+                          );
+                        },
+                      ),
+                    ],
+
+                    // 3. STT Partial 결과 표시
+                    if (chatState.sttPartialText != null &&
+                        chatState.sttPartialText!.isNotEmpty)
+                      _buildSttPartialText(chatState.sttPartialText!),
+                  ],
+                ),
               ),
             ),
           ),
@@ -177,14 +353,21 @@ class _BomiContentState extends ConsumerState<BomiContent> {
     required String animationState,
   }) {
     return SizedBox(
-      height: 360, // Stack 전체 높이 (캐릭터 300 + 여유 60)
+      height: 350, // Stack 전체 높이 (캐릭터 300 + 여유 60)
       child: Stack(
         alignment: Alignment.center,
         clipBehavior: Clip.none,
         children: [
+          // 배경색 유지 (전환 중 하얀 화면 방지)
+          Positioned.fill(
+            child: Container(
+              color: AppColors.bgBasic,
+            ),
+          ),
+
           // 캐릭터 애니메이션
           Positioned(
-            top: 50, // 캐릭터를 아래로 이동
+            top: 20, // 캐릭터를 아래로 이동
             child: AnimatedSwitcher(
               duration: const Duration(milliseconds: 300),
               switchInCurve: Curves.easeInOut,
@@ -203,7 +386,7 @@ class _BomiContentState extends ConsumerState<BomiContent> {
                 key: ValueKey(animationState),
                 characterId: 'relief',
                 emotion: animationState,
-                size: animationState == 'basic' ? 270 : 300,
+                size: 350,
                 repeat: true,
                 animate: true,
               ),
@@ -257,6 +440,25 @@ class _BomiContentState extends ConsumerState<BomiContent> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  /// 토글 빌드 헬퍼
+  Widget _buildToggle({
+    required bool value,
+    required ValueChanged<bool>? onChanged,
+    required ToggleStyle style,
+  }) {
+    return Transform.scale(
+      scale: style.scale,
+      child: Switch(
+        value: value,
+        onChanged: onChanged,
+        activeColor: style.activeThumb,
+        activeTrackColor: style.activeTrack,
+        inactiveThumbColor: style.inactiveThumb,
+        inactiveTrackColor: style.inactiveTrack,
       ),
     );
   }
