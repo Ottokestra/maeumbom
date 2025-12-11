@@ -32,16 +32,22 @@ Deep Agent Pipeline은 **Gemini**와 **GPT-4o-mini**를 함께 사용합니다:
 
 ```
 GPT-4o-mini (Orchestration)
-  ↓ 프롬프트 준비 (scenario_architect.md)
-Gemini (Scenario Generation)
+  ↓ 프롬프트 준비
+    - 관계 개선 훈련: scenario_architect.md
+    - 드라마: scenario_prompt_drama.md
+Gemini 2.5 Flash (Scenario Generation)
   ↓ 시나리오 JSON 생성
 GPT-4o-mini (Validation)
   ↓ 검증 및 파싱
 DB 저장
+  - 관계 개선 훈련: USER_ID = 사용자 ID (개인 시나리오)
+  - 드라마: USER_ID = NULL (공용 시나리오)
 ```
 
 - **GPT-4o-mini**: 오케스트레이션 (프롬프트 준비, 검증, 파싱)
-- **Gemini 2.5 Flash**: 시나리오 생성 (scenario_architect.md 하나로 전체 시나리오 한 번에 생성)
+- **Gemini 2.5 Flash**: 시나리오 생성
+  - 관계 개선 훈련: `scenario_architect.md` 사용
+  - 드라마: `scenario_prompt_drama.md` 사용 (장르별 자동 창작)
 - **Gemini 2.5 Flash Image**: 이미지 생성 (선택적, API 기반)
 
 ### 환경 변수 설정
@@ -85,6 +91,7 @@ Gemini API 키는 [Google AI Studio](https://makersuite.google.com/app/apikey)�
 
 **API 호출:**
 
+**관계 개선 훈련 시나리오:**
 ```bash
 POST /api/service/relation-training/generate-scenario
 Authorization: Bearer {access_token}
@@ -92,9 +99,29 @@ Content-Type: application/json
 
 {
   "target": "HUSBAND",  # HUSBAND, CHILD, FRIEND, COLLEAGUE
-  "topic": "매일 늦게 들어오는 남편"
+  "topic": "매일 늦게 들어오는 남편",
+  "category": "TRAINING"  # 기본값
 }
 ```
+
+**드라마 시나리오:**
+```bash
+POST /api/service/relation-training/generate-scenario
+Authorization: Bearer {access_token}
+Content-Type: application/json
+
+{
+  "target": "AUTO",  # AUTO (랜덤 배역) 또는 HUSBAND, CHILD, FRIEND, COLLEAGUE
+  "topic": "AUTO",  # AUTO (AI 자동 창작) 또는 직접 입력
+  "category": "DRAMA",
+  "genre": "MAKJANG"  # MAKJANG, ROMANCE, FAMILY
+}
+```
+
+**참고:**
+- 드라마 시나리오는 공용 시나리오로 생성됩니다 (USER_ID = NULL)
+- `target: "AUTO"` 또는 `topic: "AUTO"`를 사용하면 AI가 자동으로 창작합니다
+- 드라마 시나리오는 모든 사용자가 볼 수 있습니다
 
 **응답 (비동기 처리):**
 
@@ -126,18 +153,32 @@ Content-Type: application/json
 
 ### 시나리오 생성 프로세스
 
-1. **프롬프트 준비** (GPT-4o-mini): `scenario_architect.md` 로드 및 변수 치환
-2. **시나리오 생성** (Gemini): 전체 시나리오 JSON 한 번에 생성
+**관계 개선 훈련:**
+1. **프롬프트 준비** (GPT-4o-mini): `scenario_architect.md` 로드 및 변수 치환 (TARGET, TOPIC)
+2. **시나리오 생성** (Gemini 2.5 Flash): 전체 시나리오 JSON 한 번에 생성
    - Character Design
    - Nodes (15개)
    - Options (30개)
    - Results (16개)
 3. **검증 및 파싱** (GPT-4o-mini): JSON 구조 검증 및 Pydantic 모델 변환
 4. **폴더명 생성**: 시나리오 타이틀 기반 하이브리드 방식 (`{타이틀}_{timestamp}`)
+5. **이미지 생성** (Gemini 2.5 Flash Image, 선택적): 17장 이미지 생성
+6. **저장**: DB에 개인 시나리오로 저장 (USER_ID = 사용자 ID)
+
+**드라마:**
+1. **프롬프트 준비** (GPT-4o-mini): `scenario_prompt_drama.md` 로드 및 변수 치환 (TARGET, TOPIC, GENRE)
+2. **시나리오 생성** (Gemini 2.5 Flash): 드라마 스타일 시나리오 JSON 생성
+   - `target: "AUTO"`인 경우 AI가 장르에 맞춰 배역 자동 선택
+   - `topic: "AUTO"`인 경우 AI가 장르에 맞춰 주제 자동 창작
+3. **검증 및 파싱** (GPT-4o-mini): JSON 구조 검증 및 Pydantic 모델 변환
+4. **폴더명 생성**: 시나리오 타이틀 기반 하이브리드 방식 (`{타이틀}_{timestamp}`)
+5. **이미지 생성** (Gemini 2.5 Flash Image, 선택적): 17장 이미지 생성 (`images/public/` 폴더)
+6. **저장**: DB에 공용 시나리오로 저장 (USER_ID = NULL)
 
 ### 프롬프트 파일
 
-- `prompts/scenario_architect.md` - 전체 시나리오 생성용 올인원 프롬프트 (현재 사용)
+- `prompts/scenario_architect.md` - 관계 개선 훈련 시나리오 생성용 프롬프트
+- `prompts/scenario_prompt_drama.md` - 드라마 시나리오 생성용 프롬프트 (NEW!)
 - `prompts/step0_character_design.md` - 레거시 (사용 안 함)
 - `prompts/step1_nodes.md` - 레거시 (사용 안 함)
 - `prompts/step2_options.md` - 레거시 (사용 안 함)
@@ -630,20 +671,39 @@ python main.py
 프론트엔드에서 관계 훈련 화면의 설정 아이콘을 통해 시나리오를 생성할 수 있습니다.
 
 **사용 방법:**
+
+**관계 개선 훈련 시나리오:**
 1. 관계 훈련 목록 화면에서 상단의 설정 아이콘 클릭
-2. 관계 대상 선택 (남편/자식/친구/직장동료)
-3. 주제 입력 (예: "매일 늦게 들어오는 남편")
-4. 생성하기 버튼 클릭
-5. 시나리오 생성이 시작되면 알림 표시
-6. 약 20-30초 후 목록을 새로고침하여 생성된 시나리오 확인
+2. 카테고리: "관계 개선 훈련" 선택
+3. 관계 대상 선택 (남편/자식/친구/직장동료)
+4. 주제 입력 (예: "매일 늦게 들어오는 남편")
+5. 생성하기 버튼 클릭
+6. 시나리오 생성이 시작되면 알림 표시
+7. 약 20-30초 후 목록을 새로고침하여 생성된 시나리오 확인
+
+**드라마 시나리오:**
+1. 관계 훈련 목록 화면에서 상단의 설정 아이콘 클릭
+2. 카테고리: "드라마" 선택
+3. 장르 선택 (막장/로맨스/가족)
+4. 관계 대상 선택:
+   - "🎲 랜덤 배역" 선택 시 AI가 장르에 맞춰 배역 자동 선택
+   - 또는 구체적 대상 선택 (남편/자식/친구/직장동료)
+5. 주제 입력:
+   - "☑ AI가 알아서 주제 창작하기" 체크 시 AI가 자동 창작
+   - 또는 직접 주제 입력
+6. 생성하기 버튼 클릭
+7. 시나리오 생성이 시작되면 알림 표시
+8. 약 20-30초 후 목록을 새로고침하여 생성된 시나리오 확인
 
 **시나리오 구분:**
 - **공용 시나리오**: 모든 사용자가 사용할 수 있는 시나리오 (USER_ID = NULL)
   - 회색 "공용" 배지 표시
   - 삭제 불가
+  - 기존 공용 시나리오 + **드라마 시나리오** 포함
 - **내 시나리오**: 사용자가 생성한 개인 시나리오 (USER_ID = 사용자 ID)
   - 빨간색 "내 시나리오" 배지 표시
   - 삭제 버튼 제공
+  - 관계 개선 훈련 시나리오만 개인화됨
 
 **시나리오 삭제:**
 - 사용자 시나리오에만 삭제 버튼이 표시됩니다

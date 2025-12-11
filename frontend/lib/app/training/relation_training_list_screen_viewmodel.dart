@@ -22,9 +22,16 @@ class RelationTrainingListViewModel extends StateNotifier<AsyncValue<List<Traini
   Future<void> generateScenario({
     required String target,
     required String topic,
+    String category = 'TRAINING',
+    String? genre,
   }) async {
     try {
-      await _service.generateScenario(target: target, topic: topic);
+      await _service.generateScenario(
+        target: target,
+        topic: topic,
+        category: category,
+        genre: genre,
+      );
       // Refresh the scenario list after generation
       await getScenarios();
     } catch (e, stack) {

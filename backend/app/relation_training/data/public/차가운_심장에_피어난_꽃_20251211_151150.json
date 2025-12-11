@@ -1,0 +1,478 @@
+{
+  "scenario": {
+    "title": "차가운 심장에 피어난 꽃",
+    "target_type": "The Cold Chaebol CEO",
+    "category": "DRAMA",
+    "start_image_url": "/api/service/relation-training/images/ColdChaebolRomance/start.png"
+  },
+  "character_design": {
+    "protagonist_visual": "Korean woman, late 20s, struggling artist with a bright but slightly worn-out style. Often seen in casual, comfortable clothes, but with an underlying artistic flair. Her eyes hold both resilience and vulnerability.",
+    "target_visual": "Korean man, early 30s, sharp features, impeccably dressed in high-end business suits. Has a cold, aloof demeanor that occasionally softens with a hint of warmth. His gaze is piercing yet sometimes shows a hidden loneliness."
+  },
+  "nodes": [
+    {
+      "id": "node_1",
+      "step_level": 1,
+      "text": "당신은 우연히 마주친 본부장의 차에 실수로 커피를 쏟고 맙니다. 차가운 눈빛으로 당신을 내려다보던 그가 말합니다. \"보상할 수 있겠습니까, 이 차 한 대 값.\"",
+      "image_url": ""
+    },
+    {
+      "id": "node_2_a",
+      "step_level": 2,
+      "text": "예상치 못한 당신의 당돌함에 본부장은 흥미롭다는 듯 미소를 지으며 말합니다. \"흥미롭군. 변상 대신, 내 프로젝트에 참여해보지 않겠나?\"",
+      "image_url": ""
+    },
+    {
+      "id": "node_2_b",
+      "step_level": 2,
+      "text": "당신의 진심 어린 사과에도 본부장은 한숨을 쉬며 말합니다. \"됐습니다. 내 비서에게 연락처 남기고 가요. 견적서 보내줄 테니.\"",
+      "image_url": ""
+    },
+    {
+      "id": "node_3_aa",
+      "step_level": 3,
+      "text": "함께 일하며 당신의 재능에 감탄하던 본부장은 회식 자리에서 당신의 손을 잡고 말합니다. \"당신... 내 옆에 계속 있어줬으면 좋겠어.\"",
+      "image_url": ""
+    },
+    {
+      "id": "node_3_ab",
+      "step_level": 3,
+      "text": "당신의 대담함에 본부장은 잠시 멈칫하더니, 무표정한 얼굴로 명함을 건넵니다. \"이 정도는 애교로 넘어가죠. 하지만 다음엔 없어요. 연락처 남겨요.\"",
+      "image_url": ""
+    },
+    {
+      "id": "node_3_ba",
+      "step_level": 3,
+      "text": "당신의 진심 어린 사과에 본부장은 살짝 누그러진 표정으로 말합니다. \"울지 마요. 대신 내 프로젝트에 필요한 그림을 그려보는 건 어떻겠어?\"",
+      "image_url": ""
+    },
+    {
+      "id": "node_3_bb",
+      "step_level": 3,
+      "text": "당신의 극심한 불안감에 본부장은 한숨을 쉬며 말합니다. \"됐습니다. 내 비서에게 연락처 남기고 가요. 견적서 보내줄 테니.\"",
+      "image_url": ""
+    },
+    {
+      "id": "node_4_aaa",
+      "step_level": 4,
+      "text": "프로젝트가 성공적으로 끝나고, 본부장은 모두 앞에서 당신의 손을 잡으며 말합니다. \"이 사람이 바로 내 미래를 함께할 사람입니다.\"",
+      "image_url": ""
+    },
+    {
+      "id": "node_4_aab",
+      "step_level": 4,
+      "text": "당신은 그의 고백에 잠시 망설이지만, 이내 그의 진심을 깨닫고 눈물을 흘립니다. \"본부장님... 저도 본부장님이 좋아요...\"",
+      "image_url": ""
+    },
+    {
+      "id": "node_4_aba",
+      "step_level": 4,
+      "text": "몇 번의 우연한 만남 후, 본부장은 당신에게 사적인 식사를 제안하며 말합니다. \"왠지 모르게 당신에게 자꾸 시선이 가. 왜일까?\"",
+      "image_url": ""
+    },
+    {
+      "id": "node_4_abb",
+      "step_level": 4,
+      "text": "본부장은 당신에게 지속적으로 관심을 표현하지만, 당신은 그의 재력과 신분 때문에 부담을 느낍니다. \"본부장님과 저는 너무 다른 사람이에요...\"",
+      "image_url": ""
+    },
+    {
+      "id": "node_4_baa",
+      "step_level": 4,
+      "text": "프로젝트를 함께 하며 본부장은 당신의 순수함과 열정에 끌립니다. 어느 날, 그는 당신의 이마에 입을 맞추며 속삭입니다. \"내 그림자가 되어줄래요?\"",
+      "image_url": ""
+    },
+    {
+      "id": "node_4_bab",
+      "step_level": 4,
+      "text": "본부장은 당신에게 점점 호감을 보이지만, 당신은 과거의 상처 때문에 쉽게 마음을 열지 못합니다. \"저는 누군가를 만날 준비가 안 됐어요...\"",
+      "image_url": ""
+    },
+    {
+      "id": "node_4_bba",
+      "step_level": 4,
+      "text": "보상금 청구서가 아닌, 프로젝트 참여 제안서가 날아옵니다. 본부장은 당신의 재능을 높이 평가하고 있었습니다. \"당신의 그림, 꽤 마음에 들더군.\"",
+      "image_url": ""
+    },
+    {
+      "id": "node_4_bbb",
+      "step_level": 4,
+      "text": "냉정하게 날아온 엄청난 액수의 보상금 청구서. 당신은 좌절합니다. \"이게... 현실이구나...\"",
+      "image_url": ""
+    }
+  ],
+  "options": [
+    {
+      "from_node_id": "node_1",
+      "option_code": "A",
+      "text": "\"본부장님 차가 그렇게 비싼 줄 몰랐네요. 하지만 저도 피해자예요!\" (당당하게)",
+      "to_node_id": "node_2_a",
+      "result_code": null
+    },
+    {
+      "from_node_id": "node_1",
+      "option_code": "B",
+      "text": "\"죄송합니다! 제가 알바해서라도 꼭 갚겠습니다!\" (눈물 그렁그렁)",
+      "to_node_id": "node_2_b",
+      "result_code": null
+    },
+    {
+      "from_node_id": "node_2_a",
+      "option_code": "A",
+      "text": "\"본부장님 프로젝트요? 좋아요! 제 실력 보여드릴게요!\" (자신감)",
+      "to_node_id": "node_3_aa",
+      "result_code": null
+    },
+    {
+      "from_node_id": "node_2_a",
+      "option_code": "B",
+      "text": "\"연락처요? 왜요? 괜히 엮이고 싶지 않은데요...\" (경계심)",
+      "to_node_id": "node_3_ab",
+      "result_code": null
+    },
+    {
+      "from_node_id": "node_2_b",
+      "option_code": "A",
+      "text": "\"제... 제가요? 본부장님 프로젝트에 도움이 될 수 있다면...\" (조심스럽게 수락)",
+      "to_node_id": "node_3_ba",
+      "result_code": null
+    },
+    {
+      "from_node_id": "node_2_b",
+      "option_code": "B",
+      "text": "\"죄송합니다. 저는 그런 큰일을 맡을 능력이 없어요...\" (자신감 부족)",
+      "to_node_id": "node_3_bb",
+      "result_code": null
+    },
+    {
+      "from_node_id": "node_3_aa",
+      "option_code": "A",
+      "text": "\"본부장님 옆이요? 좋아요, 영원히요.\" (손을 맞잡음)",
+      "to_node_id": "node_4_aaa",
+      "result_code": null
+    },
+    {
+      "from_node_id": "node_3_aa",
+      "option_code": "B",
+      "text": "\"본부장님, 너무 취하셨어요. 이건 일적인 관계잖아요.\" (선 긋기)",
+      "to_node_id": "node_4_aab",
+      "result_code": null
+    },
+    {
+      "from_node_id": "node_3_ab",
+      "option_code": "A",
+      "text": "\"글쎄요? 본부장님도 제가 신경 쓰이시는 거 아니에요?\" (도발적인 미소)",
+      "to_node_id": "node_4_aba",
+      "result_code": null
+    },
+    {
+      "from_node_id": "node_3_ab",
+      "option_code": "B",
+      "text": "\"본부장님, 오해 마세요. 저는 그냥 평범한 사람이에요.\" (거리 두기)",
+      "to_node_id": "node_4_abb",
+      "result_code": null
+    },
+    {
+      "from_node_id": "node_3_ba",
+      "option_code": "A",
+      "text": "\"본부장님의 그림자요...? 좋아요, 따뜻한 빛이 되어드릴게요.\" (감동)",
+      "to_node_id": "node_4_baa",
+      "result_code": null
+    },
+    {
+      "from_node_id": "node_3_ba",
+      "option_code": "B",
+      "text": "\"본부장님... 저는 과분해요. 너무 부담스러워요.\" (뒷걸음질)",
+      "to_node_id": "node_4_bab",
+      "result_code": null
+    },
+    {
+      "from_node_id": "node_3_bb",
+      "option_code": "A",
+      "text": "\"제 그림이요? 정말요? 제가 본부장님을 도울 수 있을까요?\" (희망)",
+      "to_node_id": "node_4_bba",
+      "result_code": null
+    },
+    {
+      "from_node_id": "node_3_bb",
+      "option_code": "B",
+      "text": "\"죄송합니다, 본부장님. 전 그 돈을 감당할 수 없어요.\" (절망적인 거절)",
+      "to_node_id": "node_4_bbb",
+      "result_code": null
+    },
+    {
+      "from_node_id": "node_4_aaa",
+      "option_code": "A",
+      "text": "\"네, 본부장님! 영원히 함께할게요!\" (행복한 미소)",
+      "to_node_id": null,
+      "result_code": "AAAA"
+    },
+    {
+      "from_node_id": "node_4_aaa",
+      "option_code": "B",
+      "text": "\"갑작스러워요... 조금 더 생각할 시간을 주세요.\" (혼란)",
+      "to_node_id": null,
+      "result_code": "AAAB"
+    },
+    {
+      "from_node_id": "node_4_aab",
+      "option_code": "A",
+      "text": "\"본부장님... 저도 본부장님이 좋아요.\" (진심 어린 고백)",
+      "to_node_id": null,
+      "result_code": "AABA"
+    },
+    {
+      "from_node_id": "node_4_aab",
+      "option_code": "B",
+      "text": "\"안 돼요... 저희는 너무 달라요.\" (눈물 흘리며 거절)",
+      "to_node_id": null,
+      "result_code": "AABB"
+    },
+    {
+      "from_node_id": "node_4_aba",
+      "option_code": "A",
+      "text": "\"네, 본부장님께 자꾸 시선이 가는 건 저도 마찬가지예요.\" (솔직한 고백)",
+      "to_node_id": null,
+      "result_code": "ABAA"
+    },
+    {
+      "from_node_id": "node_4_aba",
+      "option_code": "B",
+      "text": "\"저 말고도 본부장님을 신경 쓰는 사람은 많을 거예요.\" (회피)",
+      "to_node_id": null,
+      "result_code": "ABAB"
+    },
+    {
+      "from_node_id": "node_4_abb",
+      "option_code": "A",
+      "text": "\"하지만... 그럼에도 불구하고 본부장님께 끌려요.\" (용기 있는 선택)",
+      "to_node_id": null,
+      "result_code": "ABBA"
+    },
+    {
+      "from_node_id": "node_4_abb",
+      "option_code": "B",
+      "text": "\"본부장님과 저 사이에는 넘을 수 없는 벽이 있어요.\" (자조적인 미소)",
+      "to_node_id": null,
+      "result_code": "ABBB"
+    },
+    {
+      "from_node_id": "node_4_baa",
+      "option_code": "A",
+      "text": "\"네, 본부장님의 가장 밝은 그림자가 되어드릴게요.\" (행복한 눈물)",
+      "to_node_id": null,
+      "result_code": "BAAA"
+    },
+    {
+      "from_node_id": "node_4_baa",
+      "option_code": "B",
+      "text": "\"본부장님... 저는 아직 두려워요.\" (망설임)",
+      "to_node_id": null,
+      "result_code": "BAAB"
+    },
+    {
+      "from_node_id": "node_4_bab",
+      "option_code": "A",
+      "text": "\"하지만... 본부장님이라면 믿어보고 싶어요.\" (조심스러운 용기)",
+      "to_node_id": null,
+      "result_code": "BABA"
+    },
+    {
+      "from_node_id": "node_4_bab",
+      "option_code": "B",
+      "text": "\"죄송해요. 저는 본부장님의 마음을 받아줄 수 없어요.\" (단호한 거절)",
+      "to_node_id": null,
+      "result_code": "BABB"
+    },
+    {
+      "from_node_id": "node_4_bba",
+      "option_code": "A",
+      "text": "\"네! 본부장님 기대에 부응하겠습니다!\" (벅찬 감동)",
+      "to_node_id": null,
+      "result_code": "BBAA"
+    },
+    {
+      "from_node_id": "node_4_bba",
+      "option_code": "B",
+      "text": "\"제 그림이요...? 아직은 자신이 없어요.\" (주저함)",
+      "to_node_id": null,
+      "result_code": "BBAB"
+    },
+    {
+      "from_node_id": "node_4_bbb",
+      "option_code": "A",
+      "text": "\"아니, 이대로 포기할 순 없어! 어떻게든 갚을 거야!\" (결의에 찬 눈빛)",
+      "to_node_id": null,
+      "result_code": "BBBA"
+    },
+    {
+      "from_node_id": "node_4_bbb",
+      "option_code": "B",
+      "text": "\"결국... 모든 게 무너지는구나.\" (체념)",
+      "to_node_id": null,
+      "result_code": "BBBB"
+    }
+  ],
+  "results": [
+    {
+      "result_code": "AAAA",
+      "display_title": "영원히 함께할 운명",
+      "analysis_text": "역시 K-로맨스는 직진이지! 본부장님 공개 고백에 내가 다 설렜다! 이렇게 완벽한 해피엔딩이라니, 내 심장 책임져!",
+      "atmosphere_image_type": "FLOWER",
+      "relation_health_level": "GOOD",
+      "boundary_style": "HEALTHY_ASSERTIVE",
+      "relationship_trend": "IMPROVING",
+      "image_url": "/api/service/relation-training/images/ColdChaebolRomance/result_AAAA.png"
+    },
+    {
+      "result_code": "AAAB",
+      "display_title": "아직은 미완의 로맨스",
+      "analysis_text": "크으, 본부장님 고백은 달콤했지만 여주인공의 망설임이 현실적이네! 다음 시즌에서 둘의 사랑이 결실을 맺을지 궁금해서 미치겠네!",
+      "atmosphere_image_type": "SUNNY",
+      "relation_health_level": "MIXED",
+      "boundary_style": "HEALTHY_ASSERTIVE",
+      "relationship_trend": "IMPROVING",
+      "image_url": "/api/service/relation-training/images/ColdChaebolRomance/result_AAAB.png"
+    },
+    {
+      "result_code": "AABA",
+      "display_title": "용기 있는 사랑의 시작",
+      "analysis_text": "서로 밀당하다 결국 본부장님이 먼저 넘어왔네! 역시 사랑은 용기 있는 자의 것! 여주인공의 솔직함이 빛을 발했다!",
+      "atmosphere_image_type": "FLOWER",
+      "relation_health_level": "GOOD",
+      "boundary_style": "HEALTHY_ASSERTIVE",
+      "relationship_trend": "IMPROVING",
+      "image_url": "/api/service/relation-training/images/ColdChaebolRomance/result_AABA.png"
+    },
+    {
+      "result_code": "AABB",
+      "display_title": "엇갈린 운명",
+      "analysis_text": "아니, 왜 이렇게 철벽을 쳐요? 본부장님 상처받잖아! 답답해 죽겠네! 둘의 관계가 이렇게 어긋나다니 너무 슬퍼...",
+      "atmosphere_image_type": "STORM",
+      "relation_health_level": "BAD",
+      "boundary_style": "UNHEALTHY_AVOIDANT",
+      "relationship_trend": "WORSENING",
+      "image_url": "/api/service/relation-training/images/ColdChaebolRomance/result_AABB.png"
+    },
+    {
+      "result_code": "ABAA",
+      "display_title": "운명적인 끌림",
+      "analysis_text": "쿨내 진동 로맨스! 서로에게 끌리는 거 다 보이는데 인정하기까지가 너무 짜릿해! 이 커플, 앞으로가 더 기대된다!",
+      "atmosphere_image_type": "FLOWER",
+      "relation_health_level": "GOOD",
+      "boundary_style": "HEALTHY_ASSERTIVE",
+      "relationship_trend": "IMPROVING",
+      "image_url": "/api/service/relation-training/images/ColdChaebolRomance/result_ABAA.png"
+    },
+    {
+      "result_code": "ABAB",
+      "display_title": "아직은 평행선",
+      "analysis_text": "본부장님 진짜 답답하다... 여주인공 밀어내지 마요! 곧 후회할 걸? 서로의 마음을 확인하기까지 더 많은 시간이 필요하겠어.",
+      "atmosphere_image_type": "CLOUDY",
+      "relation_health_level": "MIXED",
+      "boundary_style": "UNHEALTHY_AVOIDANT",
+      "relationship_trend": "STAGNANT",
+      "image_url": "/api/service/relation-training/images/ColdChaebolRomance/result_ABAB.png"
+    },
+    {
+      "result_code": "ABBA",
+      "display_title": "진심이 통한 순간",
+      "analysis_text": "와, 본부장님 직진 대박! 이마 키스라니... 내 심장 남아나질 않겠다! 여주인공도 용기 내줘서 고마워! 드디어 로맨스 시작인가!",
+      "atmosphere_image_type": "FLOWER",
+      "relation_health_level": "GOOD",
+      "boundary_style": "HEALTHY_ASSERTIVE",
+      "relationship_trend": "IMPROVING",
+      "image_url": "/api/service/relation-training/images/ColdChaebolRomance/result_ABBA.png"
+    },
+    {
+      "result_code": "ABBB",
+      "display_title": "넘을 수 없는 벽",
+      "analysis_text": "흐어엉... 여주인공 과거 상처 너무 안쓰러워... 본부장님이 잘 보듬어 줬으면 좋겠는데, 결국 헤어지는 건가요?",
+      "atmosphere_image_type": "STORM",
+      "relation_health_level": "BAD",
+      "boundary_style": "UNHEALTHY_AVOIDANT",
+      "relationship_trend": "WORSENING",
+      "image_url": "/api/service/relation-training/images/ColdChaebolRomance/result_ABBB.png"
+    },
+    {
+      "result_code": "BAAA",
+      "display_title": "수줍은 사랑의 시작",
+      "analysis_text": "수줍은 만남이 이렇게 달달한 로맨스로 발전하다니! 둘이 너무 잘 어울려요! 본부장님의 다정함에 내가 다 녹네 녹아!",
+      "atmosphere_image_type": "FLOWER",
+      "relation_health_level": "GOOD",
+      "boundary_style": "HEALTHY_ASSERTIVE",
+      "relationship_trend": "IMPROVING",
+      "image_url": "/api/service/relation-training/images/ColdChaebolRomance/result_BAAA.png"
+    },
+    {
+      "result_code": "BAAB",
+      "display_title": "용기가 필요한 순간",
+      "analysis_text": "본부장님은 다정하게 다가오는데 여주인공이 자꾸 피하네... 맴찢! 좀 더 용기를 내서 본부장님 손을 잡았으면 좋겠다!",
+      "atmosphere_image_type": "CLOUDY",
+      "relation_health_level": "MIXED",
+      "boundary_style": "UNHEALTHY_AVOIDANT",
+      "relationship_trend": "STAGNANT",
+      "image_url": "/api/service/relation-training/images/ColdChaebolRomance/result_BAAB.png"
+    },
+    {
+      "result_code": "BABA",
+      "display_title": "재능이 이끈 사랑",
+      "analysis_text": "어려운 상황에서도 재능을 알아봐 주는 본부장님! 역시 진정한 사랑은 능력도 알아주는 법! 그림으로 이어진 운명이라니!",
+      "atmosphere_image_type": "FLOWER",
+      "relation_health_level": "GOOD",
+      "boundary_style": "HEALTHY_ASSERTIVE",
+      "relationship_trend": "IMPROVING",
+      "image_url": "/api/service/relation-training/images/ColdChaebolRomance/result_BABA.png"
+    },
+    {
+      "result_code": "BABB",
+      "display_title": "고구마 100만 개 엔딩",
+      "analysis_text": "아니, 왜 자꾸 자낮 모드야! 본부장님이 이렇게까지 다가오는데! 답답해서 숨 막힌다! 이 관계는 시작도 못 하고 끝나겠네...",
+      "atmosphere_image_type": "STORM",
+      "relation_health_level": "BAD",
+      "boundary_style": "UNHEALTHY_AVOIDANT",
+      "relationship_trend": "WORSENING",
+      "image_url": "/api/service/relation-training/images/ColdChaebolRomance/result_BABB.png"
+    },
+    {
+      "result_code": "BBAA",
+      "display_title": "절망 속 한 줄기 빛",
+      "analysis_text": "절망 속에서 피어난 희망! 본부장님, 이 남자... 그림 볼 줄 아네! 역시 인연은 어디서든 찾아오는 법! 감동적이야!",
+      "atmosphere_image_type": "FLOWER",
+      "relation_health_level": "GOOD",
+      "boundary_style": "HEALTHY_ASSERTIVE",
+      "relationship_trend": "IMPROVING",
+      "image_url": "/api/service/relation-training/images/ColdChaebolRomance/result_BBAA.png"
+    },
+    {
+      "result_code": "BBAB",
+      "display_title": "아직은 미숙한 기회",
+      "analysis_text": "본부장님, 돈으로 해결하려 하지 마요! 여주인공 마음을 얻어야지! 기회가 찾아왔는데 왜 이렇게 주저하는 거야!",
+      "atmosphere_image_type": "CLOUDY",
+      "relation_health_level": "MIXED",
+      "boundary_style": "UNHEALTHY_AVOIDANT",
+      "relationship_trend": "STAGNANT",
+      "image_url": "/api/service/relation-training/images/ColdChaebolRomance/result_BBAB.png"
+    },
+    {
+      "result_code": "BBBA",
+      "display_title": "현실에 맞서는 용기",
+      "analysis_text": "이게 바로 K-드라마 여주인공이지! 절망 속에서도 포기하지 않는 강인함! 이대로 무너지지 않고 역경을 헤쳐나가길!",
+      "atmosphere_image_type": "SUNNY",
+      "relation_health_level": "MIXED",
+      "boundary_style": "HEALTHY_ASSERTIVE",
+      "relationship_trend": "IMPROVING",
+      "image_url": "/api/service/relation-training/images/ColdChaebolRomance/result_BBBA.png"
+    },
+    {
+      "result_code": "BBBB",
+      "display_title": "잔혹한 현실의 벽",
+      "analysis_text": "아니, 돈도 없고 자존감도 없으면 어쩌라는 거야! 결국 모든 게 돈으로 귀결되는 잔혹한 현실이 너무 슬프다. 내 가슴이 찢어지는 것 같아!",
+      "atmosphere_image_type": "STORM",
+      "relation_health_level": "BAD",
+      "boundary_style": "UNHEALTHY_AVOIDANT",
+      "relationship_trend": "WORSENING",
+      "image_url": "/api/service/relation-training/images/ColdChaebolRomance/result_BBBB.png"
+    }
+  ]
+}

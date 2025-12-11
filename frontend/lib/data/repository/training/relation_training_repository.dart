@@ -70,8 +70,15 @@ class RelationTrainingRepository {
   Future<GenerateScenarioResponse> generateScenario({
     required String target,
     required String topic,
+    String category = 'TRAINING',
+    String? genre,
   }) async {
-    return _apiClient.generateScenario(target: target, topic: topic);
+    return _apiClient.generateScenario(
+      target: target,
+      topic: topic,
+      category: category,
+      genre: genre,
+    );
   }
 
   Future<void> deleteScenario(int scenarioId) async {

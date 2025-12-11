@@ -18,15 +18,20 @@ class GenerateScenarioRequest(BaseModel):
     Attributes:
         target: Target relationship type (HUSBAND, CHILD, FRIEND, COLLEAGUE, ETC)
         topic: User's concern/topic description
+        category: Scenario category (TRAINING or DRAMA)
+        genre: Drama genre (MAKJANG, ROMANCE, FAMILY) - required when category is DRAMA
     """
     target: str = Field(..., description="Target relationship type")
     topic: str = Field(..., description="User's concern description")
+    category: str = Field(default="TRAINING", description="Scenario category (TRAINING or DRAMA)")
+    genre: Optional[str] = Field(None, description="Drama genre (MAKJANG, ROMANCE, FAMILY) - required for DRAMA")
     
     class Config:
         json_schema_extra = {
             "example": {
                 "target": "HUSBAND",
-                "topic": "남편이 밥투정을 합니다"
+                "topic": "남편이 밥투정을 합니다",
+                "category": "TRAINING"
             }
         }
 

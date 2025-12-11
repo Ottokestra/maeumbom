@@ -70,14 +70,24 @@ class RelationTrainingApiClient {
   Future<GenerateScenarioResponse> generateScenario({
     required String target,
     required String topic,
+    String category = 'TRAINING',
+    String? genre,
   }) async {
     try {
+      final requestData = {
+        'target': target,
+        'topic': topic,
+        'category': category,
+      };
+      
+      // 드라마 선택 시에만 genre 추가
+      if (category == 'DRAMA' && genre != null) {
+        requestData['genre'] = genre;
+      }
+      
       final response = await _dio.post(
         ApiConfig.relationTrainingGenerate,
-        data: {
-          'target': target,
-          'topic': topic,
-        },
+        data: requestData,
       );
       return GenerateScenarioResponse.fromJson(response.data);
     } on DioException catch (e) {

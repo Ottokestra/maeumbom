@@ -118,8 +118,19 @@ class DeepAgentService:
         print(f"[Deep Agent Pipeline] User: {user_id}, Target: {request.target}, Topic: {request.topic}")
         print(f"{'='*80}\n")
         
-        # Phase 1: Generate scenario JSON (scenario_architect.md 사용)
-        scenario_json = await self.generate_scenario_json(request.target, request.topic)
+        # 드라마 시나리오는 공용 시나리오로 생성 (USER_ID = NULL)
+        if request.category == "DRAMA":
+            user_id = None
+            print(f"[Deep Agent Pipeline] 드라마 시나리오: 공용 시나리오로 생성 (USER_ID = NULL)")
+        
+        # Phase 1: Generate scenario JSON (카테고리에 따라 프롬프트 선택)
+        # 드라마의 경우 genre도 전달
+        scenario_json = await self.generate_scenario_json(
+            request.target, 
+            request.topic, 
+            request.category, 
+            request.genre
+        )
         
         # Phase 2: Generate folder name from title (하이브리드 방식)
         folder_name = self._generate_folder_name_from_title(scenario_json.scenario.title)
@@ -147,31 +158,52 @@ class DeepAgentService:
     async def generate_scenario_json(
         self,
         target: str,
-        topic: str
+        topic: str,
+        category: str = "TRAINING",
+        genre: Optional[str] = None
     ) -> ScenarioJSON:
         """
-        Generate complete scenario JSON using scenario_architect.md prompt.
+        Generate complete scenario JSON using prompt file based on category.
         
         Args:
             target: Target relationship type (HUSBAND, CHILD, etc.)
             topic: User's concern description
+            category: Scenario category (TRAINING or DRAMA)
+            genre: Drama genre (MAKJANG, ROMANCE, FAMILY) - required for DRAMA category
         
         Returns:
             Complete ScenarioJSON object
         """
+        # 카테고리에 따라 프롬프트 파일 선택
+        prompt_file = "scenario_architect.md" if category == "TRAINING" else "scenario_prompt_drama.md"
+        
+        # 드라마의 경우 genre 필수
+        if category == "DRAMA" and not genre:
+            genre = "MAKJANG"  # 기본값
+        
         print(f"\n{'='*60}")
-        print(f"[Deep Agent] 시나리오 생성 시작 (scenario_architect.md 사용)")
-        print(f"[Deep Agent] Target: {target}, Topic: {topic}")
+        print(f"[Deep Agent] 시나리오 생성 시작 ({prompt_file} 사용)")
+        print(f"[Deep Agent] Target: {target}, Topic: {topic}, Category: {category}")
+        if category == "DRAMA":
+            print(f"[Deep Agent] Genre: {genre}")
         print(f"{'='*60}\n")
         
-        # Load scenario_architect.md prompt
+        # Load prompt file based on category
         from .prompt_utils import load_prompt_sections
+        
+        # 프롬프트 변수 준비
+        prompt_variables = {
+            "target": target,
+            "topic": topic
+        }
+        
+        # 드라마의 경우 genre 추가
+        if category == "DRAMA":
+            prompt_variables["genre"] = genre
+        
         system_prompt, user_prompt = load_prompt_sections(
-            "scenario_architect.md",
-            {
-                "target": target,
-                "topic": topic
-            }
+            prompt_file,
+            prompt_variables
         )
         
         # Generate scenario JSON with Gemini or OpenAI
@@ -997,7 +1029,7 @@ Output JSON: {{"options": [...]}}
         self,
         scenario_json: ScenarioJSON,
         folder_name: str,
-        user_id: int
+        user_id: Optional[int]
     ) -> Dict[str, str]:
         """
         Generate images for scenario.
@@ -1072,11 +1104,13 @@ Output JSON: {{"options": [...]}}
     async def _save_json_file(
         self,
         scenario_json: ScenarioJSON,
-        user_id: int,
+        user_id: Optional[int],
         folder_name: str
     ) -> Path:
         """Save scenario to JSON file."""
-        data_dir = Path(__file__).parent / "data" / str(user_id)
+        # 공용 시나리오(user_id=None)는 "public" 폴더에 저장
+        user_folder = "public" if user_id is None else str(user_id)
+        data_dir = Path(__file__).parent / "data" / user_folder
         data_dir.mkdir(parents=True, exist_ok=True)
         
         json_path = data_dir / f"{folder_name}.json"
@@ -1094,7 +1128,7 @@ Output JSON: {{"options": [...]}}
     async def _save_to_database(
         self,
         scenario_json: ScenarioJSON,
-        user_id: int
+        user_id: Optional[int]
     ) -> int:
         """Save scenario to database."""
         # 1. Create Scenario

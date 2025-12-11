@@ -1,0 +1,478 @@
+{
+  "scenario": {
+    "title": "[막장 드라마] 며느리의 복수: 검은 그림자 속 비밀",
+    "target_type": "The Evil Mother-in-Law",
+    "category": "DRAMA",
+    "start_image_url": "/api/service/relation-training/images/MakjangEvilMotherInLaw/start.png"
+  },
+  "character_design": {
+    "protagonist_visual": "Korean woman, late 20s, innocent but determined style, wearing simple clothes that hide her inner strength, slightly tired but with a spark of defiance in her eyes.",
+    "target_visual": "Korean woman, 60s, elegant but with a cold, calculating gaze, wearing luxurious traditional Korean dress (한복) or high-end Western attire, exuding authority and malice."
+  },
+  "nodes": [
+    {
+      "id": "node_1",
+      "step_level": 1,
+      "text": "재벌가 시어머니 왕여사가 싸늘한 미소를 지으며 당신 앞에 이혼 서류를 던집니다. '네까짓 게 내 아들 옆에 있을 자격 없어. 이혼하고 당장 이 집에서 나가!'",
+      "image_url": ""
+    },
+    {
+      "id": "node_2_a",
+      "step_level": 2,
+      "text": "시어머니는 당신의 멱살을 잡고 '감히 어디서 눈을 부라려!'라며 소리칩니다. 당신은 그 손을 뿌리치고 차갑게 노려봅니다.",
+      "image_url": ""
+    },
+    {
+      "id": "node_2_b",
+      "step_level": 2,
+      "text": "시어머니는 당신이 던진 서류를 주우며 '꼴에 자존심은 있나 보네. 하지만 현실은 달라!'라며 비웃습니다. 당신은 바닥에 주저앉아 눈물만 흘립니다.",
+      "image_url": ""
+    },
+    {
+      "id": "node_3_aa",
+      "step_level": 3,
+      "text": "시어머니는 분노에 찬 얼굴로 '그래, 어디 한번 해볼 테면 해 봐! 네가 뭘 할 수 있는데?'라며 비아냥거립니다. 당신은 그녀의 숨겨진 비리를 떠올립니다.",
+      "image_url": ""
+    },
+    {
+      "id": "node_3_ab",
+      "step_level": 3,
+      "text": "시어머니는 당신의 당당한 태도에 잠시 주춤하지만, 이내 '네가 감히 날 협박해? 이 집안을 무너뜨리겠다는 거냐!'라며 역정을 냅니다.",
+      "image_url": ""
+    },
+    {
+      "id": "node_3_ba",
+      "step_level": 3,
+      "text": "시어머니는 당신의 눈물을 보고는 '쯧쯧, 불쌍한 것. 그래서 얻는 게 뭐냐?'라며 조롱합니다. 당신은 이대로 무너질 수 없다고 다짐합니다.",
+      "image_url": ""
+    },
+    {
+      "id": "node_3_bb",
+      "step_level": 3,
+      "text": "시어머니는 당신의 무릎 꿇은 모습을 보며 만족스럽게 웃습니다. '그래, 그게 네 주제에 맞는 태도지.' 당신은 서러움에 북받쳐 울음을 터뜨립니다.",
+      "image_url": ""
+    },
+    {
+      "id": "node_4_aaa",
+      "step_level": 4,
+      "text": "당신은 시어머니의 비리 증거를 언론에 폭로합니다. 세상은 충격에 빠지고, 왕여사는 모든 것을 잃고 무릎 꿇습니다. '어떻게... 네가 감히...!'",
+      "image_url": ""
+    },
+    {
+      "id": "node_4_aab",
+      "step_level": 4,
+      "text": "당신은 시어머니의 약점을 파고들어 그녀의 아들을 당신 편으로 만듭니다. 아들은 진실을 알고 어머니에게 등을 돌립니다. '어머니, 제가 알던 분이 맞나요?'",
+      "image_url": ""
+    },
+    {
+      "id": "node_4_aba",
+      "step_level": 4,
+      "text": "당신은 시어머니의 약점을 잡고 그녀에게 역으로 거래를 제안합니다. '이혼은 해드리죠. 대신 이 집안의 모든 것을 저에게 넘기세요.'",
+      "image_url": ""
+    },
+    {
+      "id": "node_4_abb",
+      "step_level": 4,
+      "text": "당신은 시어머니의 협박에 잠시 흔들리지만, 이내 이성을 되찾고 더 치밀한 복수 계획을 세웁니다. '아직 끝나지 않았어...'",
+      "image_url": ""
+    },
+    {
+      "id": "node_4_baa",
+      "step_level": 4,
+      "text": "당신은 시어머니에게 복수를 다짐하며 비밀리에 증거를 모으기 시작합니다. 그녀의 주변 인물들을 포섭하며 치밀하게 움직입니다. '후회하게 해줄 거야.'",
+      "image_url": ""
+    },
+    {
+      "id": "node_4_bab",
+      "step_level": 4,
+      "text": "당신은 시어머니에게 계속 매달리지만, 그녀는 냉정하게 당신을 밀쳐냅니다. '네가 이 집에서 나가는 게 내 마지막 자비야.'",
+      "image_url": ""
+    },
+    {
+      "id": "node_4_bba",
+      "step_level": 4,
+      "text": "당신은 결국 시어머니의 뜻대로 이혼하고 집을 떠납니다. 뒤돌아보는 당신의 눈에는 복수심 대신 깊은 슬픔만이 가득합니다. '이렇게 끝나는구나...'",
+      "image_url": ""
+    },
+    {
+      "id": "node_4_bbb",
+      "step_level": 4,
+      "text": "시어머니는 당신을 비웃으며 '꼴값 떨지 말고 꺼져!'라고 외칩니다. 당신은 무릎 꿇은 채 오열하며 모든 것을 포기합니다. '제가 뭘 할 수 있겠어요...'",
+      "image_url": ""
+    }
+  ],
+  "options": [
+    {
+      "from_node_id": "node_1",
+      "option_code": "A",
+      "text": "\"이혼은 제가 아니라 어머니가 하셔야겠네요. 아드님과 전 재산, 제가 모두 가질 테니까요.\" (서류를 찢어버리며)",
+      "to_node_id": "node_2_a",
+      "result_code": null
+    },
+    {
+      "from_node_id": "node_1",
+      "option_code": "B",
+      "text": "\"어머니... 제가 뭘 잘못했나요...? 제발 이러지 마세요...\" (무릎 꿇고 애원하며)",
+      "to_node_id": "node_2_b",
+      "result_code": null
+    },
+    {
+      "from_node_id": "node_2_a",
+      "option_code": "A",
+      "text": "\"두고 보세요. 이 집안의 모든 비밀을 세상에 폭로할 테니까.\" (싸늘하게 경고하며)",
+      "to_node_id": "node_3_aa",
+      "result_code": null
+    },
+    {
+      "from_node_id": "node_2_a",
+      "option_code": "B",
+      "text": "\"어머니가 저를 이렇게 만드셨으니, 이제 저도 어머니께 복수할 겁니다.\" (독기 어린 눈빛으로 선언하며)",
+      "to_node_id": "node_3_ab",
+      "result_code": null
+    },
+    {
+      "from_node_id": "node_2_b",
+      "option_code": "A",
+      "text": "\"...이대로 당할 수는 없어. 저도 이제 제 자신을 지킬 겁니다!\" (눈물을 닦고 결심하며)",
+      "to_node_id": "node_3_ba",
+      "result_code": null
+    },
+    {
+      "from_node_id": "node_2_b",
+      "option_code": "B",
+      "text": "\"네... 어머니 뜻대로 할게요... 제가 죄인입니다...\" (체념하며 흐느끼며)",
+      "to_node_id": "node_3_bb",
+      "result_code": null
+    },
+    {
+      "from_node_id": "node_3_aa",
+      "option_code": "A",
+      "text": "그녀의 비리 장부를 세상에 공개한다. (언론 제보)",
+      "to_node_id": "node_4_aaa",
+      "result_code": null
+    },
+    {
+      "from_node_id": "node_3_aa",
+      "option_code": "B",
+      "text": "남편에게 모든 진실을 털어놓고 도움을 청한다. (남편에게 고백)",
+      "to_node_id": "node_4_aab",
+      "result_code": null
+    },
+    {
+      "from_node_id": "node_3_ab",
+      "option_code": "A",
+      "text": "시어머니의 약점을 이용해 역으로 그녀를 압박한다. (역제안)",
+      "to_node_id": "node_4_aba",
+      "result_code": null
+    },
+    {
+      "from_node_id": "node_3_ab",
+      "option_code": "B",
+      "text": "일단 물러서는 척하며 더 치밀한 복수 계획을 세운다. (와신상담)",
+      "to_node_id": "node_4_abb",
+      "result_code": null
+    },
+    {
+      "from_node_id": "node_3_ba",
+      "option_code": "A",
+      "text": "시어머니의 뒤를 캐며 증거를 수집하기 시작한다. (비밀 조사)",
+      "to_node_id": "node_4_baa",
+      "result_code": null
+    },
+    {
+      "from_node_id": "node_3_ba",
+      "option_code": "B",
+      "text": "다시 한번 시어머니에게 용서를 구한다. (마지막 애원)",
+      "to_node_id": "node_4_bab",
+      "result_code": null
+    },
+    {
+      "from_node_id": "node_3_bb",
+      "option_code": "A",
+      "text": "결국 이혼 서류에 도장을 찍고 조용히 집을 나간다. (체념)",
+      "to_node_id": "node_4_bba",
+      "result_code": null
+    },
+    {
+      "from_node_id": "node_3_bb",
+      "option_code": "B",
+      "text": "시어머니의 발밑에 엎드려 제발 살려달라고 빈다. (완전 굴복)",
+      "to_node_id": "node_4_bbb",
+      "result_code": null
+    },
+    {
+      "from_node_id": "node_4_aaa",
+      "option_code": "A",
+      "text": "세상이 시어머니의 죄를 심판하게 한다.",
+      "to_node_id": null,
+      "result_code": "AAAA"
+    },
+    {
+      "from_node_id": "node_4_aaa",
+      "option_code": "B",
+      "text": "복수가 끝났음을 선언하고 새 삶을 시작한다.",
+      "to_node_id": null,
+      "result_code": "AAAB"
+    },
+    {
+      "from_node_id": "node_4_aab",
+      "option_code": "A",
+      "text": "남편과 함께 시어머니의 만행을 바로잡는다.",
+      "to_node_id": null,
+      "result_code": "AABA"
+    },
+    {
+      "from_node_id": "node_4_aab",
+      "option_code": "B",
+      "text": "남편과 손잡고 새로운 인생을 찾아 떠난다.",
+      "to_node_id": null,
+      "result_code": "AABB"
+    },
+    {
+      "from_node_id": "node_4_aba",
+      "option_code": "A",
+      "text": "시어머니의 모든 것을 빼앗고 그녀를 몰락시킨다.",
+      "to_node_id": null,
+      "result_code": "ABAA"
+    },
+    {
+      "from_node_id": "node_4_aba",
+      "option_code": "B",
+      "text": "빼앗은 재산으로 독립하여 새로운 삶을 개척한다.",
+      "to_node_id": null,
+      "result_code": "ABAB"
+    },
+    {
+      "from_node_id": "node_4_abb",
+      "option_code": "A",
+      "text": "긴 시간을 들여 시어머니에게 완벽한 복수를 한다.",
+      "to_node_id": null,
+      "result_code": "ABBA"
+    },
+    {
+      "from_node_id": "node_4_abb",
+      "option_code": "B",
+      "text": "복수 끝에 허무함을 느끼고 조용히 사라진다.",
+      "to_node_id": null,
+      "result_code": "ABBB"
+    },
+    {
+      "from_node_id": "node_4_baa",
+      "option_code": "A",
+      "text": "숨겨진 조력자와 함께 시어머니에게 반격을 가한다.",
+      "to_node_id": null,
+      "result_code": "BAAA"
+    },
+    {
+      "from_node_id": "node_4_baa",
+      "option_code": "B",
+      "text": "복수에 성공하지만 마음의 상처는 남는다.",
+      "to_node_id": null,
+      "result_code": "BAAB"
+    },
+    {
+      "from_node_id": "node_4_bab",
+      "option_code": "A",
+      "text": "결국 시어머니의 손에 이끌려 집에서 쫓겨난다.",
+      "to_node_id": null,
+      "result_code": "BABA"
+    },
+    {
+      "from_node_id": "node_4_bab",
+      "option_code": "B",
+      "text": "복수를 포기하고 모든 것을 내려놓는다.",
+      "to_node_id": null,
+      "result_code": "BABB"
+    },
+    {
+      "from_node_id": "node_4_bba",
+      "option_code": "A",
+      "text": "새로운 시작을 위해 낯선 곳으로 떠난다.",
+      "to_node_id": null,
+      "result_code": "BBAA"
+    },
+    {
+      "from_node_id": "node_4_bba",
+      "option_code": "B",
+      "text": "고통 속에서 과거를 잊으려 노력한다.",
+      "to_node_id": null,
+      "result_code": "BBAB"
+    },
+    {
+      "from_node_id": "node_4_bbb",
+      "option_code": "A",
+      "text": "모든 것을 잃고 폐인이 되어 살아간다.",
+      "to_node_id": null,
+      "result_code": "BBBA"
+    },
+    {
+      "from_node_id": "node_4_bbb",
+      "option_code": "B",
+      "text": "복수는 꿈도 꾸지 못하고 평생 시어머니의 그늘 아래 산다.",
+      "to_node_id": null,
+      "result_code": "BBBB"
+    }
+  ],
+  "results": [
+    {
+      "result_code": "AAAA",
+      "display_title": "사이다 폭발! 완벽한 복수극",
+      "analysis_text": "대박! 여주인공 사이다 멘트 미쳤다! 빌런 시어머니 결국 망했네. 통쾌하다!",
+      "atmosphere_image_type": "FLOWER",
+      "relation_health_level": "GOOD",
+      "boundary_style": "HEALTHY_ASSERTIVE",
+      "relationship_trend": "IMPROVING",
+      "image_url": "/api/service/relation-training/images/MakjangEvilMotherInLaw/result_AAAA.png"
+    },
+    {
+      "result_code": "AAAB",
+      "display_title": "복수 그 후, 새로운 시작",
+      "analysis_text": "결국 복수 성공! 하지만 허무함은 남는 건가? 그래도 여주인공 이제 행복해라!",
+      "atmosphere_image_type": "FLOWER",
+      "relation_health_level": "GOOD",
+      "boundary_style": "HEALTHY_ASSERTIVE",
+      "relationship_trend": "IMPROVING",
+      "image_url": "/api/service/relation-training/images/MakjangEvilMotherInLaw/result_AAAB.png"
+    },
+    {
+      "result_code": "AABA",
+      "display_title": "남편과 함께 정의 구현",
+      "analysis_text": "남편이 드디어 정신 차렸네! 시어머니의 악행에 통쾌한 일침! 결국 정의가 승리했다!",
+      "atmosphere_image_type": "FLOWER",
+      "relation_health_level": "GOOD",
+      "boundary_style": "HEALTHY_ASSERTIVE",
+      "relationship_trend": "IMPROVING",
+      "image_url": "/api/service/relation-training/images/MakjangEvilMotherInLaw/result_AABA.png"
+    },
+    {
+      "result_code": "AABB",
+      "display_title": "진정한 사랑을 찾아서",
+      "analysis_text": "시어머니 집안 따위 다 버리고 남편이랑 행복 찾아 떠나는 엔딩! 이게 바로 진정한 해피엔딩!",
+      "atmosphere_image_type": "FLOWER",
+      "relation_health_level": "GOOD",
+      "boundary_style": "HEALTHY_ASSERTIVE",
+      "relationship_trend": "IMPROVING",
+      "image_url": "/api/service/relation-training/images/MakjangEvilMotherInLaw/result_AABB.png"
+    },
+    {
+      "result_code": "ABAA",
+      "display_title": "피도 눈물도 없는 완벽한 역전",
+      "analysis_text": "헐... 여주인공 완전 독해졌어! 시어머니 재산까지 다 빼앗아 버리네. 막장의 끝판왕!",
+      "atmosphere_image_type": "SUNNY",
+      "relation_health_level": "MIXED",
+      "boundary_style": "HEALTHY_ASSERTIVE",
+      "relationship_trend": "IMPROVING",
+      "image_url": "/api/service/relation-training/images/MakjangEvilMotherInLaw/result_ABAA.png"
+    },
+    {
+      "result_code": "ABAB",
+      "display_title": "새로운 제국의 탄생",
+      "analysis_text": "복수도 하고, 재산도 얻고! 여주인공 능력 인정! 이제 재벌 총수는 여주인공이 되는 건가?",
+      "atmosphere_image_type": "FLOWER",
+      "relation_health_level": "GOOD",
+      "boundary_style": "HEALTHY_ASSERTIVE",
+      "relationship_trend": "IMPROVING",
+      "image_url": "/api/service/relation-training/images/MakjangEvilMotherInLaw/result_ABAB.png"
+    },
+    {
+      "result_code": "ABBA",
+      "display_title": "치밀한 복수극의 대단원",
+      "analysis_text": "와, 여주인공 머리 좋다! 물러서는 척하다가 결국 시어머니 제대로 한 방 먹였네! 소름!",
+      "atmosphere_image_type": "FLOWER",
+      "relation_health_level": "GOOD",
+      "boundary_style": "HEALTHY_ASSERTIVE",
+      "relationship_trend": "IMPROVING",
+      "image_url": "/api/service/relation-training/images/MakjangEvilMotherInLaw/result_ABBA.png"
+    },
+    {
+      "result_code": "ABBB",
+      "display_title": "복수와 허무함 사이",
+      "analysis_text": "복수는 성공했지만, 여주인공의 눈빛이 너무 슬퍼 보여... 과연 이게 행복일까?",
+      "atmosphere_image_type": "CLOUDY",
+      "relation_health_level": "MIXED",
+      "boundary_style": "HEALTHY_ASSERTIVE",
+      "relationship_trend": "MIXED",
+      "image_url": "/api/service/relation-training/images/MakjangEvilMotherInLaw/result_ABBB.png"
+    },
+    {
+      "result_code": "BAAA",
+      "display_title": "숨겨진 조력자의 등장, 반격의 서막",
+      "analysis_text": "여기서 새로운 캐릭터가 등장한다고? 역시 막장은 예측불가! 다음 시즌 기대된다!",
+      "atmosphere_image_type": "SUNNY",
+      "relation_health_level": "MIXED",
+      "boundary_style": "HEALTHY_ASSERTIVE",
+      "relationship_trend": "IMPROVING",
+      "image_url": "/api/service/relation-training/images/MakjangEvilMotherInLaw/result_BAAA.png"
+    },
+    {
+      "result_code": "BAAB",
+      "display_title": "쓰디쓴 복수의 결말",
+      "analysis_text": "복수했어도 마음의 상처는 어쩔 수 없지... 여주인공, 이제 그만 행복해지면 좋겠다.",
+      "atmosphere_image_type": "CLOUDY",
+      "relation_health_level": "MIXED",
+      "boundary_style": "HEALTHY_ASSERTIVE",
+      "relationship_trend": "MIXED",
+      "image_url": "/api/service/relation-training/images/MakjangEvilMotherInLaw/result_BAAB.png"
+    },
+    {
+      "result_code": "BABA",
+      "display_title": "결국 쫓겨난 비련의 며느리",
+      "analysis_text": "아... 결국 며느리 불쌍해... 시어머니 진짜 너무한 거 아니냐? 드라마 보다가 속 터져 죽겠네!",
+      "atmosphere_image_type": "STORM",
+      "relation_health_level": "BAD",
+      "boundary_style": "PASSIVE_AGGRESSIVE",
+      "relationship_trend": "WORSENING",
+      "image_url": "/api/service/relation-training/images/MakjangEvilMotherInLaw/result_BABA.png"
+    },
+    {
+      "result_code": "BABB",
+      "display_title": "복수 포기, 상처뿐인 퇴장",
+      "analysis_text": "복수라도 하지... 왜 포기해! 고구마 백 개 먹은 기분이다. 답답해서 못 보겠네.",
+      "atmosphere_image_type": "STORM",
+      "relation_health_level": "BAD",
+      "boundary_style": "PASSIVE_AGGRESSIVE",
+      "relationship_trend": "WORSENING",
+      "image_url": "/api/service/relation-training/images/MakjangEvilMotherInLaw/result_BABB.png"
+    },
+    {
+      "result_code": "BBAA",
+      "display_title": "모든 것을 버리고 떠나는 길",
+      "analysis_text": "그래, 떠나는 게 답이다! 새 출발해서 꽃길만 걸어라 여주인공! 응원한다!",
+      "atmosphere_image_type": "SUNNY",
+      "relation_health_level": "MIXED",
+      "boundary_style": "HEALTHY_ASSERTIVE",
+      "relationship_trend": "IMPROVING",
+      "image_url": "/api/service/relation-training/images/MakjangEvilMotherInLaw/result_BBAA.png"
+    },
+    {
+      "result_code": "BBAB",
+      "display_title": "과거에 갇힌 채 살아가는 슬픔",
+      "analysis_text": "잊으려 해도 잊혀지지 않는 고통... 여주인공의 아픔이 너무 느껴져서 눈물 난다...",
+      "atmosphere_image_type": "STORM",
+      "relation_health_level": "BAD",
+      "boundary_style": "PASSIVE_AGGRESSIVE",
+      "relationship_trend": "WORSENING",
+      "image_url": "/api/service/relation-training/images/MakjangEvilMotherInLaw/result_BBAB.png"
+    },
+    {
+      "result_code": "BBBA",
+      "display_title": "폐인이 된 비극적 결말",
+      "analysis_text": "이런 막장 드라마는 처음이야! 여주인공이 이렇게까지 망가진다고? 충격 그 자체!",
+      "atmosphere_image_type": "STORM",
+      "relation_health_level": "BAD",
+      "boundary_style": "PASSIVE",
+      "relationship_trend": "WORSENING",
+      "image_url": "/api/service/relation-training/images/MakjangEvilMotherInLaw/result_BBBA.png"
+    },
+    {
+      "result_code": "BBBB",
+      "display_title": "영원히 굴복하는 삶",
+      "analysis_text": "아... 시어머니 진짜 악마! 여주인공은 평생 저렇게 살아야 해? 너무 잔인하다...",
+      "atmosphere_image_type": "STORM",
+      "relation_health_level": "BAD",
+      "boundary_style": "PASSIVE",
+      "relationship_trend": "WORSENING",
+      "image_url": "/api/service/relation-training/images/MakjangEvilMotherInLaw/result_BBBB.png"
+    }
+  ]
+}
