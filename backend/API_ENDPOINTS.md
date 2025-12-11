@@ -1037,28 +1037,43 @@
 ### 4. Deep Agent 시나리오 자동 생성
 **경로**: `POST /api/service/relation-training/generate-scenario`  
 **인증**: 필요 (Bearer Token)  
-**설명**: GPT-4o-mini로 시나리오 생성 + FLUX.1-schnell로 이미지 17장 자동 생성  
+**설명**: Gemini 2.5 Flash로 시나리오 생성 + Gemini 2.5 Flash Image로 이미지 17장 자동 생성 (비동기 처리)  
 
-**요청 Body**:
+**요청 Body (관계 개선 훈련)**:
 ```json
 {
-  "target": "PARENT|FRIEND|PARTNER|HUSBAND|WIFE",
-  "topic": "string"                 // 예: "남편이 밥투정을 합니다"
+  "target": "HUSBAND|CHILD|FRIEND|COLLEAGUE",
+  "topic": "string",                 // 예: "남편이 밥투정을 합니다"
+  "category": "TRAINING"             // 기본값
 }
 ```
 
-**응답**:
+**요청 Body (드라마)**:
 ```json
 {
-  "scenario_id": "integer",
-  "status": "success",
-  "image_count": "integer",
-  "folder_name": "string",
-  "message": "string"
+  "target": "AUTO|HUSBAND|CHILD|FRIEND|COLLEAGUE",  // AUTO: AI가 자동 선택
+  "topic": "AUTO|string",                           // AUTO: AI가 자동 창작
+  "category": "DRAMA",
+  "genre": "MAKJANG|ROMANCE|FAMILY"  // 필수
 }
 ```
 
-**Note**: 이미지 생성은 8~34분 소요, `USE_SKIP_IMAGES=true` 설정 시 이미지 생성 스킵
+**응답 (비동기 처리)**:
+```json
+{
+  "scenario_id": 0,  // 생성 중이므로 0
+  "status": "processing",
+  "image_count": 0,
+  "folder_name": "",
+  "message": "시나리오 생성이 시작되었습니다. 잠시 후 목록을 새로고침해주세요."
+}
+```
+
+**Note**: 
+- 시나리오 생성은 백그라운드에서 비동기로 처리됩니다 (약 20-30초 소요)
+- `USE_SKIP_IMAGES=true` 설정 시 이미지 생성 스킵
+- 드라마 시나리오는 공용 시나리오로 생성됩니다 (USER_ID = NULL)
+- 드라마 시나리오는 모든 사용자가 볼 수 있습니다
 
 ### 5. 공용 시나리오 이미지 조회
 **경로**: `GET /api/service/relation-training/images/{scenario_name}/{filename}`  
@@ -1071,17 +1086,21 @@
 
 **응답**: 이미지 파일 (image/png)
 
-### 6. 사용자별 시나리오 이미지 조회
+### 6. 사용자별/드라마 시나리오 이미지 조회
 **경로**: `GET /api/service/relation-training/images/{user_id}/{scenario_name}/{filename}`  
 **인증**: 불필요  
-**설명**: Deep Agent로 생성된 사용자별 시나리오 이미지 제공  
+**설명**: Deep Agent로 생성된 사용자별 시나리오 또는 드라마 시나리오 이미지 제공  
 
 **Path Parameters**:
-- `user_id` (integer): 사용자 ID
-- `scenario_name` (string): 시나리오 폴더명 (예: husband_20231215_143022)
-- `filename` (string): 이미지 파일명
+- `user_id` (string): 사용자 ID (숫자) 또는 "public" (드라마 시나리오)
+- `scenario_name` (string): 시나리오 폴더명 (예: husband_20231215_143022 또는 차가운_심장에_피어난_꽃_20251211_151150)
+- `filename` (string): 이미지 파일명 (예: start.png, result_AAAA.png)
 
 **응답**: 이미지 파일 (image/png)
+
+**예시**:
+- 사용자별: `/api/service/relation-training/images/123/husband_20231215_143022/start.png`
+- 드라마: `/api/service/relation-training/images/public/차가운_심장에_피어난_꽃_20251211_151150/start.png`
 
 ### 7. 시나리오 삭제
 **경로**: `DELETE /api/service/relation-training/scenarios/{scenario_id}`  

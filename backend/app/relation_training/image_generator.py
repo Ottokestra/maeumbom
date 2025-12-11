@@ -204,7 +204,7 @@ def create_placeholder_image(output_path: Path, text: str = "No Image"):
 async def generate_start_image(
     scenario_json,
     folder_name: str,
-    user_id: int
+    user_id: Optional[int]
 ) -> Optional[str]:
     """
     Generate start image for scenario
@@ -212,7 +212,7 @@ async def generate_start_image(
     Args:
         scenario_json: ScenarioJSON object with character design
         folder_name: Folder name
-        user_id: User ID
+        user_id: User ID (None for public scenarios)
     
     Returns:
         Image URL or None if skipped
@@ -228,16 +228,17 @@ async def generate_start_image(
     # Create prompt from character design
     prompt = f"따뜻하고 친근한 분위기의 한국 가정집 장면. {scenario_json.character_design.protagonist_visual}와 {scenario_json.character_design.target_visual}가 편안한 공간에 있는 모습. 부드러운 조명, 따뜻한 분위기, 4컷 만화 스타일"
     
-    # Determine output path
+    # Determine output path (공용 시나리오는 "public" 폴더 사용)
     images_dir = Path(__file__).parent / "images"
-    output_path = images_dir / str(user_id) / folder_name / "start.png"
+    user_folder = "public" if user_id is None else str(user_id)
+    output_path = images_dir / user_folder / folder_name / "start.png"
     
     # Generate image
     success = await generate_image(prompt, output_path)
     
     if success:
         # Return URL
-        return f"/api/service/relation-training/images/{user_id}/{folder_name}/start.png"
+        return f"/api/service/relation-training/images/{user_folder}/{folder_name}/start.png"
     else:
         print("[Image Generator] Start image generation failed")
         return None
@@ -246,7 +247,7 @@ async def generate_start_image(
 async def generate_result_images(
     scenario_json,
     folder_name: str,
-    user_id: int
+    user_id: Optional[int]
 ) -> Dict[str, Optional[str]]:
     """
     Generate result images (16 images) for scenario
@@ -283,7 +284,9 @@ async def generate_result_images(
         
         prompt = f"{result.display_title} - {atmosphere_desc}. {result.analysis_text[:100]}. 4컷 만화 스타일, 감정 표현이 풍부한 장면"
         
-        output_path = images_dir / str(user_id) / folder_name / f"result_{result.result_code}.png"
+        # 공용 시나리오는 "public" 폴더 사용
+        user_folder = "public" if user_id is None else str(user_id)
+        output_path = images_dir / user_folder / folder_name / f"result_{result.result_code}.png"
         tasks.append((prompt, output_path))
         result_codes.append(result.result_code)
         print(f"[{idx}/17] Result {result.result_code} 준비...")
@@ -293,10 +296,11 @@ async def generate_result_images(
     results = await generate_images_batch(tasks, max_concurrent=max_concurrent)
     
     # Build result dict
+    user_folder = "public" if user_id is None else str(user_id)
     image_urls = {}
     for result_code, success in zip(result_codes, results):
         if success:
-            image_urls[result_code] = f"/api/service/relation-training/images/{user_id}/{folder_name}/result_{result_code}.png"
+            image_urls[result_code] = f"/api/service/relation-training/images/{user_folder}/{folder_name}/result_{result_code}.png"
         else:
             image_urls[result_code] = None
             print(f"[Image Generator] Result {result_code} generation failed")
