@@ -35,6 +35,15 @@ class EmotionBubble extends StatefulWidget {
   /// true일 경우 Mint 배경 + LightGray 테두리 사용
   final bool bgGreen;
 
+  /// TTS 토글 표시 여부 (기본값: false)
+  final bool showTtsToggle;
+
+  /// TTS 활성화 상태
+  final bool ttsEnabled;
+
+  /// TTS 토글 콜백
+  final ValueChanged<bool>? onTtsToggle;
+
   const EmotionBubble({
     super.key,
     required this.message,
@@ -42,6 +51,9 @@ class EmotionBubble extends StatefulWidget {
     this.enableTypingAnimation = false,
     this.typingSpeed = 50,
     this.bgGreen = false,
+    this.showTtsToggle = false,
+    this.ttsEnabled = false,
+    this.onTtsToggle,
   });
 
   @override
@@ -133,25 +145,49 @@ class _EmotionBubbleState extends State<EmotionBubble> {
     }
   }
 
+  /// 토글 빌드 헬퍼
+  Widget _buildToggle({
+    required bool value,
+    required ValueChanged<bool>? onChanged,
+    required ToggleStyle style,
+  }) {
+    return Transform.scale(
+      scale: style.scale,
+      child: Switch(
+        value: value,
+        onChanged: onChanged,
+        activeColor: style.activeThumb,
+        activeTrackColor: style.activeTrack,
+        inactiveThumbColor: style.inactiveThumb,
+        inactiveTrackColor: style.inactiveTrack,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     final bubbleWidth = screenWidth - (AppSpacing.md * 2); // 좌우 여백 제외
-    const bubbleHeight = 120.0; // 기본 높이 설정 (3줄 크기)
 
     // 색상 결정 로직
-    final Color bgColor = widget.bgGreen ? AppColors.bgSoftMint : BubbleTokens.emotionBg;
-    final Color borderColor = widget.bgGreen ? AppColors.borderLightGray : BubbleTokens.emotionBorder;
-    
+    final Color bgColor =
+        widget.bgGreen ? AppColors.bgSoftMint : BubbleTokens.emotionBg;
+    final Color borderColor =
+        widget.bgGreen ? AppColors.borderLightGray : BubbleTokens.emotionBorder;
+
     // 삼각형 색상: bgGreen이면 natureGreen, 아니면 기본(userBg)
-    final Color triangleColor = widget.bgGreen ? AppColors.natureGreen : BubbleTokens.userBg;
+    final Color triangleColor =
+        widget.bgGreen ? AppColors.natureGreen : BubbleTokens.userBg;
 
     return GestureDetector(
       onTap: widget.onTap,
       child: Center(
         child: Container(
           width: bubbleWidth, // 명확한 너비 지정 (화면 전체 - 좌우 여백)
-          height: bubbleHeight, // 고정 높이 (3줄 크기)
+          constraints: const BoxConstraints(
+            minHeight: 60.0, // 최소 높이 (1줄 정도)
+            maxHeight: 144.0, // 최대 높이 (4줄 크기)
+          ),
           decoration: BoxDecoration(
             color: bgColor,
             border: Border.all(
@@ -163,21 +199,56 @@ class _EmotionBubbleState extends State<EmotionBubble> {
           ),
           child: Stack(
             children: [
+              // TTS 토글 (우측 상단)
+              if (widget.showTtsToggle)
+                Positioned(
+                  top: 8,
+                  right: 12,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        '목소리 듣기',
+                        style: AppTypography.caption.copyWith(
+                          color: BubbleTokens.emotionText,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      _buildToggle(
+                        value: widget.ttsEnabled,
+                        onChanged: widget.onTtsToggle,
+                        style: ToggleStyle.primary(),
+                      ),
+                    ],
+                  ),
+                ),
+
               // 스크롤 가능한 텍스트 영역
               Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.lg, // 좌우 패딩 증가 (32.0)
-                  vertical: AppSpacing.md, // 상하 패딩 증가 (24.0)
+                padding: EdgeInsets.only(
+                  left: AppSpacing.lg, // 좌측 패딩 (32.0)
+                  right: AppSpacing.lg, // 우측 패딩 (32.0)
+                  top: widget.showTtsToggle
+                      ? 40.0
+                      : AppSpacing.md, // TTS 토글 공간 확보
+                  bottom: AppSpacing.md, // 하단 패딩 (24.0)
                 ),
-                child: SingleChildScrollView(
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    return SingleChildScrollView(
                   controller: _scrollController,
                   child: Text(
                     _displayedText,
                     textAlign: TextAlign.left, // 왼쪽 정렬
+                        maxLines: 4, // 최대 4줄
+                        overflow: TextOverflow.visible,
                     style: AppTypography.bodyBold.copyWith(
                       color: BubbleTokens.emotionText, // #233446
                     ),
                   ),
+                    );
+                  },
                 ),
               ),
 

@@ -1,12 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
 
-/// 4가지 감정군 카테고리
+/// 감정군 및 상태 카테고리
 enum EmotionCategory {
+  // 4가지 감정
   happiness,
   sadness,
   anger,
   fear,
+  // 5가지 상태
+  basic,
+  listening,
+  thinking,
+  realization,
+  error,
 }
 
 /// 애니메이션 캐릭터 메타정보
@@ -25,9 +32,10 @@ class AnimationMeta {
 }
 
 /// 애니메이션 캐릭터 데이터 맵
-/// relief 캐릭터의 4가지 감정 애니메이션
+/// relief 캐릭터의 4가지 감정 + 5가지 상태 애니메이션
 /// 향후 다른 캐릭터 추가 시 '{characterId}_{emotion}' 패턴으로 추가
 const Map<String, AnimationMeta> animationMetaMap = {
+  // relief 캐릭터 - 4가지 감정
   'relief_happiness': AnimationMeta(
     id: 'relief_happiness',
     nameKo: '안심(기쁨)',
@@ -51,6 +59,38 @@ const Map<String, AnimationMeta> animationMetaMap = {
     nameKo: '안심(공포)',
     category: EmotionCategory.fear,
     assetPath: 'assets/characters/animation/fear/char_relief.json',
+  ),
+
+  // relief 캐릭터 - 5가지 상태
+  'relief_basic': AnimationMeta(
+    id: 'relief_basic',
+    nameKo: '안심(기본)',
+    category: EmotionCategory.basic,
+    assetPath: 'assets/characters/animation/basic/char_relief.json',
+  ),
+  'relief_listening': AnimationMeta(
+    id: 'relief_listening',
+    nameKo: '안심(듣는중)',
+    category: EmotionCategory.listening,
+    assetPath: 'assets/characters/animation/listening/char_relief.json',
+  ),
+  'relief_thinking': AnimationMeta(
+    id: 'relief_thinking',
+    nameKo: '안심(생각중)',
+    category: EmotionCategory.thinking,
+    assetPath: 'assets/characters/animation/thinking/char_relief.json',
+  ),
+  'relief_realization': AnimationMeta(
+    id: 'relief_realization',
+    nameKo: '안심(깨달음)',
+    category: EmotionCategory.realization,
+    assetPath: 'assets/characters/animation/realization/char_relief.json',
+  ),
+  'relief_error': AnimationMeta(
+    id: 'relief_error',
+    nameKo: '안심(오류)',
+    category: EmotionCategory.error,
+    assetPath: 'assets/characters/animation/error/char_relief.json',
   ),
 
   // TODO: 향후 추가될 캐릭터들

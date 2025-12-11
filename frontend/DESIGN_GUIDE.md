@@ -386,25 +386,79 @@ SystemBubble(
 봄이의 대화 말풍선으로 타이핑 애니메이션과 스크롤을 지원합니다.
 
 ```dart
-// 타이핑 애니메이션 있음
+// 기본 사용 (타이핑 애니메이션)
 EmotionBubble(
   message: '오늘 하루 어떠셨나요?',
   enableTypingAnimation: true,
   typingSpeed: 50,
 )
 
-// 즉시 표시
+// 민트색 배경 (Green 모드)
 EmotionBubble(
   message: '좋은 하루 보내세요!',
+  bgGreen: true,
 )
 ```
 
 **특징:**
-- 연분홍 배경 (`bgLightPink`)
-- 3줄 고정 높이 (120px)
-- 스크롤 가능 (내용이 길 경우)
+- 연분홍 배경 (`bgLightPink`) 또는 민트색 배경 (`bgSoftMint`)
+- **동적 높이**: 최소 60px ~ 최대 144px (4줄)
+  - 짧은 텍스트: 내용에 맞게 작은 크기
+  - 긴 텍스트: 최대 4줄까지 표시, 그 이상은 스크롤
+- 스크롤 가능 (내용이 4줄 초과 시)
 - 하단 삼각형 표시 (더 많은 컨텐츠 있을 때)
 - 타이핑 애니메이션 지원
+- **TTS 토글은 버블 외부에 배치** (BomiContent에서 관리)
+
+---
+
+#### 3.2.4 ListBubble
+
+**파일:** `lib/ui/components/list_bubble.dart`
+
+선택형 답변을 위한 리스트 버블입니다. `response_type: "list"`일 때 사용됩니다.
+
+```dart
+// 기본 사용
+ListBubble(
+  items: ['요가', '산책', '수영'],
+  selectedIndex: -1,
+  onItemSelected: (index, item) {
+    print('Selected: $item');
+    // 선택한 항목을 서버로 전송
+  },
+)
+
+// 선택 후 비활성화
+ListBubble(
+  items: ['요가', '산책', '수영'],
+  selectedIndex: 0,
+  disabled: true, // 선택 후 다른 항목 비활성화
+  onItemSelected: (index, item) {
+    // 이미 선택됨
+  },
+)
+```
+
+**특징:**
+- 아웃라인 스타일 (테두리만 있는 버블)
+- 번호 표시 (원형 배지)
+- 선택 시 강조 표시 (빨간색 테두리 + 배경 + 체크 아이콘)
+- 선택 후 다른 항목 비활성화 (연한 회색 처리)
+- 자동 텍스트 파싱 (`parseListItems()` 유틸리티)
+- 각 항목은 독립적으로 클릭 가능
+
+**텍스트 파싱:**
+```dart
+final items = parseListItems('''
+갱년기에 좋은 운동 추천해줄게!
+
+1. 요가 - 스트레칭과 명상을 통해 몸과 마음을 편안하게 해줘
+2. 산책 - 가벼운 유산산소 운동으로 기분 전환에 좋아
+3. 수영 - 관절에 무리 없이 전신 운동을 할 수 있어
+''');
+// 결과: ['요가 - 스트레칭과...', '산책 - 가벼운...', '수영 - 관절에...']
+```
 
 ---
 
@@ -457,6 +511,69 @@ class BubbleTokens {
   static const Color emotionText = AppColors.textPrimary;
 }
 ```
+
+---
+
+### 3.4 ToggleTokens
+
+**파일:** `lib/ui/tokens/toggles.dart`
+
+앱 전체에서 사용되는 토글(Switch) 스타일을 정의합니다.
+
+```dart
+class ToggleTokens {
+  // Primary Toggle (Red) - 주요 토글
+  static const Color primaryActiveThumb = AppColors.pureWhite;      // 활성화 토글 원 (흰색)
+  static const Color primaryActiveTrack = AppColors.accentRed;      // 활성화 배경 (빨간색)
+  static const Color primaryInactiveThumb = AppColors.pureWhite;    // 비활성 토글 원 (흰색)
+  static const Color primaryInactiveTrack = AppColors.borderLightGray; // 비활성 배경 (회색)
+
+  // Secondary Toggle (Green) - 보조 토글
+  static const Color secondaryActiveThumb = AppColors.pureWhite;    // 활성화 토글 원 (흰색)
+  static const Color secondaryActiveTrack = AppColors.natureGreen;  // 활성화 배경 (초록색)
+  static const Color secondaryInactiveThumb = AppColors.pureWhite;  // 비활성 토글 원 (흰색)
+  static const Color secondaryInactiveTrack = AppColors.borderLightGray; // 비활성 배경 (회색)
+
+  // Toggle Scale
+  static const double defaultScale = 0.75;  // 기본 크기
+  static const double largeScale = 0.85;    // 큰 크기
+  static const double smallScale = 0.65;    // 작은 크기
+}
+```
+
+**사용 예시:**
+
+```dart
+// Primary 토글 (빨간색)
+_buildToggle(
+  value: ttsEnabled,
+  onChanged: (value) => toggleTts(),
+  style: ToggleStyle.primary(),
+)
+
+// Secondary 토글 (초록색)
+_buildToggle(
+  value: isEnabled,
+  onChanged: (value) => toggle(),
+  style: ToggleStyle.secondary(),
+)
+
+// 크기 조정
+_buildToggle(
+  value: isEnabled,
+  onChanged: (value) => toggle(),
+  style: ToggleStyle.primary(size: ToggleSize.large),
+)
+```
+
+**토글 타입:**
+- `ToggleType.primary` - 빨간색 (기본, TTS 토글 등)
+- `ToggleType.secondary` - 초록색 (보조 기능)
+
+**토글 크기:**
+- `ToggleSize.small` - 0.65 배율
+- `ToggleSize.normal` - 0.75 배율 (기본)
+- `ToggleSize.large` - 0.85 배율
 
 ---
 
@@ -655,7 +772,66 @@ HomeBottomMenu()
 
 ---
 
-### 5.6 완전한 구현 예시
+### 5.6 똑똑 알람 (Alarm Screen) Design
+
+알람 화면은 홈 화면의 디자인 언어를 계승하면서 기능적인 요소를 추가했습니다.
+
+#### 디자인 철학
+- **몰입형 헤더**: 배경색이 상태바 영역까지 확장되어 개방감을 줍니다 (투명 TopBar)
+- **화이트 아이콘/텍스트**: 컬러풀한 배경 위 화이트 텍스트로 가독성을 확보합니다
+- **직관적 등록 유도**: 중앙의 큰 텍스트와 화살표 아이콘으로 알람 등록을 유도합니다
+
+#### 화면 구조
+
+```
+┌─────────────────────────────┐
+│                             │ ← 상태바 (투명 배경, 흰색 아이콘)
+│  <  똑똑 알람         ...   │ ← 투명 TopBar (흰색 아이콘/텍스트)
+│                             │
+│     제가 알람을              │
+│     등록해드릴까요?           │
+│                             │
+│      (→)        [캐릭터]     │ ← 원형 화살표 아이콘, 캐릭터
+│                             │
+│ ┌─────────────────────────┐ │
+│ │                         │ │
+│ │   오전 07:00       (O)  │ │ ← 알람 리스트 패널
+│ │   출근 준비              │ │    (흰색 배경, 둥근 모서리)
+│ │                         │ │
+│ └─────────────────────────┘ │
+└─────────────────────────────┘
+```
+
+#### 주요 컴포넌트
+
+**1. 원형 화살표 아이콘**
+- 배경: 흰색 20% 투명도 (`Colors.white.withValues(alpha: 0.2)`)
+- 모양: 원형 (`BoxShape.circle`)
+- 아이콘: 흰색 `arrow_forward`
+
+```dart
+Container(
+  width: 56,
+  height: 56,
+  decoration: BoxDecoration(
+    color: Colors.white.withValues(alpha: 0.2),
+    shape: BoxShape.circle,
+  ),
+  child: Icon(Icons.arrow_forward, color: AppColors.pureWhite),
+)
+```
+
+**2. 알람 리스트 패널**
+- **확장형 UI**: 기본적으로 일부만 보이다가 드래그/클릭 시 확장됩니다
+- **배경**: 흰색으로 깔끔하게 정리하여 컬러풀한 상단과 대비를 줍니다
+- **상호작용**:
+    - 접힘 상태: "UP" 화살표 (`keyboard_arrow_up_rounded`)
+    - 펼침 상태: "DOWN" 화살표
+    - "전체 보기" 버튼: `/alarm` 경로로 이동
+
+---
+
+### 5.7 일일 기분 체크 다이얼로그
 
 ```dart
 class HomeScreen extends ConsumerWidget {
@@ -1210,7 +1386,68 @@ TopNotificationManager.show(
 
 ---
 
-### 9.4 CircularRipple
+### 9.4 Toggle
+
+**파일:** `lib/ui/tokens/toggles.dart`
+
+일관된 토글(Switch) 스타일을 제공합니다.
+
+**사용 예시:**
+
+```dart
+// Primary 토글 (빨간색) - TTS 등
+_buildToggle(
+  value: ttsEnabled,
+  onChanged: (value) => toggleTts(),
+  style: ToggleStyle.primary(),
+)
+
+// Secondary 토글 (초록색) - 보조 기능
+_buildToggle(
+  value: isEnabled,
+  onChanged: (value) => toggle(),
+  style: ToggleStyle.secondary(),
+)
+
+// 크기 조정
+_buildToggle(
+  value: isEnabled,
+  onChanged: (value) => toggle(),
+  style: ToggleStyle.primary(size: ToggleSize.large),
+)
+
+// 헬퍼 메서드 구현
+Widget _buildToggle({
+  required bool value,
+  required ValueChanged<bool>? onChanged,
+  required ToggleStyle style,
+}) {
+  return Transform.scale(
+    scale: style.scale,
+    child: Switch(
+      value: value,
+      onChanged: onChanged,
+      activeColor: style.activeThumb,
+      activeTrackColor: style.activeTrack,
+      inactiveThumbColor: style.inactiveThumb,
+      inactiveTrackColor: style.inactiveTrack,
+    ),
+  );
+}
+```
+
+**토글 타입:**
+- `ToggleStyle.primary()` - 빨간색 (기본, TTS 토글 등)
+- `ToggleStyle.secondary()` - 초록색 (보조 기능)
+
+**토글 크기:**
+- `ToggleSize.small` - 0.65 배율
+- `ToggleSize.normal` - 0.75 배율 (기본)
+- `ToggleSize.large` - 0.85 배율
+
+---
+
+### 9.5 CircularRipple
 
 **파일:** `lib/ui/components/circular_ripple.dart`
 
