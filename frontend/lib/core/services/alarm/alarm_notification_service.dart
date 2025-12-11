@@ -10,6 +10,9 @@ class AlarmNotificationService {
       FlutterLocalNotificationsPlugin();
 
   bool _initialized = false;
+  
+  /// 알림 탭 콜백 (외부에서 설정 가능)
+  Function(int notificationId)? onNotificationTapped;
 
   /// 서비스 초기화
   Future<void> initialize() async {
@@ -19,14 +22,18 @@ class AlarmNotificationService {
     const androidSettings =
         AndroidInitializationSettings('@mipmap/ic_launcher');
 
-    // iOS 설정
-    const iosSettings = DarwinInitializationSettings(
+    // iOS 설정 (포그라운드에서도 알림 표시)
+    final iosSettings = DarwinInitializationSettings(
       requestAlertPermission: true,
       requestBadgePermission: true,
       requestSoundPermission: true,
+      onDidReceiveLocalNotification: (id, title, body, payload) async {
+        // iOS 10 이하에서 포그라운드 알림 처리
+        print('[AlarmNotificationService] Foreground notification received: $id');
+      },
     );
 
-    const settings = InitializationSettings(
+    final settings = InitializationSettings(
       android: androidSettings,
       iOS: iosSettings,
     );
@@ -40,13 +47,19 @@ class AlarmNotificationService {
     tz.initializeTimeZones();
     tz.setLocalLocation(tz.getLocation('Asia/Seoul'));
 
+    // Android 알림 채널 생성
+    await createNotificationChannel();
+
     _initialized = true;
+    print('[AlarmNotificationService] Service initialized successfully');
   }
 
   /// 알림 탭 핸들러
   void _onNotificationTapped(NotificationResponse response) {
-    // TODO: 알림 탭 시 동작 구현 (예: 알람 화면으로 이동)
     print('[AlarmNotificationService] Notification tapped: ${response.id}');
+    
+    // 외부 콜백 호출 (알람 화면으로 이동 등)
+    onNotificationTapped?.call(response.id ?? 0);
   }
 
   /// 알람 예약
@@ -144,13 +157,14 @@ class AlarmNotificationService {
     return pending.any((alarm) => alarm.id == notificationId);
   }
 
-  /// 권한 요청 (iOS)
+  /// 권한 요청 (iOS/Android)
   Future<bool?> requestPermissions() async {
     if (!_initialized) {
       await initialize();
     }
 
-    return await _notifications
+    // iOS 권한 요청
+    final iosGranted = await _notifications
         .resolvePlatformSpecificImplementation<
             IOSFlutterLocalNotificationsPlugin>()
         ?.requestPermissions(
@@ -158,6 +172,35 @@ class AlarmNotificationService {
           badge: true,
           sound: true,
         );
+
+    // Android 13+ 권한 요청
+    final androidGranted = await _notifications
+        .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin>()
+        ?.requestNotificationsPermission();
+
+    return iosGranted ?? androidGranted ?? true;
+  }
+
+  /// 권한 상태 확인
+  Future<bool> checkPermissions() async {
+    if (!_initialized) {
+      await initialize();
+    }
+
+    // iOS 권한 확인
+    final iosPermissions = await _notifications
+        .resolvePlatformSpecificImplementation<
+            IOSFlutterLocalNotificationsPlugin>()
+        ?.checkPermissions();
+
+    if (iosPermissions != null) {
+      return iosPermissions.isEnabled;
+    }
+
+    // Android는 기본적으로 허용 (Android 13 미만)
+    // Android 13+는 requestPermissions에서 처리
+    return true;
   }
 
   /// 알림 채널 생성 (Android)

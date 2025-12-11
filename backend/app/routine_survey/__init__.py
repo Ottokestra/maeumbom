@@ -1,5 +1,5 @@
 """Mental routine survey domain package."""
 
-from .routers import router
+from .router import router
 
 __all__ = ["router"]

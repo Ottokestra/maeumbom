@@ -2,12 +2,16 @@
 
 ## 개요
 
-Deep Agent Pipeline은 사용자 입력을 받아 Gemini API로 시나리오를 생성하고, FLUX.1-schnell로 17장의 이미지를 자동 생성하는 완전 자동화 파이프라인입니다.
+Deep Agent Pipeline은 사용자 입력을 받아 Gemini API로 시나리오를 생성하고, Gemini 2.5 Flash로 17장의 이미지를 자동 생성하는 완전 자동화 파이프라인입니다.
 
-**최신 업데이트 (2025-12-09)**:
-- Qwen 2.5 14B 모델 제거
-- Gemini로 시나리오 생성 전환 (scenario_architect.md 하나로 전체 시나리오 한 번에 생성)
+**최신 업데이트 (2025-12-11)**:
+- FLUX.1-schnell 로컬 모델 제거
+- Gemini 2.5 Flash로 이미지 생성 전환 (빠르고 저렴)
+- 시나리오 생성은 Gemini 2.5 Flash 사용 (scenario_architect.md 또는 scenario_prompt_drama.md)
 - 오케스트레이션은 GPT-4o-mini 계속 사용 (프롬프트 준비, 검증, 파싱)
+- **드라마 카테고리 추가**: 드라마 시나리오 생성 기능 (막장/로맨스/가족)
+- **AUTO 기능**: AI가 자동으로 배역과 주제를 창작하는 기능
+- **드라마 시나리오 공용화**: 드라마 시나리오는 모든 사용자에게 공개 (USER_ID = NULL)
 
 ## 환경 변수 설정
 
@@ -20,64 +24,42 @@ Deep Agent Pipeline은 사용자 입력을 받아 Gemini API로 시나리오를 
 
 # 이미지 생성 제어
 USE_SKIP_IMAGES=true       # 개발 모드: 이미지 생성 스킵 (NULL 저장)
-USE_AMD_GPU=false          # AMD Radeon GPU 사용 (노트북)
-USE_NVIDIA_GPU=false       # NVIDIA GPU 사용 (학원 컴퓨터)
+                           # false로 변경하면 Gemini 2.5 Flash로 이미지 생성
 
 # 성능 설정
 MAX_PARALLEL_IMAGE_GENERATION=4    # 동시 생성 이미지 수 (1~8)
-IMAGE_GENERATION_TIMEOUT=300       # 타임아웃 (초)
 
 # OpenAI API (Orchestration - 이미 설정되어 있어야 함)
 OPENAI_API_KEY=sk-xxxxxxxxxxxxx
 OPENAI_MODEL_NAME=gpt-4o-mini
 
-# Gemini API (Scenario Generation)
-SCENARIO_GENERATION_MODEL_NAME=gemini-1.5-pro
+# Gemini API (Scenario Generation + Image Generation)
+SCENARIO_GENERATION_MODEL_NAME=gemini-2.5-flash
+IMAGE_GENERATION_MODEL_NAME=gemini-2.5-flash-image
 GEMINI_API_KEY=your_gemini_api_key_here
 ```
 
-## 패키지 설치 (중요!)
+## 패키지 설치
 
-### ⚠️ PyTorch 설치 주의사항
-
-**이 프로젝트는 TTS(Text-to-Speech) 기능에서도 PyTorch를 사용합니다!**
-
-- `backend/engine/text-to-speech/` 모듈이 PyTorch에 의존
-- Deep Agent뿐만 아니라 **TTS 기능도 PyTorch 필요**
-- **절대로 PyTorch를 제거하지 마세요!**
-
-### Windows 환경 (권장)
+### 필수 패키지
 
 ```bash
-# 1. 표준 PyTorch 설치 (CPU 버전, TTS + Deep Agent 모두 지원)
-pip install torch torchvision torchaudio
+# Gemini API
+pip install google-generativeai
 
-# 2. Deep Agent 추가 의존성
-pip install diffusers transformers accelerate tenacity pillow
+# 기타 의존성
+pip install tenacity pillow
 ```
 
 **특징:**
-- ✅ Windows에서 안정적으로 작동
-- ✅ TTS 기능 사용 가능
-- ✅ Deep Agent 개발 가능 (`USE_SKIP_IMAGES=true`로)
-- ✅ 학원 NVIDIA GPU에서도 동일한 코드로 작동
+- ✅ 로컬 GPU 불필요 (API 호출)
+- ✅ 빠른 이미지 생성 (초당 1-2장)
+- ✅ 저렴한 비용
+- ✅ 한글 프롬프트 지원
 
-**주의:**
-- ⚠️ ROCm (AMD GPU 지원)은 Windows에서 지원되지 않음
-- ⚠️ Windows에서 AMD GPU를 사용하려면 DirectML 필요 (복잡, 비권장)
-
-### Linux 환경 (AMD GPU) - 고급 사용자용
-
-```bash
-# ROCm 지원 PyTorch (AMD GPU 전용, Linux만 지원)
-pip uninstall torch torchvision torchaudio -y
-pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/rocm6.0
-
-# Deep Agent 추가 의존성
-pip install diffusers transformers accelerate tenacity pillow
-```
-
-**주의:** Windows에서는 작동하지 않습니다!
+**참고:**
+- PyTorch는 TTS 기능에서만 사용됩니다
+- diffusers, transformers는 더 이상 필요하지 않습니다
 
 ### Linux/Windows 환경 (NVIDIA GPU)
 
@@ -110,18 +92,17 @@ USE_NVIDIA_GPU=false
 - Windows 노트북 (CPU 모드)
 - 표준 PyTorch 설치
 
-### Phase 2: 프로덕션 (NVIDIA GPU) - 학원 컴퓨터
+### Phase 2: 프로덕션 (이미지 생성 활성화)
 
 ```bash
 USE_SKIP_IMAGES=false
-USE_AMD_GPU=false
-USE_NVIDIA_GPU=true
 ```
 
 **특징:**
-- NVIDIA GPU로 빠른 이미지 생성
-- 17장 생성 시간: 약 2~5분
-- 학원 컴퓨터 등 고성능 GPU 환경
+- Gemini 2.5 Flash Image API로 이미지 생성
+- 17장 생성 시간: 약 17-34초 (초당 1-2장)
+- 로컬 GPU 불필요, API 호출로 처리
+- 저렴한 비용 (~$0.17/시나리오)
 
 ## API 사용법
 
@@ -129,13 +110,29 @@ USE_NVIDIA_GPU=true
 
 **Endpoint:** `POST /api/service/relation-training/generate-scenario`
 
-**Request:**
+**관계 개선 훈련 시나리오:**
 ```json
 {
-  "target": "HUSBAND",
-  "topic": "남편이 밥투정을 합니다"
+  "target": "HUSBAND",  # HUSBAND, CHILD, FRIEND, COLLEAGUE
+  "topic": "매일 늦게 들어오는 남편",
+  "category": "TRAINING"  # 기본값
 }
 ```
+
+**드라마 시나리오:**
+```json
+{
+  "target": "AUTO",  # AUTO (랜덤 배역) 또는 HUSBAND, CHILD, FRIEND, COLLEAGUE
+  "topic": "AUTO",  # AUTO (AI 자동 창작) 또는 직접 입력
+  "category": "DRAMA",
+  "genre": "MAKJANG"  # MAKJANG, ROMANCE, FAMILY
+}
+```
+
+**참고:**
+- 드라마 시나리오는 공용 시나리오로 생성됩니다 (USER_ID = NULL)
+- `target: "AUTO"`를 사용하면 AI가 장르에 맞춰 배역을 자동 선택합니다
+- `topic: "AUTO"`를 사용하면 AI가 장르에 맞춰 주제를 자동 창작합니다
 
 **Headers:**
 ```
@@ -143,16 +140,21 @@ Authorization: Bearer {access_token}
 Content-Type: application/json
 ```
 
-**Response:**
+**Response (비동기 처리):**
 ```json
 {
-  "scenario_id": 123,
-  "status": "completed",
-  "image_count": 17,
-  "folder_name": "husband_20231215_143022",
-  "message": "시나리오와 이미지가 성공적으로 생성되었습니다."
+  "scenario_id": 0,
+  "status": "processing",
+  "image_count": 0,
+  "folder_name": "",
+  "message": "시나리오 생성이 시작되었습니다. 잠시 후 목록을 새로고침해주세요."
 }
 ```
+
+**참고:**
+- 시나리오 생성은 백그라운드에서 비동기로 처리됩니다 (약 20-30초 소요)
+- 생성 완료 후 시나리오 목록을 새로고침하면 생성된 시나리오를 확인할 수 있습니다
+- 프론트엔드 UI에서 설정 아이콘을 통해 시나리오를 생성할 수 있습니다
 
 ### 2. 생성된 시나리오 확인
 
@@ -174,20 +176,38 @@ GET /api/service/relation-training/images/{user_id}/{scenario_name}/{filename}
 예: /api/service/relation-training/images/123/husband_20231215_143022/start.png
 ```
 
+**드라마 시나리오 (공용):**
+```
+GET /api/service/relation-training/images/public/{scenario_name}/{filename}
+예: /api/service/relation-training/images/public/차가운_심장에_피어난_꽃_20251211_151150/start.png
+```
+
+**참고:**
+- 드라마 시나리오는 `user_id="public"`으로 저장됩니다
+- 공용 시나리오 이미지는 `images/public/` 폴더에 저장됩니다
+
 ## 파일 구조
 
 ```
 backend/app/relation_training/
 ├── prompts/
-│   ├── scenario_architect.md      # Brain 프롬프트
+│   ├── scenario_architect.md      # 관계 개선 훈련 프롬프트
+│   ├── scenario_prompt_drama.md   # 드라마 프롬프트 (NEW!)
 │   └── cartoon_director.md        # Hands 프롬프트
 ├── data/
-│   └── {user_id}/
-│       └── {folder_name}.json     # 백업 JSON
+│   ├── {user_id}/
+│   │   └── {folder_name}.json     # 개인 시나리오 JSON
+│   └── public/
+│       └── {folder_name}.json     # 드라마 시나리오 JSON (NEW!)
 ├── images/
 │   ├── {scenario_name}/           # 공용 시나리오 (기존)
-│   └── {user_id}/
-│       └── {folder_name}/         # 사용자별 시나리오 (Deep Agent)
+│   ├── {user_id}/
+│   │   └── {folder_name}/         # 사용자별 시나리오
+│   │       ├── start.png
+│   │       ├── result_AAAA.png
+│   │       └── ... (총 17장)
+│   └── public/
+│       └── {folder_name}/         # 드라마 시나리오 이미지 (NEW!)
 │           ├── start.png
 │           ├── result_AAAA.png
 │           └── ... (총 17장)
@@ -203,15 +223,20 @@ backend/app/relation_training/
 
 ### Phase 1: The Brain (시나리오 생성)
 
-1. 프롬프트 로드 (step0~step3)
+**관계 개선 훈련 (TRAINING):**
+1. 프롬프트 로드: `scenario_architect.md`
 2. 변수 치환 (TARGET, TOPIC)
-3. GPT-4o-mini API 호출 (4단계)
-   - STEP 0: Character Design
-   - STEP 1: Nodes (15개)
-   - STEP 2: Options (30개)
-   - STEP 3: Results (16개)
+3. Gemini 2.5 Flash API 호출
 4. JSON 파싱 및 검증
 5. Pydantic 모델 변환
+
+**드라마 (DRAMA):**
+1. 프롬프트 로드: `scenario_prompt_drama.md`
+2. 변수 치환 (TARGET, TOPIC, GENRE)
+3. Gemini 2.5 Flash API 호출
+4. JSON 파싱 및 검증
+5. Pydantic 모델 변환
+6. **공용 시나리오로 저장** (USER_ID = NULL)
 
 **출력:** 15개 노드, 30개 선택지, 16개 결과
 
@@ -227,12 +252,22 @@ backend/app/relation_training/
 
 ### Phase 3: Persistence (저장)
 
+**관계 개선 훈련:**
 1. JSON 파일 저장 (`data/{user_id}/{folder_name}.json`)
-2. DB 저장:
+2. DB 저장: USER_ID = 사용자 ID
    - TB_SCENARIOS (메타데이터)
    - TB_SCENARIO_NODES (15개, text → SITUATION_TEXT)
    - TB_SCENARIO_OPTIONS (30개, text → OPTION_TEXT)
    - TB_SCENARIO_RESULTS (16개, IMAGE_URL)
+
+**드라마:**
+1. JSON 파일 저장 (`data/public/{folder_name}.json`)
+2. DB 저장: USER_ID = NULL (공용 시나리오)
+   - TB_SCENARIOS (메타데이터, CATEGORY = "DRAMA")
+   - TB_SCENARIO_NODES (15개)
+   - TB_SCENARIO_OPTIONS (30개)
+   - TB_SCENARIO_RESULTS (16개)
+3. 이미지 저장: `images/public/{folder_name}/`
 
 ## 트러블슈팅
 

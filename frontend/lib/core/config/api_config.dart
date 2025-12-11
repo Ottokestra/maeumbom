@@ -81,6 +81,10 @@ class ApiConfig {
       '$relationTrainingBase/scenarios/$scenarioId/start';
   static const String relationTrainingProgress =
       '$relationTrainingBase/progress';
+  static const String relationTrainingGenerate =
+      '$relationTrainingBase/generate-scenario';
+  static String relationTrainingDelete(int scenarioId) =>
+      '$relationTrainingBase/scenarios/$scenarioId';
 
   // Slang Quiz Endpoints
   static const String slangQuizBase = '/api/service/slang-quiz';
@@ -98,5 +102,6 @@ class ApiConfig {
 
   // Timeout Configuration
   static const Duration connectTimeout = Duration(seconds: 30);
-  static const Duration receiveTimeout = Duration(seconds: 30);
+  static const Duration receiveTimeout =
+      Duration(seconds: 120); // 시나리오 생성은 20-30초 이상 소요될 수 있음
 }

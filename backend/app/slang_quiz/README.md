@@ -83,6 +83,19 @@ python -c "from app.db.database import init_db; init_db()"
 
 ### 4. 초기 문제 생성
 
+**방법 1: 프론트엔드 Admin 화면 사용 (권장)**
+
+1. 앱 실행 → 마음연습실 → 신조어 퀴즈
+2. 시작 화면에서 **우측 상단 설정 아이콘(⚙️)** 클릭
+3. 관리자 화면에서 설정:
+   - 난이도: beginner / intermediate / advanced
+   - 타입: word_to_meaning / meaning_to_word
+   - 개수: 5 / 10 / 20 / 30
+4. **"문제 생성"** 버튼 클릭
+5. 생성 완료 대기 (약 10-30초)
+
+**방법 2: 스크립트 실행**
+
 ```bash
 python -m app.slang_quiz.scripts.generate_initial_questions
 ```
@@ -90,6 +103,8 @@ python -m app.slang_quiz.scripts.generate_initial_questions
 이 스크립트는 **180개의 문제**를 생성합니다:
 - 3 레벨 × 2 타입 × 30개 = 180개
 - DB (`TB_SLANG_QUIZ_QUESTIONS`)와 JSON 파일 (`data/` 폴더)에 동시 저장
+
+**참고**: 스크립트의 `questions_per_batch` 값을 수정하여 생성 개수를 조절할 수 있습니다.
 
 ## API 엔드포인트
 
@@ -266,11 +281,32 @@ DELETE /api/service/slang-quiz/games/{game_id}
 }
 ```
 
-#### 8. 관리자용 문제 생성 (나중에 사용)
+#### 8. 관리자용 문제 생성 (개발용)
 
 ```http
-POST /api/service/slang-quiz/admin/questions/generate?level=beginner&quiz_type=word_to_meaning&count=10
+POST /api/service/slang-quiz/admin/questions/generate?level=beginner&quiz_type=word_to_meaning&count=5
 ```
+
+**Query Parameters:**
+- `level`: beginner, intermediate, advanced
+- `quiz_type`: word_to_meaning, meaning_to_word
+- `count`: 생성할 문제 수 (1-50)
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Generated 5 questions",
+  "count": 5,
+  "level": "beginner",
+  "quiz_type": "word_to_meaning"
+}
+```
+
+**참고**: 
+- 프론트엔드 Admin 화면에서 사용 가능
+- OpenAI API 호출로 인해 약 10-30초 소요
+- 생성된 문제는 DB와 JSON 파일에 동시 저장
 
 ## 게임 플로우
 
@@ -405,20 +441,118 @@ python -m app.slang_quiz.scripts.generate_initial_questions
 
 ## 폴더 구조
 
+### 백엔드
+
 ```
 backend/app/slang_quiz/
 ├── __init__.py
 ├── routes.py           # API 엔드포인트 (8개)
-├── service.py          # 비즈니스 로직
-├── models.py           # Pydantic 모델
+├── service.py          # 비즈니스 로직 (OpenAI API 호출, 문제 선택 등)
+├── models.py           # Pydantic 모델 (Request/Response)
 ├── README.md           # 이 문서
 ├── data/               # JSON 백업
 │   ├── beginner/
+│   │   ├── word_to_meaning/
+│   │   └── meaning_to_word/
 │   ├── intermediate/
 │   └── advanced/
 └── scripts/
-    └── generate_initial_questions.py  # 초기 문제 생성
+    └── generate_initial_questions.py  # 초기 문제 생성 스크립트
 ```
+
+### 프론트엔드
+
+```
+frontend/lib/app/slang_quiz/
+├── slang_quiz_start_screen.dart      # 시작 화면 (난이도/타입 선택)
+├── slang_quiz_game_screen.dart       # 게임 화면 (문제 풀이)
+├── slang_quiz_result_screen.dart     # 결과 화면
+└── slang_quiz_admin_screen.dart      # 관리자 화면 (문제 생성)
+
+frontend/lib/data/
+├── api/slang_quiz/
+│   └── slang_quiz_api_client.dart    # API 클라이언트
+└── dtos/slang_quiz/                  # DTO 모델들
+    ├── start_game_request.dart
+    ├── start_game_response.dart
+    ├── submit_answer_request.dart
+    ├── submit_answer_response.dart
+    └── end_game_response.dart
+```
+
+## 주요 수정 사항
+
+### User 모델 속성명
+
+**중요**: User 모델의 ID 속성은 대문자 `ID`입니다.
+
+```python
+# ❌ 잘못된 사용
+current_user.id
+
+# ✅ 올바른 사용
+current_user.ID
+```
+
+모든 엔드포인트에서 `current_user.ID`를 사용하도록 수정되었습니다:
+- `start-game`
+- `submit-answer`
+- `end`
+- `history`
+- `statistics`
+- `delete`
+- `admin/questions/generate`
+
+### 프론트엔드 통합
+
+프론트엔드에서 신조어 퀴즈를 사용하려면:
+
+1. **마음연습실** → **신조어 퀴즈** 버튼 클릭
+2. 난이도/타입 선택 후 **게임 시작**
+3. 5문제 풀이 후 결과 확인
+
+**관리자 화면 접근**:
+- 시작 화면 우측 상단 설정 아이콘(⚙️) 클릭
+- 또는 캐릭터를 5번 연속 탭
+
+## 윤리성 필터링
+
+신조어 퀴즈는 5060 여성 유저를 대상으로 하므로, 윤리적이고 건전한 단어만 사용합니다.
+
+### 제외 대상
+
+- **초성 줄임말**: ㅇㅋ, ㅇㅈ, ㅈㄱㄴ 등 (의미 모호, 교육적 가치 낮음)
+- **특정 단체/커뮤니티 유래 단어**: 특정 안 좋은 단체에서 유래한 단어
+- **폭력적/차별적/혐오 표현**: 부적절한 의미를 담은 단어
+- **불법 활동 미화 단어**: 마약, 도박, 성적 비하 등 관련 단어
+- **교육적 가치 없는 단어**: 단순히 충격적이거나 부적절한 단어
+
+### 정리 방법
+
+윤리성 필터에 걸리는 문제를 자동으로 정리하는 스크립트:
+
+```bash
+cd backend
+python -m app.slang_quiz.scripts.cleanup_unethical_questions
+```
+
+**자세한 내용**: [ETHICS_GUIDE.md](ETHICS_GUIDE.md) 참조
+
+## 주의사항
+
+### 개발 환경
+
+- 프론트엔드 Admin 화면은 개발용입니다. 프로덕션 배포 시 제거하거나 숨겨야 합니다.
+- OpenAI API 호출 비용이 발생합니다.
+- 문제 생성 시 타임아웃이 발생할 수 있습니다 (약 30초 이상 소요 가능).
+
+### 데이터 관리
+
+- 문제는 DB와 JSON 파일에 동시 저장됩니다.
+- JSON 파일은 `backend/app/slang_quiz/data/` 폴더에 저장됩니다.
+- 문제 품질 확인 후 필요시 프롬프트를 수정하여 재생성할 수 있습니다.
+- **중복 방지**: 문제 생성 시 DB의 기존 단어를 자동으로 제외하여 중복을 방지합니다.
+- **윤리성 필터링**: 프롬프트 레벨과 DB 저장 시 이중 체크로 윤리성 문제를 방지합니다.
 
 ## 라이선스
 

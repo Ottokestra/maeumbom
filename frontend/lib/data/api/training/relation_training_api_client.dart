@@ -67,6 +67,44 @@ class RelationTrainingApiClient {
     }
   }
 
+  Future<GenerateScenarioResponse> generateScenario({
+    required String target,
+    required String topic,
+    String category = 'TRAINING',
+    String? genre,
+  }) async {
+    try {
+      final requestData = {
+        'target': target,
+        'topic': topic,
+        'category': category,
+      };
+      
+      // 드라마 선택 시에만 genre 추가
+      if (category == 'DRAMA' && genre != null) {
+        requestData['genre'] = genre;
+      }
+      
+      final response = await _dio.post(
+        ApiConfig.relationTrainingGenerate,
+        data: requestData,
+      );
+      return GenerateScenarioResponse.fromJson(response.data);
+    } on DioException catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  Future<void> deleteScenario(int scenarioId) async {
+    try {
+      await _dio.delete(
+        ApiConfig.relationTrainingDelete(scenarioId),
+      );
+    } on DioException catch (e) {
+      throw _handleError(e);
+    }
+  }
+
   Exception _handleError(DioException e) {
     if (e.response != null) {
       final message = e.response!.data?['detail'] ?? 'Unknown error';

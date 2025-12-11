@@ -15,6 +15,9 @@ import 'app/slang_quiz/slang_quiz_result_screen.dart';
 import 'app/slang_quiz/slang_quiz_admin_screen.dart';
 import 'data/dtos/slang_quiz/end_game_response.dart';
 
+// GlobalKey for navigation
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   // Kakao SDK 초기화
@@ -33,6 +36,13 @@ Future<void> main() async {
   // 🆕 알람 서비스 초기화
   final alarmService = AlarmNotificationService();
   await alarmService.initialize();
+  
+  // 알림 탭 시 알람 화면으로 이동
+  alarmService.onNotificationTapped = (notificationId) {
+    debugPrint('🔔 Notification tapped: $notificationId');
+    navigatorKey.currentState?.pushNamed('/alarm');
+  };
+  
   debugPrint('✅ AlarmNotificationService initialized');
 
   runApp(
@@ -47,6 +57,7 @@ class MaeumBomApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return MaterialApp(
+      navigatorKey: navigatorKey,
       title: 'Maeumbom',
       theme: AppTheme.light,
       darkTheme: AppTheme.dark,

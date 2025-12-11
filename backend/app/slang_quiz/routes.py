@@ -57,7 +57,7 @@ async def start_game(
         # 1. Select 5 questions for user
         questions = select_questions_for_user(
             db=db,
-            user_id=current_user.id,
+            user_id=current_user.ID,  # User 모델의 ID 속성은 대문자
             level=request.level.value,
             quiz_type=request.quiz_type.value,
             count=5
@@ -71,14 +71,14 @@ async def start_game(
         
         # 2. Create game session
         game = SlangQuizGame(
-            USER_ID=current_user.id,
+            USER_ID=current_user.ID,  # User 모델의 ID 속성은 대문자
             LEVEL=request.level.value,
             QUIZ_TYPE=request.quiz_type.value,
             TOTAL_QUESTIONS=5,
             CORRECT_COUNT=0,
             TOTAL_SCORE=0,
             IS_COMPLETED=False,
-            CREATED_BY=current_user.id
+            CREATED_BY=current_user.ID  # User 모델의 ID 속성은 대문자
         )
         db.add(game)
         db.commit()
@@ -88,10 +88,10 @@ async def start_game(
         for idx, question in enumerate(questions, start=1):
             answer = SlangQuizAnswer(
                 GAME_ID=game.ID,
-                USER_ID=current_user.id,
+                USER_ID=current_user.ID,  # User 모델의 ID 속성은 대문자
                 QUESTION_ID=question.ID,
                 QUESTION_NUMBER=idx,
-                CREATED_BY=current_user.id
+                CREATED_BY=current_user.ID  # User 모델의 ID 속성은 대문자
             )
             db.add(answer)
             
@@ -146,7 +146,7 @@ async def get_question(
         # Verify game ownership
         game = db.query(SlangQuizGame).filter(
             SlangQuizGame.ID == game_id,
-            SlangQuizGame.USER_ID == current_user.id,
+            SlangQuizGame.USER_ID == current_user.ID,
             SlangQuizGame.IS_DELETED == False
         ).first()
         
@@ -208,7 +208,7 @@ async def submit_answer(
         # Verify game ownership
         game = db.query(SlangQuizGame).filter(
             SlangQuizGame.ID == game_id,
-            SlangQuizGame.USER_ID == current_user.id,
+            SlangQuizGame.USER_ID == current_user.ID,
             SlangQuizGame.IS_DELETED == False
         ).first()
         
@@ -246,13 +246,13 @@ async def submit_answer(
         answer.IS_CORRECT = is_correct
         answer.RESPONSE_TIME_SECONDS = request.response_time_seconds
         answer.EARNED_SCORE = earned_score
-        answer.UPDATED_BY = current_user.id
+        answer.UPDATED_BY = current_user.ID
         
         # Update game statistics
         if is_correct:
             game.CORRECT_COUNT += 1
         game.TOTAL_SCORE += earned_score
-        game.UPDATED_BY = current_user.id
+        game.UPDATED_BY = current_user.ID
         
         db.commit()
         
@@ -295,7 +295,7 @@ async def end_game(
         # Verify game ownership
         game = db.query(SlangQuizGame).filter(
             SlangQuizGame.ID == game_id,
-            SlangQuizGame.USER_ID == current_user.id,
+            SlangQuizGame.USER_ID == current_user.ID,
             SlangQuizGame.IS_DELETED == False
         ).first()
         
@@ -311,16 +311,24 @@ async def end_game(
             SlangQuizAnswer.IS_DELETED == False
         ).order_by(SlangQuizAnswer.QUESTION_NUMBER).all()
         
-        # Calculate total time
+        # Recalculate totals from answers (ensure consistency)
         total_time = sum(
             a.RESPONSE_TIME_SECONDS for a in answers 
             if a.RESPONSE_TIME_SECONDS is not None
         )
         
-        # Update game
+        correct_count = sum(1 for a in answers if a.IS_CORRECT is True)
+        total_score = sum(
+            a.EARNED_SCORE for a in answers 
+            if a.EARNED_SCORE is not None
+        )
+        
+        # Update game with recalculated values
         game.IS_COMPLETED = True
         game.TOTAL_TIME_SECONDS = total_time
-        game.UPDATED_BY = current_user.id
+        game.CORRECT_COUNT = correct_count
+        game.TOTAL_SCORE = total_score
+        game.UPDATED_BY = current_user.ID
         db.commit()
         
         # Build questions summary
@@ -374,13 +382,13 @@ async def get_history(
     try:
         # Get total count
         total = db.query(SlangQuizGame).filter(
-            SlangQuizGame.USER_ID == current_user.id,
+            SlangQuizGame.USER_ID == current_user.ID,
             SlangQuizGame.IS_DELETED == False
         ).count()
         
         # Get games
         games = db.query(SlangQuizGame).filter(
-            SlangQuizGame.USER_ID == current_user.id,
+            SlangQuizGame.USER_ID == current_user.ID,
             SlangQuizGame.IS_DELETED == False
         ).order_by(SlangQuizGame.CREATED_AT.desc()).offset(offset).limit(limit).all()
         
@@ -425,7 +433,7 @@ async def get_statistics(
     try:
         # Get all completed games
         games = db.query(SlangQuizGame).filter(
-            SlangQuizGame.USER_ID == current_user.id,
+            SlangQuizGame.USER_ID == current_user.ID,
             SlangQuizGame.IS_COMPLETED == True,
             SlangQuizGame.IS_DELETED == False
         ).all()
@@ -517,7 +525,7 @@ async def delete_game(
         # Verify game ownership
         game = db.query(SlangQuizGame).filter(
             SlangQuizGame.ID == game_id,
-            SlangQuizGame.USER_ID == current_user.id,
+            SlangQuizGame.USER_ID == current_user.ID,
             SlangQuizGame.IS_DELETED == False
         ).first()
         
@@ -526,7 +534,7 @@ async def delete_game(
         
         # Soft delete game
         game.IS_DELETED = True
-        game.UPDATED_BY = current_user.id
+        game.UPDATED_BY = current_user.ID
         
         # Soft delete all answers
         answers = db.query(SlangQuizAnswer).filter(
@@ -536,7 +544,7 @@ async def delete_game(
         
         for answer in answers:
             answer.IS_DELETED = True
-            answer.UPDATED_BY = current_user.id
+            answer.UPDATED_BY = current_user.ID
         
         db.commit()
         
@@ -585,11 +593,21 @@ async def generate_questions_admin(
         
         from .service import generate_quiz_with_openai, save_questions_to_db, save_questions_to_json
         
+        # Get existing words from DB to avoid duplicates
+        existing_questions = db.query(SlangQuizQuestion).filter(
+            SlangQuizQuestion.LEVEL == level,
+            SlangQuizQuestion.QUIZ_TYPE == quiz_type,
+            SlangQuizQuestion.IS_DELETED == False
+        ).all()
+        
+        exclude_words = [q.WORD for q in existing_questions]
+        
         # Generate questions
         questions = await generate_quiz_with_openai(
             level=level,
             quiz_type=quiz_type,
-            count=count
+            count=count,
+            exclude_words=exclude_words
         )
         
         # Save to DB
@@ -598,7 +616,7 @@ async def generate_questions_admin(
             questions=questions,
             level=level,
             quiz_type=quiz_type,
-            created_by=current_user.id
+            created_by=current_user.ID  # User 모델의 ID 속성은 대문자
         )
         
         # Save to JSON (backup)

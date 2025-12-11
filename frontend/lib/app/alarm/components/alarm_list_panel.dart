@@ -103,6 +103,18 @@ class _AlarmListPanelState extends ConsumerState<AlarmListPanel>
       data: (alarms) {
         if (alarms.isEmpty) {
           // 알람이 없으면 패널 숨김
+          // 🆕 확장 상태를 리셋하여 bottomBar가 다시 표시되도록 함
+          if (_isExpanded) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (mounted) {
+                setState(() {
+                  _isExpanded = false;
+                  _rotationController.reverse();
+                });
+                widget.onExpansionChanged?.call(false);
+              }
+            });
+          }
           return const SizedBox.shrink();
         }
 
