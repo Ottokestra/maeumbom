@@ -361,7 +361,8 @@
 {
   "user_text": "string",             // 필수: 사용자 입력
   "session_id": "string",            // 선택: 세션 ID (기본값: user_{user_id}_default)
-  "stt_quality": "success|medium|low_quality|no_speech"  // 선택: STT 품질
+  "stt_quality": "success|medium|low_quality|no_speech",  // 선택: STT 품질
+  "tts_enabled": "boolean"           // 선택: TTS 활성화 여부 (기본값: false)
 }
 ```
 
@@ -372,6 +373,8 @@
   "input_text": "string",
   "emotion_result": { /* EmotionAnalysisResult */ },
   "routine_result": [ /* RoutineRecommendationItem[] */ ],
+  "tts_audio_url": "string",        // 선택: TTS 오디오 URL (tts_enabled=true일 때)
+  "tts_status": "ready|timeout|error",  // 선택: TTS 상태
   "meta": {
     "model": "string",
     "used_tools": ["string"],
@@ -385,6 +388,8 @@
     "api_version": "v2_deepagents"
   }
 }
+```
+
 ```
 
 ### 2. 세션 목록 조회
@@ -557,13 +562,33 @@
 
 ## 날씨 (Weather)
 
-### 1. 현재 날씨 조회
+### 1. 현재 날씨 조회 (도시명)
 **경로**: `GET /api/service/weather/current`  
 **인증**: 불필요  
 
 **Query Parameters**:
 - `city` (required, string): 도시 이름
 - `country` (optional, string): 국가 코드 (기본값: KR)
+
+**응답**:
+```json
+{
+  "city": "string",
+  "country": "string",
+  "temperature_c": "float",
+  "condition": "clear|cloudy|rain|snow|...",
+  "is_rainy": "boolean",
+  "updated_at": "datetime"
+}
+```
+
+### 2. 현재 날씨 조회 (위도/경도)
+**경로**: `GET /api/service/weather/current/location`  
+**인증**: 불필요  
+
+**Query Parameters**:
+- `lat` (required, float): 위도
+- `lon` (required, float): 경도
 
 **응답**:
 ```json
@@ -714,21 +739,19 @@
 **인증**: 필요 (Bearer Token)  
 
 **Query Parameters**:
-- `days` (optional, integer): 조회 기간 (기본값: 7)
+- `limit` (optional, integer): 조회할 레코드 수 (기본값: 100)
 
 **응답**:
 ```json
-{
-  "data": [
-    {
-      "created_at": "datetime",
-      "sentiment_overall": "positive|neutral|negative",
-      "primary_emotion": {},
-      "service_signals": {},
-      "check_root": "conversation|daily_mood_check"
-    }
-  ]
-}
+[
+  {
+    "created_at": "datetime",
+    "sentiment_overall": "positive|neutral|negative",
+    "primary_emotion": {},
+    "service_signals": {},
+    "check_root": "conversation|daily_mood_check"
+  }
+]
 ```
 
 ---
@@ -1079,21 +1102,22 @@
 ## 루틴 설문 (Routine Survey)
 
 ### 1. 설문 조회
-**경로**: `GET /api/routine-survey`  
+**경로**: `GET /api/routine-survey/questions`  
 **인증**: 불필요  
+
+**Query Parameters**:
+- `survey_id` (optional, integer): 설문 ID
 
 **응답**:
 ```json
-{
-  "survey_id": "integer",
-  "questions": [
-    {
-      "id": "integer",
-      "text": "string",
-      "type": "single_choice|multiple_choice"
-    }
-  ]
-}
+[
+  {
+    "id": "integer",
+    "text": "string",
+    "type": "single_choice|multiple_choice",
+    "order": "integer"
+  }
+]
 ```
 
 ### 2. 설문 제출
@@ -1107,7 +1131,7 @@
   "answers": [
     {
       "question_id": "integer",
-      "answer": "string"
+      "answer_value": "Y|N"
     }
   ]
 }
@@ -1116,8 +1140,39 @@
 **응답**:
 ```json
 {
-  "status": "success",
-  "response_id": "integer"
+  "survey_id": "integer",
+  "result_id": "integer",
+  "total_score": "integer",
+  "risk_level": "string",
+  "comment": "string",
+  "taken_at": "datetime"
+}
+```
+
+### 3. 내 설문 결과 조회
+**경로**: `GET /api/routine-survey/results/me`  
+**인증**: 필요 (Bearer Token)  
+**설명**: 현재 로그인한 사용자의 최신 설문 결과 조회  
+
+**Query Parameters**:
+- `survey_id` (optional, integer): 설문 ID
+
+**응답**:
+```json
+{
+  "survey_id": "integer",
+  "result_id": "integer",
+  "total_score": "integer",
+  "risk_level": "string",
+  "comment": "string",
+  "taken_at": "datetime"
+}
+```
+
+**에러 응답** (404):
+```json
+{
+  "detail": "설문 결과가 없습니다."
 }
 ```
 
@@ -1157,6 +1212,183 @@
 - LOW (0-9점): 비교적 안정적
 - MID (10-19점): 갱년기 관련 신호 보임
 - HIGH (20점 이상): 전문의 상담 권장
+
+### 2. 설문 문항 목록 조회
+**경로**: `GET /api/menopause/questions`  
+**인증**: 불필요  
+
+**Query Parameters**:
+- `gender` (optional, string): 성별 필터 (FEMALE 또는 MALE)
+- `is_active` (optional, boolean): 활성화 여부 필터
+
+**응답**:
+```json
+[
+  {
+    "id": "integer",
+    "gender": "FEMALE|MALE",
+    "code": "string",
+    "order_no": "integer",
+    "question_text": "string",
+    "risk_when_yes": "boolean",
+    "positive_label": "string",
+    "negative_label": "string",
+    "character_key": "string",
+    "is_active": "boolean",
+    "is_deleted": "boolean",
+    "created_at": "datetime",
+    "updated_at": "datetime"
+  }
+]
+```
+
+### 3. 설문 문항 단건 조회
+**경로**: `GET /api/menopause/questions/{question_id}`  
+**인증**: 불필요  
+
+**응답**:
+```json
+{
+  "id": "integer",
+  "gender": "FEMALE|MALE",
+  "code": "string",
+  "order_no": "integer",
+  "question_text": "string",
+  "risk_when_yes": "boolean",
+  "positive_label": "string",
+  "negative_label": "string",
+  "character_key": "string",
+  "is_active": "boolean",
+  "is_deleted": "boolean",
+  "created_at": "datetime",
+  "updated_at": "datetime"
+}
+```
+
+### 4. 설문 문항 생성
+**경로**: `POST /api/menopause/questions`  
+**인증**: 불필요  
+
+**요청 Body**:
+```json
+{
+  "gender": "FEMALE|MALE",
+  "code": "string",
+  "order_no": "integer",
+  "question_text": "string",
+  "risk_when_yes": "boolean",
+  "positive_label": "string",
+  "negative_label": "string",
+  "character_key": "string"
+}
+```
+
+**응답**:
+```json
+{
+  "id": "integer",
+  "gender": "FEMALE|MALE",
+  "code": "string",
+  "order_no": "integer",
+  "question_text": "string",
+  "risk_when_yes": "boolean",
+  "positive_label": "string",
+  "negative_label": "string",
+  "character_key": "string",
+  "is_active": "boolean",
+  "is_deleted": "boolean",
+  "created_at": "datetime",
+  "updated_at": "datetime"
+}
+```
+
+### 5. 설문 문항 수정
+**경로**: `PATCH /api/menopause/questions/{question_id}`  
+**인증**: 불필요  
+
+**요청 Body**:
+```json
+{
+  "gender": "FEMALE|MALE",
+  "code": "string",
+  "order_no": "integer",
+  "question_text": "string",
+  "risk_when_yes": "boolean",
+  "positive_label": "string",
+  "negative_label": "string",
+  "character_key": "string",
+  "is_active": "boolean"
+}
+```
+
+**응답**:
+```json
+{
+  "id": "integer",
+  "gender": "FEMALE|MALE",
+  "code": "string",
+  "order_no": "integer",
+  "question_text": "string",
+  "risk_when_yes": "boolean",
+  "positive_label": "string",
+  "negative_label": "string",
+  "character_key": "string",
+  "is_active": "boolean",
+  "is_deleted": "boolean",
+  "created_at": "datetime",
+  "updated_at": "datetime"
+}
+```
+
+### 6. 설문 문항 삭제
+**경로**: `DELETE /api/menopause/questions/{question_id}`  
+**인증**: 불필요  
+**설명**: 설문 문항 소프트 삭제  
+
+**응답**:
+```json
+{
+  "id": "integer",
+  "gender": "FEMALE|MALE",
+  "code": "string",
+  "order_no": "integer",
+  "question_text": "string",
+  "risk_when_yes": "boolean",
+  "positive_label": "string",
+  "negative_label": "string",
+  "character_key": "string",
+  "is_active": "boolean",
+  "is_deleted": "boolean",
+  "created_at": "datetime",
+  "updated_at": "datetime"
+}
+```
+
+### 7. 기본 설문 문항 생성
+**경로**: `POST /api/menopause/questions/seed-defaults`  
+**인증**: 불필요  
+**설명**: 기본 남/녀 설문 문항 10개씩을 한번에 생성 (존재하지 않는 코드만 추가)  
+
+**응답**:
+```json
+[
+  {
+    "id": "integer",
+    "gender": "FEMALE|MALE",
+    "code": "string",
+    "order_no": "integer",
+    "question_text": "string",
+    "risk_when_yes": "boolean",
+    "positive_label": "string",
+    "negative_label": "string",
+    "character_key": "string",
+    "is_active": "boolean",
+    "is_deleted": "boolean",
+    "created_at": "datetime",
+    "updated_at": "datetime"
+  }
+]
+```
 
 ---
 
@@ -1392,10 +1624,16 @@
 - `{"type": "status", "status": "connecting|ready|processing"}` - 상태
 - `{"type": "stt_result", "text": "...", "quality": "...", "speaker_id": "..."}` - STT 결과
 - `{"type": "agent_response", "data": {...}}` - AI 응답
+- `{"type": "tts_ready", "audio_url": "/tts-outputs/{filename}", "session_id": "string"}` - TTS 오디오 생성 완료
+- `{"type": "tts_error", "error": "timeout|generation_failed", "message": "string"}` - TTS 오류
+- `{"type": "config_ack", "tts_enabled": "boolean"}` - 설정 확인 응답
+- `{"type": "interrupted", "message": "string", "deleted_messages": "integer"}` - 인터럽트 처리 완료
 
 **송신 메시지**:
-- 음성 데이터 (bytes)
+- 음성 데이터 (bytes): `Int16Array` (512 샘플)
 - 세션 ID 설정: `{"session_id": "string"}`
+- TTS 설정: `{"type": "config", "tts_enabled": "boolean"}`
+- 인터럽트 신호: `{"type": "interrupt", "reason": "string"}`
 
 ---
 
@@ -1416,6 +1654,18 @@
 ```
 
 **응답**: WAV 파일 (audio/wav)
+
+### 2. TTS 오디오 파일 서빙
+**경로**: `GET /tts-outputs/{filename}`  
+**인증**: 불필요  
+**설명**: 생성된 TTS 오디오 파일 직접 서빙  
+
+**Path Parameters**:
+- `filename` (string): 오디오 파일명 (예: `044a57e116b04843a286c9304ebba6e1.wav`)
+
+**응답**: WAV 파일 (audio/wav)
+
+**참고**: 이 엔드포인트는 `/api/agent/v2/text` 또는 `/agent/stream`에서 `tts_enabled=true`로 요청 시 생성된 오디오 파일을 제공합니다.
 
 ---
 
@@ -1607,7 +1857,8 @@ HTTP 상태 코드:
 
 | HTTP 메서드 | 경로 | 인증 필요 | 설명 |
 |------------|------|----------|------|
-| GET | `/api/service/weather/current` | ❌ | 현재 날씨 조회 |
+| GET | `/api/service/weather/current` | ❌ | 현재 날씨 조회 (도시명) |
+| GET | `/api/service/weather/current/location` | ❌ | 현재 날씨 조회 (위도/경도) |
 
 ### 일일 감정 체크 (Daily Mood Check)
 
@@ -1654,14 +1905,21 @@ HTTP 상태 코드:
 
 | HTTP 메서드 | 경로 | 인증 필요 | 설명 |
 |------------|------|----------|------|
-| GET | `/api/routine-survey` | ❌ | 설문 조회 |
+| GET | `/api/routine-survey/questions` | ❌ | 설문 조회 |
 | POST | `/api/routine-survey/submit` | ✅ | 설문 제출 |
+| GET | `/api/routine-survey/results/me` | ✅ | 내 설문 결과 조회 |
 
 ### 갱년기 설문 (Menopause Survey)
 
 | HTTP 메서드 | 경로 | 인증 필요 | 설명 |
 |------------|------|----------|------|
 | POST | `/api/menopause-survey/submit` | ❌ | 갱년기 설문 제출 |
+| GET | `/api/menopause/questions` | ❌ | 설문 문항 목록 조회 |
+| GET | `/api/menopause/questions/{question_id}` | ❌ | 설문 문항 단건 조회 |
+| POST | `/api/menopause/questions` | ❌ | 설문 문항 생성 |
+| PATCH | `/api/menopause/questions/{question_id}` | ❌ | 설문 문항 수정 |
+| DELETE | `/api/menopause/questions/{question_id}` | ❌ | 설문 문항 삭제 |
+| POST | `/api/menopause/questions/seed-defaults` | ❌ | 기본 설문 문항 생성 |
 
 ### 신조어 퀴즈 (Slang Quiz)
 
@@ -1688,6 +1946,7 @@ HTTP 상태 코드:
 | HTTP 메서드 | 경로 | 인증 필요 | 설명 |
 |------------|------|----------|------|
 | POST | `/api/tts` | ❌ | 텍스트 음성 변환 |
+| GET | `/tts-outputs/{filename}` | ❌ | TTS 오디오 파일 서빙 |
 
 ### 디버그/정리 (Debug/Cleanup)
 
@@ -1708,5 +1967,5 @@ HTTP 상태 코드:
 
 ---
 
-**총 엔드포인트 수**: 72개  
-**인증 필요**: 44개 | **인증 불필요**: 28개
+**총 엔드포인트 수**: 81개  
+**인증 필요**: 45개 | **인증 불필요**: 36개

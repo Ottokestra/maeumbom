@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dio/dio.dart';
 import '../../ui/app_ui.dart';
 import '../../data/api/slang_quiz/slang_quiz_api_client.dart';
+import '../../providers/auth_provider.dart';
 
 class SlangQuizAdminScreen extends ConsumerStatefulWidget {
   const SlangQuizAdminScreen({super.key});
@@ -12,20 +13,12 @@ class SlangQuizAdminScreen extends ConsumerStatefulWidget {
 }
 
 class _SlangQuizAdminScreenState extends ConsumerState<SlangQuizAdminScreen> {
-  late SlangQuizApiClient _apiClient;
-  
   String _selectedLevel = 'beginner';
   String _selectedQuizType = 'word_to_meaning';
   int _count = 5;
   bool _isGenerating = false;
   String? _resultMessage;
   bool _isSuccess = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _apiClient = SlangQuizApiClient(Dio());
-  }
 
   Future<void> _generateQuestions() async {
     setState(() {
@@ -34,7 +27,17 @@ class _SlangQuizAdminScreenState extends ConsumerState<SlangQuizAdminScreen> {
     });
 
     try {
-      final result = await _apiClient.generateQuestionsAdmin(
+      // 문제 생성은 시간이 오래 걸리므로 타임아웃을 늘린 Dio 인스턴스 사용
+      final baseDio = ref.read(dioWithAuthProvider);
+      final dio = Dio(baseDio.options.copyWith(
+        receiveTimeout: const Duration(seconds: 180), // 3분으로 설정
+      ));
+      // 인터셉터 복사
+      dio.interceptors.addAll(baseDio.interceptors);
+      
+      final apiClient = SlangQuizApiClient(dio);
+      
+      final result = await apiClient.generateQuestionsAdmin(
         level: _selectedLevel,
         quizType: _selectedQuizType,
         count: _count,
