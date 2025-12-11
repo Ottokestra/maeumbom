@@ -1,9 +1,48 @@
 """Pydantic schemas for menopause survey questions."""
 from datetime import datetime
-from typing import Optional
+from typing import Optional, List
 
 from pydantic import BaseModel, Field
 
+
+# ====================================================================
+# 설문조사 응답 제출을 위한 스키마
+# ====================================================================
+
+class MenopauseSurveyAnswer(BaseModel):
+    """개별 질문에 대한 응답 스키마"""
+    question_code: str = Field(..., description="응답한 문항 코드 (F1~F10, M1~M10)")
+    answer_text: str = Field(..., description="사용자의 응답 (예: '예' 또는 '아니오')")
+    is_risk: bool = Field(..., description="이 응답이 위험(이상) 상태를 나타내는지 여부")
+
+
+class MenopauseSurveySubmitRequest(BaseModel):
+    """설문조사 제출 요청 전체 스키마"""
+    user_id: int = Field(..., description="설문조사를 제출하는 사용자 ID")
+    gender: str = Field(..., description="설문조사가 진행된 성별 (FEMALE / MALE)")
+    answers: List[MenopauseSurveyAnswer] = Field(..., description="개별 문항 응답 리스트")
+
+
+# ====================================================================
+# 설문조사 결과 응답 스키마 (새로 추가)
+# ====================================================================
+
+class MenopauseSurveyResultResponse(BaseModel):
+    """설문조사 결과 반환을 위한 응답 스키마"""
+    user_id: int = Field(..., description="결과를 받은 사용자 ID")
+    survey_id: int = Field(..., description="제출된 설문조사 레코드 ID")
+    gender: str = Field(..., description="설문조사 기준 성별")
+    risk_score: int = Field(..., description="총 위험 점수 (예: 위험 응답 개수)")
+    result_text: str = Field(..., description="결과에 따른 분석 텍스트")
+    risk_level: str = Field(..., description="위험도 레벨 (예: LOW, MEDIUM, HIGH)")
+    submitted_at: datetime = Field(..., description="설문조사 제출 시간")
+    # 상세 응답 내역이 필요하다면 아래 필드 주석을 해제하세요.
+    # answers: List[MenopauseSurveyAnswer] = Field(..., description="제출된 상세 응답 내역")
+
+
+# ====================================================================
+# 기존 질문 관리 스키마 (MenopauseQuestion)
+# ====================================================================
 
 class MenopauseQuestionCreate(BaseModel):
     gender: str = Field(..., description="성별 (FEMALE / MALE)")
@@ -49,6 +88,7 @@ class MenopauseQuestionOut(BaseModel):
     created_by: Optional[str] = Field(None, alias="CREATED_BY")
     updated_by: Optional[str] = Field(None, alias="UPDATED_BY")
 
-    class Config:
-        orm_mode = True
-        allow_population_by_field_name = True
+    model_config = {
+        "from_attributes": True, # orm_mode = True 대체
+        "populate_by_name": True # allow_population_by_field_name = True 대체
+    }
