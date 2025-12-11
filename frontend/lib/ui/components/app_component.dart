@@ -8,6 +8,7 @@ export 'app_input.dart';
 export 'chat_bubble.dart';
 export 'system_bubble.dart';
 export 'emotion_bubble.dart';
+export 'list_bubble.dart';
 
 // Voice Components
 export 'voice_waveform.dart';

@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:permission_handler/permission_handler.dart';
 import '../../ui/app_ui.dart';
 import '../../providers/chat_provider.dart';
+import '../../core/services/navigation/navigation_service.dart';
+import '../../app/alarm/components/alarm_list_panel.dart';
 import 'components/bomi_content.dart';
 
 /// Bomi Screen - ai 봄이 화면
@@ -18,6 +20,7 @@ class BomiScreen extends ConsumerStatefulWidget {
 
 class _BomiScreenState extends ConsumerState<BomiScreen> {
   bool _showInputBar = false;
+  bool _isAlarmPanelExpanded = false;
   final TextEditingController _textController = TextEditingController();
 
   @override
@@ -131,6 +134,7 @@ class _BomiScreenState extends ConsumerState<BomiScreen> {
   @override
   Widget build(BuildContext context) {
     final chatState = ref.watch(chatProvider);
+    final navigationService = NavigationService(context, ref);
 
     return AppFrame(
       topBar: TopBar(
@@ -138,20 +142,46 @@ class _BomiScreenState extends ConsumerState<BomiScreen> {
         rightIcon: Icons.more_horiz,
         onTapRight: () => MoreMenuSheet.show(context),
       ),
-      bottomBar: BottomInputBar(
-        onVoiceActivated: _handleVoiceInput,
-        onTextActivated: _handleTextInputToggle,
-        onVoiceReset: _handleVoiceInput,
-        onTextReset: _handleTextInputToggle,
-        voiceState: chatState.voiceState,
-        controller: _textController,
-        hintText: '메시지를 입력하세요',
-        onSend: _handleSendMessage,
-      ),
-      body: BomiContent(
-        showInputBar: _showInputBar,
-        onTextInputTap: _handleTextInputToggle,
-        onVoiceToggle: _handleVoiceInput,
+      bottomBar: _isAlarmPanelExpanded
+          ? null
+          : BottomInputBar(
+              onVoiceActivated: _handleVoiceInput,
+              onTextActivated: _handleTextInputToggle,
+              onVoiceReset: _handleVoiceInput,
+              onTextReset: _handleTextInputToggle,
+              voiceState: chatState.voiceState,
+              controller: _textController,
+              hintText: '메시지를 입력하세요',
+              onSend: _handleSendMessage,
+            ),
+      body: Stack(
+        children: [
+          // 기존 BomiContent
+          Positioned.fill(
+            child: BomiContent(
+              showInputBar: _showInputBar,
+              onTextInputTap: _handleTextInputToggle,
+              onVoiceToggle: _handleVoiceInput,
+            ),
+          ),
+
+          // AlarmListPanel (하단에 배치)
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: AlarmListPanel(
+              onTapMore: () {
+                navigationService.navigateToRoute('/alarm');
+              },
+              onExpansionChanged: (isExpanded) {
+                setState(() {
+                  _isAlarmPanelExpanded = isExpanded;
+                });
+              },
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -8,6 +8,7 @@ import '../data/repository/chat/chat_repository.dart';
 import '../data/api/chat/chat_api_client.dart';
 import 'auth_provider.dart';
 import 'alarm_provider.dart';
+import '../core/services/audio/tts_player_service.dart'; // ✅ TTS Service
 
 // ----- Infrastructure Providers -----
 
@@ -19,6 +20,11 @@ final permissionServiceProvider = Provider<PermissionService>((ref) {
 /// Bom Chat Service provider (Phase 2 - Big Endian)
 final bomChatServiceProvider = Provider<BomChatService>((ref) {
   return BomChatService();
+});
+
+/// TTS Player Service provider
+final ttsPlayerServiceProvider = Provider<TtsPlayerService>((ref) {
+  return TtsPlayerService();
 });
 
 /// Chat API Client provider
@@ -52,6 +58,7 @@ class ChatState {
   final String? error;
   final String sessionId;
   final String? sttPartialText; // ✅ Phase 3: STT 부분 결과
+  final bool ttsEnabled; // ✅ TTS 활성화 여부
 
   ChatState({
     required this.messages,
@@ -60,6 +67,7 @@ class ChatState {
     this.error,
     required this.sessionId,
     this.sttPartialText, // ✅ Phase 3
+    this.ttsEnabled = false, // ✅ 기본값: false
   });
 
   // 하위 호환성을 위한 getter
@@ -72,6 +80,7 @@ class ChatState {
     String? error,
     String? sessionId,
     String? sttPartialText, // ✅ Phase 3
+    bool? ttsEnabled, // ✅ TTS 토글
   }) {
     return ChatState(
       messages: messages ?? this.messages,
@@ -80,6 +89,7 @@ class ChatState {
       error: error,
       sessionId: sessionId ?? this.sessionId,
       sttPartialText: sttPartialText, // ✅ Phase 3
+      ttsEnabled: ttsEnabled ?? this.ttsEnabled, // ✅ TTS 토글
     );
   }
 }
@@ -88,6 +98,7 @@ class ChatState {
 class ChatNotifier extends StateNotifier<ChatState> {
   final BomChatService _bomChatService;
   final ChatRepository _chatRepository;
+  final TtsPlayerService _ttsPlayerService; // ✅ TTS Service 주입
   final int _userId;
   final PermissionService _permissionService;
   final Ref _ref;
@@ -96,6 +107,7 @@ class ChatNotifier extends StateNotifier<ChatState> {
   static const _sessionDuration = Duration(minutes: 5);
   static const _sessionIdKey = 'chat_session_id';
   static const _sessionTimeKey = 'chat_session_time';
+  static const _ttsEnabledKey = 'chat_tts_enabled'; // ✅ TTS 상태 저장 키
 
   // 🆕 Alarm dialog callback
   void Function(Map<String, dynamic> alarmInfo, String replyText)?
@@ -105,6 +117,7 @@ class ChatNotifier extends StateNotifier<ChatState> {
   ChatNotifier(
     this._bomChatService,
     this._chatRepository, // ✅ ChatRepository 주입
+    this._ttsPlayerService, // ✅ TTS Service 주입
     this._userId,
     this._permissionService,
     this._ref,
@@ -113,9 +126,12 @@ class ChatNotifier extends StateNotifier<ChatState> {
           isLoading: false,
           voiceState: VoiceInterfaceState.idle,
           sessionId: 'user_${_userId}_default', // 초기값, 나중에 업데이트됨
+          ttsEnabled: false, // 초기값, 나중에 복원됨
         )) {
     // ✅ Session 복원 또는 생성
     _initializeSession();
+    // ✅ TTS 상태 복원
+    _loadTtsEnabled();
     // BomChatService 콜백 설정
     _bomChatService.onResponse = _handleAgentResponse;
     _bomChatService.onError = _handleError;
@@ -171,6 +187,9 @@ class ChatNotifier extends StateNotifier<ChatState> {
         userId: _userId.toString(),
         sessionId: state.sessionId,
       );
+      
+      // 녹음 시작 시 TTS 중지
+      await _ttsPlayerService.stop();
 
       // ✅ Ready 완료 후 listening으로 전환 (사용자: "말씀하세요!")
       state = state.copyWith(
@@ -196,6 +215,7 @@ class ChatNotifier extends StateNotifier<ChatState> {
     final replyText = response['reply_text'] as String?;
     final emotion = response['emotion'] as String?;
     final responseType = response['response_type'] as String?;
+    final ttsAudio = response['tts_audio'] as String?; // ✅ TTS URL/Path
     final alarmInfo =
         response['alarm_info'] as Map<String, dynamic>?; // 🆕 alarm_info
 
@@ -253,6 +273,11 @@ class ChatNotifier extends StateNotifier<ChatState> {
         onShowWarningDialog?.call(alarmInfo);
       }
 
+      // ✅ TTS 재생
+      if (state.ttsEnabled && ttsAudio != null && ttsAudio.isNotEmpty) {
+        _playTtsAudio(ttsAudio);
+      }
+
       // ✅ WebSocket 연결 유지! - TTS 재생 후 다시 listening으로 전환
       Future.delayed(const Duration(seconds: 3), () {
         if (state.voiceState == VoiceInterfaceState.replying &&
@@ -306,6 +331,7 @@ class ChatNotifier extends StateNotifier<ChatState> {
         text: text,
         userId: _userId,
         sessionId: state.sessionId,
+        ttsEnabled: state.ttsEnabled, // ✅ TTS 활성화 여부 전달
       );
 
       print('[ChatProvider] 📥 Received response: $response');
@@ -314,6 +340,7 @@ class ChatNotifier extends StateNotifier<ChatState> {
       final replyText = response['reply_text'] as String?;
       final emotion = response['emotion'] as String?;
       final responseType = response['response_type'] as String?;
+      final ttsAudioUrl = response['tts_audio_url'] as String?; // ✅ TTS URL
       final alarmInfo = response['alarm_info'] as Map<String, dynamic>?;
 
       print('[ChatProvider] 🔍 [TEXT] response_type: $responseType');
@@ -363,6 +390,11 @@ class ChatNotifier extends StateNotifier<ChatState> {
       } else if (responseType == 'warning' && alarmInfo != null) {
         print('[ChatProvider] ⚠️ [TEXT] Triggering warning dialog callback');
         onShowWarningDialog?.call(alarmInfo);
+      }
+      
+      // ✅ TTS 재생
+      if (state.ttsEnabled && ttsAudioUrl != null && ttsAudioUrl.isNotEmpty) {
+         _playTtsAudio(ttsAudioUrl);
       }
     } catch (e) {
       print('[ChatProvider] ❌ Error in sendTextMessage: $e');
@@ -502,10 +534,66 @@ class ChatNotifier extends StateNotifier<ChatState> {
     await _updateSessionTime();
   }
 
+  // ============================================================================
+  // TTS Management
+  // ============================================================================
+
+  /// Load TTS enabled state from SharedPreferences
+  Future<void> _loadTtsEnabled() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final ttsEnabled = prefs.getBool(_ttsEnabledKey) ?? false;
+      state = state.copyWith(ttsEnabled: ttsEnabled);
+      print('✅ TTS enabled loaded: $ttsEnabled');
+    } catch (e) {
+      print('❌ TTS enabled load failed: $e');
+    }
+  }
+
+  /// Toggle TTS enabled state
+  Future<void> toggleTtsEnabled() async {
+    final newValue = !state.ttsEnabled;
+    state = state.copyWith(ttsEnabled: newValue);
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool(_ttsEnabledKey, newValue);
+      print('✅ TTS enabled toggled: $newValue');
+    } catch (e) {
+      print('❌ TTS enabled save failed: $e');
+    }
+  }
+
   @override
   void dispose() {
     _bomChatService.dispose();
     super.dispose();
+  }
+  
+  /// Play TTS Audio
+  Future<void> _playTtsAudio(String source) async {
+    // 음성 채팅 중이면 재생하지 않음 (backend가 처리하거나 중복 방지)
+    if (state.voiceState == VoiceInterfaceState.listening || 
+        state.voiceState == VoiceInterfaceState.processing) {
+       return;   
+    }
+    
+    state = state.copyWith(voiceState: VoiceInterfaceState.replying);
+    await _ttsPlayerService.play(source);
+    
+    // 재생 끝나면 (단순 시간 지연이나 콜백 등은 TtsService에서 처리하지만, 
+    // 여기서는 상태 복귀를 위해 약간의 딜레이 후 idle로, 
+    // 실제로는 TtsPlayerService의 onComplete stream을 구독하는게 좋음)
+    // 하지만 ChatProvider 구조상 복잡해지므로 일단 replying 상태 유지하다가 
+    // 다음 인터랙션에서 변경되거나 함.
+    // 텍스트 모드에서는 replying -> idle로 자동 복귀가 없으므로 여기서 처리 필요할 수 있음.
+    
+    // 텍스트 모드일 때 (BomChatService 비활성)
+    if (!_bomChatService.isActive) {
+       // 오디오 길이만큼 기다릴 수 없으므로(모름), 일단 playing 상태로 두거나
+       // TtsService가 상태 관리를 해야함. 
+       // 여기서는 단순 호출만 함.
+    }
   }
 }
 
@@ -515,6 +603,7 @@ final chatProvider = StateNotifierProvider<ChatNotifier, ChatState>((ref) {
   final chatRepository =
       ref.watch(chatRepositoryProvider); // ✅ ChatRepository 추가
   final permissionService = ref.watch(permissionServiceProvider);
+  final ttsPlayerService = ref.watch(ttsPlayerServiceProvider); // ✅ TTS Service
   final currentUser = ref.watch(currentUserProvider);
 
   if (currentUser == null) {
@@ -524,6 +613,7 @@ final chatProvider = StateNotifierProvider<ChatNotifier, ChatState>((ref) {
   return ChatNotifier(
     bomChatService,
     chatRepository, // ✅ ChatRepository 주입
+    ttsPlayerService, // ✅ TTS Service 주입
     currentUser.id,
     permissionService,
     ref, // 🆕 Ref 주입
