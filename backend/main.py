@@ -369,16 +369,13 @@ class AgentAudioRequest(BaseModel):
 # =====================================================================
 
 async def generate_tts_async(text: str) -> Path:
-    """비동기로 TTS 생성 (동기 함수를 asyncio.to_thread로 실행)"""
-    loop = asyncio.get_event_loop()
-    # synthesize_to_wav는 동기 함수이므로 스레드에서 실행
-    audio_path = await loop.run_in_executor(
-        None,  # 기본 executor 사용
-        synthesize_to_wav,
-        text,
-        None,  # speed
-        "neutral",  # tone
-        None  # engine
+    """비동기로 TTS 생성"""
+    # synthesize_to_wav는 이제 async 함수이므로 직접 await
+    audio_path = await synthesize_to_wav(
+        text=text,
+        speed=None,
+        tone="neutral",
+        engine=None
     )
     return audio_path
 
@@ -462,18 +459,24 @@ async def agent_text_v2_endpoint(
         if "alarm_info" in result:
             result["meta"]["alarm_info"] = result["alarm_info"]
 
-        # 🆕 TTS 처리 (동기 방식, 7초 타임아웃)
+        # 🆕 TTS 처리 (동기 방식 - 응답에 포함 필수)
         # 🎙️ Phase 4: audio tag가 포함된 텍스트를 TTS에 전달
+        # ⚠️ TTS URL은 응답에 포함되어야 하므로 await로 완료 대기!
         if request.tts_enabled:
             try:
-                # TTS 생성 (최대 7초 대기) - audio tag 포함 텍스트 사용
+                # TTS 생성 - audio tag 포함 텍스트 사용
                 tts_text = result.get("reply_text_with_tags", result["reply_text"])
+                print(f"[TTS] 🎤 Starting TTS generation with text: {tts_text[:100]}...")
+                
+                # ⚠️ 응답에 URL 포함되어야 하므로 await 필수!
                 audio_path = await asyncio.wait_for(
                     generate_tts_async(tts_text),
-                    timeout=7.0
+                    timeout=30.0  # 30초로 증가 (긴 텍스트 대응)
                 )
-                # 상대 경로로 URL 생성
-                audio_url = f"/tts-outputs/{audio_path.name}"
+                
+                # 서버 URL 포함 (프론트엔드가 접근 가능하도록)
+                server_url = os.getenv("SERVER_URL", "http://localhost:8000")
+                audio_url = f"{server_url}/tts-outputs/{audio_path.name}"
                 
                 # Root에 설정 (하위 호환성)
                 result["tts_audio_url"] = audio_url
@@ -486,19 +489,33 @@ async def agent_text_v2_endpoint(
                 result["meta"]["tts_audio_url"] = audio_url
                 result["meta"]["tts_status"] = "ready"
                 
-                print(f"[TTS] 음성 파일 생성 완료: {audio_path.name}")
+                print(f"[TTS] ✅ 음성 파일 생성 완료 (with audio tags): {audio_path.name}")
+                print(f"[TTS] 📤 Full URL: {audio_url}")
             except asyncio.TimeoutError:
                 result["tts_audio_url"] = None
                 result["tts_status"] = "timeout"
                 if "meta" in result:
                     result["meta"]["tts_status"] = "timeout"
-                print("[TTS] 타임아웃: 7초 내에 음성 생성 실패")
+                print("[TTS] ⏱️ 타임아웃: 30초 내에 음성 생성 실패")
             except Exception as e:
                 result["tts_audio_url"] = None
                 result["tts_status"] = "error"
                 if "meta" in result:
                     result["meta"]["tts_status"] = "error"
-                print(f"[TTS] 생성 오류: {e}")
+                print(f"[TTS] ❌ 생성 오류: {e}")
+
+        # 🆕 Celery: Queue emotion analysis task (after TTS completion)
+        try:
+            from tasks.emotion_tasks import analyze_emotion_task
+            
+            # Queue task asynchronously (don't wait for result)
+            task = analyze_emotion_task.delay(
+                user_text=request.user_text,
+                user_id=user_id
+            )
+            print(f"[Celery] 🚀 Emotion analysis task queued: {task.id}")
+        except Exception as e:
+            print(f"[Celery] ❌ Failed to queue task: {e}")
 
         return result
     except Exception as e:
