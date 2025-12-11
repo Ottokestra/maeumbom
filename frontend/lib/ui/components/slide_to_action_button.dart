@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:math' as math;
 import '../tokens/app_tokens.dart';
 import '../../providers/chat_provider.dart';
 
@@ -156,7 +157,6 @@ class _SlideToActionButtonState extends State<SlideToActionButton>
         if (!_rippleController.isAnimating) _rippleController.repeat();
         break;
       case VoiceInterfaceState.idle:
-      default:
         _rippleController.stop();
         _rippleController.reset();
         break;
@@ -170,7 +170,7 @@ class _SlideToActionButtonState extends State<SlideToActionButton>
         targetText = '준비 중...'; // ✅ 새로 추가!
         break;
       case VoiceInterfaceState.listening:
-        targetText = '말씀해주세요...';
+        targetText = '나에게 얘기해줘...';
         break;
       case VoiceInterfaceState.processing:
         targetText = '생각하는 중...';
@@ -179,7 +179,6 @@ class _SlideToActionButtonState extends State<SlideToActionButton>
         targetText = '대답하는 중...';
         break;
       case VoiceInterfaceState.idle:
-      default:
         targetText = '슬라이드하여 선택';
         break;
     }
@@ -334,37 +333,52 @@ class _SlideToActionButtonState extends State<SlideToActionButton>
     _animationController.forward(from: 0.0);
   }
 
-  // 상태에 따른 왼쪽 버튼 아이콘
-  IconData get _leftButtonIcon {
-    switch (widget.voiceState) {
-      case VoiceInterfaceState.loading:
-        return Icons.hourglass_empty; // ✅ 로딩 중 아이콘
-      case VoiceInterfaceState.listening:
-        return Icons.stop;
-      case VoiceInterfaceState.processing:
-        return Icons.more_horiz;
-      case VoiceInterfaceState.replying:
-        return Icons.volume_up;
-      case VoiceInterfaceState.idle:
-      default:
-        return Icons.mic;
-    }
-  }
-
-  // 상태에 따른 왼쪽 버튼 색상
+  // 상태에 따른 왼쪽 버튼 색상 (ProcessIndicator와 동기화)
   Color get _leftButtonColor {
     switch (widget.voiceState) {
       case VoiceInterfaceState.loading:
-        return Colors.grey; // ✅ 로딩 중 회색
+        return AppColors.accentRed; // 준비 중 - 빨간색
       case VoiceInterfaceState.listening:
-        return AppColors.accentRed;
+        return AppColors.accentRed; // 듣는 중 - 빨간색
       case VoiceInterfaceState.processing:
-        return Colors.orangeAccent;
+        return Colors.orangeAccent; // 생각 중 - 주황색
       case VoiceInterfaceState.replying:
-        return Colors.blueAccent;
+        return Colors.green; // 답변 중 - 초록색
       case VoiceInterfaceState.idle:
-      default:
         return AppColors.accentRed;
+    }
+  }
+
+  // 마이크 버튼 내부 콘텐츠 (상태별 애니메이션)
+  Widget _buildMicButtonContent() {
+    switch (widget.voiceState) {
+      case VoiceInterfaceState.loading:
+        // 준비 중 - 점 3개 타이핑 애니메이션
+        return const _MicTypingIndicator();
+
+      case VoiceInterfaceState.listening:
+        // 듣는 중 - 파형 애니메이션
+        return const _MicWaveformIndicator();
+
+      case VoiceInterfaceState.processing:
+        // 생각 중 - 점 3개 타이핑 애니메이션
+        return const _MicTypingIndicator();
+
+      case VoiceInterfaceState.replying:
+        // 답변 중 - 체크 아이콘
+        return const Icon(
+          Icons.check,
+          color: AppColors.pureWhite,
+          size: 36,
+        );
+
+      case VoiceInterfaceState.idle:
+        // 기본 상태 - 마이크 아이콘
+        return const Icon(
+          Icons.mic,
+          color: AppColors.pureWhite,
+          size: 36,
+        );
     }
   }
 
@@ -375,305 +389,273 @@ class _SlideToActionButtonState extends State<SlideToActionButton>
         final maxWidth = constraints.maxWidth;
         final isVoiceActive = widget.voiceState != VoiceInterfaceState.idle;
 
-        // 왼쪽 버튼 위치 계산 (양수 값이므로 오른쪽으로 이동)
+        // 왼쪽 버튼 위치 계산 (왼쪽에서 시작 → 오른쪽으로 이동)
         final leftButtonOffset = _leftButtonArrived
-            ? maxWidth - 80.0 // 도착 상태면 오른쪽 끝에 고정
+            ? maxWidth - 80.0 // 도착: 오른쪽 끝
             : (_draggingButton == 'left'
                 ? _dragPosition * (maxWidth / 2)
-                : 0.0);
+                : 0.0); // 기본: 왼쪽 끝
 
-        // 오른쪽 버튼 위치 계산 (음수 값이므로 왼쪽으로 이동)
-        final rightButtonOffset = _rightButtonArrived
-            ? maxWidth - 80.0 // 도착 상태면 왼쪽 끝에 고정
-            : (_draggingButton == 'right'
-                ? _dragPosition * (maxWidth / 2)
-                : 0.0);
-
-        return SizedBox(
-          height: 80,
-          child: Stack(
-            alignment: Alignment.center,
-            children: [
-              // 배경 트랙
-              AnimatedContainer(
-                duration: const Duration(milliseconds: 300),
-                curve: Curves.easeInOut,
-                height: 80,
-                decoration: BoxDecoration(
-                  color: AppColors.borderLight,
-                  borderRadius: _leftButtonArrived
-                      ? const BorderRadius.only(
-                          topLeft: Radius.circular(40),
-                          bottomLeft: Radius.circular(40),
-                          topRight: Radius.circular(40),
-                          bottomRight: Radius.circular(40),
-                        )
-                      : _rightButtonArrived
-                          ? const BorderRadius.only(
-                              topLeft: Radius.circular(40),
-                              bottomLeft: Radius.circular(40),
-                              topRight: Radius.circular(40),
-                              bottomRight: Radius.circular(40),
-                            )
-                          : BorderRadius.circular(40),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: Align(
-                    alignment:
-                        isVoiceActive ? Alignment.centerLeft : Alignment.center,
-                    child: Text(
-                      _displayedText,
-                      style: AppTypography.caption.copyWith(
-                        color: AppColors.textSecondary,
-                        fontWeight:
-                            isVoiceActive ? FontWeight.w600 : FontWeight.normal,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-
-              // 오른쪽 버튼이 움직이지 않을 때는 왼쪽 버튼을 먼저 배치
-              if (_draggingButton != 'right') ...[
-                // 오른쪽 텍스트 입력 버튼 (아래 레이어)
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+          child: SizedBox(
+            height: 80,
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                // 배경 트랙 (항상 전체 너비, 모서리 둥글게) - 맨 아래 레이어
                 Positioned(
-                  right: 0.0 - rightButtonOffset,
-                  child: GestureDetector(
-                    behavior: HitTestBehavior.opaque,
-                    onTap: _rightButtonArrived ? _resetRightButton : null,
-                    onHorizontalDragStart: _rightButtonArrived
-                        ? null
-                        : (details) => _onDragStart('right'),
-                    onHorizontalDragUpdate: _rightButtonArrived
-                        ? null
-                        : (details) => _onDragUpdate(details, maxWidth),
-                    onHorizontalDragEnd:
-                        _rightButtonArrived ? null : _onDragEnd,
+                  left: 0,
+                  right: 0,
+                  top: 0,
+                  bottom: 0,
+                  child: IgnorePointer(
                     child: Container(
-                      width: 80,
-                      height: 80,
                       decoration: BoxDecoration(
-                        color: AppColors.bgLightPink,
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: AppColors.accentRed,
-                          width: 2,
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: AppColors.accentRedShadow,
-                            blurRadius: 8,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
+                        color: AppColors.borderLight,
+                        borderRadius: BorderRadius.circular(40),
                       ),
-                      child: Icon(
-                        Icons.edit,
-                        color: AppColors.accentRed,
-                        size: 36,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                        child: Align(
+                          alignment: isVoiceActive
+                              ? Alignment.centerLeft
+                              : Alignment.center,
+                          child: Text(
+                            _displayedText,
+                            style: AppTypography.caption.copyWith(
+                              color: AppColors.textSecondary,
+                              fontWeight: isVoiceActive
+                                  ? FontWeight.w600
+                                  : FontWeight.normal,
+                            ),
+                          ),
+                        ),
                       ),
                     ),
                   ),
                 ),
 
-                // 왼쪽 음성 입력 버튼 (위 레이어)
-                Positioned(
-                  left: _leftButtonArrived ? null : -20.0 + leftButtonOffset,
-                  right: _leftButtonArrived ? -20.0 : null,
-                  child: GestureDetector(
-                    behavior: HitTestBehavior.opaque,
-                    onTap: _leftButtonArrived
-                        ? () => _resetLeftButton(notify: true)
-                        : (_rightButtonArrived
-                            ? widget.onVoiceActivated
-                            : null),
-                    onHorizontalDragStart: _leftButtonArrived
-                        ? null
-                        : (details) => _onDragStart('left'),
-                    onHorizontalDragUpdate: _leftButtonArrived
-                        ? null
-                        : (details) => _onDragUpdate(details, maxWidth),
-                    onHorizontalDragEnd: _leftButtonArrived ? null : _onDragEnd,
-                    child: SizedBox(
-                      width: 120,
-                      height: 120,
-                      child: Stack(
-                        alignment: Alignment.center,
-                        children: [
-                          // 파동 효과
-                          if (isVoiceActive)
-                            AnimatedBuilder(
-                              animation: _rippleController,
-                              builder: (context, child) {
-                                return CustomPaint(
-                                  size: const Size(120, 120),
-                                  painter: _ButtonRipplePainter(
-                                    progress: _rippleController.value,
-                                    color: _leftButtonColor,
-                                    rippleCount: 3,
-                                    state: widget.voiceState,
-                                  ),
-                                );
-                              },
-                            ),
-                          // 버튼
-                          AnimatedContainer(
-                            duration: const Duration(milliseconds: 300),
-                            width: 80,
-                            height: 80,
-                            decoration: BoxDecoration(
-                              color: _leftButtonColor,
-                              shape: BoxShape.circle,
-                              boxShadow: isVoiceActive
-                                  ? [
-                                      BoxShadow(
-                                        color: _leftButtonColor.withValues(
-                                            alpha: 0.5),
-                                        blurRadius: 20,
-                                        offset: const Offset(0, 6),
-                                        // spreadRadius removed to prevent bleeding
-                                      ),
-                                    ]
-                                  : [
-                                      BoxShadow(
-                                        color: AppColors.accentRedShadow,
-                                        blurRadius: 12,
-                                        offset: const Offset(0, 4),
-                                      ),
-                                    ],
-                            ),
+                // 오른쪽 버튼이 움직이지 않을 때는 왼쪽 버튼을 먼저 배치
+                if (_draggingButton != 'right') ...[
+                  // 오른쪽 텍스트 입력 버튼 (아래 레이어)
+                  Positioned(
+                    right: _rightButtonArrived ? null : 0.0,
+                    left: _rightButtonArrived ? 0.0 : null,
+                    child: GestureDetector(
+                      onTap: _rightButtonArrived ? _resetRightButton : null,
+                      onHorizontalDragStart: _rightButtonArrived
+                          ? null
+                          : (details) => _onDragStart('right'),
+                      onHorizontalDragUpdate: _rightButtonArrived
+                          ? null
+                          : (details) => _onDragUpdate(details, maxWidth),
+                      onHorizontalDragEnd:
+                          _rightButtonArrived ? null : _onDragEnd,
+                      child: SizedBox(
+                        width: 80,
+                        height: 80,
+                        child: CustomPaint(
+                          painter: _CircleBorderPainter(
+                            color: AppColors.accentRed,
+                            strokeWidth: 2,
+                          ),
+                          child: Center(
                             child: Icon(
-                              _leftButtonIcon,
-                              color: AppColors.pureWhite,
+                              Icons.edit,
+                              color: AppColors.accentRed,
                               size: 36,
                             ),
                           ),
-                        ],
+                        ),
                       ),
                     ),
                   ),
-                ),
-              ],
 
-              // 오른쪽 버튼이 움직일 때는 순서를 바꿔서 위에 배치
-              if (_draggingButton == 'right') ...[
-                // 왼쪽 음성 입력 버튼 (아래 레이어)
-                Positioned(
-                  left: -20.0 + leftButtonOffset, // 120px 크기를 80px 기준으로 중앙 정렬
-                  child: GestureDetector(
-                    behavior: HitTestBehavior.opaque,
-                    onTap: _leftButtonArrived
-                        ? () => _resetLeftButton(notify: true)
-                        : null,
-                    onHorizontalDragStart: _leftButtonArrived
-                        ? null
-                        : (details) => _onDragStart('left'),
-                    onHorizontalDragUpdate: _leftButtonArrived
-                        ? null
-                        : (details) => _onDragUpdate(details, maxWidth),
-                    onHorizontalDragEnd: _leftButtonArrived ? null : _onDragEnd,
-                    child: SizedBox(
-                      width: 120,
-                      height: 120,
-                      child: Stack(
-                        alignment: Alignment.center,
-                        children: [
-                          // 파동 효과
-                          if (isVoiceActive)
-                            AnimatedBuilder(
-                              animation: _rippleController,
-                              builder: (context, child) {
-                                return CustomPaint(
-                                  size: const Size(120, 120),
-                                  painter: _ButtonRipplePainter(
-                                    progress: _rippleController.value,
-                                    color: _leftButtonColor,
-                                    rippleCount: 3,
-                                    state: widget.voiceState,
-                                  ),
-                                );
-                              },
+                  // 왼쪽 음성 입력 버튼 (위 레이어)
+                  Positioned(
+                    left: _leftButtonArrived ? null : 0.0 + leftButtonOffset,
+                    right: _leftButtonArrived ? 0.0 : null,
+                    child: GestureDetector(
+                      onTap: _leftButtonArrived
+                          ? () => _resetLeftButton(notify: true)
+                          : (_rightButtonArrived
+                              ? widget.onVoiceActivated
+                              : null),
+                      onHorizontalDragStart: _leftButtonArrived
+                          ? null
+                          : (details) => _onDragStart('left'),
+                      onHorizontalDragUpdate: _leftButtonArrived
+                          ? null
+                          : (details) => _onDragUpdate(details, maxWidth),
+                      onHorizontalDragEnd:
+                          _leftButtonArrived ? null : _onDragEnd,
+                      child: SizedBox(
+                        width: 80,
+                        height: 80,
+                        child: Stack(
+                          clipBehavior: Clip.none,
+                          alignment: Alignment.center,
+                          children: [
+                            // 파동 효과 (배경 밖으로 나갈 수 있음)
+                            if (isVoiceActive)
+                              AnimatedBuilder(
+                                animation: _rippleController,
+                                builder: (context, child) {
+                                  return CustomPaint(
+                                    size: const Size(120, 120),
+                                    painter: _ButtonRipplePainter(
+                                      progress: _rippleController.value,
+                                      color: _leftButtonColor,
+                                      rippleCount: 3,
+                                      state: widget.voiceState,
+                                    ),
+                                  );
+                                },
+                              ),
+                            // 버튼 (80x80, 배경 안에 위치)
+                            AnimatedContainer(
+                              duration: const Duration(milliseconds: 300),
+                              width: 80,
+                              height: 80,
+                              decoration: BoxDecoration(
+                                color: _leftButtonColor,
+                                shape: BoxShape.circle,
+                                boxShadow: isVoiceActive
+                                    ? [
+                                        BoxShadow(
+                                          color: _leftButtonColor.withValues(
+                                              alpha: 0.5),
+                                          blurRadius: 20,
+                                          offset: const Offset(0, 6),
+                                        ),
+                                      ]
+                                    : [
+                                        BoxShadow(
+                                          color: AppColors.accentRedShadow,
+                                          blurRadius: 12,
+                                          offset: const Offset(0, 4),
+                                        ),
+                                      ],
+                              ),
+                              child: _buildMicButtonContent(),
                             ),
-                          // 버튼
-                          Container(
-                            width: 80,
-                            height: 80,
-                            decoration: BoxDecoration(
-                              color: _leftButtonColor,
-                              shape: BoxShape.circle,
-                              boxShadow: isVoiceActive
-                                  ? [
-                                      BoxShadow(
-                                        color: _leftButtonColor.withValues(
-                                            alpha: 0.5),
-                                        blurRadius: 20,
-                                        offset: const Offset(0, 6),
-                                        spreadRadius: 2,
-                                      ),
-                                    ]
-                                  : [
-                                      BoxShadow(
-                                        color: AppColors.accentRedShadow,
-                                        blurRadius: 12,
-                                        offset: const Offset(0, 4),
-                                      ),
-                                    ],
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+
+                // 오른쪽 버튼이 움직일 때는 순서를 바꿔서 위에 배치
+                if (_draggingButton == 'right') ...[
+                  // 왼쪽 음성 입력 버튼 (아래 레이어)
+                  Positioned(
+                    left: _leftButtonArrived ? null : 0.0 + leftButtonOffset,
+                    right: _leftButtonArrived ? 0.0 : null,
+                    child: GestureDetector(
+                      onTap: _leftButtonArrived
+                          ? () => _resetLeftButton(notify: true)
+                          : null,
+                      onHorizontalDragStart: _leftButtonArrived
+                          ? null
+                          : (details) => _onDragStart('left'),
+                      onHorizontalDragUpdate: _leftButtonArrived
+                          ? null
+                          : (details) => _onDragUpdate(details, maxWidth),
+                      onHorizontalDragEnd:
+                          _leftButtonArrived ? null : _onDragEnd,
+                      child: SizedBox(
+                        width: 80,
+                        height: 80,
+                        child: Stack(
+                          clipBehavior: Clip.none,
+                          alignment: Alignment.center,
+                          children: [
+                            // 파동 효과 (배경 밖으로 나갈 수 있음)
+                            if (isVoiceActive)
+                              AnimatedBuilder(
+                                animation: _rippleController,
+                                builder: (context, child) {
+                                  return CustomPaint(
+                                    size: const Size(120, 120),
+                                    painter: _ButtonRipplePainter(
+                                      progress: _rippleController.value,
+                                      color: _leftButtonColor,
+                                      rippleCount: 3,
+                                      state: widget.voiceState,
+                                    ),
+                                  );
+                                },
+                              ),
+                            // 버튼 (80x80, 배경 안에 위치)
+                            Container(
+                              width: 80,
+                              height: 80,
+                              decoration: BoxDecoration(
+                                color: _leftButtonColor,
+                                shape: BoxShape.circle,
+                                boxShadow: isVoiceActive
+                                    ? [
+                                        BoxShadow(
+                                          color: _leftButtonColor.withValues(
+                                              alpha: 0.5),
+                                          blurRadius: 20,
+                                          offset: const Offset(0, 6),
+                                        ),
+                                      ]
+                                    : [
+                                        BoxShadow(
+                                          color: AppColors.accentRedShadow,
+                                          blurRadius: 12,
+                                          offset: const Offset(0, 4),
+                                        ),
+                                      ],
+                              ),
+                              child: _buildMicButtonContent(),
                             ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  // 오른쪽 텍스트 입력 버튼 (위 레이어)
+                  Positioned(
+                    right: _rightButtonArrived ? null : 0.0,
+                    left: _rightButtonArrived ? 0.0 : null,
+                    child: GestureDetector(
+                      onTap: _rightButtonArrived ? _resetRightButton : null,
+                      onHorizontalDragStart: _rightButtonArrived
+                          ? null
+                          : (details) => _onDragStart('right'),
+                      onHorizontalDragUpdate: _rightButtonArrived
+                          ? null
+                          : (details) => _onDragUpdate(details, maxWidth),
+                      onHorizontalDragEnd:
+                          _rightButtonArrived ? null : _onDragEnd,
+                      child: SizedBox(
+                        width: 80,
+                        height: 80,
+                        child: CustomPaint(
+                          painter: _CircleBorderPainter(
+                            color: AppColors.accentRed,
+                            strokeWidth: 2,
+                          ),
+                          child: Center(
                             child: Icon(
-                              _leftButtonIcon,
-                              color: AppColors.pureWhite,
+                              Icons.edit,
+                              color: AppColors.accentRed,
                               size: 36,
                             ),
                           ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-
-                // 오른쪽 텍스트 입력 버튼 (위 레이어)
-                Positioned(
-                  right: 0.0 - rightButtonOffset,
-                  child: GestureDetector(
-                    behavior: HitTestBehavior.opaque,
-                    onTap: _rightButtonArrived ? _resetRightButton : null,
-                    onHorizontalDragStart: _rightButtonArrived
-                        ? null
-                        : (details) => _onDragStart('right'),
-                    onHorizontalDragUpdate: _rightButtonArrived
-                        ? null
-                        : (details) => _onDragUpdate(details, maxWidth),
-                    onHorizontalDragEnd:
-                        _rightButtonArrived ? null : _onDragEnd,
-                    child: Container(
-                      width: 80,
-                      height: 80,
-                      decoration: BoxDecoration(
-                        color: AppColors.bgLightPink,
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: AppColors.accentRed,
-                          width: 2,
                         ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: AppColors.accentRedShadow,
-                            blurRadius: 8,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                      child: Icon(
-                        Icons.edit,
-                        color: AppColors.accentRed,
-                        size: 36,
                       ),
                     ),
                   ),
-                ),
+                ],
               ],
-            ],
+            ),
           ),
         );
       },
@@ -740,5 +722,167 @@ class _ButtonRipplePainter extends CustomPainter {
   @override
   bool shouldRepaint(_ButtonRipplePainter oldDelegate) {
     return oldDelegate.progress != progress || oldDelegate.state != state;
+  }
+}
+
+/// 원형 테두리를 그리는 CustomPainter
+class _CircleBorderPainter extends CustomPainter {
+  final Color color;
+  final double strokeWidth;
+
+  _CircleBorderPainter({
+    required this.color,
+    required this.strokeWidth,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = strokeWidth
+      ..style = PaintingStyle.stroke;
+
+    final center = Offset(size.width / 2, size.height / 2);
+    final radius = (size.width / 2) - (strokeWidth / 2);
+
+    canvas.drawCircle(center, radius, paint);
+  }
+
+  @override
+  bool shouldRepaint(_CircleBorderPainter oldDelegate) {
+    return oldDelegate.color != color || oldDelegate.strokeWidth != strokeWidth;
+  }
+}
+
+/// 마이크 버튼용 파형 애니메이션 (listening 상태)
+class _MicWaveformIndicator extends StatefulWidget {
+  const _MicWaveformIndicator();
+
+  @override
+  State<_MicWaveformIndicator> createState() => _MicWaveformIndicatorState();
+}
+
+class _MicWaveformIndicatorState extends State<_MicWaveformIndicator>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1000),
+    )..repeat(reverse: true);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 40,
+      height: 32,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: List.generate(4, (index) {
+          return AnimatedBuilder(
+            animation: _controller,
+            builder: (context, child) {
+              double value = _controller.value + (index * 0.5);
+              double heightFactor = (math.sin(value * math.pi * 2) + 1) / 2;
+              double height = 12 + (16 * heightFactor);
+
+              return Container(
+                width: 4,
+                height: height,
+                decoration: BoxDecoration(
+                  color: AppColors.pureWhite,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              );
+            },
+          );
+        }),
+      ),
+    );
+  }
+}
+
+/// 마이크 버튼용 타이핑 애니메이션 (loading, processing 상태)
+class _MicTypingIndicator extends StatefulWidget {
+  const _MicTypingIndicator();
+
+  @override
+  State<_MicTypingIndicator> createState() => _MicTypingIndicatorState();
+}
+
+class _MicTypingIndicatorState extends State<_MicTypingIndicator>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1200),
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 40,
+      height: 20,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: List.generate(3, (index) {
+          return AnimatedBuilder(
+            animation: _controller,
+            builder: (context, child) {
+              final double start = index * 0.2;
+              final double end = start + 0.4;
+
+              double opacity = 0.3;
+              if (_controller.value >= start && _controller.value <= end) {
+                final double t = (_controller.value - start) / 0.4;
+                final double sineValue = math.sin(t * math.pi);
+                opacity = 0.3 + (0.7 * sineValue);
+              }
+
+              double scale = 1.0;
+              if (_controller.value >= start && _controller.value <= end) {
+                final double t = (_controller.value - start) / 0.4;
+                final double sineValue = math.sin(t * math.pi);
+                scale = 1.0 + (0.4 * sineValue);
+              }
+
+              return Transform.scale(
+                scale: scale,
+                child: Container(
+                  width: 8,
+                  height: 8,
+                  decoration: BoxDecoration(
+                    color: AppColors.pureWhite.withValues(alpha: opacity),
+                    shape: BoxShape.circle,
+                  ),
+                ),
+              );
+            },
+          );
+        }),
+      ),
+    );
   }
 }

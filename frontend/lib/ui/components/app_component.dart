@@ -8,6 +8,7 @@ export 'app_input.dart';
 export 'chat_bubble.dart';
 export 'system_bubble.dart';
 export 'emotion_bubble.dart';
+export 'list_bubble.dart';
 
 // Voice Components
 export 'voice_waveform.dart';
@@ -24,3 +25,6 @@ export 'process_indicator.dart';
 
 // Notification Components
 export 'top_notification.dart';
+
+// Dialog Components
+export 'message_dialog.dart';

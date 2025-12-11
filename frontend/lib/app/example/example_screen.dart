@@ -66,6 +66,14 @@ class ExampleContent extends StatelessWidget {
               Navigator.pushNamed(context, '/bubble-test');
             },
           ),
+          const SizedBox(height: AppSpacing.sm),
+          AppButton(
+            text: 'MessageDialog 테스트',
+            variant: ButtonVariant.secondaryRed,
+            onTap: () {
+              Navigator.pushNamed(context, '/message-dialog-test');
+            },
+          ),
         ],
       ),
     );

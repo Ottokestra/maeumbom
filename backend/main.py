@@ -473,16 +473,31 @@ async def agent_text_v2_endpoint(
                     timeout=7.0
                 )
                 # 상대 경로로 URL 생성
-                result["tts_audio_url"] = f"/tts-outputs/{audio_path.name}"
+                audio_url = f"/tts-outputs/{audio_path.name}"
+                
+                # Root에 설정 (하위 호환성)
+                result["tts_audio_url"] = audio_url
                 result["tts_status"] = "ready"
-                print(f"[TTS] 음성 파일 생성 완료 (with audio tags): {audio_path.name}")
+                
+                # Meta에 설정 (Frontend 요구사항)
+                if "meta" not in result:
+                    result["meta"] = {}
+                    
+                result["meta"]["tts_audio_url"] = audio_url
+                result["meta"]["tts_status"] = "ready"
+                
+                print(f"[TTS] 음성 파일 생성 완료: {audio_path.name}")
             except asyncio.TimeoutError:
                 result["tts_audio_url"] = None
                 result["tts_status"] = "timeout"
+                if "meta" in result:
+                    result["meta"]["tts_status"] = "timeout"
                 print("[TTS] 타임아웃: 7초 내에 음성 생성 실패")
             except Exception as e:
                 result["tts_audio_url"] = None
                 result["tts_status"] = "error"
+                if "meta" in result:
+                    result["meta"]["tts_status"] = "error"
                 print(f"[TTS] 생성 오류: {e}")
 
         return result
