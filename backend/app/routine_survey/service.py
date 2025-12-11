@@ -1,4 +1,5 @@
 """Service layer for the mental routine survey domain."""
+
 from datetime import datetime
 from typing import List, Optional
 
@@ -27,7 +28,9 @@ def get_active_questions(
     db: Session, survey_name: Optional[str] = None, survey_id: Optional[int] = None
 ) -> List[MentalRoutineSurveyQuestion]:
     """Return active questions for the given survey."""
-    survey_query = db.query(MentalRoutineSurvey).filter(MentalRoutineSurvey.active_yn == "Y")
+    survey_query = db.query(MentalRoutineSurvey).filter(
+        MentalRoutineSurvey.active_yn == "Y"
+    )
 
     if survey_id:
         survey_query = survey_query.filter(MentalRoutineSurvey.survey_id == survey_id)
@@ -95,7 +98,9 @@ def submit_answers(
     for answer in answers:
         question = question_map.get(answer.question_id)
         if not question:
-            raise HTTPException(status_code=400, detail=f"유효하지 않은 문항 ID: {answer.question_id}")
+            raise HTTPException(
+                status_code=400, detail=f"유효하지 않은 문항 ID: {answer.question_id}"
+            )
 
         answer_value = (answer.answer_value or "N").upper()
         score = question.score if answer_value == "Y" else 0

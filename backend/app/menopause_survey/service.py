@@ -1,4 +1,5 @@
 """Service layer for menopause survey question management."""
+
 from typing import List, Optional
 
 from fastapi import HTTPException
@@ -216,4 +217,62 @@ def delete_question_item(db: Session, question_id: int):
 def seed_default_questions(db: Session) -> List:
     created = seed_questions(db, DEFAULT_SEED_DATA, created_by=DEFAULT_SEED_CREATED_BY)
     # 반환은 최신 활성 목록 기준으로 처리
-    return list_questions(db)
+
+
+from datetime import datetime
+
+from app.db.models import MenopauseSurveyResult, MenopauseSurveyAnswer
+from .schemas import MenopauseSurveySubmitRequest, MenopauseSurveyResultResponse
+
+
+def submit_menopause_survey(
+    db: Session, payload: MenopauseSurveySubmitRequest
+) -> MenopauseSurveyResultResponse:
+    # 1. Calculate Score
+    total_score = 0
+    for ans in payload.answers:
+        total_score += ans.answer_value
+
+    # 2. Risk Level (Simple logic: <10 LOW, 10-20 MID, >20 HIGH)
+    if total_score < 10:
+        risk_level = "LOW"
+        comment = "증상이 경미합니다. 규칙적인 생활을 유지하세요."
+    elif total_score <= 20:
+        risk_level = "MID"
+        comment = "증상이 느껴집니다. 생활 습관 개선과 상담이 도움이 될 수 있습니다."
+    else:
+        risk_level = "HIGH"
+        comment = "증상이 심합니다. 전문의와의 상담을 적극 권장합니다."
+
+    # 3. Save
+    result = MenopauseSurveyResult(
+        GENDER=payload.gender,
+        TOTAL_SCORE=total_score,
+        RISK_LEVEL=risk_level,
+        COMMENT=comment,
+        CREATED_AT=datetime.utcnow(),
+        UPDATED_AT=datetime.utcnow(),
+    )
+    db.add(result)
+    db.flush()
+
+    for ans in payload.answers:
+        db.add(
+            MenopauseSurveyAnswer(
+                RESULT_ID=result.ID,
+                QUESTION_ID=ans.question_id,
+                ANSWER_VALUE=ans.answer_value,
+            )
+        )
+
+    db.commit()
+    db.refresh(result)
+
+    # Return schema compatible dict/object
+    return MenopauseSurveyResultResponse(
+        id=result.ID,
+        total_score=result.TOTAL_SCORE,
+        risk_level=result.RISK_LEVEL,
+        comment=result.COMMENT,
+        created_at=result.CREATED_AT,
+    )

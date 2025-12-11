@@ -29,30 +29,15 @@ class ChatAlarmDialogs {
     // 알람 정보 텍스트 생성
     final alarmDetailsText = _buildAlarmDetailsText(data);
 
-    MessageDialogHelper.showGreenConfirm(
-      context,
-      icon: Icons.alarm_rounded,
-      title: '알람 설정',
-      message: '$replyText\n\n$alarmDetailsText',
-      primaryButtonText: '확인',
-      secondaryButtonText: '취소',
-      onPrimaryPressed: () {
-        Navigator.pop(context);
-
-        // 저장 완료 피드백
-        TopNotificationManager.show(
-          context,
-          message: '알람이 설정되었습니다.',
-          type: TopNotificationType.green,
-          duration: const Duration(milliseconds: 2000),
-        );
-
-        // 추가 콜백 실행
-        onConfirm?.call();
-      },
-      onSecondaryPressed: () {
-        Navigator.pop(context);
-      },
+    // 🆕 BottomSheet로 표시하여 배경 스크롤 가능
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => _AlarmConfirmBottomSheet(
+        replyText: replyText,
+        alarmDetailsText: alarmDetailsText,
+        onConfirm: onConfirm,
+      ),
     );
   }
 
@@ -111,5 +96,137 @@ class ChatAlarmDialogs {
     }
 
     return buffer.toString();
+  }
+}
+
+/// 알람 확인 BottomSheet
+class _AlarmConfirmBottomSheet extends StatelessWidget {
+  const _AlarmConfirmBottomSheet({
+    required this.replyText,
+    required this.alarmDetailsText,
+    this.onConfirm,
+  });
+
+  final String replyText;
+  final String alarmDetailsText;
+  final VoidCallback? onConfirm;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: const BoxDecoration(
+        color: AppColors.pureWhite,
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(AppRadius.xxl),
+          topRight: Radius.circular(AppRadius.xxl),
+        ),
+      ),
+      padding: EdgeInsets.only(
+        left: AppSpacing.md,
+        right: AppSpacing.md,
+        top: AppSpacing.md,
+        bottom: AppSpacing.md + MediaQuery.of(context).padding.bottom,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // 아이콘
+          Container(
+            width: 80,
+            height: 80,
+            decoration: BoxDecoration(
+              color: AppColors.natureGreen.withOpacity(0.1),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.alarm_rounded,
+              size: 40,
+              color: AppColors.natureGreen,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.md),
+
+          // 제목
+          Text(
+            '알람 설정',
+            style: AppTypography.h3.copyWith(
+              color: AppColors.textPrimary,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: AppSpacing.xs),
+
+          // 본문 메시지
+          Text(
+            '$replyText\n\n$alarmDetailsText',
+            style: AppTypography.body.copyWith(
+              color: AppColors.textSecondary,
+              height: 1.5,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: AppSpacing.md),
+
+          // 버튼들
+          Column(
+            children: [
+              // 확인 버튼
+              SizedBox(
+                width: double.infinity,
+                height: 52,
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+
+                    // 저장 완료 피드백
+                    TopNotificationManager.show(
+                      context,
+                      message: '알람이 설정되었습니다.',
+                      type: TopNotificationType.green,
+                      duration: const Duration(milliseconds: 2000),
+                    );
+
+                    // 추가 콜백 실행
+                    onConfirm?.call();
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.natureGreen,
+                    foregroundColor: AppColors.textWhite,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(AppRadius.md),
+                    ),
+                    textStyle: AppTypography.bodyBold,
+                  ),
+                  child: const Text('확인'),
+                ),
+              ),
+              const SizedBox(height: AppSpacing.xs),
+
+              // 취소 버튼
+              SizedBox(
+                width: double.infinity,
+                height: 52,
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.disabledBg,
+                    foregroundColor: AppColors.textSecondary,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(AppRadius.md),
+                    ),
+                    textStyle: AppTypography.bodyBold,
+                  ),
+                  child: const Text('취소'),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
   }
 }

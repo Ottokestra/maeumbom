@@ -52,6 +52,8 @@ class RelationTrainingListScreen extends ConsumerWidget {
         await viewModel.generateScenario(
           target: result['target']!,
           topic: result['topic']!,
+          category: result['category'] ?? 'TRAINING',
+          genre: result['genre'], // 드라마 선택 시에만 있음
         );
         
         if (context.mounted) {

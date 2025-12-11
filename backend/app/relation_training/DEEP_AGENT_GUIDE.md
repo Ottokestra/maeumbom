@@ -7,8 +7,11 @@ Deep Agent Pipeline은 사용자 입력을 받아 Gemini API로 시나리오를 
 **최신 업데이트 (2025-12-11)**:
 - FLUX.1-schnell 로컬 모델 제거
 - Gemini 2.5 Flash로 이미지 생성 전환 (빠르고 저렴)
-- 시나리오 생성은 Gemini 2.5 Flash 사용 (scenario_architect.md)
+- 시나리오 생성은 Gemini 2.5 Flash 사용 (scenario_architect.md 또는 scenario_prompt_drama.md)
 - 오케스트레이션은 GPT-4o-mini 계속 사용 (프롬프트 준비, 검증, 파싱)
+- **드라마 카테고리 추가**: 드라마 시나리오 생성 기능 (막장/로맨스/가족)
+- **AUTO 기능**: AI가 자동으로 배역과 주제를 창작하는 기능
+- **드라마 시나리오 공용화**: 드라마 시나리오는 모든 사용자에게 공개 (USER_ID = NULL)
 
 ## 환경 변수 설정
 
@@ -107,13 +110,29 @@ USE_SKIP_IMAGES=false
 
 **Endpoint:** `POST /api/service/relation-training/generate-scenario`
 
-**Request:**
+**관계 개선 훈련 시나리오:**
 ```json
 {
   "target": "HUSBAND",  # HUSBAND, CHILD, FRIEND, COLLEAGUE
-  "topic": "매일 늦게 들어오는 남편"
+  "topic": "매일 늦게 들어오는 남편",
+  "category": "TRAINING"  # 기본값
 }
 ```
+
+**드라마 시나리오:**
+```json
+{
+  "target": "AUTO",  # AUTO (랜덤 배역) 또는 HUSBAND, CHILD, FRIEND, COLLEAGUE
+  "topic": "AUTO",  # AUTO (AI 자동 창작) 또는 직접 입력
+  "category": "DRAMA",
+  "genre": "MAKJANG"  # MAKJANG, ROMANCE, FAMILY
+}
+```
+
+**참고:**
+- 드라마 시나리오는 공용 시나리오로 생성됩니다 (USER_ID = NULL)
+- `target: "AUTO"`를 사용하면 AI가 장르에 맞춰 배역을 자동 선택합니다
+- `topic: "AUTO"`를 사용하면 AI가 장르에 맞춰 주제를 자동 창작합니다
 
 **Headers:**
 ```
@@ -157,20 +176,38 @@ GET /api/service/relation-training/images/{user_id}/{scenario_name}/{filename}
 예: /api/service/relation-training/images/123/husband_20231215_143022/start.png
 ```
 
+**드라마 시나리오 (공용):**
+```
+GET /api/service/relation-training/images/public/{scenario_name}/{filename}
+예: /api/service/relation-training/images/public/차가운_심장에_피어난_꽃_20251211_151150/start.png
+```
+
+**참고:**
+- 드라마 시나리오는 `user_id="public"`으로 저장됩니다
+- 공용 시나리오 이미지는 `images/public/` 폴더에 저장됩니다
+
 ## 파일 구조
 
 ```
 backend/app/relation_training/
 ├── prompts/
-│   ├── scenario_architect.md      # Brain 프롬프트
+│   ├── scenario_architect.md      # 관계 개선 훈련 프롬프트
+│   ├── scenario_prompt_drama.md   # 드라마 프롬프트 (NEW!)
 │   └── cartoon_director.md        # Hands 프롬프트
 ├── data/
-│   └── {user_id}/
-│       └── {folder_name}.json     # 백업 JSON
+│   ├── {user_id}/
+│   │   └── {folder_name}.json     # 개인 시나리오 JSON
+│   └── public/
+│       └── {folder_name}.json     # 드라마 시나리오 JSON (NEW!)
 ├── images/
 │   ├── {scenario_name}/           # 공용 시나리오 (기존)
-│   └── {user_id}/
-│       └── {folder_name}/         # 사용자별 시나리오 (Deep Agent)
+│   ├── {user_id}/
+│   │   └── {folder_name}/         # 사용자별 시나리오
+│   │       ├── start.png
+│   │       ├── result_AAAA.png
+│   │       └── ... (총 17장)
+│   └── public/
+│       └── {folder_name}/         # 드라마 시나리오 이미지 (NEW!)
 │           ├── start.png
 │           ├── result_AAAA.png
 │           └── ... (총 17장)
@@ -186,15 +223,20 @@ backend/app/relation_training/
 
 ### Phase 1: The Brain (시나리오 생성)
 
-1. 프롬프트 로드 (step0~step3)
+**관계 개선 훈련 (TRAINING):**
+1. 프롬프트 로드: `scenario_architect.md`
 2. 변수 치환 (TARGET, TOPIC)
-3. GPT-4o-mini API 호출 (4단계)
-   - STEP 0: Character Design
-   - STEP 1: Nodes (15개)
-   - STEP 2: Options (30개)
-   - STEP 3: Results (16개)
+3. Gemini 2.5 Flash API 호출
 4. JSON 파싱 및 검증
 5. Pydantic 모델 변환
+
+**드라마 (DRAMA):**
+1. 프롬프트 로드: `scenario_prompt_drama.md`
+2. 변수 치환 (TARGET, TOPIC, GENRE)
+3. Gemini 2.5 Flash API 호출
+4. JSON 파싱 및 검증
+5. Pydantic 모델 변환
+6. **공용 시나리오로 저장** (USER_ID = NULL)
 
 **출력:** 15개 노드, 30개 선택지, 16개 결과
 
@@ -210,12 +252,22 @@ backend/app/relation_training/
 
 ### Phase 3: Persistence (저장)
 
+**관계 개선 훈련:**
 1. JSON 파일 저장 (`data/{user_id}/{folder_name}.json`)
-2. DB 저장:
+2. DB 저장: USER_ID = 사용자 ID
    - TB_SCENARIOS (메타데이터)
    - TB_SCENARIO_NODES (15개, text → SITUATION_TEXT)
    - TB_SCENARIO_OPTIONS (30개, text → OPTION_TEXT)
    - TB_SCENARIO_RESULTS (16개, IMAGE_URL)
+
+**드라마:**
+1. JSON 파일 저장 (`data/public/{folder_name}.json`)
+2. DB 저장: USER_ID = NULL (공용 시나리오)
+   - TB_SCENARIOS (메타데이터, CATEGORY = "DRAMA")
+   - TB_SCENARIO_NODES (15개)
+   - TB_SCENARIO_OPTIONS (30개)
+   - TB_SCENARIO_RESULTS (16개)
+3. 이미지 저장: `images/public/{folder_name}/`
 
 ## 트러블슈팅
 

@@ -1,11 +1,12 @@
 """API routes for the mental routine survey domain."""
+
 from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.auth.dependencies import get_current_user
-from app.auth.models import User
+from app.db.models import User
 from app.db.database import get_db
 
 from .schemas import (
@@ -13,7 +14,7 @@ from .schemas import (
     SurveyResultSummary,
     SurveySubmitRequest,
 )
-from .services import (
+from .service import (
     DEFAULT_SURVEY_NAME,
     get_active_questions,
     get_my_latest_result,
@@ -66,7 +67,7 @@ async def submit_survey(
     """
     return submit_answers(
         db=db,
-        user_id=current_user.id,
+        user_id=current_user.ID,
         survey_id=request.survey_id,
         answers=request.answers,
     )
@@ -86,23 +87,9 @@ async def get_my_result(
     """
     summary = get_my_latest_result(
         db=db,
-        user_id=current_user.id,
+        user_id=current_user.ID,
         survey_id=survey_id,
     )
     if not summary:
         raise HTTPException(status_code=404, detail="설문 결과가 없습니다.")
     return summary
-
-
-# Manual test hints (after running the server):
-# 1) GET  /api/routine-survey/questions
-# 2) POST /api/routine-survey/submit
-#    body:
-#    {
-#      "survey_id": 1,
-#      "answers": [
-#        {"question_id": 1, "answer_value": "Y"},
-#        ...
-#      ]
-#    }
-# 3) GET  /api/routine-survey/results/me

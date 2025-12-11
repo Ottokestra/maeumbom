@@ -1,4 +1,5 @@
 """Pydantic schemas for menopause survey questions."""
+
 from datetime import datetime
 from typing import Optional, List
 
@@ -88,7 +89,34 @@ class MenopauseQuestionOut(BaseModel):
     created_by: Optional[str] = Field(None, alias="CREATED_BY")
     updated_by: Optional[str] = Field(None, alias="UPDATED_BY")
 
+<<<<<<< HEAD
     model_config = {
         "from_attributes": True, # orm_mode = True 대체
         "populate_by_name": True # allow_population_by_field_name = True 대체
     }
+=======
+    class Config:
+        from_attributes = True  # orm_mode is deprecated in v2
+        populate_by_name = True  # allow_population_by_field_name is deprecated in v2
+
+
+class MenopauseAnswerItem(BaseModel):
+    question_id: int
+    answer_value: int  # 0 or 3
+
+
+class MenopauseSurveySubmitRequest(BaseModel):
+    gender: str  # FEMALE / MALE (설문 대상 성별)
+    answers: list[MenopauseAnswerItem]
+
+
+class MenopauseSurveyResultResponse(BaseModel):
+    id: int
+    total_score: int
+    risk_level: str  # LOW, MID, HIGH
+    comment: str
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+>>>>>>> 10eca562ebbed6cd5936665476546b0e09b9c1ee

@@ -1,53 +1,51 @@
 """
 Business logic for onboarding survey service
 """
+
 from sqlalchemy.orm import Session
 from sqlalchemy import and_
 from typing import Optional, Dict, Any
 from fastapi import HTTPException
 
 from app.db.models import UserProfile, User
-from .models import OnboardingSurveySubmitRequest, OnboardingSurveyResponse
+from .schemas import OnboardingSurveySubmitRequest, OnboardingSurveyResponse
 
 
 def get_user_profile(db: Session, user_id: int) -> Optional[UserProfile]:
     """
     Get user profile by user_id
-    
+
     Args:
         db: Database session
         user_id: User ID
-        
+
     Returns:
         UserProfile object or None
     """
-    return db.query(UserProfile).filter(
-        and_(
-            UserProfile.USER_ID == user_id,
-            UserProfile.IS_DELETED == False
-        )
-    ).first()
+    return (
+        db.query(UserProfile)
+        .filter(and_(UserProfile.USER_ID == user_id, UserProfile.IS_DELETED == False))
+        .first()
+    )
 
 
 def create_or_update_profile(
-    db: Session,
-    user_id: int,
-    request: OnboardingSurveySubmitRequest
+    db: Session, user_id: int, request: OnboardingSurveySubmitRequest
 ) -> UserProfile:
     """
     Create or update user profile (Upsert)
-    
+
     Args:
         db: Database session
         user_id: User ID
         request: Survey submission request
-        
+
     Returns:
         Created or updated UserProfile object
     """
     # Check if profile already exists
     existing_profile = get_user_profile(db, user_id)
-    
+
     if existing_profile:
         # UPDATE existing profile
         existing_profile.NICKNAME = request.nickname
@@ -62,7 +60,7 @@ def create_or_update_profile(
         existing_profile.HOBBIES = request.hobbies
         existing_profile.ATMOSPHERE = request.atmosphere
         existing_profile.UPDATED_BY = user_id
-        
+
         db.commit()
         db.refresh(existing_profile)
         return existing_profile
@@ -81,9 +79,9 @@ def create_or_update_profile(
             STRESS_RELIEF=request.stress_relief,
             HOBBIES=request.hobbies,
             ATMOSPHERE=request.atmosphere,
-            CREATED_BY=user_id
+            CREATED_BY=user_id,
         )
-        
+
         db.add(new_profile)
         db.commit()
         db.refresh(new_profile)
@@ -93,11 +91,11 @@ def create_or_update_profile(
 def check_profile_exists(db: Session, user_id: int) -> bool:
     """
     Check if user has completed onboarding survey
-    
+
     Args:
         db: Database session
         user_id: User ID
-        
+
     Returns:
         True if profile exists, False otherwise
     """
@@ -108,10 +106,10 @@ def check_profile_exists(db: Session, user_id: int) -> bool:
 def convert_profile_to_response(profile: UserProfile) -> OnboardingSurveyResponse:
     """
     Convert UserProfile SQLAlchemy model to OnboardingSurveyResponse Pydantic model
-    
+
     Args:
         profile: UserProfile SQLAlchemy model
-        
+
     Returns:
         OnboardingSurveyResponse Pydantic model
     """
@@ -130,6 +128,5 @@ def convert_profile_to_response(profile: UserProfile) -> OnboardingSurveyRespons
         hobbies=profile.HOBBIES if profile.HOBBIES else [],
         atmosphere=profile.ATMOSPHERE if profile.ATMOSPHERE else [],
         created_at=profile.CREATED_AT,
-        updated_at=profile.UPDATED_AT
+        updated_at=profile.UPDATED_AT,
     )
-

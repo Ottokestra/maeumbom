@@ -351,7 +351,7 @@ async def delete_scenario(
 
 @router.get("/images/{user_id}/{scenario_name}/{filename}")
 async def get_user_image(
-    user_id: int,
+    user_id: str,  # "public" 또는 숫자 문자열
     scenario_name: str,
     filename: str
 ):
@@ -377,7 +377,8 @@ async def get_user_image(
         if '..' in scenario_name or '..' in filename:
             raise HTTPException(status_code=400, detail="Invalid path")
         
-        image_path = IMAGES_DIR / str(user_id) / scenario_name / filename
+        # user_id가 "public"이면 공용 시나리오 이미지
+        image_path = IMAGES_DIR / user_id / scenario_name / filename
         
         if not image_path.exists():
             raise HTTPException(status_code=404, detail="Image not found")
