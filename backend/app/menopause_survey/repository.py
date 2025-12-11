@@ -1,4 +1,5 @@
 """Repository layer for menopause survey questions."""
+
 from typing import Iterable, List, Optional
 
 from sqlalchemy.orm import Session
@@ -18,12 +19,9 @@ def list_questions(
     if is_active is not None:
         query = query.filter(MenopauseSurveyQuestion.IS_ACTIVE == is_active)
 
-    return (
-        query.order_by(
-            MenopauseSurveyQuestion.GENDER.asc(), MenopauseSurveyQuestion.ORDER_NO.asc()
-        )
-        .all()
-    )
+    return query.order_by(
+        MenopauseSurveyQuestion.GENDER.asc(), MenopauseSurveyQuestion.ORDER_NO.asc()
+    ).all()
 
 
 def get_question(db: Session, question_id: int) -> Optional[MenopauseSurveyQuestion]:
@@ -136,7 +134,10 @@ def seed_questions(
 ) -> List[MenopauseSurveyQuestion]:
     codes = [item["code"] for item in defaults]
     existing_codes = {
-        q.CODE for q in db.query(MenopauseSurveyQuestion).filter(MenopauseSurveyQuestion.CODE.in_(codes)).all()
+        q.CODE
+        for q in db.query(MenopauseSurveyQuestion)
+        .filter(MenopauseSurveyQuestion.CODE.in_(codes))
+        .all()
     }
 
     created_items: List[MenopauseSurveyQuestion] = []
