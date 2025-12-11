@@ -79,6 +79,9 @@ class ApiConfig {
   static String relationTrainingStart(int scenarioId) =>
       '$relationTrainingBase/scenarios/$scenarioId/start';
   static const String relationTrainingProgress = '$relationTrainingBase/progress';
+  static const String relationTrainingGenerate = '$relationTrainingBase/generate-scenario';
+  static String relationTrainingDelete(int scenarioId) =>
+      '$relationTrainingBase/scenarios/$scenarioId';
 
   // Slang Quiz Endpoints
   static const String slangQuizBase = '/api/service/slang-quiz';

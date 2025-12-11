@@ -1,131 +1,114 @@
 """
 Image generation module for Deep Agent Pipeline
-Supports FLUX.1-schnell with AMD/NVIDIA GPU and skip mode
+Supports Gemini 2.5 Flash image generation with skip mode
 """
 import os
-import torch
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Dict
 from PIL import Image, ImageDraw, ImageFont
 import asyncio
-from concurrent.futures import ThreadPoolExecutor
+import base64
+import io
 
 
-# Global model instance (loaded once at startup)
-_flux_model = None
-_model_lock = asyncio.Lock()
+# Gemini client (initialized once)
+_gemini_client = None
 
 
-def get_device() -> str:
+async def init_gemini_client():
     """
-    Determine which device to use for image generation
+    Initialize Gemini client (called once at startup)
     
     Returns:
-        Device string ('cuda' or 'cpu')
+        Gemini client or None if skip mode
     """
-    use_amd = os.getenv("USE_AMD_GPU", "false").lower() == "true"
-    use_nvidia = os.getenv("USE_NVIDIA_GPU", "false").lower() == "true"
+    global _gemini_client
     
-    if (use_amd or use_nvidia) and torch.cuda.is_available():
-        return "cuda"
-    return "cpu"
-
-
-async def load_flux_model():
-    """
-    Load FLUX.1-schnell model (called once at startup)
-    
-    Returns:
-        FluxPipeline instance or None if skip mode
-    """
-    global _flux_model
-    
-    # Skip if already loaded
-    if _flux_model is not None:
-        return _flux_model
+    # Skip if already initialized
+    if _gemini_client is not None:
+        return _gemini_client
     
     # Skip if in skip mode
     skip_images = os.getenv("USE_SKIP_IMAGES", "false").lower() == "true"
     if skip_images:
-        print("[Image Generator] Skip mode enabled - no model loading")
+        print("[Image Generator] Skip mode enabled - no Gemini client initialization")
         return None
     
-    async with _model_lock:
-        # Double-check after acquiring lock
-        if _flux_model is not None:
-            return _flux_model
-        
-        print("[Image Generator] Loading FLUX.1-schnell model...")
-        
-        try:
-            from diffusers import FluxPipeline
-            
-            device = get_device()
-            dtype = torch.float16 if device == "cuda" else torch.float32
-            
-            # Load model
-            _flux_model = FluxPipeline.from_pretrained(
-                "black-forest-labs/FLUX.1-schnell",
-                torch_dtype=dtype
-            )
-            
-            # Move to device
-            _flux_model = _flux_model.to(device)
-            
-            # Enable CPU offload if using GPU (memory optimization)
-            if device == "cuda":
-                try:
-                    _flux_model.enable_model_cpu_offload()
-                    print("[Image Generator] CPU offload enabled")
-                except Exception as e:
-                    print(f"[Image Generator] CPU offload not available: {e}")
-            
-            print(f"[Image Generator] Model loaded successfully on {device}")
-            return _flux_model
-            
-        except Exception as e:
-            print(f"[Image Generator] Failed to load model: {e}")
-            print("[Image Generator] Falling back to skip mode")
-            return None
+    gemini_api_key = os.getenv("GEMINI_API_KEY")
+    if not gemini_api_key:
+        print("[Image Generator] GEMINI_API_KEY not found - falling back to skip mode")
+        return None
+    
+    try:
+        import google.generativeai as genai
+        genai.configure(api_key=gemini_api_key)
+        _gemini_client = genai
+        print("[Image Generator] Gemini client initialized successfully")
+        return _gemini_client
+    except ImportError:
+        print("[Image Generator] google-generativeai not installed - falling back to skip mode")
+        return None
+    except Exception as e:
+        print(f"[Image Generator] Failed to initialize Gemini client: {e}")
+        return None
 
 
-def generate_image_sync(prompt: str, output_path: Path) -> bool:
+async def generate_image_with_gemini(prompt: str, output_path: Path) -> bool:
     """
-    Generate image synchronously (blocking)
+    Generate image using Gemini 2.5 Flash
     
     Args:
-        prompt: English prompt for FLUX.1
+        prompt: Text prompt (Korean or English)
         output_path: Output file path
     
     Returns:
         True if successful, False otherwise
     """
-    global _flux_model
+    global _gemini_client
     
     try:
-        if _flux_model is None:
-            print(f"[Image Generator] Model not loaded, skipping: {output_path.name}")
-            return False
+        if _gemini_client is None:
+            await init_gemini_client()
+            if _gemini_client is None:
+                print(f"[Image Generator] Gemini not available, skipping: {output_path.name}")
+                return False
+        
+        # Use Gemini 2.5 Flash Image for image generation
+        model = _gemini_client.GenerativeModel('gemini-2.5-flash-image')
         
         # Generate image
-        result = _flux_model(
-            prompt=prompt,
-            num_inference_steps=4,  # schnell uses 4 steps
-            guidance_scale=0.0,
-            num_images_per_prompt=1
+        response = await asyncio.to_thread(
+            model.generate_content,
+            [prompt],
+            generation_config={
+                "temperature": 0.8,
+                "max_output_tokens": 8192,
+            }
         )
         
-        image = result.images[0]
+        # Extract image from response
+        # Note: Gemini 2.5 Flash returns images in the response
+        if hasattr(response, 'candidates') and response.candidates:
+            for part in response.candidates[0].content.parts:
+                if hasattr(part, 'inline_data') and part.inline_data:
+                    # Decode base64 image
+                    image_data = base64.b64decode(part.inline_data.data)
+                    image = Image.open(io.BytesIO(image_data))
+                    
+                    # Save image
+                    output_path.parent.mkdir(parents=True, exist_ok=True)
+                    image.save(output_path)
+                    
+                    print(f"[Image Generator] Generated: {output_path.name}")
+                    return True
         
-        # Save image
-        output_path.parent.mkdir(parents=True, exist_ok=True)
-        image.save(output_path)
-        
-        print(f"[Image Generator] Generated: {output_path.name}")
-        return True
+        print(f"[Image Generator] No image in response for: {output_path.name}")
+        return False
         
     except Exception as e:
         print(f"[Image Generator] Error generating {output_path.name}: {e}")
+        import traceback
+        traceback.print_exc()
         return False
 
 
@@ -134,21 +117,13 @@ async def generate_image(prompt: str, output_path: Path) -> bool:
     Generate image asynchronously
     
     Args:
-        prompt: English prompt for FLUX.1
+        prompt: Text prompt (Korean or English)
         output_path: Output file path
     
     Returns:
         True if successful, False otherwise
     """
-    # Run in thread pool to avoid blocking
-    loop = asyncio.get_event_loop()
-    with ThreadPoolExecutor() as executor:
-        return await loop.run_in_executor(
-            executor,
-            generate_image_sync,
-            prompt,
-            output_path
-        )
+    return await generate_image_with_gemini(prompt, output_path)
 
 
 async def generate_images_batch(
@@ -176,9 +151,10 @@ async def generate_images_batch(
     results = await asyncio.gather(*[
         generate_with_semaphore(prompt, path)
         for prompt, path in tasks
-    ])
+    ], return_exceptions=True)
     
-    return results
+    # Convert exceptions to False
+    return [r if isinstance(r, bool) else False for r in results]
 
 
 def create_placeholder_image(output_path: Path, text: str = "No Image"):
@@ -200,7 +176,7 @@ def create_placeholder_image(output_path: Path, text: str = "No Image"):
             font = ImageFont.truetype("arial.ttf", 40)
         except:
             # Fallback to default font
-            font = ImageDraw.ImageFont.load_default()
+            font = ImageFont.load_default()
         
         # Calculate text position
         bbox = draw.textbbox((0, 0), text, font=font)
@@ -222,21 +198,21 @@ def create_placeholder_image(output_path: Path, text: str = "No Image"):
 
 
 # ============================================================================
-# High-level API
+# High-level API (compatible with existing code)
 # ============================================================================
 
 async def generate_start_image(
-    prompt: str,
-    user_id: int,
-    folder_name: str
+    scenario_json,
+    folder_name: str,
+    user_id: int
 ) -> Optional[str]:
     """
-    Generate start image
+    Generate start image for scenario
     
     Args:
-        prompt: English prompt
-        user_id: User ID
+        scenario_json: ScenarioJSON object with character design
         folder_name: Folder name
+        user_id: User ID
     
     Returns:
         Image URL or None if skipped
@@ -248,6 +224,9 @@ async def generate_start_image(
         return None
     
     print("[1/17] Start image 생성 중...")
+    
+    # Create prompt from character design
+    prompt = f"따뜻하고 친근한 분위기의 한국 가정집 장면. {scenario_json.character_design.protagonist_visual}와 {scenario_json.character_design.target_visual}가 편안한 공간에 있는 모습. 부드러운 조명, 따뜻한 분위기, 4컷 만화 스타일"
     
     # Determine output path
     images_dir = Path(__file__).parent / "images"
@@ -265,17 +244,17 @@ async def generate_start_image(
 
 
 async def generate_result_images(
-    prompts: dict,
-    user_id: int,
-    folder_name: str
-) -> dict:
+    scenario_json,
+    folder_name: str,
+    user_id: int
+) -> Dict[str, Optional[str]]:
     """
-    Generate result images (16 images)
+    Generate result images (16 images) for scenario
     
     Args:
-        prompts: Dict of {result_code: prompt}
-        user_id: User ID
+        scenario_json: ScenarioJSON object with results
         folder_name: Folder name
+        user_id: User ID
     
     Returns:
         Dict of {result_code: image_url or None}
@@ -284,20 +263,30 @@ async def generate_result_images(
     
     if skip_images:
         print("[2-17/17] Result images - SKIPPED")
-        return {code: None for code in prompts.keys()}
+        return {}
     
-    print(f"[2-17/17] Result images 생성 중... (총 {len(prompts)}장)")
+    print(f"[2-17/17] Result images 생성 중... (총 {len(scenario_json.results)}장)")
     
     # Prepare tasks
     images_dir = Path(__file__).parent / "images"
     tasks = []
     result_codes = []
     
-    for idx, (result_code, prompt) in enumerate(prompts.items(), start=2):
-        output_path = images_dir / str(user_id) / folder_name / f"result_{result_code}.png"
+    for idx, result in enumerate(scenario_json.results, start=2):
+        # Create prompt from result data
+        atmosphere_desc = {
+            "STORM": "폭풍우 치는 어두운 분위기",
+            "CLOUDY": "흐리고 우울한 분위기",
+            "SUNNY": "밝고 화창한 분위기",
+            "FLOWER": "꽃이 피어나는 아름다운 분위기"
+        }.get(result.atmosphere_image_type, "중립적인 분위기")
+        
+        prompt = f"{result.display_title} - {atmosphere_desc}. {result.analysis_text[:100]}. 4컷 만화 스타일, 감정 표현이 풍부한 장면"
+        
+        output_path = images_dir / str(user_id) / folder_name / f"result_{result.result_code}.png"
         tasks.append((prompt, output_path))
-        result_codes.append(result_code)
-        print(f"[{idx}/17] Result {result_code} 준비...")
+        result_codes.append(result.result_code)
+        print(f"[{idx}/17] Result {result.result_code} 준비...")
     
     # Generate in parallel
     max_concurrent = int(os.getenv("MAX_PARALLEL_IMAGE_GENERATION", "4"))
@@ -314,3 +303,13 @@ async def generate_result_images(
     
     return image_urls
 
+
+# Legacy function for backward compatibility
+async def load_flux_model():
+    """
+    Legacy function - now initializes Gemini client instead
+    
+    Returns:
+        Gemini client or None
+    """
+    return await init_gemini_client()

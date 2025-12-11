@@ -67,6 +67,34 @@ class RelationTrainingApiClient {
     }
   }
 
+  Future<GenerateScenarioResponse> generateScenario({
+    required String target,
+    required String topic,
+  }) async {
+    try {
+      final response = await _dio.post(
+        ApiConfig.relationTrainingGenerate,
+        data: {
+          'target': target,
+          'topic': topic,
+        },
+      );
+      return GenerateScenarioResponse.fromJson(response.data);
+    } on DioException catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  Future<void> deleteScenario(int scenarioId) async {
+    try {
+      await _dio.delete(
+        ApiConfig.relationTrainingDelete(scenarioId),
+      );
+    } on DioException catch (e) {
+      throw _handleError(e);
+    }
+  }
+
   Exception _handleError(DioException e) {
     if (e.response != null) {
       final message = e.response!.data?['detail'] ?? 'Unknown error';
