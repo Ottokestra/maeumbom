@@ -34,7 +34,14 @@ class AlarmNotifier extends StateNotifier<AsyncValue<List<AlarmModel>>> {
 
   AlarmNotifier(this._repository, this._notificationService, this._userId)
       : super(const AsyncValue.loading()) {
-    loadAlarms();
+    _initialize();
+  }
+
+  /// 초기화: 알람 로드 및 재스케줄링
+  Future<void> _initialize() async {
+    await loadAlarms();
+    await rescheduleAllAlarms();
+    print('[AlarmProvider] Initialization complete');
   }
 
   /// 알람 목록 로드
@@ -52,6 +59,21 @@ class AlarmNotifier extends StateNotifier<AsyncValue<List<AlarmModel>>> {
   /// 알람 추가 (백엔드 alarm_info에서)
   Future<void> addAlarms(List<Map<String, dynamic>> alarmDataList) async {
     try {
+      // 권한 체크
+      final hasPermission = await _notificationService.checkPermissions();
+      if (!hasPermission) {
+        print('[AlarmProvider] Notification permission not granted, requesting...');
+        final granted = await _notificationService.requestPermissions();
+        if (granted != true) {
+          print('[AlarmProvider] Notification permission denied');
+          state = AsyncValue.error(
+            Exception('알림 권한이 필요합니다. 설정에서 알림을 허용해주세요.'),
+            StackTrace.current,
+          );
+          return;
+        }
+      }
+
       for (final alarmData in alarmDataList) {
         // 유효한 알람만 저장
         final isValid = alarmData['is_valid_alarm'] as bool? ?? false;

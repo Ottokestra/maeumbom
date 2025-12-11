@@ -113,6 +113,9 @@ class ChatNotifier extends StateNotifier<ChatState> {
   void Function(Map<String, dynamic> alarmInfo, String replyText)?
       onShowAlarmDialog;
   void Function(Map<String, dynamic> alarmInfo)? onShowWarningDialog;
+  
+  // 🆕 음성 입력 여부 추적
+  bool _isVoiceInput = false;
 
   ChatNotifier(
     this._bomChatService,
@@ -162,6 +165,9 @@ class ChatNotifier extends StateNotifier<ChatState> {
   /// Start audio recording (Phase 2)
   Future<void> startAudioRecording() async {
     try {
+      // 🆕 음성 입력 플래그 설정
+      _isVoiceInput = true;
+      
       // 권한 확인
       final hasPermission = await _permissionService.hasMicrophonePermission();
       if (!hasPermission) {
@@ -248,12 +254,16 @@ class ChatNotifier extends StateNotifier<ChatState> {
       print(
           '[ChatProvider] ✅ State updated, messages count: ${state.messages.length}');
 
-      // 🆕 Alarm dialog callback trigger
+      // 🆕 Alarm dialog callback trigger (음성/텍스트 모두)
       if (responseType == 'alarm' && alarmInfo != null) {
-        print('[ChatProvider] 🔔 Triggering alarm dialog callback');
+        print('[ChatProvider] 🔔 [VOICE] Alarm detected');
+        print('[ChatProvider] 🔔 [VOICE] _isVoiceInput: $_isVoiceInput');
+        print('[ChatProvider] 🔔 [VOICE] onShowAlarmDialog: $onShowAlarmDialog');
+        
+        // 🆕 음성/텍스트 모두 다이얼로그 표시
         onShowAlarmDialog?.call(alarmInfo, replyText);
 
-        // 🆕 AlarmProvider에 알람 데이터 전달
+        // 🆕 AlarmProvider에 알람 데이터 전달 (음성/텍스트 모두)
         final alarmDataList = alarmInfo['data'] as List<dynamic>?;
         if (alarmDataList != null && alarmDataList.isNotEmpty) {
           // 유효한 알람만 필터링
@@ -265,11 +275,11 @@ class ChatNotifier extends StateNotifier<ChatState> {
           if (validAlarms.isNotEmpty) {
             _ref.read(alarmProvider.notifier).addAlarms(validAlarms);
             print(
-                '[ChatProvider] 📝 ${validAlarms.length} valid alarms sent to AlarmProvider');
+                '[ChatProvider] 📝 [VOICE] ${validAlarms.length} valid alarms sent to AlarmProvider');
           }
         }
       } else if (responseType == 'warning' && alarmInfo != null) {
-        print('[ChatProvider] ⚠️ Triggering warning dialog callback');
+        print('[ChatProvider] ⚠️ [VOICE] Triggering warning dialog callback');
         onShowWarningDialog?.call(alarmInfo);
       }
 
@@ -305,6 +315,9 @@ class ChatNotifier extends StateNotifier<ChatState> {
   /// Send text message via HTTP API
   Future<void> sendTextMessage(String text) async {
     if (text.trim().isEmpty) return;
+    
+    // 🆕 텍스트 입력 플래그 설정
+    _isVoiceInput = false;
 
     // Add user message to UI
     final userMessage = ChatMessage(
@@ -367,9 +380,12 @@ class ChatNotifier extends StateNotifier<ChatState> {
 
       print('[ChatProvider] ✅ [TEXT] Message added to state');
 
-      // 🆕 Trigger alarm dialog callbacks if needed
+      // 🆕 Alarm 처리 (텍스트 입력 시에도 다이얼로그 표시)
       if (responseType == 'alarm' && alarmInfo != null && replyText != null) {
-        print('[ChatProvider] 🔔 [TEXT] Triggering alarm dialog callback');
+        print('[ChatProvider] 🔔 [TEXT] Alarm detected');
+        print('[ChatProvider] 🔔 [TEXT] onShowAlarmDialog: $onShowAlarmDialog');
+        
+        // 🆕 다이얼로그 표시
         onShowAlarmDialog?.call(alarmInfo, replyText);
 
         // 🆕 AlarmProvider에 알람 데이터 전달
@@ -387,9 +403,6 @@ class ChatNotifier extends StateNotifier<ChatState> {
                 '[ChatProvider] 📝 [TEXT] ${validAlarms.length} valid alarms sent to AlarmProvider');
           }
         }
-      } else if (responseType == 'warning' && alarmInfo != null) {
-        print('[ChatProvider] ⚠️ [TEXT] Triggering warning dialog callback');
-        onShowWarningDialog?.call(alarmInfo);
       }
       
       // ✅ TTS 재생
@@ -578,21 +591,24 @@ class ChatNotifier extends StateNotifier<ChatState> {
        return;   
     }
     
-    state = state.copyWith(voiceState: VoiceInterfaceState.replying);
+    // 🆕 음성 채팅 중이 아닐 때만 (텍스트 입력 시) voiceState 변경
+    final isVoiceChatActive = _bomChatService.isActive;
+    
+    if (!isVoiceChatActive) {
+      // 텍스트 모드: replying 상태로 변경
+      state = state.copyWith(voiceState: VoiceInterfaceState.replying);
+    }
+    
     await _ttsPlayerService.play(source);
     
-    // 재생 끝나면 (단순 시간 지연이나 콜백 등은 TtsService에서 처리하지만, 
-    // 여기서는 상태 복귀를 위해 약간의 딜레이 후 idle로, 
-    // 실제로는 TtsPlayerService의 onComplete stream을 구독하는게 좋음)
-    // 하지만 ChatProvider 구조상 복잡해지므로 일단 replying 상태 유지하다가 
-    // 다음 인터랙션에서 변경되거나 함.
-    // 텍스트 모드에서는 replying -> idle로 자동 복귀가 없으므로 여기서 처리 필요할 수 있음.
-    
-    // 텍스트 모드일 때 (BomChatService 비활성)
-    if (!_bomChatService.isActive) {
-       // 오디오 길이만큼 기다릴 수 없으므로(모름), 일단 playing 상태로 두거나
-       // TtsService가 상태 관리를 해야함. 
-       // 여기서는 단순 호출만 함.
+    // 🆕 텍스트 모드일 때는 TTS 재생 후 idle로 복귀
+    if (!isVoiceChatActive) {
+      // 약간의 딜레이 후 idle로 복귀 (TTS 재생 완료 시간 고려)
+      Future.delayed(const Duration(milliseconds: 500), () {
+        if (mounted && !_bomChatService.isActive) {
+          state = state.copyWith(voiceState: VoiceInterfaceState.idle);
+        }
+      });
     }
   }
 }
