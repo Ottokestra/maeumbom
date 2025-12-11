@@ -125,7 +125,7 @@ class DeepAgentService:
         folder_name = self._generate_folder_name_from_title(scenario_json.scenario.title)
         
         # Phase 3: Generate images (optional, based on env var)
-        image_urls = await self.generate_images(scenario_json, folder_name)
+        image_urls = await self.generate_images(scenario_json, folder_name, user_id)
         
         # Phase 4: Save to JSON file and database
         scenario_id = await self.save_scenario(scenario_json, user_id, folder_name)
@@ -996,7 +996,8 @@ Output JSON: {{"options": [...]}}
     async def generate_images(
         self,
         scenario_json: ScenarioJSON,
-        folder_name: str
+        folder_name: str,
+        user_id: int
     ) -> Dict[str, str]:
         """
         Generate images for scenario.
@@ -1004,6 +1005,7 @@ Output JSON: {{"options": [...]}}
         Args:
             scenario_json: Complete scenario JSON
             folder_name: Folder name for images (e.g., "husband_20231215_143022")
+            user_id: User ID
         
         Returns:
             Dictionary mapping image types to URLs
@@ -1021,13 +1023,13 @@ Output JSON: {{"options": [...]}}
         
         # Generate start image
         print("[Hands] [1/17] Start 이미지 생성 중...")
-        start_url = await generate_start_image(scenario_json, folder_name)
+        start_url = await generate_start_image(scenario_json, folder_name, user_id)
         if start_url:
             image_urls["start"] = start_url
         
         # Generate result images
         print("[Hands] [2-17/17] Result 이미지 생성 중...")
-        result_urls = await generate_result_images(scenario_json, folder_name)
+        result_urls = await generate_result_images(scenario_json, folder_name, user_id)
         image_urls.update(result_urls)
         
         print(f"[Hands] ✅ 이미지 생성 완료: {len(image_urls)}장")

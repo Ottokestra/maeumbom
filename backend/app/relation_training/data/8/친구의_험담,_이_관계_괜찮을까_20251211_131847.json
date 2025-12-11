@@ -1,0 +1,478 @@
+{
+  "scenario": {
+    "title": "친구의 험담, 이 관계 괜찮을까?",
+    "target_type": "FRIEND",
+    "category": "TRAINING",
+    "start_image_url": "/api/service/relation-training/images/friend_badmouthing/start.png"
+  },
+  "character_design": {
+    "protagonist_visual": "Korean woman, 50s, with short, neatly styled dark hair with subtle grey streaks, wearing a comfortable yet elegant olive green knit cardigan over a cream blouse, and dark slacks. She has a thoughtful and slightly weary expression.",
+    "target_visual": "Korean woman, 50s, with voluminous, dyed brown hair and a fashionable patterned scarf. She often displays a subtle, knowing smirk or an expression of feigned innocence, dressed in a slightly more attention-grabbing floral blouse and tailored trousers."
+  },
+  "nodes": [
+    {
+      "id": "node_1",
+      "step_level": 1,
+      "text": "얼마 전 미숙씨와 통화하는데, 미숙씨가 조심스럽게 말합니다. \"혜진이가 요즘 당신 걱정을 많이 하더라. 건강도 안 좋아 보이고, 돈도 좀 힘든 것 같다고...\" (당신은 순간 혜진이가 자신을 진심으로 걱정하는 건지, 아니면 또 뒤에서 험담을 하는 건지 혼란스럽습니다.) 며칠 후 혜진이와 만나 차를 마시는데, 혜진이가 당신을 빤히 보더니 고개를 갸웃하며 말합니다.\n\n\"야, 너 요즘 얼굴이 너무 안 좋아 보인다. 다크서클이 여기까지 내려왔어. 혹시 무슨 일 있어? 많이 힘든가 보네?\"",
+      "image_url": ""
+    },
+    {
+      "id": "node_2_a",
+      "step_level": 2,
+      "text": "(당신의 말에 혜진이는 눈을 동그랗게 뜨며 놀란 표정을 짓습니다.) 혜진이가 손사래를 치며 황당하다는 듯 말합니다. \n\n\"야, 내가 언제? 미숙이가 뭘 잘못 들었나 보네. 난 그냥 네가 걱정돼서 한두 마디 한 것뿐인데, 설마 내가 너 험담을 하겠니? 너 나한테 그렇게 서운했어?\"",
+      "image_url": ""
+    },
+    {
+      "id": "node_2_b",
+      "step_level": 2,
+      "text": "(당신이 얼버무리자 혜진이는 빙긋 웃으며 고개를 끄덕입니다.) 혜진이가 당신의 손을 잡으며 걱정스러운 표정을 짓는가 싶더니, 이내 한숨을 쉬며 말합니다.\n\n\"야, 너 너무 그렇게 아무렇지 않은 척하지 마. 내가 모를 줄 알아? 요즘 너 힘든 거 다 티 나. 너 그러다 나처럼 건강 다 망가진다. 일은 좀 쉬엄쉬엄하고 그래야지. 내가 예전에 너한테 그랬잖아, 너무 열심히 살지 말라고.\"",
+      "image_url": ""
+    },
+    {
+      "id": "node_3_aa",
+      "step_level": 3,
+      "text": "(혜진이는 당신의 단호한 태도에 순간 표정이 굳어지더니, 못마땅한 얼굴로 한숨을 푹 쉽니다.) 혜진이가 턱을 괴고 앉아 당신을 비스듬히 쳐다보며 말합니다.\n\n\"알았어, 알았어. 이제 네 얘기는 다른 사람한테 한마디도 안 할게. 그런데 넌 요즘 너무 예민해진 것 같아. 친구 사이도 편하게 이야기 못 하니?\"",
+      "image_url": ""
+    },
+    {
+      "id": "node_3_ab",
+      "step_level": 3,
+      "text": "(당신의 사과에 혜진이는 금세 환하게 웃으며 고개를 젓습니다.) 혜진이가 당신의 팔을 가볍게 치며 장난스러운 표정으로 말합니다.\n\n\"됐어, 됐어. 뭘 미안하기까지 해. 우리 사이에 뭘 그런 걸 가지고 그래. 아, 그러고 보니 예전에 우리 동창회 때 네가 입고 왔던 그 옷 기억나? 다들 너한테는 안 어울린다고 수군거렸잖아!\"",
+      "image_url": ""
+    },
+    {
+      "id": "node_3_ba",
+      "step_level": 3,
+      "text": "(당신이 불편한 기색을 내비치자 혜진이는 잠시 놀란 듯 눈을 깜빡이더니, 이내 서운한 표정으로 입술을 삐죽 내밉니다.) 혜진이가 어깨를 으쓱하며 퉁명스럽게 말합니다.\n\n\"아니, 난 다 네 생각해서 하는 말인데 그렇게까지 불편해하니 어쩔 수 없지. 그럼 앞으로는 내 이야기는 다 모른 척할게. 힘든 일이 있어도 나한테는 얘기하지 마.\"",
+      "image_url": ""
+    },
+    {
+      "id": "node_3_bb",
+      "step_level": 3,
+      "text": "(당신이 화제를 돌리자 혜진이는 잠시 당신의 말을 듣는 척하더니, 이내 고개를 저으며 당신을 뚫어지게 쳐다봅니다.) 혜진이가 혀를 차며 안쓰럽다는 듯 말합니다.\n\n\"야, 너 정말 괜찮은 거야? 내 눈엔 자꾸만 네 얼굴에 그늘이 보여. 혹시 자식들 때문에 힘든 건 아니지? 요즘 애들 말 안 듣는다고 다들 난리던데, 너네 애들은 잘 지내?\"",
+      "image_url": ""
+    },
+    {
+      "id": "node_4_aaa",
+      "step_level": 4,
+      "text": "(혜진이는 당신의 말에 입을 꾹 다물고 당신을 잠시 노려보더니, 이내 고개를 돌려 창밖을 봅니다.) 혜진이가 차가운 목소리로 한숨을 쉬며 말합니다.\n\n\"그래, 알았어. 네가 그렇게까지 말하는데 내가 뭘 더 말하겠니. 그냥 우리 사이도 이제는 예전 같지 않다는 생각밖에 안 드네.\"",
+      "image_url": ""
+    },
+    {
+      "id": "node_4_aab",
+      "step_level": 4,
+      "text": "(당신이 사과하자 혜진이는 기다렸다는 듯 다시 활짝 웃습니다.) 혜진이가 당신의 손을 잡으며 친한 척 팔짱을 끼더니, 밝은 목소리로 말합니다.\n\n\"역시 너는 내 말을 다 이해해줄 줄 알았어. 그래서 말인데, 내가 요즘 정말 효과 좋은 영양제를 찾았거든? 너도 요즘 힘들어 보이니까 같이 먹어볼래?\"",
+      "image_url": ""
+    },
+    {
+      "id": "node_4_aba",
+      "step_level": 4,
+      "text": "(당신의 말에 혜진이는 잠시 당황한 듯하더니, 이내 피식 웃으며 손을 흔듭니다.) 혜진이가 어색한 미소를 지으며 말합니다.\n\n\"아유, 뭘 또 그런 걸 가지고 서운해하니. 그냥 옛날이야기 한 건데. 친구끼리 농담도 못 하니? 너무 진지하게 받아들이지 마.\"",
+      "image_url": ""
+    },
+    {
+      "id": "node_4_abb",
+      "step_level": 4,
+      "text": "(당신이 어색하게 웃어넘기자 혜진이는 더 신이 난 듯 말을 이어갑니다.) 혜진이가 당신의 어깨를 툭 치며 의미심장한 표정으로 말합니다.\n\n\"그때 생각하면 진짜 웃기다니까. 아, 그러고 보니 얼마 전에 네 남편 봤는데, 좀 피곤해 보이더라. 집에서 무슨 일 있어? 혹시 너네 부부 싸웠니?\"",
+      "image_url": ""
+    },
+    {
+      "id": "node_4_baa",
+      "step_level": 4,
+      "text": "(혜진이는 당신의 말에 어이없다는 듯 헛웃음을 짓더니, 눈을 가늘게 뜨고 당신을 노려봅니다.) 혜진이가 팔짱을 끼며 싸늘한 목소리로 말합니다.\n\n\"하, 그래. 알겠어. 내가 괜한 오지랖을 부렸네. 앞으로는 너한테 아무 말도 안 할 테니 알아서 잘해봐. 나중에 후회해도 난 모른다.\"",
+      "image_url": ""
+    },
+    {
+      "id": "node_4_bab",
+      "step_level": 4,
+      "text": "(당신이 서둘러 해명하자 혜진이는 만족스러운 듯 피식 웃습니다.) 혜진이가 고개를 끄덕이며 당신의 말을 자르듯 말합니다.\n\n\"그래, 진작 그렇게 말했으면 좋았잖아. 난 다 네가 잘 되라고 하는 소리인데 뭘 그렇게 꼬아서 듣니. 그래서 말인데, 내가 저번에 말한 그 건강식품은 사봤어?\"",
+      "image_url": ""
+    },
+    {
+      "id": "node_4_bba",
+      "step_level": 4,
+      "text": "(혜진이는 당신의 단호한 태도에 얼굴이 살짝 붉어지더니, 금세 평온한 표정을 가장하며 미소를 짓습니다.) 혜진이가 손을 흔들며 능청스럽게 말합니다.\n\n\"아유, 뭘 또 그렇게 정색을 하니. 그냥 궁금해서 물어본 거지. 우리 사이에 뭘 그런 걸 가지고 그래. 그럼 화제 좀 바꿔볼까? 요즘 그 새로 생긴 브런치 카페 가봤어?\"",
+      "image_url": ""
+    },
+    {
+      "id": "node_4_bbb",
+      "step_level": 4,
+      "text": "(당신이 해명하자 혜진이는 듣는 둥 마는 둥 고개를 끄덕이더니, 당신의 말을 끊고 혀를 끌끌 차며 말합니다.) 혜진이가 한심하다는 듯 당신을 쳐다보며 말합니다.\n\n\"그렇구나. 역시 애 키우는 게 쉬운 일이 아니지. 특히 다 큰 자식들이 더 속 썩인다고들 하더라. 너도 이제 좀 네 인생을 즐기면서 살아야 할 텐데, 너무 자식한테만 매달리는 거 아니니?\"",
+      "image_url": ""
+    }
+  ],
+  "options": [
+    {
+      "from_node_id": "node_1",
+      "option_code": "A",
+      "text": "\"혜진아, 혹시 미숙이한테 내 이야기했어? 건강이 안 좋다느니, 돈이 어렵다느니 하는 이야기 말이야. 네가 나를 걱정하는 건 고맙지만, 그런 이야기는 다른 사람에게 말 안 해줬으면 좋겠어.\"",
+      "to_node_id": "node_2_a",
+      "result_code": null
+    },
+    {
+      "from_node_id": "node_1",
+      "option_code": "B",
+      "text": "\"(애써 미소 지으며) 별일 아니야. 잠을 좀 못 자서 그런가 봐. 너도 나이 드니까 이런저런 데 아프고 그렇지 않니?\" 하고 화제를 돌린다.",
+      "to_node_id": "node_2_b",
+      "result_code": null
+    },
+    {
+      "from_node_id": "node_2_a",
+      "option_code": "A",
+      "text": "\"네가 날 걱정하는 마음은 알겠어. 그런데 내 이야기를 다른 사람에게 하는 건 조심해줬으면 좋겠어. 네 의도는 그렇지 않았겠지만, 듣는 사람 입장에서는 기분이 좋지 않거든.\"",
+      "to_node_id": "node_3_aa",
+      "result_code": null
+    },
+    {
+      "from_node_id": "node_2_a",
+      "option_code": "B",
+      "text": "\"아니야, 내가 오해했나 봐. 네가 진심으로 걱정해준 건데 내가 너무 예민하게 받아들였나 보다. 미안해.\" 하고 사과한다.",
+      "to_node_id": "node_3_ab",
+      "result_code": null
+    },
+    {
+      "from_node_id": "node_2_b",
+      "option_code": "A",
+      "text": "\"혜진아, 내가 힘든 건 맞지만 네가 그렇게 내 상황을 단정하고 조언하는 건 불편하다. 내가 알아서 할게.\" 하고 선을 긋는다.",
+      "to_node_id": "node_3_ba",
+      "result_code": null
+    },
+    {
+      "from_node_id": "node_2_b",
+      "option_code": "B",
+      "text": "\"(씁쓸하게 웃으며) 하긴, 네 말이 맞다. 내가 좀 무리했나 봐. 그런데 말이야, 요즘 그 드라마 봤어? 거기 주인공이...\" 하고 애써 화제를 돌린다.",
+      "to_node_id": "node_3_bb",
+      "result_code": null
+    },
+    {
+      "from_node_id": "node_3_aa",
+      "option_code": "A",
+      "text": "\"친구니까 솔직하게 이야기하는 게 맞다고 생각해. 네가 날 걱정하는 마음은 고맙지만, 내 개인적인 이야기를 다른 사람에게 하는 건 자제해줬으면 좋겠어.\"",
+      "to_node_id": "node_4_aaa",
+      "result_code": null
+    },
+    {
+      "from_node_id": "node_3_aa",
+      "option_code": "B",
+      "text": "\"아니야, 예민해진 건 아니고... 그냥 네가 내 이야기를 다른 사람에게 했다는 게 좀 서운해서 그랬어. 오해하게 해서 미안하다.\" 하고 관계를 부드럽게 풀려 노력한다.",
+      "to_node_id": "node_4_aab",
+      "result_code": null
+    },
+    {
+      "from_node_id": "node_3_ab",
+      "option_code": "A",
+      "text": "\"혜진아, 그때 그 옷 이야기는 이제 그만하면 좋겠어. 농담인 줄은 알지만, 그때 사실 좀 기분이 안 좋았거든. 다음부터는 그런 이야기는 안 해줬으면 해.\"",
+      "to_node_id": "node_4_aba",
+      "result_code": null
+    },
+    {
+      "from_node_id": "node_3_ab",
+      "option_code": "B",
+      "text": "\"(어색하게 웃으며) 하하, 그랬었지. 내가 그때 좀 용감했어. 뭐 지나간 일이니까 괜찮아.\" 하고 대수롭지 않게 넘긴다.",
+      "to_node_id": "node_4_abb",
+      "result_code": null
+    },
+    {
+      "from_node_id": "node_3_ba",
+      "option_code": "A",
+      "text": "\"혜진아, 네가 날 걱정해주는 마음은 충분히 알아. 하지만 친구 사이에 선을 넘는 조언은 불편할 수 있어. 필요할 때 내가 먼저 도움을 청할게.\"라고 단호하게 말한다.",
+      "to_node_id": "node_4_baa",
+      "result_code": null
+    },
+    {
+      "from_node_id": "node_3_ba",
+      "option_code": "B",
+      "text": "\"아니야, 그런 뜻은 아니었어. 네 마음은 고맙지. 그냥 내가 좀 힘든 일이 있어서 예민하게 받아들였나 봐.\" 하고 서운해하는 친구를 달랜다.",
+      "to_node_id": "node_4_bab",
+      "result_code": null
+    },
+    {
+      "from_node_id": "node_3_bb",
+      "option_code": "A",
+      "text": "\"혜진아, 내 자식 문제는 내가 알아서 할게. 내가 너한테도 네 자식 이야기 함부로 안 하는 것처럼, 너도 내 자식 이야기는 함부로 안 했으면 좋겠어.\"라고 분명히 말한다.",
+      "to_node_id": "node_4_bba",
+      "result_code": null
+    },
+    {
+      "from_node_id": "node_3_bb",
+      "option_code": "B",
+      "text": "\"(한숨을 쉬며) 하긴, 요즘 애들이 다 그렇죠 뭐. 우리 애도...\" 하고 자식 문제에 대해 시시콜콜 설명한다.",
+      "to_node_id": "node_4_bbb",
+      "result_code": null
+    },
+    {
+      "from_node_id": "node_4_aaa",
+      "option_code": "A",
+      "text": "\"우리 사이가 예전 같지 않다고 느끼는 건 너뿐만이 아닐 거야. 네가 내 개인적인 이야기를 함부로 한 것 때문에 내가 상처를 받았다는 건 알아줬으면 좋겠어.\"라고 솔직하게 말하고 자리를 뜬다.",
+      "to_node_id": null,
+      "result_code": "AAAA"
+    },
+    {
+      "from_node_id": "node_4_aaa",
+      "option_code": "B",
+      "text": "\"그래도 우리 오랜 친구잖아. 이렇게 서운한 감정 쌓지 말고, 다음에 다시 만나서 차분하게 이야기해보자.\" 하고 관계를 유지하려 노력한다.",
+      "to_node_id": null,
+      "result_code": "AAAB"
+    },
+    {
+      "from_node_id": "node_4_aab",
+      "option_code": "A",
+      "text": "\"영양제 이야기는 고맙지만, 그건 내가 알아서 챙겨 먹을게. 네 걱정은 충분히 알았으니, 다른 이야기 하자.\"라고 부드럽게 거절한다.",
+      "to_node_id": null,
+      "result_code": "AABA"
+    },
+    {
+      "from_node_id": "node_4_aab",
+      "option_code": "B",
+      "text": "\"그래? 어떤 영양제인데? 정말 효과가 좋아? 그럼 나도 한번 먹어볼까?\" 하고 친구의 제안을 받아들인다.",
+      "to_node_id": null,
+      "result_code": "AABB"
+    },
+    {
+      "from_node_id": "node_4_aba",
+      "option_code": "A",
+      "text": "\"농담이라도 상대방이 불편해하면 멈춰야 하는 거야. 나는 네가 친구로서 나를 존중해줬으면 좋겠어.\"라고 자신의 감정을 명확히 전달한다.",
+      "to_node_id": null,
+      "result_code": "ABAA"
+    },
+    {
+      "from_node_id": "node_4_aba",
+      "option_code": "B",
+      "text": "\"알았어, 알았어. 이제 그만하자. 다음부터는 조심해줘.\" 하고 대충 마무리한다.",
+      "to_node_id": null,
+      "result_code": "ABAB"
+    },
+    {
+      "from_node_id": "node_4_abb",
+      "option_code": "A",
+      "text": "\"혜진아, 내 남편에 대한 이야기도 다른 사람에게 함부로 말하는 건 불편해. 우리 가족 이야기는 우리만 하는 게 맞아.\"라고 단호하게 선을 긋는다.",
+      "to_node_id": null,
+      "result_code": "ABBA"
+    },
+    {
+      "from_node_id": "node_4_abb",
+      "option_code": "B",
+      "text": "\"아니야, 별일 없어. 그냥 일이 많아서 좀 피곤한가 봐. 요즘 남편이...\" 하고 남편의 상황을 구구절절 설명한다.",
+      "to_node_id": null,
+      "result_code": "ABBB"
+    },
+    {
+      "from_node_id": "node_4_baa",
+      "option_code": "A",
+      "text": "\"날 걱정하는 마음은 고맙지만, 그런 식의 말은 친구에게 상처를 줄 수 있어. 후회할 일은 만들지 않을 테니, 앞으로 서로에게 존중을 보여줬으면 좋겠어.\"라고 차분하게 응수한다.",
+      "to_node_id": null,
+      "result_code": "BAAA"
+    },
+    {
+      "from_node_id": "node_4_baa",
+      "option_code": "B",
+      "text": "\"아니야, 그렇게까지 말하니까 내가 더 미안하네. 화난 거 아니지? 그럼 우리 이만 갈까?\" 하고 서둘러 자리를 마무리한다.",
+      "to_node_id": null,
+      "result_code": "BAAB"
+    },
+    {
+      "from_node_id": "node_4_bab",
+      "option_code": "A",
+      "text": "\"혜진아, 영양제는 내가 알아서 챙길게. 네가 계속 내 건강에 대해 걱정하는 건 고맙지만, 이제 그만했으면 좋겠어.\"라고 단호하게 거절한다.",
+      "to_node_id": null,
+      "result_code": "BABA"
+    },
+    {
+      "from_node_id": "node_4_bab",
+      "option_code": "B",
+      "text": "\"아, 그 영양제? 아직 못 사봤네. 다음에 한번 찾아볼게. 네가 그렇게 좋다고 하니 궁금하긴 하다.\" 하고 애매하게 대답한다.",
+      "to_node_id": null,
+      "result_code": "BABB"
+    },
+    {
+      "from_node_id": "node_4_bba",
+      "option_code": "A",
+      "text": "\"갑자기 화제를 바꾸는 건 네가 내 말을 무시하는 것처럼 느껴져서 기분이 좋지 않아. 나는 지금 네가 내 자식 이야기를 너무 쉽게 하는 것에 대해 이야기하고 싶어.\"라고 솔직하게 말한다.",
+      "to_node_id": null,
+      "result_code": "BBAA"
+    },
+    {
+      "from_node_id": "node_4_bba",
+      "option_code": "B",
+      "text": "\"새로운 브런치 카페? 어디에 생겼는데? 나도 한번 가보고 싶다!\" 하고 친구가 바꾼 화제에 맞춰준다.",
+      "to_node_id": null,
+      "result_code": "BBAB"
+    },
+    {
+      "from_node_id": "node_4_bbb",
+      "option_code": "A",
+      "text": "\"혜진아, 네가 자꾸 내 자식 문제나 내 인생에 대해 훈계하듯이 말하는 게 불편하다. 우리 관계에 대해 다시 생각해 봐야 할 것 같아.\"라고 말하고 대화를 중단한다.",
+      "to_node_id": null,
+      "result_code": "BBBA"
+    },
+    {
+      "from_node_id": "node_4_bbb",
+      "option_code": "B",
+      "text": "\"네 말이 맞다. 내가 너무 자식들한테만 매달렸나 봐. 이제 나도 내 인생을 좀 즐겨야 할 텐데...\" 하고 친구의 말에 동조한다.",
+      "to_node_id": null,
+      "result_code": "BBBB"
+    }
+  ],
+  "results": [
+    {
+      "result_code": "AAAA",
+      "display_title": "관계 재정립의 시작",
+      "analysis_text": "당신은 친구의 무례한 행동에 대해 명확하게 자신의 감정을 전달하고 관계의 재정립을 시도했습니다. 이러한 단호함은 당장은 불편할 수 있지만, 장기적으로는 자신을 존중하고 건강한 관계를 만드는 데 필수적입니다. 친구가 당신의 진심을 이해하고 변할지는 미지수이지만, 최소한 당신 스스로를 지키는 좋은 선택입니다.",
+      "atmosphere_image_type": "FLOWER",
+      "relation_health_level": "GOOD",
+      "boundary_style": "HEALTHY_ASSERTIVE",
+      "relationship_trend": "IMPROVING",
+      "image_url": "/api/service/relation-training/images/friend_badmouthing/result_AAAA.png"
+    },
+    {
+      "result_code": "AAAB",
+      "display_title": "일시적인 봉합, 깊어지는 불신",
+      "analysis_text": "당신은 친구와의 관계를 유지하기 위해 노력했지만, 친구는 당신의 감정을 진정으로 이해하기보다 상황을 모면하려 했습니다. 문제의 본질을 해결하지 않은 채 대화를 미루는 것은, 당신의 서운함을 더 키우고 친구에 대한 불신을 심화시킬 수 있습니다. 관계는 일시적으로 봉합되었지만, 근본적인 해결책은 아닙니다.",
+      "atmosphere_image_type": "CLOUDY",
+      "relation_health_level": "MIXED",
+      "boundary_style": "AVOIDANT",
+      "relationship_trend": "WORSENING",
+      "image_url": "/api/service/relation-training/images/friend_badmouthing/result_AAAB.png"
+    },
+    {
+      "result_code": "AABA",
+      "display_title": "자신을 지키는 현명한 태도",
+      "analysis_text": "친구의 반복되는 '걱정'이 사실은 자신을 불편하게 한다는 것을 인지하고, 이를 단호하지만 부드럽게 거절했습니다. 이는 상대방의 의도를 존중하면서도 자신의 경계를 분명히 하는 건강한 태도입니다. 친구가 즉시 수용하지 않더라도, 당신의 메시지는 명확하게 전달될 것입니다. 관계의 건강도를 높이는 좋은 선택입니다.",
+      "atmosphere_image_type": "FLOWER",
+      "relation_health_level": "GOOD",
+      "boundary_style": "HEALTHY_ASSERTIVE",
+      "relationship_trend": "IMPROVING",
+      "image_url": "/api/service/relation-training/images/friend_badmouthing/result_AABA.png"
+    },
+    {
+      "result_code": "AABB",
+      "display_title": "편안함 뒤에 숨은 불만",
+      "analysis_text": "당신은 갈등을 피하기 위해 친구의 제안을 받아들였습니다. 당장은 편안함을 느낄 수 있지만, 이는 자신의 불편함을 감추고 친구의 행동을 용인하는 결과를 낳습니다. 이로 인해 당신의 불만은 계속 쌓이고, 친구는 당신의 경계를 존중할 필요성을 느끼지 못하게 됩니다. 장기적으로 관계에 좋지 않은 영향을 미칠 수 있습니다.",
+      "atmosphere_image_type": "STORM",
+      "relation_health_level": "BAD",
+      "boundary_style": "OVER_ADAPTIVE",
+      "relationship_trend": "WORSENING",
+      "image_url": "/api/service/relation-training/images/friend_badmouthing/result_AABB.png"
+    },
+    {
+      "result_code": "ABAA",
+      "display_title": "솔직함이 가져올 변화",
+      "analysis_text": "당신은 친구의 '농담'이 자신에게 상처를 주었음을 솔직하게 표현했습니다. 이는 불편한 진실이지만, 건강한 관계를 위해서는 반드시 필요한 과정입니다. 친구가 당신의 감정을 이해하고 앞으로 행동을 조심하게 만들 수 있는 좋은 기회가 될 것입니다. 관계의 투명성을 높이는 데 기여합니다.",
+      "atmosphere_image_type": "FLOWER",
+      "relation_health_level": "GOOD",
+      "boundary_style": "HEALTHY_ASSERTIVE",
+      "relationship_trend": "IMPROVING",
+      "image_url": "/api/service/relation-training/images/friend_badmouthing/result_ABAA.png"
+    },
+    {
+      "result_code": "ABAB",
+      "display_title": "반복되는 상처, 무너지는 신뢰",
+      "analysis_text": "당신은 친구의 무례한 농담에 대해 명확한 선을 긋지 못하고 대충 넘겼습니다. 이는 친구에게 '이 정도는 괜찮다'는 잘못된 신호를 줄 수 있으며, 앞으로도 비슷한 상황이 반복될 가능성이 높습니다. 당신의 감정은 무시되고, 친구에 대한 신뢰는 점차 무너질 수 있습니다. 관계의 질을 떨어뜨리는 선택입니다.",
+      "atmosphere_image_type": "STORM",
+      "relation_health_level": "BAD",
+      "boundary_style": "AVOIDANT",
+      "relationship_trend": "WORSENING",
+      "image_url": "/api/service/relation-training/images/friend_badmouthing/result_ABAB.png"
+    },
+    {
+      "result_code": "ABBA",
+      "display_title": "가족을 지키는 단호한 경계",
+      "analysis_text": "친구의 도를 넘는 가족 이야기에 대해 단호하게 경계를 설정했습니다. 가족은 가장 민감한 영역이므로, 이에 대한 보호는 매우 중요합니다. 당장은 친구가 서운해할 수 있지만, 당신의 확고한 태도는 친구가 앞으로 당신의 가족을 존중하게 만들 것입니다. 건강한 관계를 위한 용기 있는 선택입니다.",
+      "atmosphere_image_type": "FLOWER",
+      "relation_health_level": "GOOD",
+      "boundary_style": "HEALTHY_ASSERTIVE",
+      "relationship_trend": "IMPROVING",
+      "image_url": "/api/service/relation-training/images/friend_badmouthing/result_ABBA.png"
+    },
+    {
+      "result_code": "ABBB",
+      "display_title": "불필요한 정보 공개와 후회",
+      "analysis_text": "당신은 친구의 무례한 질문에 대해 남편의 상황을 자세히 설명하며 방어하려 했습니다. 이는 친구에게 더 많은 비난의 빌미를 주거나, 당신의 개인적인 정보를 함부로 다루게 할 수 있습니다. 불필요한 정보 공개는 후회로 이어질 수 있으며, 친구는 당신의 경계를 시험하려 할 가능성이 높습니다.",
+      "atmosphere_image_type": "STORM",
+      "relation_health_level": "BAD",
+      "boundary_style": "OVER_ADAPTIVE",
+      "relationship_trend": "WORSENING",
+      "image_url": "/api/service/relation-training/images/friend_badmouthing/result_ABBB.png"
+    },
+    {
+      "result_code": "BAAA",
+      "display_title": "스스로를 지키는 냉정한 판단",
+      "analysis_text": "친구의 감정적인 비난과 책임 전가에도 불구하고, 당신은 흔들리지 않고 자신의 입장을 차분하게 전달했습니다. 이는 건강한 관계를 위해 자신을 지키는 매우 중요한 태도입니다. 친구가 당장은 당신을 비난할지라도, 당신은 스스로의 존엄성을 지켰습니다. 관계의 재정립을 위한 첫걸음이 될 것입니다.",
+      "atmosphere_image_type": "FLOWER",
+      "relation_health_level": "GOOD",
+      "boundary_style": "HEALTHY_ASSERTIVE",
+      "relationship_trend": "IMPROVING",
+      "image_url": "/api/service/relation-training/images/friend_badmouthing/result_BAAA.png"
+    },
+    {
+      "result_code": "BAAB",
+      "display_title": "죄책감에 갇힌 관계",
+      "analysis_text": "당신은 친구의 서운함에 죄책감을 느끼고 관계를 서둘러 마무리하려 했습니다. 이는 친구가 당신을 감정적으로 조종하게 만들 수 있으며, 당신은 계속해서 친구의 기분을 살피게 될 것입니다. 문제 해결 없이 상황을 모면하는 것은 당신의 감정적 소모를 증가시키고 관계를 더욱 불균형하게 만듭니다.",
+      "atmosphere_image_type": "STORM",
+      "relation_health_level": "BAD",
+      "boundary_style": "OVER_ADAPTIVE",
+      "relationship_trend": "WORSENING",
+      "image_url": "/api/service/relation-training/images/friend_badmouthing/result_BAAB.png"
+    },
+    {
+      "result_code": "BABA",
+      "display_title": "명확한 거절, 존중의 시작",
+      "analysis_text": "당신은 친구의 반복적인 조언과 간섭에 대해 단호하게 거절 의사를 밝혔습니다. 친구의 의도가 좋았다고 할지라도, 그것이 당신에게 불편함을 주었다면 명확히 표현하는 것이 중요합니다. 이는 친구에게 당신의 경계를 인지시키고, 앞으로 더 존중하는 태도를 요구하는 건강한 선택입니다.",
+      "atmosphere_image_type": "FLOWER",
+      "relation_health_level": "GOOD",
+      "boundary_style": "HEALTHY_ASSERTIVE",
+      "relationship_trend": "IMPROVING",
+      "image_url": "/api/service/relation-training/images/friend_badmouthing/result_BABA.png"
+    },
+    {
+      "result_code": "BABB",
+      "display_title": "애매한 태도가 부를 반복",
+      "analysis_text": "당신은 친구의 제안을 명확히 거절하지 않고 애매하게 대답했습니다. 이는 친구에게 '다음에 다시 시도해도 된다'는 인상을 주어, 앞으로도 비슷한 간섭이 반복될 가능성이 높습니다. 당신의 불편함은 해소되지 않고, 친구의 행동은 계속될 것입니다. 관계의 개선을 기대하기 어려운 선택입니다.",
+      "atmosphere_image_type": "CLOUDY",
+      "relation_health_level": "MIXED",
+      "boundary_style": "AVOIDANT",
+      "relationship_trend": "STABLE",
+      "image_url": "/api/service/relation-training/images/friend_badmouthing/result_BABB.png"
+    },
+    {
+      "result_code": "BBAA",
+      "display_title": "회피를 막는 솔직한 소통",
+      "analysis_text": "친구의 화제 전환 시도를 무시하고, 문제의 본질(자신을 무시하는 듯한 태도)에 대해 솔직하게 이야기했습니다. 이는 회피적인 친구의 행동 패턴을 끊고, 진정한 소통을 시도하는 용기 있는 선택입니다. 당장은 불편할 수 있지만, 장기적으로는 더 건강하고 솔직한 관계로 나아갈 기반을 마련합니다.",
+      "atmosphere_image_type": "FLOWER",
+      "relation_health_level": "GOOD",
+      "boundary_style": "HEALTHY_ASSERTIVE",
+      "relationship_trend": "IMPROVING",
+      "image_url": "/api/service/relation-training/images/friend_badmouthing/result_BBAA.png"
+    },
+    {
+      "result_code": "BBAB",
+      "display_title": "겉으로만 평화로운 관계",
+      "analysis_text": "당신은 친구의 화제 전환에 맞춰주며 갈등을 피했습니다. 이는 당장의 평화를 유지할 수 있지만, 근본적인 불만은 해결되지 않은 채 남게 됩니다. 당신은 계속해서 친구의 눈치를 보고, 친구는 자신의 행동이 문제가 없다고 생각할 것입니다. 겉으로는 평화로워 보이지만, 속으로는 균열이 생기는 관계입니다.",
+      "atmosphere_image_type": "CLOUDY",
+      "relation_health_level": "MIXED",
+      "boundary_style": "AVOIDANT",
+      "relationship_trend": "WORSENING",
+      "image_url": "/api/service/relation-training/images/friend_badmouthing/result_BBAB.png"
+    },
+    {
+      "result_code": "BBBA",
+      "display_title": "스스로를 지키는 관계 단절",
+      "analysis_text": "친구의 지속적인 훈계와 비난에 대해 더 이상 관계를 유지하기 어렵다는 의사를 명확히 전달했습니다. 이는 매우 어려운 결정이지만, 자신을 보호하고 더 이상의 상처를 막기 위한 필요한 선택일 수 있습니다. 건강하지 못한 관계에서 벗어나 자신에게 집중할 기회를 얻게 될 것입니다. 자신을 존중하는 가장 단호한 방법입니다.",
+      "atmosphere_image_type": "FLOWER",
+      "relation_health_level": "GOOD",
+      "boundary_style": "HEALTHY_ASSERTIVE",
+      "relationship_trend": "IMPROVING",
+      "image_url": "/api/service/relation-training/images/friend_badmouthing/result_BBBA.png"
+    },
+    {
+      "result_code": "BBBB",
+      "display_title": "자기 비하로 이어지는 관계",
+      "analysis_text": "당신은 친구의 비난에 동조하며 자신을 비하하는 태도를 보였습니다. 이는 친구에게 당신을 쉽게 판단하고 비난해도 된다는 잘못된 신호를 줍니다. 당신의 자존감은 더욱 낮아지고, 관계는 친구에게 일방적으로 유리하게 흘러갈 것입니다. 자신을 희생하는 대가로 유지되는 관계는 건강할 수 없습니다.",
+      "atmosphere_image_type": "STORM",
+      "relation_health_level": "BAD",
+      "boundary_style": "OVER_ADAPTIVE",
+      "relationship_trend": "WORSENING",
+      "image_url": "/api/service/relation-training/images/friend_badmouthing/result_BBBB.png"
+    }
+  ]
+}

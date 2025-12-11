@@ -69,6 +69,8 @@ class SlangQuizApiClient {
   }
 
   /// 관리자용 문제 생성 (개발용)
+  /// 주의: 이 메서드는 OpenAI API 호출로 인해 시간이 오래 걸릴 수 있습니다.
+  /// 호출하는 쪽에서 Dio 인스턴스의 receiveTimeout을 충분히 설정해야 합니다.
   Future<Map<String, dynamic>> generateQuestionsAdmin({
     required String level,
     required String quizType,
