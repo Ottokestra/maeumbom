@@ -98,5 +98,5 @@ class ApiConfig {
 
   // Timeout Configuration
   static const Duration connectTimeout = Duration(seconds: 30);
-  static const Duration receiveTimeout = Duration(seconds: 30);
+  static const Duration receiveTimeout = Duration(seconds: 120); // 시나리오 생성은 20-30초 이상 소요될 수 있음
 }

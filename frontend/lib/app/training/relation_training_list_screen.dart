@@ -35,22 +35,63 @@ class RelationTrainingListScreen extends ConsumerWidget {
   }
 
   Future<void> _showGenerationDialog(BuildContext context, WidgetRef ref) async {
+    print('[DEBUG] Opening scenario generation dialog');
     final result = await showDialog<Map<String, String>>(
       context: context,
       builder: (context) => const ScenarioGenerationDialog(),
     );
 
+    print('[DEBUG] Dialog closed with result: $result');
+    
     if (result != null && context.mounted) {
-      final viewModel = ref.read(relationTrainingListViewModelProvider.notifier);
-      await viewModel.generateScenario(
-        target: result['target']!,
-        topic: result['topic']!,
-      );
-      
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('시나리오가 생성되었습니다!')),
+      print('[DEBUG] Result is not null and context is mounted');
+      try {
+        final viewModel = ref.read(relationTrainingListViewModelProvider.notifier);
+        
+        // 비동기로 시나리오 생성 시작 (즉시 응답)
+        await viewModel.generateScenario(
+          target: result['target']!,
+          topic: result['topic']!,
         );
+        
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('시나리오 생성이 시작되었습니다. 잠시 후 목록을 새로고침해주세요.'),
+              duration: Duration(seconds: 5),
+            ),
+          );
+          
+          // 3초 후 자동으로 목록 새로고침
+          Future.delayed(const Duration(seconds: 3), () {
+            if (context.mounted) {
+              viewModel.getScenarios();
+            }
+          });
+          
+          // 10초 후 다시 한 번 새로고침 (생성 완료 확인)
+          Future.delayed(const Duration(seconds: 10), () {
+            if (context.mounted) {
+              viewModel.getScenarios();
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('시나리오 생성이 완료되었을 수 있습니다. 목록을 확인해주세요.'),
+                  duration: Duration(seconds: 3),
+                ),
+              );
+            }
+          });
+        }
+      } catch (e) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('오류 발생: $e'),
+              backgroundColor: AppColors.errorRed,
+              duration: const Duration(seconds: 5),
+            ),
+          );
+        }
       }
     }
   }

@@ -14,11 +14,10 @@ class _ScenarioGenerationDialogState extends State<ScenarioGenerationDialog> {
   bool _isGenerating = false;
 
   final Map<String, String> _targetOptions = {
-    'PARENT': '부모',
-    'FRIEND': '친구',
-    'PARTNER': '파트너',
     'HUSBAND': '남편',
-    'WIFE': '아내',
+    'CHILD': '자식',
+    'FRIEND': '친구',
+    'COLLEAGUE': '직장동료',
   };
 
   @override
@@ -28,6 +27,11 @@ class _ScenarioGenerationDialogState extends State<ScenarioGenerationDialog> {
   }
 
   void _generateScenario() {
+    // 이미 처리 중이면 무시
+    if (_isGenerating) {
+      return;
+    }
+    
     if (_selectedTarget == null || _topicController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('관계 대상과 주제를 모두 입력해주세요')),
@@ -35,9 +39,25 @@ class _ScenarioGenerationDialogState extends State<ScenarioGenerationDialog> {
       return;
     }
 
-    Navigator.of(context).pop({
-      'target': _selectedTarget,
-      'topic': _topicController.text.trim(),
+    // mounted 체크 및 상태 설정
+    if (!mounted) return;
+    
+    // 즉시 상태를 변경하여 중복 호출 방지
+    setState(() {
+      _isGenerating = true;
+    });
+    
+    // 다음 프레임에서 pop 실행 (setState 완료 후)
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      
+      final target = _selectedTarget!;
+      final topic = _topicController.text.trim();
+      
+      Navigator.of(context).pop(<String, String>{
+        'target': target,
+        'topic': topic,
+      });
     });
   }
 
@@ -49,10 +69,11 @@ class _ScenarioGenerationDialogState extends State<ScenarioGenerationDialog> {
       ),
       child: Padding(
         padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -130,7 +151,8 @@ class _ScenarioGenerationDialogState extends State<ScenarioGenerationDialog> {
                 onTap: _generateScenario,
                 variant: ButtonVariant.primaryRed,
               ),
-          ],
+            ],
+          ),
         ),
       ),
     );

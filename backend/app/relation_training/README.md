@@ -41,8 +41,8 @@ DB 저장
 ```
 
 - **GPT-4o-mini**: 오케스트레이션 (프롬프트 준비, 검증, 파싱)
-- **Gemini**: 시나리오 생성 (scenario_architect.md 하나로 전체 시나리오 한 번에 생성)
-- **Image Generator (FLUX.1-schnell)**: 이미지 생성 (선택적)
+- **Gemini 2.5 Flash**: 시나리오 생성 (scenario_architect.md 하나로 전체 시나리오 한 번에 생성)
+- **Gemini 2.5 Flash Image**: 이미지 생성 (선택적, API 기반)
 
 ### 환경 변수 설정
 
@@ -58,15 +58,15 @@ OPENAI_MODEL_NAME=gpt-4o-mini
 # ============================================================================
 # Scenario Generation Model (Gemini)
 # ============================================================================
-SCENARIO_GENERATION_MODEL_NAME=gemini-1.5-pro
+SCENARIO_GENERATION_MODEL_NAME=gemini-2.5-flash
 GEMINI_API_KEY=your_gemini_api_key_here
 
 # ============================================================================
 # Image Generation Configuration
 # ============================================================================
-USE_SKIP_IMAGES=false
-USE_AMD_GPU=false
-USE_NVIDIA_GPU=false
+USE_SKIP_IMAGES=true       # 개발 모드: 이미지 생성 스킵 (NULL 저장)
+                           # false로 변경하면 Gemini 2.5 Flash Image로 이미지 생성
+IMAGE_GENERATION_MODEL_NAME=gemini-2.5-flash-image
 MAX_PARALLEL_IMAGE_GENERATION=4
 ```
 
@@ -86,32 +86,43 @@ Gemini API 키는 [Google AI Studio](https://makersuite.google.com/app/apikey)�
 **API 호출:**
 
 ```bash
-POST /api/service/relation-training/deep-agent/generate
+POST /api/service/relation-training/generate-scenario
 Authorization: Bearer {access_token}
 Content-Type: application/json
 
 {
-  "target": "CHILD",  # CHILD, HUSBAND, FRIEND, COLLEAGUE, ETC
-  "topic": "스마트폰 사용법 질문"
+  "target": "HUSBAND",  # HUSBAND, CHILD, FRIEND, COLLEAGUE
+  "topic": "매일 늦게 들어오는 남편"
 }
 ```
 
-**응답:**
+**응답 (비동기 처리):**
 
 ```json
 {
-  "scenario_id": 123,
-  "status": "completed",
-  "image_count": 17,
-  "folder_name": "요즘_말이_없는_남편_20231215_143022"
+  "scenario_id": 0,
+  "status": "processing",
+  "image_count": 0,
+  "folder_name": "",
+  "message": "시나리오 생성이 시작되었습니다. 잠시 후 목록을 새로고침해주세요."
 }
 ```
+
+**참고:**
+- 시나리오 생성은 백그라운드에서 비동기로 처리됩니다 (약 20-30초 소요)
+- 생성 완료 후 시나리오 목록을 새로고침하면 생성된 시나리오를 확인할 수 있습니다
+- 프론트엔드 UI에서 설정 아이콘을 통해 시나리오를 생성할 수 있습니다
 
 ### 성능
 
 | 모드 | 시간 | 비용 | 품질 |
 |------|------|------|------|
-| **Gemini 1.5 Pro (API)** | ~20-30초 | ~$0.10 | ⭐⭐⭐⭐⭐ |
+| **Gemini 2.5 Flash (API)** | ~20-30초 | ~$0.05 | ⭐⭐⭐⭐ |
+| **Gemini 2.5 Flash Image (API)** | ~1-2초/장 | ~$0.01/장 | ⭐⭐⭐⭐ |
+
+**참고:**
+- 시나리오 생성은 비동기 처리로 즉시 응답을 반환합니다
+- 이미지 생성은 `USE_SKIP_IMAGES=false`일 때만 실행됩니다
 
 ### 시나리오 생성 프로세스
 
@@ -611,6 +622,33 @@ python main.py
   ]
 }
 ```
+
+## 🎨 프론트엔드 UI
+
+### 시나리오 생성
+
+프론트엔드에서 관계 훈련 화면의 설정 아이콘을 통해 시나리오를 생성할 수 있습니다.
+
+**사용 방법:**
+1. 관계 훈련 목록 화면에서 상단의 설정 아이콘 클릭
+2. 관계 대상 선택 (남편/자식/친구/직장동료)
+3. 주제 입력 (예: "매일 늦게 들어오는 남편")
+4. 생성하기 버튼 클릭
+5. 시나리오 생성이 시작되면 알림 표시
+6. 약 20-30초 후 목록을 새로고침하여 생성된 시나리오 확인
+
+**시나리오 구분:**
+- **공용 시나리오**: 모든 사용자가 사용할 수 있는 시나리오 (USER_ID = NULL)
+  - 회색 "공용" 배지 표시
+  - 삭제 불가
+- **내 시나리오**: 사용자가 생성한 개인 시나리오 (USER_ID = 사용자 ID)
+  - 빨간색 "내 시나리오" 배지 표시
+  - 삭제 버튼 제공
+
+**시나리오 삭제:**
+- 사용자 시나리오에만 삭제 버튼이 표시됩니다
+- 삭제 버튼 클릭 시 확인 다이얼로그 표시
+- 공용 시나리오는 삭제할 수 없습니다 (백엔드에서 검증)
 
 ## 🐛 트러블슈팅
 

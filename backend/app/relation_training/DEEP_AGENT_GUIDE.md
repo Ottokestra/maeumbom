@@ -89,18 +89,17 @@ USE_NVIDIA_GPU=false
 - Windows 노트북 (CPU 모드)
 - 표준 PyTorch 설치
 
-### Phase 2: 프로덕션 (NVIDIA GPU) - 학원 컴퓨터
+### Phase 2: 프로덕션 (이미지 생성 활성화)
 
 ```bash
 USE_SKIP_IMAGES=false
-USE_AMD_GPU=false
-USE_NVIDIA_GPU=true
 ```
 
 **특징:**
-- NVIDIA GPU로 빠른 이미지 생성
-- 17장 생성 시간: 약 2~5분
-- 학원 컴퓨터 등 고성능 GPU 환경
+- Gemini 2.5 Flash Image API로 이미지 생성
+- 17장 생성 시간: 약 17-34초 (초당 1-2장)
+- 로컬 GPU 불필요, API 호출로 처리
+- 저렴한 비용 (~$0.17/시나리오)
 
 ## API 사용법
 
@@ -111,8 +110,8 @@ USE_NVIDIA_GPU=true
 **Request:**
 ```json
 {
-  "target": "HUSBAND",
-  "topic": "남편이 밥투정을 합니다"
+  "target": "HUSBAND",  # HUSBAND, CHILD, FRIEND, COLLEAGUE
+  "topic": "매일 늦게 들어오는 남편"
 }
 ```
 
@@ -122,16 +121,21 @@ Authorization: Bearer {access_token}
 Content-Type: application/json
 ```
 
-**Response:**
+**Response (비동기 처리):**
 ```json
 {
-  "scenario_id": 123,
-  "status": "completed",
-  "image_count": 17,
-  "folder_name": "husband_20231215_143022",
-  "message": "시나리오와 이미지가 성공적으로 생성되었습니다."
+  "scenario_id": 0,
+  "status": "processing",
+  "image_count": 0,
+  "folder_name": "",
+  "message": "시나리오 생성이 시작되었습니다. 잠시 후 목록을 새로고침해주세요."
 }
 ```
+
+**참고:**
+- 시나리오 생성은 백그라운드에서 비동기로 처리됩니다 (약 20-30초 소요)
+- 생성 완료 후 시나리오 목록을 새로고침하면 생성된 시나리오를 확인할 수 있습니다
+- 프론트엔드 UI에서 설정 아이콘을 통해 시나리오를 생성할 수 있습니다
 
 ### 2. 생성된 시나리오 확인
 
