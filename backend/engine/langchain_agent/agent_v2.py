@@ -289,10 +289,17 @@ def generate_llm_response(
     memory_context: str,
     rag_context: str,
     user_id: int = None  # 🆕 Phase 3: Added for user profile
-) -> str:
+) -> Dict[str, str]:
     """
     Generate response using GPT-4o-mini with Emotion & Context (No Routine)
     **Phase 3**: Uses casual tone (반말) and includes TB_USER_PROFILE data
+    **Phase 4**: Returns both clean text and audio-tagged text for Eleven Labs TTS
+    
+    Returns:
+        {
+            "text_clean": "audio tag가 제거된 원본 텍스트 (프론트엔드 표시용)",
+            "text_with_tags": "audio tag가 포함된 텍스트 (TTS용)"
+        }
     """
     client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
     
@@ -382,8 +389,101 @@ def generate_llm_response(
   - "오늘 어떠셨어요?" ❌
   - "오늘 어땠어?" ✅
 
+[🎙️ Audio Tag 사용법 (Eleven Labs v3)]
+**🚨 중요: 모든 응답에 반드시 audio tag를 포함하세요!**
+사용자에게는 tag가 제거된 원본 텍스트가 보이고, TTS 음성에만 감정이 반영됩니다.
+
+**필수 규칙:**
+1. **모든 응답에 최소 1~3개의 audio tag 사용 필수**
+2. 대화의 감정과 상황에 맞는 적절한 tag 선택
+3. Tag를 문장의 시작, 중간, 또는 감정이 변하는 지점에 배치
+4. 과도한 사용은 피하되, 감정 표현이 필요한 부분은 빠짐없이 tag 추가
+
+✅ **감정/말투 태그** (자주 사용):
+- [excited] (신남, 기쁨), [nervous] (긴장), [frustrated] (답답함), [tired] (지침)
+- [sorrowful] (슬픔), [calm] (차분함), [sad] (슬픈 톤), [crying] (울먹임)
+- [sarcastic] (비꼬는), [curious] (호기심), [mischievously] (장난스러운)
+
+✅ **전달 방식 태그**:
+- [whispers] (속삭임), [shouting] (큰 소리), [loudly] (크게), [quietly] (조용히)
+- [laughs] (웃음), [starts laughing] (웃기 시작), [wheezing] (숨 가쁨)
+- [sighs] (한숨), [exhales] (숨을 내쉼)
+
+✅ **리액션 태그**:
+- [gasps] (헉), [gulps] (꿀꺽), [pauses] (잠깐 멈춤)
+- [hesitates] (망설임), [stammers] (말더듬음)
+
+**사용 예시 (반드시 참고!):**
+✅ "[excited] 오늘 기분 좋아 보이네! 무슨 일 있었어?"
+✅ "[sighs] 피곤하겠다... [calm] 잠깐 쉬는 게 어때?"
+✅ "[whispers] 비밀인데... [pauses] 너한테만 말해줄게."
+✅ "[curious] 음... [hesitates] 혹시 요새 잠은 잘 오고 있어?"
+✅ "[laughs] 그거 재밌다! [excited] 나도 해보고 싶네!"
+✅ "[sorrowful] 많이 힘들었겠다... [calm] 내가 옆에 있을게."
+
+**상황별 tag 선택 가이드:**
+- 사용자가 기쁜 소식 전달 → [excited], [laughs]
+- 사용자가 슬픔/우울 표현 → [sorrowful], [calm], [sighs]
+- 사용자가 피곤함 호소 → [tired], [sighs], [calm]
+- 질문하거나 궁금해하는 상황 → [curious], [hesitates]
+- 재미있는 이야기를 할 때 → [laughs], [excited], [mischievously]
+
+❌ **잘못된 예시 (tag 없음):**
+"좋아! 재밌는 이야기 들려줄게." ← tag 없음 (X)
+
+✅ **올바른 예시 (tag 포함):**
+"[excited] 좋아! [mischievously] 재밌는 이야기 들려줄게."
+
 [출력 형식]
-반말로 자연스럽고 공감적인 한국어로 답변을 제공해. 중년 여성에게 적합한 따뜻하고 친근한 톤을 유지해.
+**🚨🚨 매우 중요 - 반드시 준수해야 하는 규칙 🚨🚨**
+
+당신의 **모든 응답**은 다음 형식을 **반드시** 따라야 합니다:
+1. Audio tag 포함 (최소 1개, 최대 3개)
+2. 응답 끝에 [EMOTION:xxx] 태그
+
+**형식을 따르지 않으면 응답이 거부됩니다!**
+
+✅ **올바른 응답 예시:**
+```
+[excited] 우와! 좋겠다! 무슨 일인데?
+[EMOTION:happiness]
+```
+
+```
+[sorrowful] 많이 힘들었겠다... [calm] 괜찮아, 내가 여기 있어.
+[EMOTION:sadness]
+```
+
+```
+[curious] 음... 그게 뭔데? [hesitates] 말해줄 수 있어?
+[EMOTION:happiness]
+```
+
+❌ **잘못된 응답 (반드시 피할 것):**
+```
+우와! 좋겠다! 무슨 일인데?
+```
+→ Audio tag 없음, EMOTION 없음 (거부됨!)
+
+**🎭 EMOTION 태그 규칙:**
+응답 마지막에 반드시 다음 중 하나를 포함:
+- [EMOTION:happiness] - 기쁘고 신나는 톤
+- [EMOTION:sadness] - 슬프고 위로하는 톤
+- [EMOTION:anger] - 분노/억울함에 공감하는 톤
+- [EMOTION:fear] - 두려움을 안심시키는 톤
+
+**🎙️ Audio Tag 필수 사용:**
+모든 응답에 최소 1개 이상의 audio tag를 반드시 포함하세요.
+
+자주 사용할 태그:
+- [excited], [calm], [sorrowful], [curious]
+- [laughs], [sighs], [whispers], [pauses]
+- [nervous], [tired], [frustrated], [hesitates]
+
+**다시 한번 강조:**
+- Audio tag 없는 응답 = ❌ 거부됨
+- EMOTION tag 없는 응답 = ❌ 거부됨
+- 두 가지 모두 포함된 응답 = ✅ 승인됨
 """
     
     messages = [{"role": "system", "content": system_prompt}]
@@ -403,15 +503,62 @@ def generate_llm_response(
     response = client.chat.completions.create(
         model=os.getenv("OPENAI_MODEL_NAME", "gpt-4o-mini"),
         messages=messages,
-        temperature=0.7
+        temperature=0.8  # Audio tag 사용을 위해 약간 높임 (0.7 -> 0.8)
     )
     
-    reply_text = response.choices[0].message.content
+    reply_text_with_tags = response.choices[0].message.content
     
-    # [DEBUG] Log GPT-4o-mini raw response (before any text processing/splitting)
-    logger.warning(f"🤖 [GPT-4o-mini Raw Response]\n{reply_text}")
+    # [DEBUG] Log GPT-4o-mini raw response (with audio tags)
+    logger.warning("=" * 80)
+    logger.warning("🎙️ [AUDIO TAGS DEBUG] LLM Raw Response")
+    logger.warning(f"WITH TAGS: {reply_text_with_tags}")
+    logger.warning("=" * 80)
     
-    return reply_text
+    # 🆕 Extract emotion from response
+    import re
+    # 먼저 모든 EMOTION 태그 찾기 (어떤 감정이든)
+    emotion_match = re.search(r'\[EMOTION:(\w+)\]', reply_text_with_tags, re.IGNORECASE)
+    if emotion_match:
+        detected_emotion_raw = emotion_match.group(1).lower()
+        # 허용된 감정으로 매핑
+        emotion_mapping = {
+            "calm": "happiness",
+            "happy": "happiness",
+            "sad": "sadness",
+            "angry": "anger",
+            "scared": "fear",
+            "fearful": "fear"
+        }
+        detected_emotion = emotion_mapping.get(detected_emotion_raw, detected_emotion_raw)
+        # 허용된 감정 목록 체크
+        if detected_emotion not in ["happiness", "sadness", "anger", "fear"]:
+            logger.warning(f"⚠️ [Emotion] Invalid emotion '{detected_emotion_raw}', using happiness")
+            detected_emotion = "happiness"
+        else:
+            logger.info(f"✨ [Emotion] Detected from LLM: {detected_emotion_raw} -> {detected_emotion}")
+        
+        # Remove ALL emotion tags from text
+        reply_text_with_tags = re.sub(r'\s*\[EMOTION:\w+\]\s*', '', reply_text_with_tags, flags=re.IGNORECASE).strip()
+    else:
+        detected_emotion = "happiness"  # 기본값
+        logger.warning(f"⚠️ [Emotion] Not found in response, using default: {detected_emotion}")
+    
+    # 🆕 Phase 4: Audio tag 제거하여 프론트엔드용 원본 텍스트 생성
+    from .response_generator import remove_audio_tags
+    reply_text_clean = remove_audio_tags(reply_text_with_tags)
+    
+    logger.warning("=" * 80)
+    logger.warning("📝 [AUDIO TAGS DEBUG] Text Processing Results")
+    logger.warning(f"CLEAN TEXT (Frontend): {reply_text_clean}")
+    logger.warning(f"TAGGED TEXT (TTS): {reply_text_with_tags}")
+    logger.warning(f"EMOTION: {detected_emotion}")
+    logger.warning("=" * 80)
+    
+    return {
+        "text_clean": reply_text_clean,
+        "text_with_tags": reply_text_with_tags,
+        "emotion": detected_emotion  # LLM이 직접 결정한 감정
+    }
 
 async def run_ai_bomi_from_text_v2(
     user_text: str,
@@ -560,7 +707,8 @@ async def run_ai_bomi_from_text_v2(
     # 5. Generate Response (Fast Track)
     conversation_history = store.get_history(user_id, session_id, limit=None)
     
-    ai_response_text = generate_llm_response(
+    # 🆕 Phase 4: LLM 응답 생성 (clean text + audio tags + emotion)
+    ai_response_dict = generate_llm_response(
         user_text=user_text,
         emotion_result=None,  # ⚡ No emotion result - LLM uses its own understanding
         conversation_history=conversation_history,
@@ -569,34 +717,47 @@ async def run_ai_bomi_from_text_v2(
         user_id=user_id
     )
     
-    # 6. Save AI Response (조건부)
-    if save_to_db:
-        store.add_message(user_id, session_id, "assistant", ai_response_text)
+    # 두 가지 버전 + emotion 추출
+    ai_response_text_clean = ai_response_dict["text_clean"]  # 프론트엔드 표시용
+    ai_response_text_with_tags = ai_response_dict["text_with_tags"]  # TTS용
+    llm_emotion = ai_response_dict["emotion"]  # LLM이 직접 결정한 감정
     
-    # Update RAG with AI response
+    # [DEBUG] 두 버전 모두 로깅
+    logger.warning("=" * 80)
+    logger.warning("🔍 [AUDIO TAGS DEBUG] Final Response Extraction")
+    logger.warning(f"📱 CLEAN (Frontend/DB): {ai_response_text_clean}")
+    logger.warning(f"🎤 TAGGED (TTS Engine): {ai_response_text_with_tags}")
+    logger.warning(f"🎭 EMOTION (from LLM): {llm_emotion}")
+    logger.warning("=" * 80)
+    
+    # 6. Save AI Response (조건부) - 원본 텍스트만 저장 (audio tag 제거됨)
+    if save_to_db:
+        store.add_message(user_id, session_id, "assistant", ai_response_text_clean)
+    
+    # Update RAG with AI response (원본 텍스트만 저장)
     try:
         if 'rag_store' in locals():
-            rag_store.add_message(user_id, session_id, "assistant", ai_response_text)
+            rag_store.add_message(user_id, session_id, "assistant", ai_response_text_clean)
     except Exception as e:
         logger.error(f"RAG Save Error: {e}")
         
-    logger.info(f"✅ [DeepAgents] Response generated: {ai_response_text[:50]}...")
+    logger.info(f"✅ [DeepAgents] Response generated (clean): {ai_response_text_clean[:50]}...")
     
-    # ⚡ Phase 3: Generate response-type only (fast regex, no LLM)
+    # ⚡ Phase 3: Generate response-type and emotion
     response_metadata = {}
     try:
-        from .response_generator import generate_response_type, parse_alarm_request
+        from .response_generator import generate_response_type, parse_alarm_request, generate_emotion_parameter
         from datetime import datetime
         
-        # 기본 response_type 감지
-        response_type = generate_response_type(ai_response_text)
+        # 기본 response_type 감지 (clean text 사용)
+        response_type = generate_response_type(ai_response_text_clean)
         logger.info(f"📋 [Response Type] Detected by regex: {response_type}")
         
-        # 🆕 Alarm 요청 파싱 (항상 실행)
+        # 🆕 Alarm 요청 파싱 (항상 실행) - clean text 사용
         logger.info(f"🔍 [Alarm Parser] Checking for alarm requests...")
         alarm_data = parse_alarm_request(
             user_text=user_text,
-            llm_response=ai_response_text,
+            llm_response=ai_response_text_clean,
             current_datetime=datetime.now()
         )
         logger.info(f"✅ [Alarm Parser] Result: {alarm_data.get('response_type')} (count: {alarm_data.get('count', 0)})")
@@ -606,8 +767,12 @@ async def run_ai_bomi_from_text_v2(
             response_type = alarm_data["response_type"]
             logger.info(f"🎯 [Response Type] Override to: {response_type}")
         
+        # ⚡ Emotion은 LLM이 직접 결정 (추가 API 호출 없음)
+        emotion = llm_emotion
+        logger.info(f"✨ [Emotion] Using LLM decision: {emotion}")
+        
         response_metadata = {
-            "emotion": "happiness",  # ⚡ Default value, no LLM call
+            "emotion": emotion,
             "response_type": response_type
         }
         
@@ -621,19 +786,21 @@ async def run_ai_bomi_from_text_v2(
                 response_metadata["alarm_info"]["message"] = alarm_data["message"]
             logger.info(f"✨ [Alarm Info] Included in response: {response_metadata['alarm_info']}")
         
-        logger.info(f"✨ [Response Type] Final: {response_type} (emotion=default)")
+        logger.info(f"✨ [Response Type] Final: {response_type}")
     except Exception as e:
         logger.error(f"Failed to generate response type: {e}", exc_info=True)
         response_metadata = {"emotion": "happiness", "response_type": "normal"}
         
-    # ⚡ 6.5. Background Emotion Analysis (after response, for future reports)
-    async def background_emotion_analysis():
+    # ⚡ 6.5. Background Tasks: Full Emotion Analysis (for emotion reports only)
+    async def background_tasks():
+        """백그라운드에서 감정 분석 수행 (응답 속도에 영향 없음)"""
         try:
-            logger.info("🔍 [Background] Starting emotion analysis...")
+            # Full emotion analysis (for emotion reports)
+            logger.info("🔍 [Background] Starting full emotion analysis...")
             emotion_response = await run_fast_track(user_text, user_id=user_id)
             
             if emotion_response.get("skipped"):
-                logger.info("ℹ️  [Background] Emotion analysis skipped")
+                logger.info("ℹ️  [Background] Full emotion analysis skipped")
                 return
             
             emotion_result = emotion_response.get("result")
@@ -642,11 +809,22 @@ async def run_ai_bomi_from_text_v2(
                 
             # Save to DB + ChromaDB cache (if fresh analysis)
             if not emotion_response.get("cached"):
-                from sentence_transformers import SentenceTransformer
                 import json
+                import asyncio
                 
-                embedder = SentenceTransformer('jhgan/ko-sroberta-multitask')
-                embedding = embedder.encode(user_text).tolist()
+                # ⚡ SentenceTransformer를 executor에서 실행 (블로킹 방지!)
+                def encode_text_sync():
+                    """동기 함수: Sentence Transformer 로드 및 인코딩"""
+                    from sentence_transformers import SentenceTransformer
+                    embedder = SentenceTransformer('jhgan/ko-sroberta-multitask')
+                    embedding = embedder.encode(user_text).tolist()
+                    return embedding
+                
+                loop = asyncio.get_event_loop()
+                logger.info("🔍 [Background] Loading embedding model (in executor)...")
+                embedding = await loop.run_in_executor(None, encode_text_sync)
+                logger.info("✅ [Background] Embedding generation complete")
+                
                 embedding_json = json.dumps(embedding)
                 
                 analysis_id = store.save_emotion_analysis(
@@ -663,16 +841,23 @@ async def run_ai_bomi_from_text_v2(
                     )
                     logger.info(f"💾 [Background] Saved: Analysis ID {analysis_id}")
         except Exception as e:
-            logger.error(f"❌ [Background] Emotion analysis failed: {e}")
+            logger.error(f"❌ [Background] Background tasks failed: {e}")
     
-    asyncio.create_task(background_emotion_analysis())
-    logger.info("🚀 [Background] Emotion analysis task created")
     
-    logger.info(f"✅ [DeepAgents] Response generated: {ai_response_text[:50]}...")
+    # ⚠️ 백그라운드 태스크 임시 비활성화 (TTS와 리소스 경쟁 방지)
+    # TODO: TTS 완료 후 실행하도록 main.py로 이동 필요
+    # asyncio.create_task(background_tasks())
+    # logger.info("🚀 [Background] Background tasks created (non-blocking)")
+    logger.info("⚠️ [Background] Background tasks disabled (TTS optimization)")
+
     
-    # 🆕 Alarm info 추가
+    logger.info(f"✅ [DeepAgents] Both text versions ready for return")
+
+    
+    # 🆕 Phase 4: 두 가지 버전의 텍스트 반환
     result = {
-        "reply_text": ai_response_text,
+        "reply_text": ai_response_text_clean,  # 프론트엔드 표시용 (audio tag 제거됨)
+        "reply_text_with_tags": ai_response_text_with_tags,  # TTS용 (audio tag 포함)
         "input_text": user_text,
         "emotion_result": None,  # ⚡ Analyzed in background
         "routine_result": routine_result,
@@ -686,7 +871,10 @@ async def run_ai_bomi_from_text_v2(
             "memory_used": bool(memory_context),
             "rag_used": bool(rag_context),
             "stt_quality": stt_quality,
-            "classifier_hint": classifier_hint  # ⚡ Lightweight hint
+            "classifier_hint": classifier_hint,  # ⚡ Lightweight hint
+            # 🆕 Frontend compatibility: meta에도 emotion/response_type 포함
+            "emotion": response_metadata.get("emotion", "happiness"),
+            "response_type": response_metadata.get("response_type", "normal")
         }
     }
     
@@ -694,6 +882,15 @@ async def run_ai_bomi_from_text_v2(
     if "alarm_info" in response_metadata:
         result["alarm_info"] = response_metadata["alarm_info"]
         logger.info(f"✅ [Return] alarm_info added to result: {response_metadata['alarm_info']}")
+    
+    # [DEBUG] 최종 API 응답 로깅
+    logger.warning("=" * 80)
+    logger.warning("📤 [AUDIO TAGS DEBUG] Final API Response")
+    logger.warning(f"reply_text (clean): {result['reply_text']}")
+    logger.warning(f"reply_text_with_tags: {result['reply_text_with_tags']}")
+    logger.warning(f"emotion: {result.get('emotion')}")
+    logger.warning(f"response_type: {result.get('response_type')}")
+    logger.warning("=" * 80)
     
     return result
 
