@@ -41,16 +41,48 @@ class _BomiContentState extends ConsumerState<BomiContent> {
     super.dispose();
   }
 
-  /// Alarm 다이얼로그 표시
+  /// Alarm 다이얼로그 표시 → TopNotification으로 변경
   void _showAlarmDialog(Map<String, dynamic> alarmInfo, String replyText) {
     if (!mounted) return;
 
-    ChatAlarmDialogs.showAlarmConfirmDialog(
+    // 알람 정보 파싱
+    final data = alarmInfo['data'] as List?;
+    if (data == null || data.isEmpty) return;
+
+    // 첫 번째 알람 정보 추출
+    final firstAlarm = data[0];
+    final name = firstAlarm['name'] as String? ?? '알람';
+    final month = firstAlarm['month'] ?? 0;
+    final day = firstAlarm['day'] ?? 0;
+    final time = firstAlarm['time'] ?? 0;
+    final minute = firstAlarm['minute'] ?? 0;
+    final amPm = firstAlarm['am_pm'] ?? 'am';
+    final amPmText = amPm == 'am' ? '오전' : '오후';
+
+    // 간단한 알람 메시지 생성
+    final alarmMessage = data.length > 1
+        ? '$name 외 ${data.length - 1}개 | $month/$day $amPmText $time:${minute.toString().padLeft(2, '0')}'
+        : '$name | $month/$day $amPmText $time:${minute.toString().padLeft(2, '0')}';
+
+    // TopNotification으로 표시 (확인 버튼 누를 때까지 유지)
+    TopNotificationManager.show(
       context,
-      alarmInfo: alarmInfo,
-      replyText: replyText,
+      message: alarmMessage,
+      actionLabel: '확인',
+      type: TopNotificationType.green,
+      duration: const Duration(hours: 1), // 매우 긴 시간 (사실상 수동으로만 제거)
+      onActionTap: () {
+        // 확인 버튼 클릭 시 알림 제거
+        TopNotificationManager.remove();
+      },
     );
   }
+
+  /// 알람 확인 처리 (제거)
+  // void _confirmAlarm() { ... }
+
+  /// 알람 취소 처리 (제거)
+  // void _cancelAlarm() { ... }
 
   /// Warning 다이얼로그 표시
   void _showWarningDialog(Map<String, dynamic> alarmInfo) {

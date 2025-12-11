@@ -23,6 +23,29 @@ class AlarmListItem extends StatelessWidget {
   /// 삭제 콜백
   final VoidCallback onDelete;
 
+  /// 요일 표시 문자열 (매일 또는 개별 요일)
+  String get _weekDisplayString {
+    if (alarm.week.isEmpty) return '';
+    
+    // 7개 요일이 모두 선택된 경우 "매일"로 표시
+    if (alarm.week.length == 7) {
+      return '매일';
+    }
+    
+    // 개별 요일 표시
+    const weekMap = {
+      'Monday': '월',
+      'Tuesday': '화',
+      'Wednesday': '수',
+      'Thursday': '목',
+      'Friday': '금',
+      'Saturday': '토',
+      'Sunday': '일',
+    };
+    
+    return alarm.week.map((w) => weekMap[w] ?? w).join(', ');
+  }
+
   @override
   Widget build(BuildContext context) {
     return Dismissible(
@@ -45,7 +68,10 @@ class AlarmListItem extends StatelessWidget {
       ),
       child: Container(
         margin: const EdgeInsets.only(bottom: AppSpacing.sm),
-        padding: const EdgeInsets.all(AppSpacing.md),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.md,
+          vertical: AppSpacing.sm,
+        ),
         decoration: BoxDecoration(
           color: AppColors.pureWhite,
           borderRadius: BorderRadius.circular(AppRadius.md),
@@ -55,44 +81,50 @@ class AlarmListItem extends StatelessWidget {
           ),
         ),
         child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             // 알람 정보 영역
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  // 시간
+                  // 시간 (크게 표시)
                   Text(
                     alarm.timeString,
-                    style: AppTypography.h3.copyWith(
+                    style: AppTypography.h2.copyWith(
                       color: alarm.isEnabled
                           ? AppColors.textPrimary
                           : AppColors.textSecondary,
-                      fontWeight: FontWeight.w700,
+                      fontWeight: FontWeight.w600,
+                      height: 1.2,
                     ),
                   ),
-                  const SizedBox(height: AppSpacing.xxs),
-                  // 날짜
-                  Text(
-                    alarm.dateString,
-                    style: AppTypography.body.copyWith(
-                      color: alarm.isEnabled
-                          ? AppColors.textSecondary
-                          : AppColors.disabledText,
-                    ),
-                  ),
-                  // 요일 (있을 때만 표시)
-                  if (alarm.week.isNotEmpty) ...[
-                    const SizedBox(height: AppSpacing.xxs),
+                  const SizedBox(height: 4),
+                  // 제목 (추후 API에서 세팅 예정)
+                  if (alarm.title != null && alarm.title!.isNotEmpty) ...[
                     Text(
-                      alarm.weekString,
+                      alarm.title!,
+                      style: AppTypography.body.copyWith(
+                        color: alarm.isEnabled
+                            ? AppColors.textPrimary
+                            : AppColors.textSecondary,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                  ],
+                  // 요일 표시
+                  if (alarm.week.isNotEmpty)
+                    Text(
+                      _weekDisplayString,
                       style: AppTypography.caption.copyWith(
                         color: alarm.isEnabled
                             ? AppColors.textSecondary
                             : AppColors.disabledText,
                       ),
                     ),
-                  ],
                 ],
               ),
             ),
