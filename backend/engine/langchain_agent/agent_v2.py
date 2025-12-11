@@ -289,10 +289,17 @@ def generate_llm_response(
     memory_context: str,
     rag_context: str,
     user_id: int = None  # 🆕 Phase 3: Added for user profile
-) -> str:
+) -> Dict[str, str]:
     """
     Generate response using GPT-4o-mini with Emotion & Context (No Routine)
     **Phase 3**: Uses casual tone (반말) and includes TB_USER_PROFILE data
+    **Phase 4**: Returns both clean text and audio-tagged text for Eleven Labs TTS
+    
+    Returns:
+        {
+            "text_clean": "audio tag가 제거된 원본 텍스트 (프론트엔드 표시용)",
+            "text_with_tags": "audio tag가 포함된 텍스트 (TTS용)"
+        }
     """
     client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
     
@@ -382,8 +389,38 @@ def generate_llm_response(
   - "오늘 어떠셨어요?" ❌
   - "오늘 어땠어?" ✅
 
+[🎙️ Audio Tag 사용법 (Eleven Labs v3)]
+**중요**: 응답에 감정과 말투를 표현하는 audio tag를 자연스럽게 삽입하세요.
+사용자에게는 tag가 제거된 원본 텍스트가 보이고, TTS 음성에만 감정이 반영됩니다.
+
+✅ **감정/말투 태그** (상황에 맞게 사용):
+- 감정 표현: [excited] (신남), [nervous] (긴장), [frustrated] (답답함), [tired] (지침), [sorrowful] (슬픔), [calm] (차분함)
+- 슬픔/울음: [sad] (슬픈 톤), [crying] (울먹임)
+- 성격 부여: [sarcastic] (비꼬는), [curious] (호기심), [mischievously] (장난스러운)
+
+✅ **전달 방식 태그**:
+- 소리 크기: [whispers] (속삭임), [shouting] (큰 소리), [loudly] (크게), [quietly] (조용히)
+- 웃음/반응: [laughs] (웃음), [laughs harder] (크게 웃음), [starts laughing] (웃기 시작), [wheezing] (숨 가쁨)
+- 숨소리: [sighs] (한숨), [exhales] (숨을 내쉼)
+
+✅ **리액션 태그**:
+- 놀람/긴장: [gasps] (헉), [gulps] (꿀꺽), [gasp] (놀람)
+- 망설임/멈춤: [pauses] (잠깐 멈춤), [hesitates] (망설임), [stammers] (말더듬음), [hesitant] (주저함)
+
+**사용 예시**:
+- "[excited] 오늘 기분 좋아 보이네! 무슨 일 있었어?"
+- "[sighs] 피곤하겠다... [calm] 잠깐 쉬는 게 어때?"
+- "[whispers] 비밀인데... [pauses] 너한테만 말해줄게."
+- "[curious] 음... [hesitates] 혹시 요새 잠은 잘 오고 있어?"
+- "[laughs] 그거 재밌다! [excited] 나도 해보고 싶네!"
+
+**주의사항**:
+- Tag를 과도하게 사용하지 마세요 (1~3개 정도가 적당)
+- 대화 흐름에 자연스럽게 녹여내세요
+- 사용자의 감정 상태에 맞는 적절한 tag를 선택하세요
+
 [출력 형식]
-반말로 자연스럽고 공감적인 한국어로 답변을 제공해. 중년 여성에게 적합한 따뜻하고 친근한 톤을 유지해.
+반말로 자연스럽고 공감적인 한국어로 답변을 제공해. 중년 여성에게 적합한 따뜻하고 친근한 톤을 유지하며, audio tag를 활용해 감정을 표현해.
 """
     
     messages = [{"role": "system", "content": system_prompt}]
@@ -406,12 +443,22 @@ def generate_llm_response(
         temperature=0.7
     )
     
-    reply_text = response.choices[0].message.content
+    reply_text_with_tags = response.choices[0].message.content
     
-    # [DEBUG] Log GPT-4o-mini raw response (before any text processing/splitting)
-    logger.warning(f"🤖 [GPT-4o-mini Raw Response]\n{reply_text}")
+    # [DEBUG] Log GPT-4o-mini raw response (with audio tags)
+    logger.warning(f"🤖 [GPT-4o-mini Raw Response WITH TAGS]\n{reply_text_with_tags}")
     
-    return reply_text
+    # 🆕 Phase 4: Audio tag 제거하여 프론트엔드용 원본 텍스트 생성
+    from .response_generator import remove_audio_tags
+    reply_text_clean = remove_audio_tags(reply_text_with_tags)
+    
+    logger.info(f"📝 [Clean Text (Frontend)] {reply_text_clean[:100]}...")
+    logger.info(f"🎙️ [Tagged Text (TTS)] {reply_text_with_tags[:100]}...")
+    
+    return {
+        "text_clean": reply_text_clean,
+        "text_with_tags": reply_text_with_tags
+    }
 
 async def run_ai_bomi_from_text_v2(
     user_text: str,
@@ -560,7 +607,8 @@ async def run_ai_bomi_from_text_v2(
     # 5. Generate Response (Fast Track)
     conversation_history = store.get_history(user_id, session_id, limit=None)
     
-    ai_response_text = generate_llm_response(
+    # 🆕 Phase 4: LLM 응답 생성 (clean text + audio tags)
+    ai_response_dict = generate_llm_response(
         user_text=user_text,
         emotion_result=None,  # ⚡ No emotion result - LLM uses its own understanding
         conversation_history=conversation_history,
@@ -569,34 +617,38 @@ async def run_ai_bomi_from_text_v2(
         user_id=user_id
     )
     
-    # 6. Save AI Response (조건부)
-    if save_to_db:
-        store.add_message(user_id, session_id, "assistant", ai_response_text)
+    # 두 가지 버전 추출
+    ai_response_text_clean = ai_response_dict["text_clean"]  # 프론트엔드 표시용
+    ai_response_text_with_tags = ai_response_dict["text_with_tags"]  # TTS용
     
-    # Update RAG with AI response
+    # 6. Save AI Response (조건부) - 원본 텍스트만 저장 (audio tag 제거됨)
+    if save_to_db:
+        store.add_message(user_id, session_id, "assistant", ai_response_text_clean)
+    
+    # Update RAG with AI response (원본 텍스트만 저장)
     try:
         if 'rag_store' in locals():
-            rag_store.add_message(user_id, session_id, "assistant", ai_response_text)
+            rag_store.add_message(user_id, session_id, "assistant", ai_response_text_clean)
     except Exception as e:
         logger.error(f"RAG Save Error: {e}")
         
-    logger.info(f"✅ [DeepAgents] Response generated: {ai_response_text[:50]}...")
+    logger.info(f"✅ [DeepAgents] Response generated (clean): {ai_response_text_clean[:50]}...")
     
-    # ⚡ Phase 3: Generate response-type only (fast regex, no LLM)
+    # ⚡ Phase 3: Generate response-type and emotion
     response_metadata = {}
     try:
-        from .response_generator import generate_response_type, parse_alarm_request
+        from .response_generator import generate_response_type, parse_alarm_request, generate_emotion_parameter
         from datetime import datetime
         
-        # 기본 response_type 감지
-        response_type = generate_response_type(ai_response_text)
+        # 기본 response_type 감지 (clean text 사용)
+        response_type = generate_response_type(ai_response_text_clean)
         logger.info(f"📋 [Response Type] Detected by regex: {response_type}")
         
-        # 🆕 Alarm 요청 파싱 (항상 실행)
+        # 🆕 Alarm 요청 파싱 (항상 실행) - clean text 사용
         logger.info(f"🔍 [Alarm Parser] Checking for alarm requests...")
         alarm_data = parse_alarm_request(
             user_text=user_text,
-            llm_response=ai_response_text,
+            llm_response=ai_response_text_clean,
             current_datetime=datetime.now()
         )
         logger.info(f"✅ [Alarm Parser] Result: {alarm_data.get('response_type')} (count: {alarm_data.get('count', 0)})")
@@ -606,8 +658,16 @@ async def run_ai_bomi_from_text_v2(
             response_type = alarm_data["response_type"]
             logger.info(f"🎯 [Response Type] Override to: {response_type}")
         
+        # 🆕 Emotion 파라미터 생성 (LLM 기반 분석) - clean text 사용
+        emotion = generate_emotion_parameter(
+            conversation_history=conversation_history,
+            llm_response=ai_response_text_clean,
+            user_text=user_text
+        )
+        logger.info(f"✨ [Emotion] Generated: {emotion}")
+        
         response_metadata = {
-            "emotion": "happiness",  # ⚡ Default value, no LLM call
+            "emotion": emotion,
             "response_type": response_type
         }
         
@@ -668,11 +728,12 @@ async def run_ai_bomi_from_text_v2(
     asyncio.create_task(background_emotion_analysis())
     logger.info("🚀 [Background] Emotion analysis task created")
     
-    logger.info(f"✅ [DeepAgents] Response generated: {ai_response_text[:50]}...")
+    logger.info(f"✅ [DeepAgents] Both text versions ready for return")
     
-    # 🆕 Alarm info 추가
+    # 🆕 Phase 4: 두 가지 버전의 텍스트 반환
     result = {
-        "reply_text": ai_response_text,
+        "reply_text": ai_response_text_clean,  # 프론트엔드 표시용 (audio tag 제거됨)
+        "reply_text_with_tags": ai_response_text_with_tags,  # TTS용 (audio tag 포함)
         "input_text": user_text,
         "emotion_result": None,  # ⚡ Analyzed in background
         "routine_result": routine_result,
