@@ -34,4 +34,15 @@ class RelationTrainingService {
       currentPath: newPath,
     );
   }
+
+  Future<GenerateScenarioResponse> generateScenario({
+    required String target,
+    required String topic,
+  }) async {
+    return _repository.generateScenario(target: target, topic: topic);
+  }
+
+  Future<void> deleteScenario(int scenarioId) async {
+    return _repository.deleteScenario(scenarioId);
+  }
 }

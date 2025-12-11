@@ -9,6 +9,7 @@ class TextChatRequest with _$TextChatRequest {
     @JsonKey(name: 'user_text') required String userText,
     @JsonKey(name: 'session_id') String? sessionId,
     @JsonKey(name: 'stt_quality') String? sttQuality,
+    @JsonKey(name: 'tts_enabled') bool? ttsEnabled, // ✅ TTS 활성화 여부
   }) = _TextChatRequest;
 
   factory TextChatRequest.fromJson(Map<String, dynamic> json) =>

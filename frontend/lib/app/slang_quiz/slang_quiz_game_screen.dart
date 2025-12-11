@@ -3,11 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../ui/app_ui.dart';
 import '../../providers/daily_mood_provider.dart';
+import '../../providers/auth_provider.dart';
 import '../../data/api/slang_quiz/slang_quiz_api_client.dart';
 import '../../data/dtos/slang_quiz/start_game_request.dart';
 import '../../data/dtos/slang_quiz/start_game_response.dart';
 import '../../data/dtos/slang_quiz/submit_answer_request.dart';
-import 'package:dio/dio.dart';
 
 class SlangQuizGameScreen extends ConsumerStatefulWidget {
   final String level;
@@ -24,7 +24,7 @@ class SlangQuizGameScreen extends ConsumerStatefulWidget {
 }
 
 class _SlangQuizGameScreenState extends ConsumerState<SlangQuizGameScreen> {
-  late SlangQuizApiClient _apiClient;
+  SlangQuizApiClient? _apiClient;
   
   int? _gameId;
   int _currentQuestion = 1;
@@ -42,8 +42,10 @@ class _SlangQuizGameScreenState extends ConsumerState<SlangQuizGameScreen> {
   @override
   void initState() {
     super.initState();
-    _apiClient = SlangQuizApiClient(Dio());
-    _startGame();
+    // API 클라이언트는 _startGame에서 초기화
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _startGame();
+    });
   }
 
   @override
@@ -54,12 +56,16 @@ class _SlangQuizGameScreenState extends ConsumerState<SlangQuizGameScreen> {
 
   Future<void> _startGame() async {
     try {
+      // API 클라이언트 초기화
+      final dio = ref.read(dioWithAuthProvider);
+      _apiClient = SlangQuizApiClient(dio);
+      
       final request = StartGameRequest(
         level: widget.level,
         quizType: widget.quizType,
       );
       
-      final response = await _apiClient.startGame(request);
+      final response = await _apiClient!.startGame(request);
       
       setState(() {
         _gameId = response.gameId;
@@ -96,7 +102,7 @@ class _SlangQuizGameScreenState extends ConsumerState<SlangQuizGameScreen> {
   }
 
   Future<void> _submitAnswer(int? answerIndex) async {
-    if (_isSubmitting || _gameId == null || _questionData == null) return;
+    if (_isSubmitting || _gameId == null || _questionData == null || _apiClient == null) return;
     
     setState(() => _isSubmitting = true);
     _timer?.cancel();
@@ -112,7 +118,7 @@ class _SlangQuizGameScreenState extends ConsumerState<SlangQuizGameScreen> {
         responseTimeSeconds: responseTime,
       );
 
-      final response = await _apiClient.submitAnswer(_gameId!, request);
+      final response = await _apiClient!.submitAnswer(_gameId!, request);
 
       if (mounted) {
         // 결과 다이얼로그 표시
@@ -148,11 +154,13 @@ class _SlangQuizGameScreenState extends ConsumerState<SlangQuizGameScreen> {
   }
 
   Future<void> _loadNextQuestion() async {
+    if (_apiClient == null) return;
+    
     try {
       setState(() => _isLoading = true);
       
       final nextQuestionNumber = _currentQuestion + 1;
-      final questionData = await _apiClient.getQuestion(_gameId!, nextQuestionNumber);
+      final questionData = await _apiClient!.getQuestion(_gameId!, nextQuestionNumber);
       
       setState(() {
         _currentQuestion = nextQuestionNumber;
@@ -175,8 +183,10 @@ class _SlangQuizGameScreenState extends ConsumerState<SlangQuizGameScreen> {
   }
 
   Future<void> _endGame() async {
+    if (_apiClient == null) return;
+    
     try {
-      final response = await _apiClient.endGame(_gameId!);
+      final response = await _apiClient!.endGame(_gameId!);
       
       if (mounted) {
         Navigator.pushReplacementNamed(
@@ -273,17 +283,17 @@ class _SlangQuizGameScreenState extends ConsumerState<SlangQuizGameScreen> {
       topBar: TopBar(
         title: '문제 $_currentQuestion/$_totalQuestions  ⏱️ $_timeRemaining초',
       ),
-      body: Padding(
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(AppSpacing.lg),
         child: Column(
           children: [
-            // 캐릭터
+            // 캐릭터 (크기 축소)
             EmotionCharacter(
               id: currentEmotion,
               use2d: true,
-              size: 180,
+              size: 120,
             ),
-            const SizedBox(height: AppSpacing.lg),
+            const SizedBox(height: AppSpacing.md),
             
             // 문제
             Container(
@@ -298,43 +308,47 @@ class _SlangQuizGameScreenState extends ConsumerState<SlangQuizGameScreen> {
                 textAlign: TextAlign.center,
               ),
             ),
-            const SizedBox(height: AppSpacing.xl),
+            const SizedBox(height: AppSpacing.lg),
             
-            // 선택지
-            Expanded(
-              child: ListView.separated(
-                itemCount: _questionData!.options.length,
-                separatorBuilder: (_, __) => const SizedBox(height: AppSpacing.sm),
-                itemBuilder: (context, index) {
-                  final isSelected = _selectedIndex == index;
-                  return GestureDetector(
-                    onTap: _isSubmitting ? null : () {
-                      setState(() => _selectedIndex = index);
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.all(AppSpacing.md),
-                      decoration: BoxDecoration(
+            // 선택지 (4개 모두 표시, 스크롤 없음)
+            ...List.generate(_questionData!.options.length, (index) {
+              final isSelected = _selectedIndex == index;
+              return Padding(
+                padding: EdgeInsets.only(
+                  bottom: index < _questionData!.options.length - 1 
+                      ? AppSpacing.sm 
+                      : 0,
+                ),
+                child: GestureDetector(
+                  onTap: _isSubmitting ? null : () {
+                    setState(() => _selectedIndex = index);
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.md,
+                      vertical: AppSpacing.sm,
+                    ),
+                    decoration: BoxDecoration(
+                      color: isSelected
+                          ? AppColors.accentRed.withOpacity(0.1)
+                          : Colors.white,
+                      borderRadius: BorderRadius.circular(AppRadius.md),
+                      border: Border.all(
                         color: isSelected
-                            ? AppColors.accentRed.withOpacity(0.1)
-                            : Colors.white,
-                        borderRadius: BorderRadius.circular(AppRadius.md),
-                        border: Border.all(
-                          color: isSelected
-                              ? AppColors.accentRed
-                              : AppColors.borderLight,
-                          width: isSelected ? 2 : 1,
-                        ),
-                      ),
-                      child: Text(
-                        _questionData!.options[index],
-                        style: AppTypography.body,
-                        textAlign: TextAlign.center,
+                            ? AppColors.accentRed
+                            : AppColors.borderLight,
+                        width: isSelected ? 2 : 1,
                       ),
                     ),
-                  );
-                },
-              ),
-            ),
+                    child: Text(
+                      _questionData!.options[index],
+                      style: AppTypography.body,
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ),
+              );
+            }),
             const SizedBox(height: AppSpacing.lg),
             
             // 제출 버튼

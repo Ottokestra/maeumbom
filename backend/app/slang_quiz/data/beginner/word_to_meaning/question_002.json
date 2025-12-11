@@ -1,0 +1,16 @@
+{
+  "word": "TMI",
+  "question": "자녀가 'TMI'라고 했다면 무슨 뜻일까요?",
+  "options": [
+    "진짜 멋져",
+    "불필요한 정보",
+    "재미있는 이야기",
+    "좋아하는 것"
+  ],
+  "answer_index": 1,
+  "explanation": "'TMI'는 'Too Much Information'의 약자로, 필요 없는 정보나 과도한 정보를 의미해요. 예를 들어 '그 사람의 사생활은 TMI야.'라고 쓸 수 있어요.",
+  "reward_card": {
+    "message": "TMI도 좋지만, 너의 이야기가 더 좋아!",
+    "background_mood": "warm"
+  }
+}
