@@ -135,6 +135,8 @@ flutter:
     - assets/characters/animation/thinking/
     - assets/images/icons/
     - assets/images/logo/
+    - assets/training_images/randomQ.png
+
 
 
   fonts:

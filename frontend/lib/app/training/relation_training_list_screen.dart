@@ -161,18 +161,18 @@ class RelationTrainingListScreen extends ConsumerWidget {
                   flex: 3,
                   child: ClipRRect(
                     borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-                    child: scenario.imageUrl != null
-                        ? Image.network(
+                    child: (isUserScenario || scenario.imageUrl == null || scenario.imageUrl!.isEmpty)
+                        ? Image.asset(
+                            'assets/training_images/randomQ.png',
+                            fit: BoxFit.cover,
+                          )
+                        : Image.network(
                             scenario.imageUrl!,
                             fit: BoxFit.cover,
-                            errorBuilder: (ctx, err, stack) => Container(
-                              color: AppColors.borderLight,
-                              child: const Icon(Icons.broken_image, color: Colors.grey),
+                            errorBuilder: (ctx, err, stack) => Image.asset(
+                              'assets/training_images/randomQ.png',
+                              fit: BoxFit.cover,
                             ),
-                          )
-                        : Container(
-                            color: AppColors.moodGoodYellow.withOpacity(0.5),
-                            child: const Icon(Icons.people, size: 40, color: AppColors.natureGreen),
                           ),
                   ),
                 ),

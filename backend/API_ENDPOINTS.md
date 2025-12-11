@@ -1037,28 +1037,43 @@
 ### 4. Deep Agent 시나리오 자동 생성
 **경로**: `POST /api/service/relation-training/generate-scenario`  
 **인증**: 필요 (Bearer Token)  
-**설명**: GPT-4o-mini로 시나리오 생성 + FLUX.1-schnell로 이미지 17장 자동 생성  
+**설명**: Gemini 2.5 Flash로 시나리오 생성 + Gemini 2.5 Flash Image로 이미지 17장 자동 생성 (비동기 처리)  
 
-**요청 Body**:
+**요청 Body (관계 개선 훈련)**:
 ```json
 {
-  "target": "PARENT|FRIEND|PARTNER|HUSBAND|WIFE",
-  "topic": "string"                 // 예: "남편이 밥투정을 합니다"
+  "target": "HUSBAND|CHILD|FRIEND|COLLEAGUE",
+  "topic": "string",                 // 예: "남편이 밥투정을 합니다"
+  "category": "TRAINING"             // 기본값
 }
 ```
 
-**응답**:
+**요청 Body (드라마)**:
 ```json
 {
-  "scenario_id": "integer",
-  "status": "success",
-  "image_count": "integer",
-  "folder_name": "string",
-  "message": "string"
+  "target": "AUTO|HUSBAND|CHILD|FRIEND|COLLEAGUE",  // AUTO: AI가 자동 선택
+  "topic": "AUTO|string",                           // AUTO: AI가 자동 창작
+  "category": "DRAMA",
+  "genre": "MAKJANG|ROMANCE|FAMILY"  // 필수
 }
 ```
 
-**Note**: 이미지 생성은 8~34분 소요, `USE_SKIP_IMAGES=true` 설정 시 이미지 생성 스킵
+**응답 (비동기 처리)**:
+```json
+{
+  "scenario_id": 0,  // 생성 중이므로 0
+  "status": "processing",
+  "image_count": 0,
+  "folder_name": "",
+  "message": "시나리오 생성이 시작되었습니다. 잠시 후 목록을 새로고침해주세요."
+}
+```
+
+**Note**: 
+- 시나리오 생성은 백그라운드에서 비동기로 처리됩니다 (약 20-30초 소요)
+- `USE_SKIP_IMAGES=true` 설정 시 이미지 생성 스킵
+- 드라마 시나리오는 공용 시나리오로 생성됩니다 (USER_ID = NULL)
+- 드라마 시나리오는 모든 사용자가 볼 수 있습니다
 
 ### 5. 공용 시나리오 이미지 조회
 **경로**: `GET /api/service/relation-training/images/{scenario_name}/{filename}`  
@@ -1071,17 +1086,21 @@
 
 **응답**: 이미지 파일 (image/png)
 
-### 6. 사용자별 시나리오 이미지 조회
+### 6. 사용자별/드라마 시나리오 이미지 조회
 **경로**: `GET /api/service/relation-training/images/{user_id}/{scenario_name}/{filename}`  
 **인증**: 불필요  
-**설명**: Deep Agent로 생성된 사용자별 시나리오 이미지 제공  
+**설명**: Deep Agent로 생성된 사용자별 시나리오 또는 드라마 시나리오 이미지 제공  
 
 **Path Parameters**:
-- `user_id` (integer): 사용자 ID
-- `scenario_name` (string): 시나리오 폴더명 (예: husband_20231215_143022)
-- `filename` (string): 이미지 파일명
+- `user_id` (string): 사용자 ID (숫자) 또는 "public" (드라마 시나리오)
+- `scenario_name` (string): 시나리오 폴더명 (예: husband_20231215_143022 또는 차가운_심장에_피어난_꽃_20251211_151150)
+- `filename` (string): 이미지 파일명 (예: start.png, result_AAAA.png)
 
 **응답**: 이미지 파일 (image/png)
+
+**예시**:
+- 사용자별: `/api/service/relation-training/images/123/husband_20231215_143022/start.png`
+- 드라마: `/api/service/relation-training/images/public/차가운_심장에_피어난_꽃_20251211_151150/start.png`
 
 ### 7. 시나리오 삭제
 **경로**: `DELETE /api/service/relation-training/scenarios/{scenario_id}`  
@@ -1213,6 +1232,49 @@
 - MID (10-19점): 갱년기 관련 신호 보임
 - HIGH (20점 이상): 전문의 상담 권장
 
+응답 예시
+{
+  "gender": "FEMALE",
+  "total_score": 18,
+  "risk_level": "HIGH",
+  "risk_label": "심한 갱년기 의심",
+  "risk_description": "최근 4주 동안 신체적/정신적 증상이 일상에 영향을 줄 정도로 나타나고 있습니다.",
+  "recommendations": [
+    "충분한 휴식과 수면 시간을 우선적으로 확보해 주세요.",
+    "증상이 지속되거나 악화될 경우 전문의 상담을 권장합니다.",
+    "규칙적인 운동과 균형 잡힌 식단이 도움이 될 수 있습니다."
+  ]
+}
+
+GET /api/menopause/questions?gender=FEMALE
+
+[
+  {
+    "id": 1,
+    "gender": "FEMALE",
+    "code": "F1",
+    "order_no": 1,
+    "question_text": "일의 집중력이나 기억력이 예전 같지 않다고 느낀다.",
+    "risk_when_yes": true,
+    "positive_label": "그렇다",
+    "negative_label": "아니다",
+    "created_at": "2025-12-10T09:00:00",
+    "updated_at": "2025-12-10T09:00:00"
+  },
+  {
+    "id": 2,
+    "gender": "FEMALE",
+    "code": "F2",
+    "order_no": 2,
+    "question_text": "아무 이유 없이 짜증이 늘고 감정 기복이 심해졌다.",
+    "risk_when_yes": true,
+    "positive_label": "그렇다",
+    "negative_label": "아니다",
+    "created_at": "2025-12-10T09:00:00",
+    "updated_at": "2025-12-10T09:00:00"
+  }
+]
+
 ### 2. 설문 문항 목록 조회
 **경로**: `GET /api/menopause/questions`  
 **인증**: 불필요  
@@ -1264,6 +1326,20 @@
   "updated_at": "datetime"
 }
 ```
+
+응답 예시
+{
+  "id": 1,
+  "gender": "FEMALE",
+  "code": "F1",
+  "order_no": 1,
+  "question_text": "일의 집중력이나 기억력이 예전 같지 않다고 느낀다.",
+  "risk_when_yes": true,
+  "positive_label": "그렇다",
+  "negative_label": "아니다",
+  "created_at": "2025-12-10T09:00:00",
+  "updated_at": "2025-12-10T09:00:00"
+}
 
 ### 4. 설문 문항 생성
 **경로**: `POST /api/menopause/questions`  
@@ -1340,6 +1416,25 @@
 }
 ```
 
+{
+  "order_no": 3,
+  "question_text": "최근 4주 동안 이유 없이 짜증이 늘고 감정 기복이 심해졌다."
+}
+
+응답 예시
+{
+  "id": 2,
+  "gender": "FEMALE",
+  "code": "F2",
+  "order_no": 3,
+  "question_text": "최근 4주 동안 이유 없이 짜증이 늘고 감정 기복이 심해졌다.",
+  "risk_when_yes": true,
+  "positive_label": "그렇다",
+  "negative_label": "아니다",
+  "created_at": "2025-12-10T09:00:00",
+  "updated_at": "2025-12-10T09:20:00"
+}
+
 ### 6. 설문 문항 삭제
 **경로**: `DELETE /api/menopause/questions/{question_id}`  
 **인증**: 불필요  
@@ -1389,6 +1484,216 @@
   }
 ]
 ```
+
+## 주간 감정 리포트 (Weekly Emotion Report)
+
+### 1. 공통 모델
+
+**WeeklyEmotionReport (주간 감정 리포트 요약)**
+
+```json
+{
+  "reportId": 123,
+  "userId": 1,
+  "weekStart": "2025-12-08",
+  "weekEnd": "2025-12-14",
+  "emotionTemperature": 73,
+  "positiveScore": 42,
+  "negativeScore": 18,
+  "neutralScore": 10,
+  "mainEmotion": "불안",
+  "mainEmotionConfidence": 0.82,
+  "mainEmotionCharacterCode": "ANXIOUS_RABBIT",
+  "badges": [
+    "불안多",
+    "지침",
+    "회복시도"
+  ],
+  "summaryText": "이번 주에는 걱정과 피로가 자주 등장했어요. 스스로를 돌보려는 시도도 보였습니다.",
+  "createdAt": "2025-12-14T23:50:00Z"
+}
+
+
+WeeklyEmotionDialogSnippet (리포트용 대화 하이라이트)
+
+{
+  "role": "user",             // "user" 또는 "assistant"
+  "content": "요즘은 자꾸 불안해서 잠이 잘 안 와요.",
+  "emotion": "불안",
+  "createdAt": "2025-12-11T05:10:00Z"
+}
+
+
+2. 주간 리포트 생성 / 재생성
+
+경로: POST /api/v1/reports/emotion/weekly/generate
+인증: 필요 (Bearer Token)
+설명: 특정 사용자 + 특정 주간에 대한 주간 감정 리포트를 새로 생성하거나 갱신한다.
+
+요청 Body
+{
+  "userId": 1,
+  "weekStart": "2025-12-08",
+  "weekEnd": "2025-12-14",
+  "regenerate": true
+}
+
+응답 200
+{
+  "report": {
+    "reportId": 123,
+    "userId": 1,
+    "weekStart": "2025-12-08",
+    "weekEnd": "2025-12-14",
+    "emotionTemperature": 73,
+    "positiveScore": 42,
+    "negativeScore": 18,
+    "neutralScore": 10,
+    "mainEmotion": "불안",
+    "mainEmotionConfidence": 0.82,
+    "mainEmotionCharacterCode": "ANXIOUS_RABBIT",
+    "badges": [
+      "불안多",
+      "지침",
+      "회복시도"
+    ],
+    "summaryText": "이번 주에는 걱정과 피로가 자주 등장했어요. 스스로를 돌보려는 시도도 보였습니다.",
+    "createdAt": "2025-12-14T23:50:00Z"
+  }
+}
+
+3. 주간 리포트 상세 조회 (reportId 기준)
+
+경로: GET /api/v1/reports/emotion/weekly/{reportId}
+인증: 필요 (Bearer Token)
+설명: 리포트 ID를 기준으로 상세 요약 + 대화 하이라이트를 조회한다.
+
+경로 변수
+
+reportId: 주간 감정 리포트 ID
+
+응답 200
+{
+  "report": {
+    "reportId": 123,
+    "userId": 1,
+    "weekStart": "2025-12-08",
+    "weekEnd": "2025-12-14",
+    "emotionTemperature": 73,
+    "positiveScore": 42,
+    "negativeScore": 18,
+    "neutralScore": 10,
+    "mainEmotion": "불안",
+    "mainEmotionConfidence": 0.82,
+    "mainEmotionCharacterCode": "ANXIOUS_RABBIT",
+    "badges": [
+      "불안多",
+      "지침",
+      "회복시도"
+    ],
+    "summaryText": "이번 주에는 걱정과 피로가 자주 등장했어요. 스스로를 돌보려는 시도도 보였습니다.",
+    "createdAt": "2025-12-14T23:50:00Z"
+  },
+  "dialogSnippets": [
+    {
+      "role": "user",
+      "content": "요즘은 자꾸 불안해서 잠이 잘 안 와요.",
+      "emotion": "불안",
+      "createdAt": "2025-12-11T05:10:00Z"
+    },
+    {
+      "role": "assistant",
+      "content": "그럴수록 스스로를 돌보는 시간이 더 필요해요.",
+      "emotion": "공감",
+      "createdAt": "2025-12-11T05:10:10Z"
+    }
+  ]
+}
+
+4. 주간 리포트 조회 (userId + week 기준)
+
+경로: GET /api/v1/reports/emotion/weekly
+인증: 필요 (Bearer Token)
+설명: 특정 사용자 + 특정 주간(weekStart~weekEnd)의 리포트 1건을 조회한다.
+
+Query Parameters
+
+userId (필수): 사용자 ID
+
+weekStart (필수): 주 시작일 (YYYY-MM-DD)
+
+weekEnd (선택): 주 종료일 (YYYY-MM-DD), 없으면 weekStart + 6일로 계산
+
+예시
+GET /api/v1/reports/emotion/weekly?userId=1&weekStart=2025-12-08
+
+응답 200
+{
+  "report": {
+    "reportId": 123,
+    "userId": 1,
+    "weekStart": "2025-12-08",
+    "weekEnd": "2025-12-14",
+    "emotionTemperature": 73,
+    "positiveScore": 42,
+    "negativeScore": 18,
+    "neutralScore": 10,
+    "mainEmotion": "불안",
+    "mainEmotionConfidence": 0.82,
+    "mainEmotionCharacterCode": "ANXIOUS_RABBIT",
+    "badges": [
+      "불안多",
+      "지침",
+      "회복시도"
+    ],
+    "summaryText": "이번 주에는 걱정과 피로가 자주 등장했어요. 스스로를 돌보려는 시도도 보였습니다.",
+    "createdAt": "2025-12-14T23:50:00Z"
+  }
+}
+
+5. 주간 리포트 목록 조회 (최근 N주)
+
+경로: GET /api/v1/reports/emotion/weekly/list
+인증: 필요 (Bearer Token)
+설명: 특정 사용자의 최근 N주 주간 감정 리포트 요약 목록을 조회한다.
+FE에서 주간 선택 드롭다운/타임라인에 사용한다.
+
+Query Parameters
+
+userId (필수): 사용자 ID
+
+limit (선택, 기본값 8): 조회할 주간 개수
+
+예시
+GET /api/v1/reports/emotion/weekly/list?userId=1&limit=8
+
+응답 200
+{
+  "items": [
+    {
+      "reportId": 123,
+      "weekStart": "2025-12-08",
+      "weekEnd": "2025-12-14",
+      "emotionTemperature": 73,
+      "mainEmotion": "불안",
+      "badges": [
+        "불안多",
+        "지침"
+      ]
+    },
+    {
+      "reportId": 122,
+      "weekStart": "2025-12-01",
+      "weekEnd": "2025-12-07",
+      "emotionTemperature": 61,
+      "mainEmotion": "피로",
+      "badges": [
+        "지침",
+        "회복시도"
+      ]
+    }
+  ]
+}
 
 ---
 
@@ -1913,13 +2218,13 @@ HTTP 상태 코드:
 
 | HTTP 메서드 | 경로 | 인증 필요 | 설명 |
 |------------|------|----------|------|
-| POST | `/api/menopause-survey/submit` | ❌ | 갱년기 설문 제출 |
-| GET | `/api/menopause/questions` | ❌ | 설문 문항 목록 조회 |
+| POST | `/api/menopause-survey/submit` | ❌ | 갱년기 설문 제출 및 위험도 평가 |
+| GET | `/api/menopause/questions` | ❌ | 설문 문항 목록 조회 (gender 별) |
 | GET | `/api/menopause/questions/{question_id}` | ❌ | 설문 문항 단건 조회 |
 | POST | `/api/menopause/questions` | ❌ | 설문 문항 생성 |
 | PATCH | `/api/menopause/questions/{question_id}` | ❌ | 설문 문항 수정 |
 | DELETE | `/api/menopause/questions/{question_id}` | ❌ | 설문 문항 삭제 |
-| POST | `/api/menopause/questions/seed-defaults` | ❌ | 기본 설문 문항 생성 |
+| POST | `/api/menopause/questions/seed-defaults` | ❌ | 기본 설문 문항 시드 생성 (개발/QA용) |
 
 ### 신조어 퀴즈 (Slang Quiz)
 
@@ -1964,6 +2269,16 @@ HTTP 상태 코드:
 |------------|------|----------|------|
 | GET | `/health` | ❌ | 헬스 체크 |
 | GET | `/` | ❌ | Root 정보 |
+
+
+### 주간 감정 리포트 (Weekly Emotion Report)
+
+| HTTP 메서드 | 경로 | 인증 필요 | 설명 |
+|------------|------|----------|------|
+| POST | `/api/v1/reports/emotion/weekly/generate` | ✅ | 주간 감정 리포트 생성/갱신 |
+| GET  | `/api/v1/reports/emotion/weekly/{reportId}` | ✅ | reportId 기준 리포트 상세 + 대화 하이라이트 조회 |
+| GET  | `/api/v1/reports/emotion/weekly` | ✅ | userId + weekStart(+weekEnd) 기준 리포트 조회 |
+| GET  | `/api/v1/reports/emotion/weekly/list` | ✅ | 최근 N주 리포트 요약 목록 조회 |
 
 ---
 
