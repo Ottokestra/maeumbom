@@ -341,6 +341,86 @@ try:
         tags=["slang-quiz"],
     )
     print("[INFO] Slang quiz router loaded successfully.")
+    
+    # 신조어 퀴즈 JSON 파일 자동 import (DB에 없으면 자동으로 로드)
+    try:
+        from app.slang_quiz.service import load_questions_from_json, save_questions_to_db
+        from app.db.database import SessionLocal
+        from app.db.models import SlangQuizQuestion
+        from pathlib import Path as _Path
+        
+        data_dir = (
+            _Path(__file__).parent
+            / "app"
+            / "slang_quiz"
+            / "data"
+        )
+        
+        if data_dir.exists():
+            levels = ["beginner", "intermediate", "advanced"]
+            quiz_types = ["word_to_meaning", "meaning_to_word"]
+            
+            total_imported = 0
+            db = SessionLocal()
+            
+            try:
+                for level in levels:
+                    for quiz_type in quiz_types:
+                        # Load questions from JSON
+                        questions = load_questions_from_json(level=level, quiz_type=quiz_type)
+                        
+                        if not questions:
+                            continue
+                        
+                        # Check which questions already exist in DB
+                        existing_words = set()
+                        existing_questions = db.query(SlangQuizQuestion).filter(
+                            SlangQuizQuestion.LEVEL == level,
+                            SlangQuizQuestion.QUIZ_TYPE == quiz_type,
+                            SlangQuizQuestion.IS_DELETED == False
+                        ).all()
+                        
+                        for eq in existing_questions:
+                            existing_words.add(eq.WORD)
+                        
+                        # Filter out existing questions
+                        new_questions = [
+                            q for q in questions 
+                            if q["word"] not in existing_words
+                        ]
+                        
+                        if new_questions:
+                            # Save new questions to DB
+                            saved_questions = save_questions_to_db(
+                                db=db,
+                                questions=new_questions,
+                                level=level,
+                                quiz_type=quiz_type,
+                                created_by=None  # System imported
+                            )
+                            total_imported += len(saved_questions)
+                            print(
+                                f"[INFO] Slang quiz: {level} - {quiz_type}: "
+                                f"{len(saved_questions)}개 문제 자동 import됨"
+                            )
+                
+                if total_imported > 0:
+                    print(f"[INFO] Slang quiz: 총 {total_imported}개 문제가 DB에 자동 import되었습니다.")
+                else:
+                    print("[INFO] Slang quiz: 모든 문제가 이미 DB에 있습니다.")
+            except Exception as import_error:
+                import traceback
+                print(f"[ERROR] Slang quiz 자동 import 실패: {import_error}")
+                traceback.print_exc()
+            finally:
+                db.close()
+        else:
+            print(f"[WARN] Slang quiz data directory not found: {data_dir}")
+    except Exception as e:
+        import traceback
+        print(f"[ERROR] Slang quiz 자동 import 설정 실패: {e}")
+        traceback.print_exc()
+        
 except Exception as e:
     import traceback
 

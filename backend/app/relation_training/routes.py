@@ -2,7 +2,7 @@
 API routes for relation training service
 Interactive scenario endpoints with authentication
 """
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
 from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 from typing import Optional
@@ -146,22 +146,24 @@ async def progress_scenario(
 @router.post("/generate-scenario", response_model=GenerateScenarioResponse)
 async def generate_scenario(
     request: GenerateScenarioRequest,
+    background_tasks: BackgroundTasks,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """
-    Deep Agent Pipeline - 시나리오 자동 생성
+    Deep Agent Pipeline - 시나리오 자동 생성 (비동기)
     
-    사용자 입력(Target, Topic)을 받아 GPT-4o-mini로 시나리오를 생성하고,
-    FLUX.1-schnell로 17장의 이미지를 자동 생성한 후 DB에 저장합니다.
+    사용자 입력(Target, Topic)을 받아 백그라운드에서 시나리오를 생성합니다.
+    즉시 응답을 반환하고, 시나리오 생성은 백그라운드에서 진행됩니다.
     
     Args:
         request: 생성 요청 (target, topic)
+        background_tasks: FastAPI BackgroundTasks
         current_user: 현재 로그인한 사용자 (인증 필수)
         db: Database session
     
     Returns:
-        생성 결과 (scenario_id, status, image_count, folder_name)
+        즉시 응답 (status: "processing")
     
     Example:
         POST /api/service/relation-training/generate-scenario
@@ -171,25 +173,37 @@ async def generate_scenario(
         }
     
     Note:
-        - 이미지 생성은 시간이 걸립니다 (8~34분)
+        - 시나리오 생성은 백그라운드에서 진행됩니다 (20-30초 소요)
+        - 생성 완료 후 시나리오 목록을 새로고침하면 확인할 수 있습니다
         - USE_SKIP_IMAGES=true 설정 시 이미지 생성 스킵
     """
-    try:
-        # Create Deep Agent service
-        service = DeepAgentService(db)
-        
-        # Run pipeline
-        result = await service.generate_scenario(request, current_user.ID)
-        
-        return GenerateScenarioResponse(**result)
-        
-    except Exception as e:
-        import traceback
-        traceback.print_exc()
-        raise HTTPException(
-            status_code=500,
-            detail=f"시나리오 생성 실패: {str(e)}"
-        )
+    # 백그라운드 태스크로 시나리오 생성 실행
+    async def create_scenario_task():
+        try:
+            # 새로운 DB 세션 생성 (백그라운드 태스크용)
+            from app.database import SessionLocal
+            bg_db = SessionLocal()
+            try:
+                service = DeepAgentService(bg_db)
+                await service.generate_scenario(request, current_user.ID)
+            finally:
+                bg_db.close()
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            print(f"[Background Task] 시나리오 생성 실패: {str(e)}")
+    
+    # 백그라운드 태스크 추가
+    background_tasks.add_task(create_scenario_task)
+    
+    # 즉시 응답 반환
+    return GenerateScenarioResponse(
+        scenario_id=0,  # 아직 생성 중이므로 0
+        status="processing",
+        image_count=0,
+        folder_name="",
+        message="시나리오 생성이 시작되었습니다. 잠시 후 목록을 새로고침해주세요."
+    )
 
 
 @router.get("/images/{scenario_name}/{filename}")

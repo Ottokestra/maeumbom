@@ -78,3 +78,16 @@ class TrainingScenario with _$TrainingScenario {
 
  factory TrainingScenario.fromJson(Map<String, dynamic> json) => _$TrainingScenarioFromJson(json);
 }
+
+@freezed
+class GenerateScenarioResponse with _$GenerateScenarioResponse {
+  const factory GenerateScenarioResponse({
+    @JsonKey(name: 'scenario_id') required int scenarioId,
+    required String status,
+    @JsonKey(name: 'image_count') required int imageCount,
+    @JsonKey(name: 'folder_name') required String folderName,
+    String? message,
+  }) = _GenerateScenarioResponse;
+
+  factory GenerateScenarioResponse.fromJson(Map<String, dynamic> json) => _$GenerateScenarioResponseFromJson(json);
+}

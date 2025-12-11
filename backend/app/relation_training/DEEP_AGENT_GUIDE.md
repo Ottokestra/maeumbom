@@ -2,11 +2,12 @@
 
 ## 개요
 
-Deep Agent Pipeline은 사용자 입력을 받아 Gemini API로 시나리오를 생성하고, FLUX.1-schnell로 17장의 이미지를 자동 생성하는 완전 자동화 파이프라인입니다.
+Deep Agent Pipeline은 사용자 입력을 받아 Gemini API로 시나리오를 생성하고, Gemini 2.5 Flash로 17장의 이미지를 자동 생성하는 완전 자동화 파이프라인입니다.
 
-**최신 업데이트 (2025-12-09)**:
-- Qwen 2.5 14B 모델 제거
-- Gemini로 시나리오 생성 전환 (scenario_architect.md 하나로 전체 시나리오 한 번에 생성)
+**최신 업데이트 (2025-12-11)**:
+- FLUX.1-schnell 로컬 모델 제거
+- Gemini 2.5 Flash로 이미지 생성 전환 (빠르고 저렴)
+- 시나리오 생성은 Gemini 2.5 Flash 사용 (scenario_architect.md)
 - 오케스트레이션은 GPT-4o-mini 계속 사용 (프롬프트 준비, 검증, 파싱)
 
 ## 환경 변수 설정
@@ -20,64 +21,42 @@ Deep Agent Pipeline은 사용자 입력을 받아 Gemini API로 시나리오를 
 
 # 이미지 생성 제어
 USE_SKIP_IMAGES=true       # 개발 모드: 이미지 생성 스킵 (NULL 저장)
-USE_AMD_GPU=false          # AMD Radeon GPU 사용 (노트북)
-USE_NVIDIA_GPU=false       # NVIDIA GPU 사용 (학원 컴퓨터)
+                           # false로 변경하면 Gemini 2.5 Flash로 이미지 생성
 
 # 성능 설정
 MAX_PARALLEL_IMAGE_GENERATION=4    # 동시 생성 이미지 수 (1~8)
-IMAGE_GENERATION_TIMEOUT=300       # 타임아웃 (초)
 
 # OpenAI API (Orchestration - 이미 설정되어 있어야 함)
 OPENAI_API_KEY=sk-xxxxxxxxxxxxx
 OPENAI_MODEL_NAME=gpt-4o-mini
 
-# Gemini API (Scenario Generation)
-SCENARIO_GENERATION_MODEL_NAME=gemini-1.5-pro
+# Gemini API (Scenario Generation + Image Generation)
+SCENARIO_GENERATION_MODEL_NAME=gemini-2.5-flash
+IMAGE_GENERATION_MODEL_NAME=gemini-2.5-flash-image
 GEMINI_API_KEY=your_gemini_api_key_here
 ```
 
-## 패키지 설치 (중요!)
+## 패키지 설치
 
-### ⚠️ PyTorch 설치 주의사항
-
-**이 프로젝트는 TTS(Text-to-Speech) 기능에서도 PyTorch를 사용합니다!**
-
-- `backend/engine/text-to-speech/` 모듈이 PyTorch에 의존
-- Deep Agent뿐만 아니라 **TTS 기능도 PyTorch 필요**
-- **절대로 PyTorch를 제거하지 마세요!**
-
-### Windows 환경 (권장)
+### 필수 패키지
 
 ```bash
-# 1. 표준 PyTorch 설치 (CPU 버전, TTS + Deep Agent 모두 지원)
-pip install torch torchvision torchaudio
+# Gemini API
+pip install google-generativeai
 
-# 2. Deep Agent 추가 의존성
-pip install diffusers transformers accelerate tenacity pillow
+# 기타 의존성
+pip install tenacity pillow
 ```
 
 **특징:**
-- ✅ Windows에서 안정적으로 작동
-- ✅ TTS 기능 사용 가능
-- ✅ Deep Agent 개발 가능 (`USE_SKIP_IMAGES=true`로)
-- ✅ 학원 NVIDIA GPU에서도 동일한 코드로 작동
+- ✅ 로컬 GPU 불필요 (API 호출)
+- ✅ 빠른 이미지 생성 (초당 1-2장)
+- ✅ 저렴한 비용
+- ✅ 한글 프롬프트 지원
 
-**주의:**
-- ⚠️ ROCm (AMD GPU 지원)은 Windows에서 지원되지 않음
-- ⚠️ Windows에서 AMD GPU를 사용하려면 DirectML 필요 (복잡, 비권장)
-
-### Linux 환경 (AMD GPU) - 고급 사용자용
-
-```bash
-# ROCm 지원 PyTorch (AMD GPU 전용, Linux만 지원)
-pip uninstall torch torchvision torchaudio -y
-pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/rocm6.0
-
-# Deep Agent 추가 의존성
-pip install diffusers transformers accelerate tenacity pillow
-```
-
-**주의:** Windows에서는 작동하지 않습니다!
+**참고:**
+- PyTorch는 TTS 기능에서만 사용됩니다
+- diffusers, transformers는 더 이상 필요하지 않습니다
 
 ### Linux/Windows 환경 (NVIDIA GPU)
 
@@ -110,18 +89,17 @@ USE_NVIDIA_GPU=false
 - Windows 노트북 (CPU 모드)
 - 표준 PyTorch 설치
 
-### Phase 2: 프로덕션 (NVIDIA GPU) - 학원 컴퓨터
+### Phase 2: 프로덕션 (이미지 생성 활성화)
 
 ```bash
 USE_SKIP_IMAGES=false
-USE_AMD_GPU=false
-USE_NVIDIA_GPU=true
 ```
 
 **특징:**
-- NVIDIA GPU로 빠른 이미지 생성
-- 17장 생성 시간: 약 2~5분
-- 학원 컴퓨터 등 고성능 GPU 환경
+- Gemini 2.5 Flash Image API로 이미지 생성
+- 17장 생성 시간: 약 17-34초 (초당 1-2장)
+- 로컬 GPU 불필요, API 호출로 처리
+- 저렴한 비용 (~$0.17/시나리오)
 
 ## API 사용법
 
@@ -132,8 +110,8 @@ USE_NVIDIA_GPU=true
 **Request:**
 ```json
 {
-  "target": "HUSBAND",
-  "topic": "남편이 밥투정을 합니다"
+  "target": "HUSBAND",  # HUSBAND, CHILD, FRIEND, COLLEAGUE
+  "topic": "매일 늦게 들어오는 남편"
 }
 ```
 
@@ -143,16 +121,21 @@ Authorization: Bearer {access_token}
 Content-Type: application/json
 ```
 
-**Response:**
+**Response (비동기 처리):**
 ```json
 {
-  "scenario_id": 123,
-  "status": "completed",
-  "image_count": 17,
-  "folder_name": "husband_20231215_143022",
-  "message": "시나리오와 이미지가 성공적으로 생성되었습니다."
+  "scenario_id": 0,
+  "status": "processing",
+  "image_count": 0,
+  "folder_name": "",
+  "message": "시나리오 생성이 시작되었습니다. 잠시 후 목록을 새로고침해주세요."
 }
 ```
+
+**참고:**
+- 시나리오 생성은 백그라운드에서 비동기로 처리됩니다 (약 20-30초 소요)
+- 생성 완료 후 시나리오 목록을 새로고침하면 생성된 시나리오를 확인할 수 있습니다
+- 프론트엔드 UI에서 설정 아이콘을 통해 시나리오를 생성할 수 있습니다
 
 ### 2. 생성된 시나리오 확인
 
