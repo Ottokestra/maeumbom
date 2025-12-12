@@ -14,7 +14,7 @@ class TopBar extends StatelessWidget implements PreferredSizeWidget {
     this.onTapLeft,
     this.onTapRight,
     this.height = 60,
-    this.backgroundColor = AppColors.pureWhite,
+    this.backgroundColor = AppColors.basicColor,
     this.foregroundColor = AppColors.textPrimary,
   });
 

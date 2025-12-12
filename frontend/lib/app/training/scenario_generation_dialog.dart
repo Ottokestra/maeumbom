@@ -150,7 +150,7 @@ class _ScenarioGenerationDialogState extends State<ScenarioGenerationDialog> {
                         _selectedTarget = selected ? 'AUTO' : null;
                       });
                     },
-                    selectedColor: AppColors.accentRed,
+                    selectedColor: AppColors.primaryColor,
                     labelStyle: TextStyle(
                       color: _selectedTarget == 'AUTO' ? Colors.white : AppColors.textPrimary,
                     ),
@@ -166,7 +166,7 @@ class _ScenarioGenerationDialogState extends State<ScenarioGenerationDialog> {
                         _selectedTarget = selected ? entry.key : null;
                       });
                     },
-                    selectedColor: AppColors.accentRed,
+                    selectedColor: AppColors.primaryColor,
                     labelStyle: TextStyle(
                       color: isSelected ? Colors.white : AppColors.textPrimary,
                     ),
@@ -198,7 +198,7 @@ class _ScenarioGenerationDialogState extends State<ScenarioGenerationDialog> {
                       }
                     });
                   },
-                  selectedColor: AppColors.accentRed,
+                  selectedColor: AppColors.primaryColor,
                   labelStyle: TextStyle(
                     color: isSelected ? Colors.white : AppColors.textPrimary,
                   ),
@@ -226,7 +226,7 @@ class _ScenarioGenerationDialogState extends State<ScenarioGenerationDialog> {
                         _selectedGenre = selected ? entry.key : null;
                       });
                     },
-                    selectedColor: AppColors.accentRed,
+                    selectedColor: AppColors.primaryColor,
                     labelStyle: TextStyle(
                       color: isSelected ? Colors.white : AppColors.textPrimary,
                     ),

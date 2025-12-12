@@ -15,10 +15,12 @@ class HomeScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    const statusBarStyle = SystemUiOverlayStyle.light;
+
     return AppFrame(
       topBar: null,
       useSafeArea: false,
-      statusBarStyle: SystemUiOverlayStyle.light, // 흰색 상태 바 아이콘
+      statusBarStyle: statusBarStyle,
       body: const HomeContent(),
     );
   }
@@ -60,11 +62,11 @@ class _HomeContentState extends ConsumerState<HomeContent> {
   void _showMoodCheckDialog() {
     MessageDialogHelper.showRedConfirm(
       context,
-      icon: Icons.sentiment_satisfied_rounded,
+      icon: Icons.favorite_rounded,
       title: '오늘의 기분은 어떠신가요?',
-      message: '아직 오늘의 감정 캐릭터를 \n선택하지 않으셨어요.\n지금 기록하러 가볼까요?',
+      message: '아직 오늘의 감정 캐릭터를 선택하지 않으셨어요.\n지금 기록하러 가볼까요?',
       primaryButtonText: '기록하기',
-      secondaryButtonText: '나중에 할게',
+      secondaryButtonText: '나중에',
       onPrimaryPressed: () {
         Navigator.pop(context);
         Navigator.push(
@@ -74,9 +76,7 @@ class _HomeContentState extends ConsumerState<HomeContent> {
           ),
         );
       },
-      onSecondaryPressed: () {
-        Navigator.pop(context);
-      },
+      onSecondaryPressed: () => Navigator.pop(context),
     );
   }
 
@@ -147,11 +147,11 @@ class _HomeContentState extends ConsumerState<HomeContent> {
   Color _getBackgroundColor(MoodCategory category) {
     switch (category) {
       case MoodCategory.good:
-        return AppColors.homeGoodYellow;
+        return AppColors.moodGoodColor;
       case MoodCategory.neutral:
-        return AppColors.homeNormalGreen;
+        return AppColors.moodNormalColor;
       case MoodCategory.bad:
-        return AppColors.homeBadBlue;
+        return AppColors.moodNormalColor; // 디자인 가이드/사용자 요청에 따라 변경
     }
   }
 }

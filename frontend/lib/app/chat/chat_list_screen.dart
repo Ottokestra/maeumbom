@@ -134,7 +134,7 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen> {
         margin: const EdgeInsets.only(bottom: AppSpacing.sm),
         padding: const EdgeInsets.all(AppSpacing.md),
         decoration: BoxDecoration(
-          color: AppColors.pureWhite,
+          color: AppColors.basicColor,
           borderRadius: BorderRadius.circular(AppRadius.md),
           border: Border.all(color: AppColors.borderLight),
         ),

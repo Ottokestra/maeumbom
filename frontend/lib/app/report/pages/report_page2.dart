@@ -73,13 +73,13 @@ class ReportPage2 extends StatelessWidget {
                   vertical: 4,
                 ),
                 decoration: BoxDecoration(
-                  color: AppColors.accentRed,
+                  color: AppColors.primaryColor,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
                   'Chapter 2',
                   style: AppTypography.caption.copyWith(
-                    color: AppColors.pureWhite,
+                    color: AppColors.basicColor,
                     fontWeight: FontWeight.w700,
                     fontSize: 9,
                   ),
@@ -115,7 +115,7 @@ class ReportPage2 extends StatelessWidget {
               Text(
                 '$collectedCount/7',
                 style: AppTypography.body.copyWith(
-                  color: AppColors.natureGreen,
+                  color: AppColors.secondaryColor,
                   fontWeight: FontWeight.w700,
                 ),
               ),
@@ -133,7 +133,7 @@ class ReportPage2 extends StatelessWidget {
                     widthFactor: progress,
                     child: Container(
                       decoration: BoxDecoration(
-                        color: AppColors.natureGreen,
+                        color: AppColors.secondaryColor,
                         borderRadius: BorderRadius.circular(6),
                       ),
                     ),
@@ -189,12 +189,12 @@ class ReportPage2 extends StatelessWidget {
             height: 100,
             decoration: BoxDecoration(
               color: emotion.isCollected
-                  ? AppColors.natureGreen.withOpacity(0.1)
+                  ? AppColors.secondaryColor.withOpacity(0.1)
                   : AppColors.borderLight.withOpacity(0.3),
               shape: BoxShape.circle,
               border: Border.all(
                 color: emotion.isCollected
-                    ? AppColors.natureGreen
+                    ? AppColors.secondaryColor
                     : AppColors.borderLight,
                 width: 2,
               ),
@@ -219,10 +219,10 @@ class ReportPage2 extends StatelessWidget {
                       width: 28,
                       height: 28,
                       decoration: BoxDecoration(
-                        color: AppColors.natureGreen,
+                        color: AppColors.secondaryColor,
                         shape: BoxShape.circle,
                         border: Border.all(
-                          color: AppColors.pureWhite,
+                          color: AppColors.basicColor,
                           width: 2,
                         ),
                       ),
@@ -246,13 +246,13 @@ class ReportPage2 extends StatelessWidget {
                         color: AppColors.borderLight,
                         shape: BoxShape.circle,
                         border: Border.all(
-                          color: AppColors.pureWhite,
+                          color: AppColors.basicColor,
                           width: 2,
                         ),
                       ),
                       child: Icon(
                         Icons.check,
-                        color: AppColors.pureWhite,
+                        color: AppColors.basicColor,
                         size: 16,
                       ),
                     ),

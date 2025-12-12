@@ -226,7 +226,7 @@ class _SlangQuizGameScreenState extends ConsumerState<SlangQuizGameScreen> {
           children: [
             Text(
               '획득 점수: $earnedScore점',
-              style: AppTypography.h2.copyWith(color: AppColors.accentRed),
+              style: AppTypography.h2.copyWith(color: AppColors.primaryColor),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: AppSpacing.sm),
@@ -330,12 +330,12 @@ class _SlangQuizGameScreenState extends ConsumerState<SlangQuizGameScreen> {
                     ),
                     decoration: BoxDecoration(
                       color: isSelected
-                          ? AppColors.accentRed.withOpacity(0.1)
+                          ? AppColors.primaryColor.withOpacity(0.1)
                           : Colors.white,
                       borderRadius: BorderRadius.circular(AppRadius.md),
                       border: Border.all(
                         color: isSelected
-                            ? AppColors.accentRed
+                            ? AppColors.primaryColor
                             : AppColors.borderLight,
                         width: isSelected ? 2 : 1,
                       ),

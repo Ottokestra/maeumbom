@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:frontend/ui/tokens/app_tokens.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/daily_mood_provider.dart';
@@ -9,9 +10,9 @@ import '../characters/app_characters.dart';
 /// 더보기 메뉴 BottomSheet
 ///
 /// 네비게이션 단순화를 위해 부가 기능들을 모아둔 더보기 메뉴입니다.
-/// - 알람 설정
-/// - 리포트 보기
-/// - 마이페이지
+/// - 홈
+/// - 마음서랍
+/// - 마음연습실
 /// - 설정
 /// - 도움말
 ///
@@ -75,32 +76,27 @@ class MoreMenuSheet extends ConsumerWidget {
 
     final menuItems = [
       _MenuItemData(
-        icon: Icons.alarm,
-        title: '똑똑 알람',
+        iconAsset: 'assets/images/icons/icon-home.svg',
+        title: '홈',
+        onTap: () => _navigateToHome(context),
+      ),
+      _MenuItemData(
+        iconAsset: 'assets/images/icons/icon-report.svg',
+        title: '마음서랍',
         onTap: () => _navigateToAlarm(context),
       ),
       _MenuItemData(
-        icon: Icons.bar_chart,
+        iconAsset: 'assets/images/icons/icon-apps.svg',
         title: '마음연습실',
         onTap: () => _navigateToTraining(context),
       ),
       _MenuItemData(
-        icon: Icons.assessment,
-        title: '마음리포트',
-        onTap: () => _navigateToReport(context),
-      ),
-      _MenuItemData(
-        icon: Icons.person,
-        title: '마이페이지',
-        onTap: () => _navigateToMyPage(context),
-      ),
-      _MenuItemData(
-        icon: Icons.settings,
+        iconAsset: 'assets/images/icons/icon-settings.svg',
         title: '설정',
         onTap: () => _navigateToSettings(context),
       ),
       _MenuItemData(
-        icon: Icons.help,
+        iconAsset: 'assets/images/icons/icon-message.svg',
         title: '도움말',
         onTap: () => _navigateToHelp(context),
       ),
@@ -118,6 +114,7 @@ class MoreMenuSheet extends ConsumerWidget {
               children: [
                 ...menuItems.map((item) => _buildListMenuItem(
                       icon: item.icon,
+                      iconAsset: item.iconAsset,
                       title: item.title,
                       onTap: item.onTap,
                       moodCategory: moodCategory,
@@ -143,7 +140,7 @@ class MoreMenuSheet extends ConsumerWidget {
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        color: AppColors.accentRed,
+        color: AppColors.primaryColor,
         borderRadius: const BorderRadius.only(
           topLeft: Radius.circular(AppRadius.lg),
         ),
@@ -234,7 +231,8 @@ class MoreMenuSheet extends ConsumerWidget {
 
   /// 리스트 메뉴 항목 빌더
   Widget _buildListMenuItem({
-    required IconData icon,
+    IconData? icon,
+    String? iconAsset,
     required String title,
     required VoidCallback onTap,
     required MoodCategory moodCategory,
@@ -256,11 +254,26 @@ class MoreMenuSheet extends ConsumerWidget {
         ),
         child: Row(
           children: [
-            Icon(
-              icon,
-              color: AppColors.accentRed,
-              size: 24,
-            ),
+            // 아이콘 (우선순위: SVG > Icon)
+            if (iconAsset != null)
+              SizedBox(
+                width: 28,
+                height: 28,
+                child: SvgPicture.asset(
+                  iconAsset,
+                  fit: BoxFit.contain,
+                  colorFilter: const ColorFilter.mode(
+                    AppColors.primaryColor,
+                    BlendMode.srcIn,
+                  ),
+                ),
+              )
+            else if (icon != null)
+              Icon(
+                icon,
+                color: AppColors.primaryColor,
+                size: 22,
+              ),
             const SizedBox(width: AppSpacing.md),
             Expanded(
               child: Text(
@@ -284,6 +297,11 @@ class MoreMenuSheet extends ConsumerWidget {
   }
 
   // ============ Navigation Methods ============
+
+  static void _navigateToHome(BuildContext context) {
+    Navigator.pop(context);
+    Navigator.pushNamed(context, '/home');
+  }
 
   static void _navigateToAlarm(BuildContext context) {
     Navigator.pop(context);
@@ -324,12 +342,14 @@ class MoreMenuSheet extends ConsumerWidget {
 
 /// 메뉴 항목 데이터 모델
 class _MenuItemData {
-  final IconData icon;
+  final IconData? icon;
+  final String? iconAsset;
   final String title;
   final VoidCallback onTap;
 
   const _MenuItemData({
-    required this.icon,
+    this.icon,
+    this.iconAsset,
     required this.title,
     required this.onTap,
   });

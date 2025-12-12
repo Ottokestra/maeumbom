@@ -33,15 +33,15 @@ class ProcessIndicator extends StatelessWidget {
   Color _getIconColor() {
     switch (currentStep) {
       case ProcessStep.preparation:
-        return AppColors.accentRed; // 준비 중 - 빨간색
+        return AppColors.primaryColor; // 준비 중 - 빨간색
       case ProcessStep.input:
-        return AppColors.accentRed; // 입력 중 - 빨간색
+        return AppColors.primaryColor; // 입력 중 - 빨간색
       case ProcessStep.analysis:
         return Colors.orangeAccent; // 분석 중 - 주황색
       case ProcessStep.completion:
         return Colors.green; // 완료 - 초록색
       case ProcessStep.standby:
-        return AppColors.accentRed;
+        return AppColors.primaryColor;
     }
   }
 
@@ -164,7 +164,7 @@ class ProcessIndicator extends StatelessWidget {
 class _TypingIndicator extends StatefulWidget {
   final Color color;
 
-  const _TypingIndicator({this.color = AppColors.accentRed});
+  const _TypingIndicator({this.color = AppColors.primaryColor});
 
   @override
   State<_TypingIndicator> createState() => _TypingIndicatorState();
@@ -240,7 +240,7 @@ class _TypingIndicatorState extends State<_TypingIndicator>
 class _WaveformIndicator extends StatefulWidget {
   final Color color;
 
-  const _WaveformIndicator({this.color = AppColors.accentRed});
+  const _WaveformIndicator({this.color = AppColors.primaryColor});
 
   @override
   State<_WaveformIndicator> createState() => _WaveformIndicatorState();

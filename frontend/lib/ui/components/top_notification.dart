@@ -50,7 +50,7 @@ class TopNotification extends StatelessWidget {
               child: Text(
                 message,
                 style: AppTypography.body.copyWith(
-                  color: AppColors.pureWhite,
+                  color: AppColors.basicColor,
                 ),
               ),
             ),
@@ -60,7 +60,7 @@ class TopNotification extends StatelessWidget {
                 child: Text(
                   actionLabel!,
                   style: AppTypography.body.copyWith(
-                    color: AppColors.pureWhite,
+                    color: AppColors.basicColor,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -74,9 +74,9 @@ class TopNotification extends StatelessWidget {
   Color _getBackgroundColor() {
     switch (type) {
       case TopNotificationType.red:
-        return AppColors.accentRed;
+        return AppColors.primaryColor;
       case TopNotificationType.green:
-        return AppColors.natureGreen;
+        return AppColors.secondaryColor;
     }
   }
 }

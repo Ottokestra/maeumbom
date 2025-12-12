@@ -64,11 +64,11 @@ class _SummaryBubbleTile extends StatelessWidget {
     final alignment =
         isUser ? MainAxisAlignment.start : MainAxisAlignment.end;
     final bubbleColor = isUser
-        ? AppColors.pureWhite
-        : AppColors.accentRed.withOpacity(0.08);
+        ? AppColors.basicColor
+        : AppColors.primaryColor.withOpacity(0.08);
     final borderColor = isUser
         ? AppColors.borderLight
-        : AppColors.accentRed.withOpacity(0.2);
+        : AppColors.primaryColor.withOpacity(0.2);
 
     return Row(
       mainAxisAlignment: alignment,
@@ -94,7 +94,7 @@ class _SummaryBubbleTile extends StatelessWidget {
               border: Border.all(color: borderColor),
               boxShadow: const [
                 BoxShadow(
-                  color: AppColors.accentRedShadow,
+                  color: AppColors.primaryColorShadow,
                   blurRadius: 6,
                   offset: Offset(0, 2),
                 ),

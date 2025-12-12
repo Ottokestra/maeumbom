@@ -53,7 +53,7 @@ class DailyMoodCheckWidget extends ConsumerWidget {
               Text(
                 emotionMetaMap[dailyState.selectedEmotion!]!.nameKo,
                 style: AppTypography.body.copyWith(
-                  color: AppColors.natureGreen,
+                  color: AppColors.secondaryColor,
                   fontWeight: FontWeight.bold,
                 ),
               ),

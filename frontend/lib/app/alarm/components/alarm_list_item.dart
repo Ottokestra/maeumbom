@@ -62,7 +62,7 @@ class AlarmListItem extends StatelessWidget {
         ),
         child: const Icon(
           Icons.delete,
-          color: AppColors.pureWhite,
+          color: AppColors.basicColor,
           size: 28,
         ),
       ),
@@ -73,7 +73,7 @@ class AlarmListItem extends StatelessWidget {
           vertical: AppSpacing.sm,
         ),
         decoration: BoxDecoration(
-          color: AppColors.pureWhite,
+          color: AppColors.basicColor,
           borderRadius: BorderRadius.circular(AppRadius.md),
           border: Border.all(
             color: AppColors.borderLight,
