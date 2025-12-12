@@ -1,0 +1,478 @@
+{
+  "scenario": {
+    "title": "자식이 집을 나가겠다고 하는데, 난 어떻게 해야 할까?",
+    "target_type": "CHILD",
+    "category": "TRAINING",
+    "start_image_url": "/api/service/relation-training/images/child_leaving_home/start.png"
+  },
+  "character_design": {
+    "protagonist_visual": "Korean woman, 50s-60s, with short, neatly styled brown hair, wearing a comfortable but elegant knit sweater and glasses, looking a bit worried.",
+    "target_visual": "Korean man, late 20s-early 30s, the protagonist's son, with short, modern hairstyle, wearing casual clothes (hoodie or t-shirt), looking frustrated and agitated."
+  },
+  "nodes": [
+    {
+      "id": "node_1",
+      "step_level": 1,
+      "text": "아들이 저녁 식탁에서 밥을 먹다 말고 숟가락을 툭 내려놓습니다. 얼굴에는 짜증이 가득하고, 한숨을 크게 쉬더니 퉁명스럽게 말합니다.\n\n\"엄마, 나 다음 달부터 독립할게. 더 이상 여기서 못 살겠어.\"",
+      "image_url": ""
+    },
+    {
+      "id": "node_2_a",
+      "step_level": 2,
+      "text": "(당신은 아들의 단호함에 가슴이 철렁 내려앉습니다.) 아들은 당신의 표정을 보더니 미간을 찌푸리며 목소리를 높입니다.\n\n\"왜? 뭐가 문제인데? 내가 알아서 할 일인데 엄마가 걱정할 거 없어!\"",
+      "image_url": ""
+    },
+    {
+      "id": "node_2_b",
+      "step_level": 2,
+      "text": "(당신이 아들의 말에 서운함과 함께 화가 치밀어 오릅니다.) 아들은 당신의 싸늘한 시선을 느끼자마자 눈을 부라리며 따지듯 말합니다.\n\n\"엄마는 내가 뭘 하든 다 불만이지? 내가 평생 엄마 옆에 붙어 살아야 속이 시원하겠어?\"",
+      "image_url": ""
+    },
+    {
+      "id": "node_3_aa",
+      "step_level": 3,
+      "text": "아들은 팔짱을 끼고 벽에 기대서더니 당신의 걱정하는 말에 코웃음을 칩니다. 고개를 절레절레 흔들며 한심하다는 듯 말합니다.\n\n\"내가 애도 아니고, 내 결정인데 뭘 그렇게 자꾸 캐물어? 그냥 내버려 둬!\"",
+      "image_url": ""
+    },
+    {
+      "id": "node_3_ab",
+      "step_level": 3,
+      "text": "아들은 잠시 멈칫하더니, 여전히 얼굴에는 불만이 가득한 채로 휴대폰을 만지작거립니다. 낮은 목소리로 투덜거립니다.\n\n\"그냥 답답해서 그래. 엄마랑 같이 있으면 너무 숨 막혀. 잔소리도 싫고...\"",
+      "image_url": ""
+    },
+    {
+      "id": "node_3_ba",
+      "step_level": 3,
+      "text": "아들은 당신의 단호한 말에 잠시 굳어 있다가, 이내 얼굴이 새빨개지며 손가락으로 당신을 가리킵니다. 격앙된 목소리로 소리칩니다.\n\n\"내가 뭘 잘못했다고 그래? 엄마가 맨날 나한테 이래라저래라 하니까 내가 이렇게 된 거 아니야!\"",
+      "image_url": ""
+    },
+    {
+      "id": "node_3_bb",
+      "step_level": 3,
+      "text": "아들은 당신의 사과에 오히려 더 화가 난 듯 씩씩거립니다. 거친 숨을 몰아쉬며, 분노에 찬 눈빛으로 당신을 노려봅니다.\n\n\"이제 와서 미안하다는 소리가 나와? 엄마가 나한테 한 게 얼만데!\"",
+      "image_url": ""
+    },
+    {
+      "id": "node_4_aaa",
+      "step_level": 4,
+      "text": "아들은 당신의 단호한 태도에 잠시 주춤하더니, 이내 한숨을 푹 쉬며 휴대폰을 거칠게 만집니다. 고개를 돌려버리며 짜증스럽게 중얼거립니다.\n\n\"됐어, 엄마랑은 말이 안 통해. 그냥 내가 알아서 할게.\"",
+      "image_url": ""
+    },
+    {
+      "id": "node_4_aab",
+      "step_level": 4,
+      "text": "아들은 잠시 표정이 풀리는 듯했지만, 이내 다시 굳어지며 눈을 피합니다. 불안한 듯 손톱을 물어뜯으며 작은 목소리로 말합니다.\n\n\"나도 엄마한테 이렇게 말하고 싶지는 않았는데... 너무 답답해서 그랬어.\"",
+      "image_url": ""
+    },
+    {
+      "id": "node_4_aba",
+      "step_level": 4,
+      "text": "아들은 당신의 차분한 질문에 잠시 고민하더니, 어깨를 으쓱하며 건성으로 대답합니다. 시선을 다른 곳으로 돌리며 퉁명스럽게 말합니다.\n\n\"그냥 독립하고 싶어서 그래. 특별한 이유는 없고. 이제 다 컸으니까.\"",
+      "image_url": ""
+    },
+    {
+      "id": "node_4_abb",
+      "step_level": 4,
+      "text": "아들은 당신의 따뜻한 말에 잠시 눈을 깜빡이더니, 입술을 꾹 다뭅니다. 이내 고개를 숙이며 마지못해 작은 목소리로 속마음을 털어놓습니다.\n\n\"사실... 회사 일이 너무 힘들어서 혼자 있고 싶어. 엄마 잔소리 들을 힘도 없어.\"",
+      "image_url": ""
+    },
+    {
+      "id": "node_4_baa",
+      "step_level": 4,
+      "text": "아들은 당신의 서운하다는 말에 잠시 움찔하더니, 불쾌한 표정을 지으며 자리에서 벌떡 일어섭니다. 씩씩거리며 방으로 들어가 버립니다.\n\n\"엄마는 왜 맨날 피해자 코스프레야? 내가 뭘 했다고!\"",
+      "image_url": ""
+    },
+    {
+      "id": "node_4_bab",
+      "step_level": 4,
+      "text": "아들은 당신의 진솔한 말에 고개를 숙이고 잠시 침묵합니다. 이내 깊은 한숨을 쉬며 얼굴을 쓸어내리더니, 지친 목소리로 말합니다.\n\n\"미안해 엄마. 나도 좀 예민했어. 그냥... 아무한테도 말 못 할 고민이 좀 있어서.\"",
+      "image_url": ""
+    },
+    {
+      "id": "node_4_bba",
+      "step_level": 4,
+      "text": "아들은 당신의 부드러운 반응에도 불구하고 분노를 주체하지 못하는 듯합니다. 식탁을 손으로 '쾅' 치더니 당신을 노려보며 쏘아붙입니다.\n\n\"엄마가 나한테 뭘 해줬는데? 맨날 간섭만 했잖아! 내 인생에서 좀 빠져!\"",
+      "image_url": ""
+    },
+    {
+      "id": "node_4_bbb",
+      "step_level": 4,
+      "text": "아들은 당신의 자책에 오히려 더 불만을 터뜨립니다. 휴대폰을 집어 던지듯 놓더니 신경질적으로 소리칩니다.\n\n\"엄마가 뭘 잘못했는지 알기는 알아? 내가 뭘 그렇게 잘못했는데 맨날 엄마 뜻대로 해야 해?\"",
+      "image_url": ""
+    }
+  ],
+  "options": [
+    {
+      "from_node_id": "node_1",
+      "option_code": "A",
+      "text": "\"갑자기 그게 무슨 말이니? 엄마는 너한테 뭘 서운하게 했니?\" 하고 단호하게 묻는다.",
+      "to_node_id": "node_2_a",
+      "result_code": null
+    },
+    {
+      "from_node_id": "node_1",
+      "option_code": "B",
+      "text": "\"무슨 일 있니? 엄마한테 말해 봐. 어디 불편한 데라도 있는 거야?\" 하고 걱정스럽게 묻는다.",
+      "to_node_id": "node_2_b",
+      "result_code": null
+    },
+    {
+      "from_node_id": "node_2_a",
+      "option_code": "A",
+      "text": "\"네 말투가 너무 듣기 거북하다. 엄마한테 그렇게 말하는 거 아니야.\" 하고 기분 상한 표정으로 말한다.",
+      "to_node_id": "node_3_aa",
+      "result_code": null
+    },
+    {
+      "from_node_id": "node_2_a",
+      "option_code": "B",
+      "text": "\"알겠다. 그럼 네가 독립하고 싶은 이유를 차분히 설명해 줄 수 있겠니?\" 하고 침착하게 대화를 시도한다.",
+      "to_node_id": "node_3_ab",
+      "result_code": null
+    },
+    {
+      "from_node_id": "node_2_b",
+      "option_code": "A",
+      "text": "\"네가 그렇게 말하면 엄마는 정말 서운하다. 난 단지 네가 걱정돼서 그런 건데.\" 하고 솔직한 감정을 표현한다.",
+      "to_node_id": "node_3_ba",
+      "result_code": null
+    },
+    {
+      "from_node_id": "node_2_b",
+      "option_code": "B",
+      "text": "\"미안하다. 엄마가 너무 오지랖을 부렸나 보네. 네 마음이 그렇게 답답했구나.\" 하고 사과하며 아들을 이해하려 한다.",
+      "to_node_id": "node_3_bb",
+      "result_code": null
+    },
+    {
+      "from_node_id": "node_3_aa",
+      "option_code": "A",
+      "text": "\"엄마가 자꾸 캐묻는 게 아니라, 네가 일방적으로 통보하는 태도가 문제인 거야.\" 하고 단호하게 지적한다.",
+      "to_node_id": "node_4_aaa",
+      "result_code": null
+    },
+    {
+      "from_node_id": "node_3_aa",
+      "option_code": "B",
+      "text": "\"그래, 알겠다. 그럼 나중에 네가 편할 때 다시 이야기하자.\" 하고 일단 자리를 피한다.",
+      "to_node_id": "node_4_aab",
+      "result_code": null
+    },
+    {
+      "from_node_id": "node_3_ab",
+      "option_code": "A",
+      "text": "\"네가 숨 막힌다고 느꼈다니 엄마도 서운하다. 하지만 이건 중요한 문제니 진지하게 이야기해야 해.\" 하고 단호하게 말한다.",
+      "to_node_id": "node_4_aba",
+      "result_code": null
+    },
+    {
+      "from_node_id": "node_3_ab",
+      "option_code": "B",
+      "text": "\"엄마 때문에 네가 힘들었다니 미안하다. 네가 원하는 대로 해줄게.\" 하고 아들의 뜻을 따른다.",
+      "to_node_id": "node_4_abb",
+      "result_code": null
+    },
+    {
+      "from_node_id": "node_3_ba",
+      "option_code": "A",
+      "text": "\"엄마가 너한테 뭘 이래라저래라 했다는 거니? 네가 오해하는 부분이 있다면 말해봐.\" 하고 차분히 반박한다.",
+      "to_node_id": "node_4_baa",
+      "result_code": null
+    },
+    {
+      "from_node_id": "node_3_ba",
+      "option_code": "B",
+      "text": "\"네가 그렇게 느꼈다면 엄마가 미안하다. 하지만 엄마는 항상 네가 잘 되길 바랄 뿐이야.\" 하고 이해를 구한다.",
+      "to_node_id": "node_4_bab",
+      "result_code": null
+    },
+    {
+      "from_node_id": "node_3_bb",
+      "option_code": "A",
+      "text": "\"엄마가 뭘 잘못했는지 지금 당장은 모르겠다. 하지만 네 기분은 충분히 이해한다.\" 하고 솔직하게 말한다.",
+      "to_node_id": "node_4_bba",
+      "result_code": null
+    },
+    {
+      "from_node_id": "node_3_bb",
+      "option_code": "B",
+      "text": "\"그래, 엄마가 다 잘못했다. 네가 하고 싶은 대로 해라.\" 하고 체념한 듯 말한다.",
+      "to_node_id": "node_4_bbb",
+      "result_code": null
+    },
+    {
+      "from_node_id": "node_4_aaa",
+      "option_code": "A",
+      "text": "\"그래, 네가 알아서 해라. 하지만 집을 나가려면 최소한의 예의는 지켜야지.\" 하고 선을 긋는다.",
+      "to_node_id": null,
+      "result_code": "AAAA"
+    },
+    {
+      "from_node_id": "node_4_aaa",
+      "option_code": "B",
+      "text": "\"그래도 엄마는 네가 걱정된다. 혼자 살면 힘들 텐데...\" 하고 다시 걱정하는 마음을 드러낸다.",
+      "to_node_id": null,
+      "result_code": "AAAB"
+    },
+    {
+      "from_node_id": "node_4_aab",
+      "option_code": "A",
+      "text": "\"네가 말하기 싫으면 강요하지 않겠다. 하지만 독립은 신중해야 하는 문제야.\" 하고 침묵을 지킨다.",
+      "to_node_id": null,
+      "result_code": "AABA"
+    },
+    {
+      "from_node_id": "node_4_aab",
+      "option_code": "B",
+      "text": "\"혹시 무슨 힘든 일 있니? 엄마는 항상 네 편이란다.\" 하고 따뜻하게 위로한다.",
+      "to_node_id": null,
+      "result_code": "AABB"
+    },
+    {
+      "from_node_id": "node_4_aba",
+      "option_code": "A",
+      "text": "\"특별한 이유 없이 나간다는 건 무책임하다고 생각한다. 다시 한번 생각해보는 게 어떠니?\" 하고 충고한다.",
+      "to_node_id": null,
+      "result_code": "ABAA"
+    },
+    {
+      "from_node_id": "node_4_aba",
+      "option_code": "B",
+      "text": "\"그래, 다 컸으니 네가 알아서 할 일이지. 엄마가 너무 간섭했나 보다.\" 하고 수긍한다.",
+      "to_node_id": null,
+      "result_code": "ABAB"
+    },
+    {
+      "from_node_id": "node_4_abb",
+      "option_code": "A",
+      "text": "\"힘들었구나. 솔직하게 이야기해줘서 고맙다. 엄마가 어떻게 도와줄 수 있을까?\" 하고 위로와 지지를 보낸다.",
+      "to_node_id": null,
+      "result_code": "ABBA"
+    },
+    {
+      "from_node_id": "node_4_abb",
+      "option_code": "B",
+      "text": "\"미안하다. 엄마가 정말 몰랐네. 그럼 독립하고 싶은 대로 해. 다 엄마 탓이지.\" 하고 자책한다.",
+      "to_node_id": null,
+      "result_code": "ABBB"
+    },
+    {
+      "from_node_id": "node_4_baa",
+      "option_code": "A",
+      "text": "\"피해자 코스프레라니, 엄마도 감정이 있는 사람이다. 네 말을 그렇게 함부로 할 수 없어.\" 하고 강하게 맞선다.",
+      "to_node_id": null,
+      "result_code": "BAAA"
+    },
+    {
+      "from_node_id": "node_4_baa",
+      "option_code": "B",
+      "text": "(아들이 방으로 들어가 버리자) \"어휴, 내가 뭘 잘못했나...\" 하고 자책하며 한숨을 쉰다.",
+      "to_node_id": null,
+      "result_code": "BAAB"
+    },
+    {
+      "from_node_id": "node_4_bab",
+      "option_code": "A",
+      "text": "\"네가 힘든 일이 있다면 엄마한테 이야기해 줘. 엄마는 언제든 네 이야기를 들어줄 준비가 되어있어.\" 하고 다독인다.",
+      "to_node_id": null,
+      "result_code": "BABA"
+    },
+    {
+      "from_node_id": "node_4_bab",
+      "option_code": "B",
+      "text": "\"그래, 많이 힘들었겠구나. 엄마가 너무 몰랐네. 미안하다.\" 하고 계속 사과한다.",
+      "to_node_id": null,
+      "result_code": "BABB"
+    },
+    {
+      "from_node_id": "node_4_bba",
+      "option_code": "A",
+      "text": "\"엄마가 뭘 해줬냐니? 너를 키우고 사랑한 게 아무것도 아니니? 함부로 말하지 마.\" 하고 상처받은 감정을 표현한다.",
+      "to_node_id": null,
+      "result_code": "BBAA"
+    },
+    {
+      "from_node_id": "node_4_bba",
+      "option_code": "B",
+      "text": "\"그래, 엄마가 잘못했다. 네 말대로 모든 게 다 엄마 탓인 것 같구나.\" 하고 모든 비난을 받아들인다.",
+      "to_node_id": null,
+      "result_code": "BBAB"
+    },
+    {
+      "from_node_id": "node_4_bbb",
+      "option_code": "A",
+      "text": "\"엄마가 너의 뜻을 존중하지만, 네가 엄마에게 이렇게 화를 내는 건 옳지 않아.\" 하고 단호하게 말한다.",
+      "to_node_id": null,
+      "result_code": "BBBA"
+    },
+    {
+      "from_node_id": "node_4_bbb",
+      "option_code": "B",
+      "text": "\"그래, 엄마가 몰랐다. 네가 그렇게까지 힘들었을 줄은... 미안하다.\" 하고 또 다시 사과한다.",
+      "to_node_id": null,
+      "result_code": "BBBB"
+    }
+  ],
+  "results": [
+    {
+      "result_code": "AAAA",
+      "display_title": "선을 넘지 않는 단호함",
+      "analysis_text": "자식의 무례한 태도에 단호하게 선을 긋고 자신의 감정을 표현했습니다. 이는 자식에게 존중받아야 할 부모의 권위를 인지시키는 건강한 방식입니다. 당장은 서운해할 수 있지만, 장기적으로는 서로의 경계를 존중하는 관계로 발전할 가능성이 높습니다.",
+      "atmosphere_image_type": "FLOWER",
+      "relation_health_level": "GOOD",
+      "boundary_style": "HEALTHY_ASSERTIVE",
+      "relationship_trend": "IMPROVING",
+      "image_url": "/api/service/relation-training/images/child_leaving_home/result_AAAA.png"
+    },
+    {
+      "result_code": "AAAB",
+      "display_title": "걱정이 앞서는 관계",
+      "analysis_text": "자식의 무례함에 대한 지적 후에도 걱정이 앞서 자식의 독립을 만류하는 모습을 보였습니다. 자식은 부모의 걱정을 잔소리로 받아들일 수 있으며, 독립의지에 대한 존중이 부족하다고 느낄 수 있습니다. 관계 개선보다는 현상 유지가 될 가능성이 높습니다.",
+      "atmosphere_image_type": "CLOUDY",
+      "relation_health_level": "MIXED",
+      "boundary_style": "OVER_ADAPTIVE",
+      "relationship_trend": "STABLE",
+      "image_url": "/api/service/relation-training/images/child_leaving_home/result_AAAB.png"
+    },
+    {
+      "result_code": "AABA",
+      "display_title": "침묵 속의 기다림",
+      "analysis_text": "자식의 감정 표현을 존중하며 침묵을 선택했습니다. 강요하지 않는 태도는 자식에게 생각할 시간을 주어 스스로의 행동을 돌아보게 할 기회를 제공합니다. 당장은 해결되지 않지만, 관계가 악화되지는 않을 것입니다.",
+      "atmosphere_image_type": "FLOWER",
+      "relation_health_level": "GOOD",
+      "boundary_style": "HEALTHY_ASSERTIVE",
+      "relationship_trend": "IMPROVING",
+      "image_url": "/api/service/relation-training/images/child_leaving_home/result_AABA.png"
+    },
+    {
+      "result_code": "AABB",
+      "display_title": "따뜻한 위로의 손길",
+      "analysis_text": "자식의 짜증 뒤에 숨겨진 어려움을 헤아리며 따뜻하게 위로했습니다. 이는 자식이 마음을 열고 속마음을 털어놓을 수 있는 안정적인 환경을 조성합니다. 관계가 더욱 깊어지고 유대감이 강해질 수 있습니다.",
+      "atmosphere_image_type": "FLOWER",
+      "relation_health_level": "GOOD",
+      "boundary_style": "OVER_ADAPTIVE",
+      "relationship_trend": "IMPROVING",
+      "image_url": "/api/service/relation-training/images/child_leaving_home/result_AABB.png"
+    },
+    {
+      "result_code": "ABAA",
+      "display_title": "이성적인 충고",
+      "analysis_text": "자식의 독립 결정에 대해 이성적인 관점에서 충고를 건넸습니다. 자식은 자신의 결정을 존중받지 못한다고 느낄 수 있지만, 현실적인 조언은 도움이 될 수 있습니다. 하지만 말투가 강압적으로 느껴질 수 있습니다.",
+      "atmosphere_image_type": "CLOUDY",
+      "relation_health_level": "MIXED",
+      "boundary_style": "ASSERTIVE_HARSH",
+      "relationship_trend": "STABLE",
+      "image_url": "/api/service/relation-training/images/child_leaving_home/result_ABAA.png"
+    },
+    {
+      "result_code": "ABAB",
+      "display_title": "체념하는 수긍",
+      "analysis_text": "자식의 의견을 수긍했지만, 내면의 서운함이 남아있는 태도입니다. 자식은 부모의 속마음을 알지 못하고 원하는 대로 할 수 있다고 생각할 수 있습니다. 장기적으로 부모의 불만이 쌓여 관계에 독이 될 수 있습니다.",
+      "atmosphere_image_type": "STORM",
+      "relation_health_level": "BAD",
+      "boundary_style": "OVER_ADAPTIVE",
+      "relationship_trend": "WORSENING",
+      "image_url": "/api/service/relation-training/images/child_leaving_home/result_ABAB.png"
+    },
+    {
+      "result_code": "ABBA",
+      "display_title": "공감과 지지",
+      "analysis_text": "자식의 힘든 상황에 공감하며, 솔직하게 이야기해준 것에 고마움을 표현했습니다. 이는 자식이 부모를 신뢰하고 의지할 수 있는 발판을 마련해 줍니다. 관계가 더욱 돈독해지고 건강하게 발전할 수 있습니다.",
+      "atmosphere_image_type": "FLOWER",
+      "relation_health_level": "GOOD",
+      "boundary_style": "HEALTHY_ASSERTIVE",
+      "relationship_trend": "IMPROVING",
+      "image_url": "/api/service/relation-training/images/child_leaving_home/result_ABBA.png"
+    },
+    {
+      "result_code": "ABBB",
+      "display_title": "과도한 자책과 희생",
+      "analysis_text": "자식의 어려움에 대한 과도한 자책은 자식에게 오히려 부담을 줄 수 있습니다. 모든 것을 부모 탓으로 돌리는 태도는 자식의 책임감을 약화시키고 관계의 불균형을 심화시킬 수 있습니다.",
+      "atmosphere_image_type": "STORM",
+      "relation_health_level": "BAD",
+      "boundary_style": "OVER_ADAPTIVE",
+      "relationship_trend": "WORSENING",
+      "image_url": "/api/service/relation-training/images/child_leaving_home/result_ABBB.png"
+    },
+    {
+      "result_code": "BAAA",
+      "display_title": "감정적인 충돌",
+      "analysis_text": "자식의 비난에 감정적으로 맞서면서 관계가 더 악화될 수 있습니다. 서로 상처만 주고받는 결과를 낳을 가능성이 높습니다. 감정적인 충돌은 문제 해결에 도움이 되지 않습니다.",
+      "atmosphere_image_type": "STORM",
+      "relation_health_level": "BAD",
+      "boundary_style": "ASSERTIVE_HARSH",
+      "relationship_trend": "WORSENING",
+      "image_url": "/api/service/relation-training/images/child_leaving_home/result_BAAA.png"
+    },
+    {
+      "result_code": "BAAB",
+      "display_title": "자책하는 회피",
+      "analysis_text": "자식과의 갈등 상황에서 자책하며 회피하는 태도는 문제를 해결하지 못하고 부모의 마음속에 불만만 쌓이게 합니다. 자식은 부모의 희생을 당연하게 여길 수 있습니다.",
+      "atmosphere_image_type": "STORM",
+      "relation_health_level": "BAD",
+      "boundary_style": "AVOIDANT",
+      "relationship_trend": "WORSENING",
+      "image_url": "/api/service/relation-training/images/child_leaving_home/result_BAAB.png"
+    },
+    {
+      "result_code": "BABA",
+      "display_title": "경청과 지지",
+      "analysis_text": "자식이 속마음을 털어놓을 기회를 주며 경청하는 태도는 관계 개선에 큰 도움이 됩니다. 자식은 부모의 지지 속에서 자신의 문제를 스스로 해결할 힘을 얻을 수 있습니다.",
+      "atmosphere_image_type": "FLOWER",
+      "relation_health_level": "GOOD",
+      "boundary_style": "HEALTHY_ASSERTIVE",
+      "relationship_trend": "IMPROVING",
+      "image_url": "/api/service/relation-training/images/child_leaving_home/result_BABA.png"
+    },
+    {
+      "result_code": "BABB",
+      "display_title": "끝없는 사과",
+      "analysis_text": "자식의 감정을 이해하려 노력하는 것은 좋지만, 끝없이 사과하는 태도는 관계의 균형을 깨뜨릴 수 있습니다. 부모의 권위가 약해지고 자식이 부모를 존중하지 않을 가능성이 있습니다.",
+      "atmosphere_image_type": "STORM",
+      "relation_health_level": "BAD",
+      "boundary_style": "OVER_ADAPTIVE",
+      "relationship_trend": "WORSENING",
+      "image_url": "/api/service/relation-training/images/child_leaving_home/result_BABB.png"
+    },
+    {
+      "result_code": "BBAA",
+      "display_title": "상처받은 감정 표현",
+      "analysis_text": "자식의 무례한 발언에 상처받은 감정을 솔직하게 표현했습니다. 이는 자식에게 자신의 행동이 부모에게 어떤 영향을 미치는지 깨닫게 하는 계기가 됩니다. 건강한 관계를 위한 중요한 경계 설정입니다.",
+      "atmosphere_image_type": "FLOWER",
+      "relation_health_level": "GOOD",
+      "boundary_style": "HEALTHY_ASSERTIVE",
+      "relationship_trend": "IMPROVING",
+      "image_url": "/api/service/relation-training/images/child_leaving_home/result_BBAA.png"
+    },
+    {
+      "result_code": "BBAB",
+      "display_title": "무조건적인 수용",
+      "analysis_text": "자식의 모든 비난을 무조건적으로 받아들이는 태도는 부모의 자존감을 해치고 자식에게 무책임한 행동을 할 빌미를 줄 수 있습니다. 관계가 더욱 불균형해지고 부모는 계속 상처받게 될 것입니다.",
+      "atmosphere_image_type": "STORM",
+      "relation_health_level": "BAD",
+      "boundary_style": "OVER_ADAPTIVE",
+      "relationship_trend": "WORSENING",
+      "image_url": "/api/service/relation-training/images/child_leaving_home/result_BBAB.png"
+    },
+    {
+      "result_code": "BBBA",
+      "display_title": "존중과 단호함",
+      "analysis_text": "자식의 독립 의사를 존중하면서도, 무례한 태도에 대해 단호하게 지적했습니다. 이는 자식에게 존중받아야 할 부모의 영역을 명확히 알려주며, 건강한 상호작용의 기반을 다집니다.",
+      "atmosphere_image_type": "FLOWER",
+      "relation_health_level": "GOOD",
+      "boundary_style": "HEALTHY_ASSERTIVE",
+      "relationship_trend": "IMPROVING",
+      "image_url": "/api/service/relation-training/images/child_leaving_home/result_BBBA.png"
+    },
+    {
+      "result_code": "BBBB",
+      "display_title": "무력한 자책",
+      "analysis_text": "자식의 분노에 대한 무력한 자책은 부모의 에너지를 소진시키고 자식에게 더 큰 불만을 유발할 수 있습니다. 관계는 더욱 멀어지고 부모는 무기력감을 느낄 가능성이 큽니다.",
+      "atmosphere_image_type": "STORM",
+      "relation_health_level": "BAD",
+      "boundary_style": "OVER_ADAPTIVE",
+      "relationship_trend": "WORSENING",
+      "image_url": "/api/service/relation-training/images/child_leaving_home/result_BBBB.png"
+    }
+  ]
+}

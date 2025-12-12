@@ -1,0 +1,160 @@
+name: frontend
+description: "A new Flutter project."
+# The following line prevents the package from being accidentally published to
+# pub.dev using `flutter pub publish`. This is preferred for private packages.
+publish_to: 'none' # Remove this line if you wish to publish to pub.dev
+
+# The following defines the version and build number for your application.
+# A version number is three numbers separated by dots, like 1.2.43
+# followed by an optional build number separated by a +.
+# Both the version and the builder number may be overridden in flutter
+# build by specifying --build-name and --build-number, respectively.
+# In Android, build-name is used as versionName while build-number used as versionCode.
+# Read more about Android versioning at https://developer.android.com/studio/publish/versioning
+# In iOS, build-name is used as CFBundleShortVersionString while build-number is used as CFBundleVersion.
+# Read more about iOS versioning at
+# https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
+# In Windows, build-name is used as the major, minor, and patch parts
+# of the product and file versions while build-number is used as the build suffix.
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+# Dependencies specify other packages that your package needs in order to work.
+# To automatically upgrade your package dependencies to the latest versions
+# consider running `flutter pub upgrade --major-versions`. Alternatively,
+# dependencies can be manually updated by changing the version numbers below to
+# the latest version available on pub.dev. To see which dependencies have newer
+# versions available, run `flutter pub outdated`.
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # The following adds the Cupertino Icons font to your application.
+  # Use with the CupertinoIcons class for iOS style icons.
+  cupertino_icons: ^1.0.8
+  flutter_svg: ^2.2.3
+
+  # State Management
+  flutter_riverpod: ^2.5.1
+
+  # HTTP Client
+  dio: ^5.4.0
+
+  # Secure Storage
+  flutter_secure_storage: ^10.0.0-beta.5
+
+  # Google Sign In
+  google_sign_in: ^6.2.1
+
+  # Kakao Login SDK (Native)
+  kakao_flutter_sdk_user: ^1.9.6
+
+  # Web Auth for Naver (WebView OAuth)
+  flutter_web_auth_2: ^4.1.0
+
+  # Utilities
+  freezed_annotation: ^2.4.1
+  json_annotation: ^4.8.1
+  logger: ^2.0.2
+
+  # Audio & Permissions
+  record: ^6.1.2
+  permission_handler: ^12.0.1
+  web_socket_channel: ^3.0.3
+
+  # ★ retrofit 추가
+  retrofit: 4.4.1
+
+  # Lottie Animation
+  lottie: ^3.0.0
+
+  # Local Database (Drift)
+  drift: ^2.14.0
+  sqlite3_flutter_libs: ^0.5.0
+  path_provider: ^2.1.0
+  path: ^1.8.3
+
+  # Local Notifications
+  flutter_local_notifications: ^17.0.0
+  timezone: ^0.9.0
+  audioplayers: ^6.5.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  flutter_lints: ^6.0.0
+
+  # Code Generation
+  build_runner: ^2.4.7
+  freezed: ^2.4.1
+  json_serializable: ^6.7.1
+
+  # retrofit generator (★ 딱 한 줄만 남기기)
+  retrofit_generator: ^8.2.0
+
+  # Drift code generator
+  drift_dev: ^2.14.0
+
+  # Launcher Icons
+  flutter_launcher_icons: ^0.13.1
+
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/images/icons/app_icon.png"
+  remove_alpha_ios: true      # iOS 아이콘 투명 배경 자동 처리
+
+
+# Override dependencies to fix Linux compatibility issues
+dependency_overrides:
+  record_linux: ^1.0.0
+
+# For information on the generic Dart part of this file, see the
+# following page: https://dart.dev/tools/pub/pubspec
+
+# The following section is specific to Flutter packages.
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/characters/normal/
+    - assets/characters/normal_2d/
+    - assets/characters/animation/
+    - assets/characters/animation/happiness/
+    - assets/characters/animation/sadness/
+    - assets/characters/animation/anger/
+    - assets/characters/animation/fear/
+    - assets/characters/animation/basic/
+    - assets/characters/animation/error/
+    - assets/characters/animation/listening/
+    - assets/characters/animation/realization/
+    - assets/characters/animation/thinking/
+    - assets/images/icons/
+    - assets/images/logo/
+    - assets/training_images/randomQ.png
+    - assets/legal/terms_of_service.txt
+    - assets/legal/privacy_policy.txt
+
+  fonts:
+    - family: Pretendard
+      fonts:
+        - asset: assets/fonts/Pretendard-Thin.ttf
+          weight: 100
+        - asset: assets/fonts/Pretendard-ExtraLight.ttf
+          weight: 200
+        - asset: assets/fonts/Pretendard-Light.ttf
+          weight: 300
+        - asset: assets/fonts/Pretendard-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/Pretendard-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/Pretendard-Bold.ttf
+          weight: 700
+        - asset: assets/fonts/Pretendard-ExtraBold.ttf
+          weight: 800
+        - asset: assets/fonts/Pretendard-Black.ttf
+          weight: 900

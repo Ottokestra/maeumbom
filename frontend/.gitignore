@@ -5,6 +5,19 @@
 Thumbs.db
 
 # ----------------------------
+# Flutter / Dart
+# ----------------------------
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.metadata
+*.iml
+
+# Generated files
+*.g.dart
+*.freezed.dart
+
+# ----------------------------
 # Node / Monorepo
 # ----------------------------
 node_modules/
@@ -28,6 +41,31 @@ build/
 dist/
 frontend/dist/
 coverage/
+
+# ----------------------------
+# Android
+# ----------------------------
+android/.gradle/
+android/gradle/
+android/local.properties
+android/**/GeneratedPluginRegistrant.java
+android/app/google-services.json
+android/key.properties
+
+# ----------------------------
+# iOS
+# ----------------------------
+ios/Pods/
+ios/.symlinks/
+ios/Flutter/Flutter.framework
+ios/Flutter/Flutter.podspec
+ios/Flutter/Generated.xcconfig
+ios/Flutter/app.flx
+ios/Flutter/app.zip
+ios/Flutter/flutter_assets/
+ios/ServiceDefinitions.json
+ios/Runner/GeneratedPluginRegistrant.*
+ios/Runner/GoogleService-Info.plist
 
 # ----------------------------
 # 환경변수(루트/프런트/백엔드)
@@ -62,8 +100,6 @@ develop-eggs/
 downloads/
 eggs/
 .eggs/
-lib/
-lib64/
 parts/
 sdist/
 var/

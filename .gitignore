@@ -1,0 +1,16 @@
+.idea/
+.cursorrules
+.antigravityrules
+.claude/
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+# Thumbnails
+._*
+
+# Test
+frontend-test/
+
+.env
