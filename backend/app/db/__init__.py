@@ -15,6 +15,7 @@ from .models import (
     SlangQuizQuestion,
     SlangQuizGame,
     SlangQuizAnswer,
+    RoutineRecommendation,
 )
 
 __all__ = [
@@ -35,5 +36,6 @@ __all__ = [
     "SlangQuizQuestion",
     "SlangQuizGame",
     "SlangQuizAnswer",
+    "RoutineRecommendation",
 ]
 

@@ -1315,6 +1315,73 @@ class MenopauseSurveyAnswer(Base):
 
 
 # ============================================================================
+# Routine Recommendations (from Emotion Analysis)
+# ============================================================================
+
+
+class RoutineRecommendation(Base):
+    """
+    루틴 추천 결과 저장
+    
+    Attributes:
+        ID: Primary key
+        USER_ID: 사용자 ID
+        RECOMMENDATION_DATE: 추천 날짜 (YYYY-MM-DD)
+        EMOTION_SUMMARY: 하루 감정 요약 (JSON)
+        ROUTINES: 추천된 루틴 목록 (JSON)
+        TOTAL_EMOTIONS: 해당 날짜 총 감정 분석 수
+        PRIMARY_EMOTION: 주요 감정
+        SENTIMENT_OVERALL: 전체 감정 (positive/negative/neutral)
+        IS_DELETED: Deletion flag
+        CREATED_AT: Creation timestamp
+        CREATED_BY: Creator user ID
+        UPDATED_AT: Last update timestamp
+        UPDATED_BY: Last updater user ID
+    """
+    
+    __tablename__ = "TB_ROUTINE_RECOMMENDATIONS"
+    
+    ID = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    USER_ID = Column(Integer, ForeignKey("TB_USERS.ID"), nullable=False, index=True)
+    RECOMMENDATION_DATE = Column(Date, nullable=False, index=True)
+    
+    # 감정 요약
+    EMOTION_SUMMARY = Column(JSON, nullable=True)  # 하루치 감정 분포
+    TOTAL_EMOTIONS = Column(Integer, nullable=False, default=0)
+    PRIMARY_EMOTION = Column(String(50), nullable=True)
+    SENTIMENT_OVERALL = Column(String(20), nullable=True)
+    
+    # 루틴 추천 결과
+    ROUTINES = Column(JSON, nullable=True)  # 추천된 루틴 목록
+    
+    # 표준 필드
+    IS_DELETED = Column(Boolean, default=False, nullable=False, index=True)
+    CREATED_AT = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    CREATED_BY = Column(Integer, ForeignKey("TB_USERS.ID"), nullable=True, index=True)
+    UPDATED_AT = Column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now(),
+        nullable=False,
+    )
+    UPDATED_BY = Column(Integer, ForeignKey("TB_USERS.ID"), nullable=True, index=True)
+    
+    # 인덱스
+    __table_args__ = (
+        Index("idx_user_date_routine", "USER_ID", "RECOMMENDATION_DATE"),
+        Index("idx_date_deleted_routine", "RECOMMENDATION_DATE", "IS_DELETED"),
+    )
+    
+    # Relationships
+    user = relationship("User", foreign_keys=[USER_ID], backref="routine_recommendations")
+    creator = relationship("User", foreign_keys=[CREATED_BY])
+    updater = relationship("User", foreign_keys=[UPDATED_BY])
+    
+    def __repr__(self):
+        return f"<RoutineRecommendation(ID={self.ID}, USER_ID={self.USER_ID}, DATE={self.RECOMMENDATION_DATE})>"
+
+
+# ============================================================================
 # Weekly Emotion Report (for My Page)
 # ============================================================================
 
