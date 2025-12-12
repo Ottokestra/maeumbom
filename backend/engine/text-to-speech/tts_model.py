@@ -36,7 +36,7 @@ if not ELEVENLABS_API_KEY:
 # ----------------------------------------------------------------------
 # 외부 API: 텍스트 → WAV
 # ----------------------------------------------------------------------
-def synthesize_to_wav(
+async def synthesize_to_wav(
     text: str,
     speed: Optional[float] = None,
     tone: Optional[str] = None,
@@ -84,9 +84,9 @@ def synthesize_to_wav(
     }
 
     try:
-        # API 요청
-        with httpx.Client(timeout=30.0) as client:
-            response = client.post(url, json=data, headers=headers)
+        # ✅ Async API 요청 (블로킹 제거!)
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            response = await client.post(url, json=data, headers=headers)
             response.raise_for_status()
 
         # 출력 폴더 (backend/engine/text-to-speech/outputs/ 로 고정)

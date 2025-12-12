@@ -13,6 +13,32 @@ import os
 logger = logging.getLogger(__name__)
 
 
+def remove_audio_tags(text: str) -> str:
+    """
+    Eleven Labs v3 audio tag 제거 (프론트엔드 표시용 원본 텍스트 생성)
+    
+    Args:
+        text: audio tag가 포함된 텍스트
+        
+    Returns:
+        audio tag가 제거된 원본 텍스트
+        
+    Examples:
+        "[excited] 안녕!" -> "안녕!"
+        "오늘 [sighs] 피곤해" -> "오늘 피곤해"
+        "[whispers] 비밀인데... [pauses] 말해줄까?" -> "비밀인데... 말해줄까?"
+    """
+    # 대괄호로 감싸진 태그를 모두 제거 (예: [excited], [sighs], [whispers])
+    # 패턴: [로 시작하여 ]로 끝나는 단어들
+    cleaned_text = re.sub(r'\[[\w\s]+\]\s*', '', text)
+    
+    # 여러 공백을 하나로 정리
+    cleaned_text = re.sub(r'\s+', ' ', cleaned_text).strip()
+    
+    return cleaned_text
+
+
+
 def generate_emotion_parameter(
     conversation_history: List[Dict[str, str]],
     llm_response: str,

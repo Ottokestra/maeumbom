@@ -204,6 +204,36 @@ except Exception as e:
 
 
 # =====================================================================
+# Emotion Analysis (Separate Endpoint)
+# =====================================================================
+try:
+    # Import from engine path (hyphen in folder name requires special handling)
+    import importlib.util
+    import sys
+    from pathlib import Path
+    
+    routes_path = Path(__file__).parent / "engine" / "emotion-analysis" / "api" / "routes.py"
+    spec = importlib.util.spec_from_file_location("emotion_routes", routes_path)
+    emotion_routes_module = importlib.util.module_from_spec(spec)
+    sys.modules["emotion_routes"] = emotion_routes_module
+    spec.loader.exec_module(emotion_routes_module)
+    
+    emotion_analysis_router = emotion_routes_module.router
+
+    app.include_router(
+        emotion_analysis_router, 
+        prefix="/emotion/api", 
+        tags=["Emotion Analysis"]
+    )
+    print("[INFO] Emotion analysis router loaded successfully from engine/emotion-analysis/api/routes.py")
+except Exception as e:
+    import traceback
+
+    print(f"[WARN] Emotion analysis router load failed: {e}")
+    traceback.print_exc()
+
+
+# =========================
 # Weekly Emotion Report 라우터
 # =====================================================================
 try:
@@ -462,16 +492,13 @@ class AgentAudioRequest(BaseModel):
 
 
 async def generate_tts_async(text: str) -> Path:
-    """비동기로 TTS 생성 (동기 함수를 asyncio.to_thread로 실행)"""
-    loop = asyncio.get_event_loop()
-    # synthesize_to_wav는 동기 함수이므로 스레드에서 실행
-    audio_path = await loop.run_in_executor(
-        None,  # 기본 executor 사용
-        synthesize_to_wav,
-        text,
-        None,  # speed
-        "neutral",  # tone
-        None,  # engine
+    """비동기로 TTS 생성"""
+    # synthesize_to_wav는 이제 async 함수이므로 직접 await
+    audio_path = await synthesize_to_wav(
+        text=text,
+        speed=None,
+        tone="neutral",
+        engine=None
     )
     return audio_path
 
@@ -555,16 +582,25 @@ async def agent_text_v2_endpoint(
         if "alarm_info" in result:
             result["meta"]["alarm_info"] = result["alarm_info"]
 
-        # 🆕 TTS 처리 (동기 방식, 7초 타임아웃)
+        # 🆕 TTS 처리 (동기 방식 - 응답에 포함 필수)
+        # 🎙️ Phase 4: audio tag가 포함된 텍스트를 TTS에 전달
+        # ⚠️ TTS URL은 응답에 포함되어야 하므로 await로 완료 대기!
         if request.tts_enabled:
             try:
-                # TTS 생성 (최대 7초 대기)
+                # TTS 생성 - audio tag 포함 텍스트 사용
+                tts_text = result.get("reply_text_with_tags", result["reply_text"])
+                print(f"[TTS] 🎤 Starting TTS generation with text: {tts_text[:100]}...")
+                
+                # ⚠️ 응답에 URL 포함되어야 하므로 await 필수!
                 audio_path = await asyncio.wait_for(
-                    generate_tts_async(result["reply_text"]), timeout=7.0
+                    generate_tts_async(tts_text),
+                    timeout=30.0  # 30초로 증가 (긴 텍스트 대응)
                 )
-                # 상대 경로로 URL 생성
-                audio_url = f"/tts-outputs/{audio_path.name}"
-
+                
+                # 서버 URL 포함 (프론트엔드가 접근 가능하도록)
+                server_url = os.getenv("SERVER_URL", "http://localhost:8000")
+                audio_url = f"{server_url}/tts-outputs/{audio_path.name}"
+                
                 # Root에 설정 (하위 호환성)
                 result["tts_audio_url"] = audio_url
                 result["tts_status"] = "ready"
@@ -575,20 +611,20 @@ async def agent_text_v2_endpoint(
 
                 result["meta"]["tts_audio_url"] = audio_url
                 result["meta"]["tts_status"] = "ready"
-
+                
                 print(f"[TTS] 음성 파일 생성 완료: {audio_path.name}")
             except asyncio.TimeoutError:
                 result["tts_audio_url"] = None
                 result["tts_status"] = "timeout"
                 if "meta" in result:
                     result["meta"]["tts_status"] = "timeout"
-                print("[TTS] 타임아웃: 7초 내에 음성 생성 실패")
+                print("[TTS] ⏱️ 타임아웃: 30초 내에 음성 생성 실패")
             except Exception as e:
                 result["tts_audio_url"] = None
                 result["tts_status"] = "error"
                 if "meta" in result:
                     result["meta"]["tts_status"] = "error"
-                print(f"[TTS] 생성 오류: {e}")
+                print(f"[TTS] ❌ 생성 오류: {e}")
 
         return result
     except Exception as e:
@@ -850,6 +886,7 @@ async def cleanup_global_memories(
 
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
+
 
 
 # =====================================================================

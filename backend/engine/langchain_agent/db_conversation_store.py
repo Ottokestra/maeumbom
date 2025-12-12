@@ -216,6 +216,55 @@ class DBConversationStore:
         finally:
             db.close()
     
+    def get_session_messages(
+        self,
+        user_id: int,
+        session_id: str,
+        role: str = None
+    ) -> List[Dict[str, Any]]:
+        """
+        Get all messages from a session (for emotion analysis)
+        
+        Args:
+            user_id: User ID (for data isolation)
+            session_id: Session identifier
+            role: Filter by role ('user' or 'assistant'), None for all
+        
+        Returns:
+            List of message dictionaries with 'content', 'role', 'created_at'
+        """
+        db = self._get_db()
+        try:
+            query = db.query(Conversation).filter(
+                and_(
+                    Conversation.USER_ID == user_id,
+                    Conversation.SESSION_ID == session_id,
+                    Conversation.IS_DELETED == 'N'
+                )
+            )
+            
+            # Filter by role if specified
+            if role:
+                if role == "user":
+                    # Include all user speaker types (user-A, user-B, etc.)
+                    query = query.filter(Conversation.SPEAKER_TYPE != "assistant")
+                else:
+                    query = query.filter(Conversation.SPEAKER_TYPE == role)
+            
+            query = query.order_by(Conversation.CREATED_AT.asc())
+            messages = query.all()
+            
+            return [
+                {
+                    "content": msg.CONTENT,
+                    "role": "assistant" if msg.SPEAKER_TYPE == "assistant" else "user",
+                    "created_at": msg.CREATED_AT.isoformat()
+                }
+                for msg in messages
+            ]
+        finally:
+            db.close()
+    
     def get_user_sessions(self, user_id: int) -> List[Dict[str, Any]]:
         """
         Get all active sessions for a user
