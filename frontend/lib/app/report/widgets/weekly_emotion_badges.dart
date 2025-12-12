@@ -75,7 +75,7 @@ class WeeklyEmotionBadges extends StatelessWidget {
                     ),
                     child: const Icon(
                       Icons.emoji_emotions_outlined,
-                      color: AppColors.accentRed,
+                      color: AppColors.primaryColor,
                     ),
                   ),
                   const SizedBox(width: AppSpacing.sm),
@@ -120,14 +120,14 @@ class _BadgePill extends StatelessWidget {
         vertical: AppSpacing.xs,
       ),
       decoration: BoxDecoration(
-        color: AppColors.accentRed.withOpacity(0.08),
+        color: AppColors.primaryColor.withOpacity(0.08),
         borderRadius: BorderRadius.circular(AppRadius.pill),
-        border: Border.all(color: AppColors.accentRed.withOpacity(0.12)),
+        border: Border.all(color: AppColors.primaryColor.withOpacity(0.12)),
       ),
       child: Text(
         text,
         style: AppTypography.caption.copyWith(
-          color: AppColors.accentRed,
+          color: AppColors.primaryColor,
           fontWeight: FontWeight.w600,
         ),
       ),

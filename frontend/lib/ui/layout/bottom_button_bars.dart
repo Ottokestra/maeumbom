@@ -16,8 +16,8 @@ class BottomButtonBar extends StatelessWidget {
     this.onPrimaryTap,
     this.onSecondaryTap,
     this.style = BottomButtonBarStyle.pill,
-    this.backgroundColor = AppColors.pureWhite,
-    this.primaryButtonColor = AppColors.accentRed,
+    this.backgroundColor = AppColors.basicColor,
+    this.primaryButtonColor = AppColors.primaryColor,
   });
 
   final String primaryText;

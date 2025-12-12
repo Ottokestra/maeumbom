@@ -128,7 +128,8 @@ frontend/
 │   │   │   ├── top_bars.dart           # Top Bar (5가지 변형)
 │   │   │   ├── bottom_menu_bars.dart   # Bottom Menu Bar
 │   │   │   ├── bottom_button_bars.dart # Bottom Button Bar
-│   │   │   ├── bottom_input_bars.dart  # Bottom Input Bar
+│   │   │   ├── bottom_input_bars.dart  # Bottom Input Bar (텍스트 입력)
+│   │   │   ├── bottom_voice_bar.dart   # Bottom Voice Bar (음성 입력)
 │   │   │   └── bottom_home_bar.dart    # Bottom Home Bar (홈 화면 전용)
 │   │   │
 │   │   ├── components/                 # 재사용 컴포넌트
@@ -287,7 +288,7 @@ class TranslucentScreen extends StatelessWidget {
               TopBar(
                 title: 'Title',
                 backgroundColor: Colors.transparent, 
-                foregroundColor: AppColors.pureWhite,
+                foregroundColor: AppColors.basicColor,
                 // ...
               ),
               Expanded(child: Content()),
@@ -1682,7 +1683,7 @@ TopNotificationManager.show(
 ### 주요 특징
 
 #### 1. 일관된 디자인
-- 디자인 시스템 색상 자동 적용 (`AppColors.accentRed`, `AppColors.natureGreen`)
+- 디자인 시스템 색상 자동 적용 (`AppColors.primaryColor`, `AppColors.secondaryColor`)
 - 통일된 위치 (TopBar 바로 아래)
 - 일관된 애니메이션
 
@@ -2622,7 +2623,7 @@ TopBar(
 
 ```dart
 // Colors
-AppColors.accentRed
+AppColors.primaryColor
 AppColors.textPrimary
 
 // Typography
@@ -2926,9 +2927,9 @@ TopNotificationManager.show(
 - **위치**: TopBar 바로 아래 (상단 패딩 + 60px)
 - **너비**: 전체 너비
 - **배경색**: 
-  - Red: `AppColors.accentRed`
-  - Green: `AppColors.natureGreen`
-- **텍스트 색상**: `AppColors.pureWhite`
+  - Red: `AppColors.primaryColor`
+  - Green: `AppColors.secondaryColor`
+- **텍스트 색상**: `AppColors.basicColor`
 - **타이포그래피**: `AppTypography.body`
 - **패딩**: 가로 `AppSpacing.md`, 세로 12px
 

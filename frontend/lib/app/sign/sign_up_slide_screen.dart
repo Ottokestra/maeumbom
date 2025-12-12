@@ -404,7 +404,7 @@ class _SignUpSlideScreenState extends ConsumerState<SignUpSlideScreen> {
                     child: Container(
                       width: opt['width'], height: 44,
                       decoration: ShapeDecoration(
-                        color: isSelected ? AppColors.accentRed : Colors.white,
+                        color: isSelected ? AppColors.primaryColor : Colors.white,
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14), side: const BorderSide(color: Color(0xFFF0EAE8))),
                       ),
                       alignment: Alignment.center,
@@ -469,7 +469,7 @@ class _SignUpSlideScreenState extends ConsumerState<SignUpSlideScreen> {
               ),
               child: Text(
                 resolvedError,
-                style: AppTypography.body.copyWith(color: AppColors.accentRed),
+                style: AppTypography.body.copyWith(color: AppColors.primaryColor),
               ),
             ),
             const SizedBox(height: 12),
@@ -494,7 +494,7 @@ class _SignUpSlideScreenState extends ConsumerState<SignUpSlideScreen> {
         padding: const EdgeInsets.symmetric(vertical: 8),
         child: Row(
           children: [
-            Checkbox(value: value, onChanged: onChanged, activeColor: AppColors.natureGreen),
+            Checkbox(value: value, onChanged: onChanged, activeColor: AppColors.secondaryColor),
             Text(title, style: AppTypography.body.copyWith(fontWeight: isBold ? FontWeight.bold : FontWeight.normal)),
           ],
         ),
@@ -532,7 +532,7 @@ class _SignUpSlideScreenState extends ConsumerState<SignUpSlideScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.accentRed : Colors.white,
+          color: isSelected ? AppColors.primaryColor : Colors.white,
           borderRadius: BorderRadius.circular(14),
           border: Border.all(color: AppColors.borderLight),
         ),
@@ -548,7 +548,7 @@ class _SignUpSlideScreenState extends ConsumerState<SignUpSlideScreen> {
         width: double.infinity,
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.accentRed : Colors.white,
+          color: isSelected ? AppColors.primaryColor : Colors.white,
           borderRadius: BorderRadius.circular(14),
           border: Border.all(color: AppColors.borderLight),
         ),
@@ -562,7 +562,7 @@ class _SignUpSlideScreenState extends ConsumerState<SignUpSlideScreen> {
       hintText: hint, filled: true, fillColor: Colors.white,
       border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: AppColors.borderLight)),
       enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: AppColors.borderLight)),
-      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: AppColors.accentRed)),
+      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: AppColors.primaryColor)),
     );
   }
 

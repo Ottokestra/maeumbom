@@ -100,7 +100,7 @@ class _EmotionBar extends StatelessWidget {
                     width: barWidth,
                     decoration: BoxDecoration(
                       gradient: const LinearGradient(
-                        colors: [AppColors.accentRed, AppColors.accentCoral],
+                        colors: [AppColors.primaryColor, AppColors.accentCoral],
                       ),
                       borderRadius: BorderRadius.circular(AppRadius.sm),
                     ),

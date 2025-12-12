@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:permission_handler/permission_handler.dart';
 import '../../ui/app_ui.dart';
+import '../../ui/layout/bottom_voice_bar.dart';
 import '../../providers/chat_provider.dart';
 import '../../core/services/navigation/navigation_service.dart';
-import '../../app/alarm/components/alarm_list_panel.dart';
 import 'components/bomi_content.dart';
 
 /// Bomi Screen - ai 봄이 화면
@@ -19,8 +19,7 @@ class BomiScreen extends ConsumerStatefulWidget {
 }
 
 class _BomiScreenState extends ConsumerState<BomiScreen> {
-  bool _showInputBar = false;
-  bool _isAlarmPanelExpanded = false;
+  bool _showInputBar = true; // true: input bar, false: voice bar
   final TextEditingController _textController = TextEditingController();
 
   @override
@@ -29,20 +28,21 @@ class _BomiScreenState extends ConsumerState<BomiScreen> {
     super.dispose();
   }
 
-  void _handleTextInputToggle() {
+  void _handleTextModeToggle() {
     setState(() {
-      _showInputBar = !_showInputBar;
+      _showInputBar = true;
+    });
+  }
+
+  void _handleVoiceModeToggle() {
+    setState(() {
+      _showInputBar = false;
     });
   }
 
   Future<void> _handleVoiceInput() async {
     final chatNotifier = ref.read(chatProvider.notifier);
     final chatState = ref.read(chatProvider);
-
-    // 음성 입력 시작 시 텍스트 입력 바 닫기
-    if (_showInputBar) {
-      _handleTextInputToggle(); // Toggle off
-    }
 
     if (chatState.voiceState == VoiceInterfaceState.listening ||
         chatState.voiceState == VoiceInterfaceState.processing ||
@@ -139,49 +139,27 @@ class _BomiScreenState extends ConsumerState<BomiScreen> {
     return AppFrame(
       topBar: TopBar(
         title: '',
+        leftIcon: Icons.arrow_back_ios,
         rightIcon: Icons.more_horiz,
+        onTapLeft: () => navigationService.navigateToTab(0),
         onTapRight: () => MoreMenuSheet.show(context),
       ),
-      bottomBar: _isAlarmPanelExpanded
-          ? null
-          : BottomInputBar(
-              onVoiceActivated: _handleVoiceInput,
-              onTextActivated: _handleTextInputToggle,
-              onVoiceReset: _handleVoiceInput,
-              onTextReset: _handleTextInputToggle,
-              voiceState: chatState.voiceState,
+      bottomBar: _showInputBar
+          ? BottomInputBar(
               controller: _textController,
               hintText: '메시지를 입력하세요',
               onSend: _handleSendMessage,
+              onMicTap: _handleVoiceModeToggle,
+            )
+          : BottomVoiceBar(
+              voiceState: chatState.voiceState,
+              onMicTap: _handleVoiceInput,
+              onTextModeTap: _handleTextModeToggle,
             ),
-      body: Stack(
-        children: [
-          // 기존 BomiContent
-          Positioned.fill(
-            child: BomiContent(
-              showInputBar: _showInputBar,
-              onTextInputTap: _handleTextInputToggle,
-              onVoiceToggle: _handleVoiceInput,
-            ),
-          ),
-
-          // AlarmListPanel (하단에 배치)
-          Positioned(
-            left: 0,
-            right: 0,
-            bottom: 0,
-            child: AlarmListPanel(
-              onTapMore: () {
-                navigationService.navigateToRoute('/alarm');
-              },
-              onExpansionChanged: (isExpanded) {
-                setState(() {
-                  _isAlarmPanelExpanded = isExpanded;
-                });
-              },
-            ),
-          ),
-        ],
+      body: BomiContent(
+        showInputBar: _showInputBar,
+        onTextInputTap: _handleTextModeToggle,
+        onVoiceToggle: _handleVoiceInput,
       ),
     );
   }

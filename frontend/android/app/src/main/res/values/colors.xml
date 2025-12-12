@@ -2,4 +2,5 @@
 <resources>
     <!-- Maeumbom Brand Colors -->
     <color name="accent_red">#D8454D</color>
+    <color name="basic_gray">#F5F5F5</color>
 </resources>
