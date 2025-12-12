@@ -9,6 +9,7 @@ import 'top_bars.dart';
 /// - bottomBar: 하단 바 (BottomMenuBar/BottomButtonBar/BottomInputBar 또는 null)
 /// - body: 메인 컨텐츠
 /// - statusBarStyle: 상태바 스타일 (자동 감지 또는 수동 설정)
+/// - resizeToAvoidBottomInset: 키보드가 올라올 때 화면 크기 조정 여부
 class AppFrame extends StatelessWidget {
   const AppFrame({
     super.key,
@@ -17,6 +18,7 @@ class AppFrame extends StatelessWidget {
     required this.body,
     this.statusBarStyle,
     this.useSafeArea = true,
+    this.resizeToAvoidBottomInset = false,
   });
 
   final PreferredSizeWidget? topBar;
@@ -24,6 +26,7 @@ class AppFrame extends StatelessWidget {
   final Widget body;
   final SystemUiOverlayStyle? statusBarStyle;
   final bool useSafeArea;
+  final bool resizeToAvoidBottomInset;
 
   @override
   Widget build(BuildContext context) {
@@ -44,7 +47,7 @@ class AppFrame extends StatelessWidget {
       value: effectiveStatusBarStyle,
       child: Scaffold(
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-        resizeToAvoidBottomInset: false, // 키보드가 올라와도 화면 크기 유지
+        resizeToAvoidBottomInset: resizeToAvoidBottomInset,
         appBar: safeTopBar,
         body: useSafeArea ? SafeArea(child: body) : body,
         bottomNavigationBar: bottomBar,

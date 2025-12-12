@@ -137,6 +137,7 @@ class _BomiScreenState extends ConsumerState<BomiScreen> {
     final navigationService = NavigationService(context, ref);
 
     return AppFrame(
+      resizeToAvoidBottomInset: true, // 키보드 올라올 때 화면 조정
       topBar: TopBar(
         title: '',
         leftIcon: Icons.arrow_back_ios,
