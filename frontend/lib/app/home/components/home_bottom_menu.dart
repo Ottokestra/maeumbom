@@ -7,7 +7,12 @@ import '../../../core/services/navigation/navigation_service.dart';
 ///
 /// 봄이 채팅, 똑똑 알람, 마음리포트, 마음연습실로 이동하는 메뉴입니다.
 class HomeBottomMenu extends ConsumerWidget {
-  const HomeBottomMenu({super.key});
+  final Color contentColor;
+
+  const HomeBottomMenu({
+    super.key,
+    this.contentColor = AppColors.basicColor,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -54,13 +59,13 @@ class HomeBottomMenu extends ConsumerWidget {
             width: 56,
             height: 56,
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.2),
+              color: contentColor.withValues(alpha: 0.2),
               shape: BoxShape.circle,
             ),
             child: Icon(
               item.icon,
               size: 28,
-              color: Colors.white,
+              color: contentColor,
             ),
           ),
 
@@ -70,7 +75,7 @@ class HomeBottomMenu extends ConsumerWidget {
           Text(
             item.label,
             style: AppTypography.caption.copyWith(
-              color: Colors.white,
+              color: contentColor,
             ),
             textAlign: TextAlign.center,
           ),

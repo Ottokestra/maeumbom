@@ -15,7 +15,7 @@ enum MessageDialogType {
 /// 이미지의 UI를 참고하여 만든 팝업 메시지 창입니다.
 /// - 중앙 원형 아이콘
 /// - 제목 및 본문 텍스트
-/// - 메인 버튼 (accentRed 또는 natureGreen)
+/// - 메인 버튼 (accentRed 또는 secondaryColor)
 /// - 보조 버튼 (회색)
 class MessageDialog extends StatelessWidget {
   const MessageDialog({
@@ -57,8 +57,8 @@ class MessageDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final primaryColor = type == MessageDialogType.red
-        ? AppColors.accentRed
-        : AppColors.natureGreen;
+        ? AppColors.primaryColor
+        : AppColors.secondaryColor;
 
     return Dialog(
       shape: RoundedRectangleBorder(

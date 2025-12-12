@@ -166,7 +166,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.accentRed : Colors.white,
+          color: isSelected ? AppColors.primaryColor : Colors.white,
           borderRadius: BorderRadius.circular(14),
           border: Border.all(color: AppColors.borderLight),
         ),
@@ -265,7 +265,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                             ),
                             focusedBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(14),
-                              borderSide: const BorderSide(color: AppColors.accentRed),
+                              borderSide: const BorderSide(color: AppColors.primaryColor),
                             ),
                           ),
                           validator: (value) {

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lottie/lottie.dart';
 import '../../ui/app_ui.dart';
 import '../../providers/auth_provider.dart';
 
@@ -54,22 +55,19 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
   @override
   Widget build(BuildContext context) {
     return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: const SystemUiOverlayStyle(
-        statusBarColor: Colors.transparent,
-        statusBarIconBrightness: Brightness.light, // Android
-        statusBarBrightness: Brightness.dark, // iOS
-      ),
+      value: SystemUiOverlayStyle.dark,
       child: Scaffold(
-        backgroundColor: AppColors.accentRed,
+        backgroundColor: AppColors.basicGray,
         body: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // 마음봄 로고
-              Image.asset(
-                'assets/images/logo/logo.png',
+              // 마음봄 로고 Lottie 애니메이션 (한 번만 재생)
+              Lottie.asset(
+                'assets/images/logo/splash.json',
                 width: 256,
                 height: 256,
+                repeat: false,
               ),
             ],
           ),

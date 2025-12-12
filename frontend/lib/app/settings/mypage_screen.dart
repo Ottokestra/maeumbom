@@ -380,6 +380,10 @@ class _MypageScreenState extends ConsumerState<MypageScreen> {
     return AppFrame(
       topBar: TopBar(
         title: '마이페이지',
+        leftIcon: Icons.arrow_back,
+        onTapLeft: () => navigationService.navigateToTab(0),
+        rightIcon: Icons.more_horiz,
+        onTapRight: () => MoreMenuSheet.show(context),
       ),
       bottomBar: BottomMenuBar(
         currentIndex: 4,
@@ -610,7 +614,7 @@ class _MypageScreenState extends ConsumerState<MypageScreen> {
                   const SizedBox(height: AppSpacing.sm),
                   Text(
                     _pattern!.insight!,
-                    style: AppTypography.body.copyWith(color: AppColors.accentRed),
+                    style: AppTypography.body.copyWith(color: AppColors.primaryColor),
                   ),
                 ],
                 if (_pattern!.dataCompleteness != null)

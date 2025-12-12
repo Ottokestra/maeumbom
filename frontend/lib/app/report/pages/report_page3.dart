@@ -64,13 +64,13 @@ class ReportPage3 extends StatelessWidget {
                   vertical: 4,
                 ),
                 decoration: BoxDecoration(
-                  color: AppColors.accentRed,
+                  color: AppColors.primaryColor,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
                   'Chapter 3',
                   style: AppTypography.caption.copyWith(
-                    color: AppColors.pureWhite,
+                    color: AppColors.basicColor,
                     fontWeight: FontWeight.w700,
                     fontSize: 9,
                   ),
@@ -144,7 +144,7 @@ class ReportPage3 extends StatelessWidget {
                             '${emotion.rank}',
                             style: AppTypography.caption.copyWith(
                               color: isFirst
-                                  ? AppColors.pureWhite
+                                  ? AppColors.basicColor
                                   : AppColors.textSecondary,
                               fontWeight: FontWeight.w700,
                             ),
@@ -205,7 +205,7 @@ class ReportPage3 extends StatelessWidget {
                   children: [
                     Icon(
                       Icons.lightbulb_outline,
-                      color: AppColors.accentRed,
+                      color: AppColors.primaryColor,
                       size: 20,
                     ),
                     const SizedBox(width: 8),
@@ -241,7 +241,7 @@ class ReportPage3 extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(AppSpacing.lg),
       decoration: BoxDecoration(
-        color: AppColors.pureWhite,
+        color: AppColors.basicColor,
         borderRadius: BorderRadius.circular(AppRadius.xl),
         boxShadow: [
           BoxShadow(
@@ -281,7 +281,7 @@ class ReportPage3 extends StatelessWidget {
                 Text(
                   '이번 주 가장 많이 느낀 감정',
                   style: AppTypography.caption.copyWith(
-                    color: AppColors.pureWhite.withOpacity(0.9),
+                    color: AppColors.basicColor.withOpacity(0.9),
                     fontSize: 12,
                   ),
                 ),
@@ -289,7 +289,7 @@ class ReportPage3 extends StatelessWidget {
                 Text(
                   emotion.emotionName,
                   style: AppTypography.h1.copyWith(
-                    color: AppColors.pureWhite,
+                    color: AppColors.basicColor,
                     fontWeight: FontWeight.w700,
                     fontSize: 32,
                   ),
@@ -302,14 +302,14 @@ class ReportPage3 extends StatelessWidget {
                     Text(
                       '${emotion.count}회 기록됨',
                       style: AppTypography.body.copyWith(
-                        color: AppColors.pureWhite.withOpacity(0.9),
+                        color: AppColors.basicColor.withOpacity(0.9),
                         fontSize: 14,
                       ),
                     ),
                     Text(
                       '${emotion.percentage}%',
                       style: AppTypography.h1.copyWith(
-                        color: AppColors.pureWhite,
+                        color: AppColors.basicColor,
                         fontWeight: FontWeight.w700,
                         fontSize: 40,
                       ),

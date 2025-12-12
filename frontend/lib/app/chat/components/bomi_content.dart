@@ -225,9 +225,6 @@ class _BomiContentState extends ConsumerState<BomiContent> {
     // 키보드 높이 감지
     final keyboardHeight = MediaQuery.of(context).viewInsets.bottom;
 
-    // 알람 패널 높이 고려 (패널이 있을 때 하단 여백 추가)
-    final bottomPadding = keyboardHeight > 0 ? 0.0 : 80.0; // 패널 접힌 상태 높이
-
     // 키보드가 나타날 때 스크롤 이동
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (keyboardHeight > 0 && _scrollController.hasClients) {
@@ -256,11 +253,11 @@ class _BomiContentState extends ConsumerState<BomiContent> {
             child: SingleChildScrollView(
               controller: _scrollController,
               child: Padding(
-                padding: EdgeInsets.only(
+                padding: const EdgeInsets.only(
                   left: AppSpacing.md,
                   right: AppSpacing.md,
                   top: AppSpacing.sm,
-                  bottom: AppSpacing.sm + bottomPadding,
+                  bottom: AppSpacing.sm,
                 ),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -449,7 +446,7 @@ class _BomiContentState extends ConsumerState<BomiContent> {
           color: AppColors.bgLightPink.withOpacity(0.5),
           borderRadius: BorderRadius.circular(AppRadius.lg),
           border: Border.all(
-            color: AppColors.accentRed.withOpacity(0.3),
+            color: AppColors.primaryColor.withOpacity(0.3),
             width: 1,
           ),
         ),
@@ -458,7 +455,7 @@ class _BomiContentState extends ConsumerState<BomiContent> {
             Icon(
               Icons.mic,
               size: 16,
-              color: AppColors.accentRed,
+              color: AppColors.primaryColor,
             ),
             const SizedBox(width: AppSpacing.xs),
             Expanded(

@@ -12,10 +12,10 @@ class ToggleTokens {
   // ============================================================================
 
   /// Primary 토글 - 활성화 시 빨간색
-  static const Color primaryActiveThumb = AppColors.pureWhite; // 활성화 토글 원 (흰색)
-  static const Color primaryActiveTrack = AppColors.accentRed; // 활성화 배경 (빨간색)
+  static const Color primaryActiveThumb = AppColors.basicColor; // 활성화 토글 원 (흰색)
+  static const Color primaryActiveTrack = AppColors.primaryColor; // 활성화 배경 (빨간색)
   static const Color primaryInactiveThumb =
-      AppColors.pureWhite; // 비활성 토글 원 (흰색)
+      AppColors.basicColor; // 비활성 토글 원 (흰색)
   static const Color primaryInactiveTrack =
       AppColors.borderLightGray; // 비활성 배경 (회색)
 
@@ -25,11 +25,11 @@ class ToggleTokens {
 
   /// Secondary 토글 - 활성화 시 초록색
   static const Color secondaryActiveThumb =
-      AppColors.pureWhite; // 활성화 토글 원 (흰색)
+      AppColors.basicColor; // 활성화 토글 원 (흰색)
   static const Color secondaryActiveTrack =
-      AppColors.natureGreen; // 활성화 배경 (초록색)
+      AppColors.secondaryColor; // 활성화 배경 (초록색)
   static const Color secondaryInactiveThumb =
-      AppColors.pureWhite; // 비활성 토글 원 (흰색)
+      AppColors.basicColor; // 비활성 토글 원 (흰색)
   static const Color secondaryInactiveTrack =
       AppColors.borderLightGray; // 비활성 배경 (회색)
 

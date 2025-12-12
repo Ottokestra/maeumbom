@@ -68,7 +68,7 @@ class _AlarmScreenState extends ConsumerState<AlarmScreen> {
                 onTapLeft: () => navigationService.navigateToTab(0),
                 onTapRight: () => MoreMenuSheet.show(context),
                 backgroundColor: Colors.transparent,
-                foregroundColor: AppColors.pureWhite,
+                foregroundColor: AppColors.basicColor,
               ),
 
               // B. 상단 영역 (텍스트 + 캐릭터)
@@ -92,7 +92,7 @@ class _AlarmScreenState extends ConsumerState<AlarmScreen> {
                             Text(
                               '제가 알람을\n등록해드릴까요?',
                               style: AppTypography.h3.copyWith(
-                                color: AppColors.pureWhite,
+                                color: AppColors.basicColor,
                                 height: 1.4,
                                 fontWeight: FontWeight.bold,
                               ),
@@ -107,7 +107,7 @@ class _AlarmScreenState extends ConsumerState<AlarmScreen> {
                               ),
                               child: const Icon(
                                 Icons.arrow_forward,
-                                color: AppColors.pureWhite,
+                                color: AppColors.basicColor,
                                 size: 28,
                               ),
                             ),
@@ -136,7 +136,7 @@ class _AlarmScreenState extends ConsumerState<AlarmScreen> {
                 ),
                 child: Container(
                   decoration: const BoxDecoration(
-                    color: AppColors.pureWhite,
+                    color: AppColors.basicColor,
                     boxShadow: [
                       BoxShadow(
                         color: Colors.black12,

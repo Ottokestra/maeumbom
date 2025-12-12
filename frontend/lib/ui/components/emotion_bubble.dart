@@ -175,9 +175,9 @@ class _EmotionBubbleState extends State<EmotionBubble> {
     final Color borderColor =
         widget.bgGreen ? AppColors.borderLightGray : BubbleTokens.emotionBorder;
 
-    // 삼각형 색상: bgGreen이면 natureGreen, 아니면 기본(userBg)
+    // 삼각형 색상: bgGreen이면 secondaryColor, 아니면 기본(userBg)
     final Color triangleColor =
-        widget.bgGreen ? AppColors.natureGreen : BubbleTokens.userBg;
+        widget.bgGreen ? AppColors.secondaryColor : BubbleTokens.userBg;
 
     return GestureDetector(
       onTap: widget.onTap,

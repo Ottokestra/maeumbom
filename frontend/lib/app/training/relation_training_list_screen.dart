@@ -174,7 +174,7 @@ class RelationTrainingListScreen extends ConsumerWidget {
                           )
                         : Container(
                             color: AppColors.moodGoodYellow.withOpacity(0.5),
-                            child: const Icon(Icons.people, size: 40, color: AppColors.natureGreen),
+                            child: const Icon(Icons.people, size: 40, color: AppColors.secondaryColor),
                           ),
                   ),
                 ),
@@ -209,7 +209,7 @@ class RelationTrainingListScreen extends ConsumerWidget {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: isUserScenario ? AppColors.accentRed : Colors.grey[600],
+                  color: isUserScenario ? AppColors.primaryColor : Colors.grey[600],
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(

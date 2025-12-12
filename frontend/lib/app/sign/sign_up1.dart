@@ -243,7 +243,7 @@ class _SignUp1ScreenState extends ConsumerState<SignUp1Screen> {
         style: BottomButtonBarStyle.block, // 꽉 찬 버튼 스타일 권장
         // 유효성 검사 여부와 상관없이 클릭 가능하게 하고, 클릭 시 상세 검증 수행
         onPrimaryTap: _submitSurvey,
-        primaryButtonColor: AppColors.accentRed, // 항상 활성화된 색상
+        primaryButtonColor: AppColors.primaryColor, // 항상 활성화된 색상
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
@@ -376,7 +376,7 @@ class _SignUp1ScreenState extends ConsumerState<SignUp1Screen> {
         padding: const EdgeInsets.symmetric(vertical: 8),
         child: Row(
           children: [
-            Checkbox(value: value, onChanged: onChanged, activeColor: AppColors.natureGreen),
+            Checkbox(value: value, onChanged: onChanged, activeColor: AppColors.secondaryColor),
             Text(title, style: AppTypography.body.copyWith(fontWeight: isBold ? FontWeight.bold : FontWeight.normal)),
           ],
         ),
@@ -420,7 +420,7 @@ class _SignUp1ScreenState extends ConsumerState<SignUp1Screen> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.accentRed : Colors.white,
+          color: isSelected ? AppColors.primaryColor : Colors.white,
           borderRadius: BorderRadius.circular(14),
           border: Border.all(color: AppColors.borderLight),
         ),
@@ -444,7 +444,7 @@ class _SignUp1ScreenState extends ConsumerState<SignUp1Screen> {
         width: double.infinity,
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.accentRed : Colors.white,
+          color: isSelected ? AppColors.primaryColor : Colors.white,
           borderRadius: BorderRadius.circular(14),
           border: Border.all(color: AppColors.borderLight),
         ),
@@ -464,7 +464,7 @@ class _SignUp1ScreenState extends ConsumerState<SignUp1Screen> {
       fillColor: Colors.white,
       border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: AppColors.borderLight)),
       enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: AppColors.borderLight)),
-      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: AppColors.accentRed)),
+      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: AppColors.primaryColor)),
     );
   }
 
@@ -514,7 +514,7 @@ class _SignUp1ScreenState extends ConsumerState<SignUp1Screen> {
                       height: 44,
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                       decoration: ShapeDecoration(
-                        color: isSelected ? AppColors.accentRed : Colors.white,
+                        color: isSelected ? AppColors.primaryColor : Colors.white,
                         shape: RoundedRectangleBorder(
                           side: BorderSide(width: 1, color: const Color(0xFFF0EAE8)),
                           borderRadius: BorderRadius.circular(14),
