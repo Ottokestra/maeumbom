@@ -283,6 +283,7 @@ def parse_alarm_request(
     
     try:
         import json
+        import random
         from datetime import datetime
         
         print("[ALARM PARSER] Step 1: Imports successful")
@@ -337,6 +338,7 @@ AI 응답: "{llm_response}"
 4. minute이 언급 안 되면 무조건 0
 5. 여러 알람의 경우 각각 완전한 정보 (time, minute, am_pm 모두 필수)
 6. am_pm 추론: 5시/6시/7시 → 문맥상 오후로 판단
+7. **name 필드:** 사용자가 알람 용도를 명시했으면 10글자 이내로 요약, 없으면 null
 
 **반환 형식:**
 {{
@@ -349,15 +351,18 @@ AI 응답: "{llm_response}"
       "day": 10,
       "time": 2,        // 반드시 숫자 (1-12), null 금지
       "minute": 30,     // 반드시 숫자 (0-59), null 금지
-      "am_pm": "pm"     // 반드시 "am" 또는 "pm", null 금지
+      "am_pm": "pm",    // 반드시 "am" 또는 "pm", null 금지
+      "name": "약 먹기"  // 용도가 있으면 10글자 이내, 없으면 null
     }}
   ]
 }}
 
 **알람 요청 예시 (is_alarm: true):**
-- "5시, 6시, 7시 알람"
-- "내일 오후 2시 30분에 깨워줘"
-- "오전 9시 알림 설정"
+- "5시, 6시, 7시 알람" → name: null
+- "내일 오후 2시 30분에 깨워줘" → name: null
+- "오전 9시 알림 설정" → name: null
+- "오후 3시에 약 먹을 시간 알려줘" → name: "약 먹기"
+- "내일 아침 7시 운동 알람" → name: "운동"
 
 **일반 대화 예시 (is_alarm: false):**
 - "안녕" → {{"is_alarm": false}}
@@ -371,6 +376,7 @@ AI 응답: "{llm_response}"
 - minute: 지정 안 하면 00
 - am_pm: 13시 이상이면 pm, 아니면 am (오전/오후 언급 없으면 am)
 - time: 1~12 범위로 변환 (13시 → 1시 pm, 14시 → 2시 pm)
+- name: 사용자가 용도를 명시하지 않았으면 null
 
 **요일 변환:**
 - 월요일: Monday, 화요일: Tuesday, 수요일: Wednesday
@@ -477,7 +483,26 @@ AI 응답: "{llm_response}"
             
             print(f"[ALARM PARSER] Step 13.{i}: alarm_dt={alarm_dt}, current={current_datetime}, is_valid={is_valid}")
             
-            # 🆕 유효한 알람만 추가 (time/minute 포함)
+            # � Name 필드 처리
+            alarm_name = alarm.get("name")
+            if alarm_name:
+                # 사용자가 명시한 이름이 있으면 무조건 그대로 사용
+                pass
+            else:
+                # name이 null일 경우에만 이스터에그 또는 기본값 적용
+                if random.random() < 0.001:  # 0.1% 확률
+                    easter_eggs = [
+                        "봄이 와쪄욤><",
+                        "(❁´▽`❁)",
+                        "(❀╹◡╹)",
+                        "◟( ˘ ³˘)◞ "
+                    ]
+                    alarm_name = random.choice(easter_eggs)
+                    logger.info(f"🎉 [Easter Egg] {alarm_name}")
+                else:
+                    alarm_name = "봄이의 알림"
+            
+            # 🆕 유효한 알람만 추가 (time/minute/name 포함)
             if is_valid:
                 processed_alarms.append({
                     "year": alarm_dt.year,
@@ -487,9 +512,10 @@ AI 응답: "{llm_response}"
                     "is_valid_alarm": True,
                     "time": time_val,
                     "minute": minute_val,
-                    "am_pm": am_pm_val
+                    "am_pm": am_pm_val,
+                    "name": alarm_name
                 })
-                print(f"[ALARM PARSER] Step 14.{i}: ADDED - valid alarm")
+                print(f"[ALARM PARSER] Step 14.{i}: ADDED - valid alarm with name: {alarm_name}")
             else:
                 print(f"[ALARM PARSER] Step 14.{i}: SKIPPED - past datetime")
         
