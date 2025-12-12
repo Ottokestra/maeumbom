@@ -10,6 +10,11 @@ class AnalyzeRequest(BaseModel):
     text: str = Field(..., description="Text to analyze", min_length=1)
 
 
+class SessionAnalyzeRequest(BaseModel):
+    """Request model for session-based emotion analysis"""
+    session_id: str = Field(..., description="Session ID (e.g., user_2_1734170515123)", min_length=1)
+
+
 class SimilarContext(BaseModel):
     """Model for similar context information"""
     text: str
