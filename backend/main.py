@@ -244,6 +244,38 @@ except Exception as e:
 
 
 # =====================================================================
+# Emotion Analysis (Separate Endpoint)
+# =====================================================================
+try:
+    # Import from engine path (hyphen in folder name requires special handling)
+    import importlib.util
+    import sys
+    from pathlib import Path
+
+    routes_path = (
+        Path(__file__).parent / "engine" / "emotion-analysis" / "api" / "routes.py"
+    )
+    spec = importlib.util.spec_from_file_location("emotion_routes", routes_path)
+    emotion_routes_module = importlib.util.module_from_spec(spec)
+    sys.modules["emotion_routes"] = emotion_routes_module
+    spec.loader.exec_module(emotion_routes_module)
+
+    emotion_analysis_router = emotion_routes_module.router
+
+    app.include_router(
+        emotion_analysis_router, prefix="/emotion/api", tags=["Emotion Analysis"]
+    )
+    print(
+        "[INFO] Emotion analysis router loaded successfully from engine/emotion-analysis/api/routes.py"
+    )
+except Exception as e:
+    import traceback
+
+    print(f"[WARN] Emotion analysis router load failed: {e}")
+    traceback.print_exc()
+
+
+# =========================
 # Weekly Emotion Report 라우터
 # =====================================================================
 try:
@@ -641,18 +673,6 @@ async def agent_text_v2_endpoint(
                 if "meta" in result:
                     result["meta"]["tts_status"] = "error"
                 print(f"[TTS] ❌ 생성 오류: {e}")
-
-        # 🆕 Celery: Queue emotion analysis task (after TTS completion)
-        try:
-            from tasks.emotion_tasks import analyze_emotion_task
-
-            # Queue task asynchronously (don't wait for result)
-            task = analyze_emotion_task.delay(
-                user_text=request.user_text, user_id=user_id
-            )
-            print(f"[Celery] 🚀 Emotion analysis task queued: {task.id}")
-        except Exception as e:
-            print(f"[Celery] ❌ Failed to queue task: {e}")
 
         return result
     except Exception as e:
