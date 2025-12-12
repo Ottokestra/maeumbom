@@ -60,15 +60,8 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen> {
         title: '대화 히스토리',
         leftIcon: Icons.arrow_back,
         onTapLeft: () => Navigator.pop(context),
-      ),
-      bottomBar: BottomMenuBar(
-        currentIndex: 1,
-        onTap: (index) {
-          final route = AppRoutes.findByTabIndex(index);
-          if (route != null) {
-            Navigator.pushReplacementNamed(context, route.routeName);
-          }
-        },
+        rightIcon: Icons.more_horiz,
+        onTapRight: () => MoreMenuSheet.show(context),
       ),
       body: _buildBody(),
     );
