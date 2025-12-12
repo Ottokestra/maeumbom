@@ -15,8 +15,8 @@ class TermsScreen extends StatelessWidget {
     return AppFrame(
       topBar: TopBar(
         title: '서비스 이용약관',
-        onTapLeft: () => Navigator.pop(context),
         leftIcon: Icons.arrow_back,
+        onTapLeft: () => Navigator.pop(context),
       ),
       body: FutureBuilder<String>(
         future: _loadTerms(),
