@@ -42,12 +42,12 @@ class RelationTrainingListScreen extends ConsumerWidget {
     );
 
     print('[DEBUG] Dialog closed with result: $result');
-    
+
     if (result != null && context.mounted) {
       print('[DEBUG] Result is not null and context is mounted');
       try {
         final viewModel = ref.read(relationTrainingListViewModelProvider.notifier);
-        
+
         // 비동기로 시나리오 생성 시작 (즉시 응답)
         await viewModel.generateScenario(
           target: result['target']!,
@@ -55,7 +55,7 @@ class RelationTrainingListScreen extends ConsumerWidget {
           category: result['category'] ?? 'TRAINING',
           genre: result['genre'], // 드라마 선택 시에만 있음
         );
-        
+
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -63,14 +63,14 @@ class RelationTrainingListScreen extends ConsumerWidget {
               duration: Duration(seconds: 5),
             ),
           );
-          
+
           // 3초 후 자동으로 목록 새로고침
           Future.delayed(const Duration(seconds: 3), () {
             if (context.mounted) {
               viewModel.getScenarios();
             }
           });
-          
+
           // 10초 후 다시 한 번 새로고침 (생성 완료 확인)
           Future.delayed(const Duration(seconds: 10), () {
             if (context.mounted) {
@@ -131,7 +131,7 @@ class RelationTrainingListScreen extends ConsumerWidget {
 
   Widget _buildScenarioCard(BuildContext context, WidgetRef ref, TrainingScenario scenario) {
     final isUserScenario = scenario.userId != null;
-    
+
     return GestureDetector(
       onTap: () {
         Navigator.push(
@@ -163,19 +163,24 @@ class RelationTrainingListScreen extends ConsumerWidget {
                   flex: 3,
                   child: ClipRRect(
                     borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-                    child: scenario.imageUrl != null
-                        ? Image.network(
-                            scenario.imageUrl!,
+                    child: (isUserScenario || scenario.imageUrl == null || scenario.imageUrl!.isEmpty)
+                        ? Image.asset(
+                            'assets/training_images/randomQ.png',
                             fit: BoxFit.cover,
-                            errorBuilder: (ctx, err, stack) => Container(
-                              color: AppColors.borderLight,
-                              child: const Icon(Icons.broken_image, color: Colors.grey),
-                            ),
                           )
-                        : Container(
-                            color: AppColors.moodGoodYellow.withOpacity(0.5),
-                            child: const Icon(Icons.people, size: 40, color: AppColors.secondaryColor),
-                          ),
+                        : (scenario.imageUrl != null && scenario.imageUrl!.isNotEmpty)
+                          ? Image.network(
+                              scenario.imageUrl!,
+                              fit: BoxFit.cover,
+                              errorBuilder: (ctx, err, stack) => Image.asset(
+                                'assets/training_images/randomQ.png',
+                                fit: BoxFit.cover,
+                              ),
+                            )
+                          : Container(
+                              color: AppColors.moodGoodYellow.withOpacity(0.5),
+                              child: const Icon(Icons.people, size: 40, color: AppColors.secondaryColor),
+                            ),
                   ),
                 ),
                 Expanded(
@@ -272,7 +277,7 @@ class RelationTrainingListScreen extends ConsumerWidget {
     if (confirmed == true && context.mounted) {
       final viewModel = ref.read(relationTrainingListViewModelProvider.notifier);
       await viewModel.deleteScenario(scenario.id);
-      
+
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('시나리오가 삭제되었습니다')),

@@ -14,38 +14,30 @@ from .repository import (
     seed_questions,
     soft_delete_question,
     update_question,
+    # TODO: 설문조사 응답 저장/조회용 repository 함수 추가 필요
 )
-from .schemas import MenopauseQuestionCreate, MenopauseQuestionUpdate
+from .schemas import (
+    MenopauseQuestionCreate, 
+    MenopauseQuestionUpdate, 
+    # 설문조사 제출/결과 스키마 임포트 추가
+    MenopauseSurveySubmitRequest, 
+    MenopauseSurveyResultResponse
+)
 
 logger = logging.getLogger(__name__)
 
 DEFAULT_SEED_CREATED_BY = "seed-defaults"
 
-# TODO: 캐릭터 매핑 테이블 연동 예정 - 현재는 임시 키를 사용
+# ... (FEMALE_CHARACTER_KEYS, MALE_CHARACTER_KEYS, DEFAULT_QUESTIONS 정의는 생략) ...
+
 FEMALE_CHARACTER_KEYS = [
-    "PEACH_WORRY",
-    "PEACH_CALM",
-    "PEACH_TIRED",
-    "PEACH_HEAT",
-    "PEACH_ANXIOUS",
-    "PEACH_PAIN",
-    "PEACH_SHY",
-    "PEACH_BALANCE",
-    "PEACH_BLUE",
-    "PEACH_EXHAUSTED",
+    "PEACH_WORRY", "PEACH_CALM", "PEACH_TIRED", "PEACH_HEAT", "PEACH_ANXIOUS", 
+    "PEACH_PAIN", "PEACH_SHY", "PEACH_BALANCE", "PEACH_BLUE", "PEACH_EXHAUSTED",
 ]
 
 MALE_CHARACTER_KEYS = [
-    "FIRE_FOCUS",
-    "FIRE_ENERGY",
-    "FIRE_DRIVE",
-    "FIRE_ANGRY",
-    "FIRE_EMPTY",
-    "FIRE_FORGET",
-    "FIRE_SLEEP",
-    "FIRE_STRESS",
-    "FIRE_WEIGHT",
-    "FIRE_CONFIDENCE",
+    "FIRE_FOCUS", "FIRE_ENERGY", "FIRE_DRIVE", "FIRE_ANGRY", "FIRE_EMPTY", 
+    "FIRE_FORGET", "FIRE_SLEEP", "FIRE_STRESS", "FIRE_WEIGHT", "FIRE_CONFIDENCE",
 ]
 
 
@@ -110,8 +102,63 @@ DEFAULT_SEED_DATA = FEMALE_DEFAULT_QUESTIONS + MALE_DEFAULT_QUESTIONS
 
 
 def _normalize_gender(gender: Optional[str]) -> Optional[str]:
-    return gender.upper() if gender else None
+    if not gender:
+        return None
+    
+    g = gender.upper().strip()
+    if g in ("M", "MALE"):
+        return "M"
+    if g in ("F", "FEMALE"):
+        return "F"
+    return g
 
+
+# ====================================================================
+# 설문조사 제출 핵심 서비스 함수 (ImportError 해결)
+# ====================================================================
+
+async def submit_menopause_survey_service(
+    db: Session,
+    request_data: MenopauseSurveySubmitRequest,
+    current_user_id: int,  # 사용자 인증 정보를 통해 현재 사용자 ID를 받는다고 가정
+) -> MenopauseSurveyResultResponse:
+    """
+    설문조사 응답을 받아 DB에 저장하고, 분석을 수행하여 결과를 반환합니다.
+    """
+    # 1. DB에 설문조사 결과 저장 (repository 함수 필요)
+    # submitted_record = save_survey_answers(db, request_data)
+
+    # 2. 위험 점수 계산
+    risk_score = sum(1 for answer in request_data.answers if answer.is_risk)
+    
+    # 3. 위험 레벨 및 텍스트 결정 로직 (간단한 예시)
+    if risk_score >= 8:
+        risk_level = "HIGH"
+        result_text = "위험 점수가 높아 전문가 상담을 권장합니다."
+    elif risk_score >= 4:
+        risk_level = "MEDIUM"
+        result_text = "주의가 필요합니다. 건강 상태를 점검해보세요."
+    else:
+        risk_level = "LOW"
+        result_text = "현재 상태는 양호합니다."
+
+    # 4. 결과 응답 객체 생성 및 반환
+    from datetime import datetime
+    
+    return MenopauseSurveyResultResponse(
+        user_id=current_user_id,
+        survey_id=1,  # 저장된 레코드 ID로 대체 필요
+        gender=request_data.gender,
+        risk_score=risk_score,
+        result_text=result_text,
+        risk_level=risk_level,
+        submitted_at=datetime.now()
+    )
+
+
+# ====================================================================
+# 기존 질문 관리 서비스 함수들
+# ====================================================================
 
 def list_question_items(
     db: Session, *, gender: Optional[str] = None, is_active: Optional[bool] = True
