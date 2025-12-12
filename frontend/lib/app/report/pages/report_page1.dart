@@ -35,13 +35,13 @@ class ReportPage1 extends StatelessWidget {
                   vertical: 4,
                 ),
                 decoration: BoxDecoration(
-                  color: AppColors.accentRed,
+                  color: AppColors.primaryColor,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
                   'Chapter 1',
                   style: AppTypography.caption.copyWith(
-                    color: AppColors.pureWhite,
+                    color: AppColors.basicColor,
                     fontWeight: FontWeight.w700,
                     fontSize: 9,
                   ),
@@ -154,7 +154,7 @@ class ReportPage1 extends StatelessWidget {
                   children: [
                     Icon(
                       Icons.lightbulb_outline,
-                      color: AppColors.accentRed,
+                      color: AppColors.primaryColor,
                       size: 20,
                     ),
                     const SizedBox(width: 8),
@@ -246,7 +246,7 @@ class SemicircleProgressPainter extends CustomPainter {
 
       // 내부 원 (흰색)
       final innerCirclePaint = Paint()
-        ..color = AppColors.pureWhite
+        ..color = AppColors.basicColor
         ..style = PaintingStyle.fill;
 
       canvas.drawCircle(endPoint, 10, innerCirclePaint);

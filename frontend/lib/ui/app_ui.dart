@@ -2,6 +2,8 @@
 export 'layout/app_frame.dart';
 export 'layout/bottom_button_bars.dart';
 export 'layout/bottom_input_bars.dart';
+export 'layout/bottom_home_bar.dart';    // Bottom Home Bar (홈 화면 전용)
+export 'layout/bottom_add_modal_bar.dart';
 export 'layout/bottom_menu_bars.dart';
 export 'layout/top_bars.dart';
 

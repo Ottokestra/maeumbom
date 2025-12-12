@@ -10,22 +10,22 @@ class ButtonTokens {
   static const EdgeInsets padding = EdgeInsets.symmetric(horizontal: 20);
 
   // ===== Primary - Accent Red =====
-  static const Color primaryRedBg = AppColors.accentRed;
+  static const Color primaryRedBg = AppColors.primaryColor;
   static const Color primaryRedText = AppColors.textWhite;
 
   // ===== Secondary - Accent Red =====
-  static const Color secondaryRedBg = AppColors.pureWhite;
-  static const Color secondaryRedBorder = AppColors.accentRed;
-  static const Color secondaryRedText = AppColors.accentRed;
+  static const Color secondaryRedBg = AppColors.basicColor;
+  static const Color secondaryRedBorder = AppColors.primaryColor;
+  static const Color secondaryRedText = AppColors.primaryColor;
 
   // ===== Primary - Nature Green =====
-  static const Color primaryGreenBg = AppColors.natureGreen;
+  static const Color primaryGreenBg = AppColors.secondaryColor;
   static const Color primaryGreenText = AppColors.textWhite;
 
   // ===== Secondary - Nature Green =====
-  static const Color secondaryGreenBg = AppColors.pureWhite;
-  static const Color secondaryGreenBorder = AppColors.natureGreen;
-  static const Color secondaryGreenText = AppColors.natureGreen;
+  static const Color secondaryGreenBg = AppColors.basicColor;
+  static const Color secondaryGreenBorder = AppColors.secondaryColor;
+  static const Color secondaryGreenText = AppColors.secondaryColor;
 
   // 텍스트 스타일
   static final TextStyle textStyle =

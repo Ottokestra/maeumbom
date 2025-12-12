@@ -131,7 +131,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(4),
                   color: _currentPage == index
-                      ? AppColors.natureGreen
+                      ? AppColors.secondaryColor
                       : AppColors.borderLightGray,
                 ),
               );

@@ -337,15 +337,15 @@ class _SlideToActionButtonState extends State<SlideToActionButton>
   Color get _leftButtonColor {
     switch (widget.voiceState) {
       case VoiceInterfaceState.loading:
-        return AppColors.accentRed; // 준비 중 - 빨간색
+        return AppColors.primaryColor; // 준비 중 - 빨간색
       case VoiceInterfaceState.listening:
-        return AppColors.accentRed; // 듣는 중 - 빨간색
+        return AppColors.primaryColor; // 듣는 중 - 빨간색
       case VoiceInterfaceState.processing:
         return Colors.orangeAccent; // 생각 중 - 주황색
       case VoiceInterfaceState.replying:
         return Colors.green; // 답변 중 - 초록색
       case VoiceInterfaceState.idle:
-        return AppColors.accentRed;
+        return AppColors.primaryColor;
     }
   }
 
@@ -368,7 +368,7 @@ class _SlideToActionButtonState extends State<SlideToActionButton>
         // 답변 중 - 체크 아이콘
         return const Icon(
           Icons.check,
-          color: AppColors.pureWhite,
+          color: AppColors.basicColor,
           size: 36,
         );
 
@@ -376,7 +376,7 @@ class _SlideToActionButtonState extends State<SlideToActionButton>
         // 기본 상태 - 마이크 아이콘
         return const Icon(
           Icons.mic,
-          color: AppColors.pureWhite,
+          color: AppColors.basicColor,
           size: 36,
         );
     }
@@ -457,13 +457,13 @@ class _SlideToActionButtonState extends State<SlideToActionButton>
                         height: 80,
                         child: CustomPaint(
                           painter: _CircleBorderPainter(
-                            color: AppColors.accentRed,
+                            color: AppColors.primaryColor,
                             strokeWidth: 2,
                           ),
                           child: Center(
                             child: Icon(
                               Icons.edit,
-                              color: AppColors.accentRed,
+                              color: AppColors.primaryColor,
                               size: 36,
                             ),
                           ),
@@ -532,7 +532,7 @@ class _SlideToActionButtonState extends State<SlideToActionButton>
                                       ]
                                     : [
                                         BoxShadow(
-                                          color: AppColors.accentRedShadow,
+                                          color: AppColors.primaryColorShadow,
                                           blurRadius: 12,
                                           offset: const Offset(0, 4),
                                         ),
@@ -606,7 +606,7 @@ class _SlideToActionButtonState extends State<SlideToActionButton>
                                       ]
                                     : [
                                         BoxShadow(
-                                          color: AppColors.accentRedShadow,
+                                          color: AppColors.primaryColorShadow,
                                           blurRadius: 12,
                                           offset: const Offset(0, 4),
                                         ),
@@ -639,13 +639,13 @@ class _SlideToActionButtonState extends State<SlideToActionButton>
                         height: 80,
                         child: CustomPaint(
                           painter: _CircleBorderPainter(
-                            color: AppColors.accentRed,
+                            color: AppColors.primaryColor,
                             strokeWidth: 2,
                           ),
                           child: Center(
                             child: Icon(
                               Icons.edit,
-                              color: AppColors.accentRed,
+                              color: AppColors.primaryColor,
                               size: 36,
                             ),
                           ),
@@ -801,7 +801,7 @@ class _MicWaveformIndicatorState extends State<_MicWaveformIndicator>
                 width: 4,
                 height: height,
                 decoration: BoxDecoration(
-                  color: AppColors.pureWhite,
+                  color: AppColors.basicColor,
                   borderRadius: BorderRadius.circular(2),
                 ),
               );
@@ -874,7 +874,7 @@ class _MicTypingIndicatorState extends State<_MicTypingIndicator>
                   width: 8,
                   height: 8,
                   decoration: BoxDecoration(
-                    color: AppColors.pureWhite.withValues(alpha: opacity),
+                    color: AppColors.basicColor.withValues(alpha: opacity),
                     shape: BoxShape.circle,
                   ),
                 ),

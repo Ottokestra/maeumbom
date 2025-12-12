@@ -41,7 +41,7 @@ class SlangQuizResultScreen extends ConsumerWidget {
             Text(
               '${result.totalScore}점',
               style: AppTypography.display.copyWith(
-                color: AppColors.accentRed,
+                color: AppColors.primaryColor,
               ),
             ),
             const SizedBox(height: AppSpacing.sm),
@@ -141,7 +141,7 @@ class SlangQuizResultScreen extends ConsumerWidget {
             height: 32,
             decoration: BoxDecoration(
               color: isCorrect
-                  ? AppColors.natureGreen.withOpacity(0.2)
+                  ? AppColors.secondaryColor.withOpacity(0.2)
                   : AppColors.errorRed.withOpacity(0.2),
               shape: BoxShape.circle,
             ),
@@ -149,7 +149,7 @@ class SlangQuizResultScreen extends ConsumerWidget {
               child: Text(
                 '${summary.questionNumber}',
                 style: AppTypography.bodyBold.copyWith(
-                  color: isCorrect ? AppColors.natureGreen : AppColors.errorRed,
+                  color: isCorrect ? AppColors.secondaryColor : AppColors.errorRed,
                 ),
               ),
             ),
@@ -167,7 +167,7 @@ class SlangQuizResultScreen extends ConsumerWidget {
           // 결과 아이콘
           Icon(
             isCorrect ? Icons.check_circle : Icons.cancel,
-            color: isCorrect ? AppColors.natureGreen : AppColors.errorRed,
+            color: isCorrect ? AppColors.secondaryColor : AppColors.errorRed,
             size: 20,
           ),
           const SizedBox(width: AppSpacing.xs),
@@ -176,7 +176,7 @@ class SlangQuizResultScreen extends ConsumerWidget {
           Text(
             '$score점',
             style: AppTypography.bodyBold.copyWith(
-              color: isCorrect ? AppColors.natureGreen : AppColors.errorRed,
+              color: isCorrect ? AppColors.secondaryColor : AppColors.errorRed,
             ),
           ),
         ],

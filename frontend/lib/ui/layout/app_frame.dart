@@ -44,6 +44,7 @@ class AppFrame extends StatelessWidget {
       value: effectiveStatusBarStyle,
       child: Scaffold(
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        resizeToAvoidBottomInset: false, // 키보드가 올라와도 화면 크기 유지
         appBar: safeTopBar,
         body: useSafeArea ? SafeArea(child: body) : body,
         bottomNavigationBar: bottomBar,

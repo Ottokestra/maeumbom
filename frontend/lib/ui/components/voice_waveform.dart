@@ -11,7 +11,7 @@ import 'package:frontend/ui/tokens/colors.dart';
 /// ```dart
 /// VoiceWaveform(
 ///   isActive: isRecording,
-///   color: AppColors.accentRed,
+///   color: AppColors.primaryColor,
 ///   height: 40,
 /// )
 /// ```
@@ -28,7 +28,7 @@ class VoiceWaveform extends StatefulWidget {
   const VoiceWaveform({
     super.key,
     this.isActive = true,
-    this.color = AppColors.accentRed,
+    this.color = AppColors.primaryColor,
     this.height = 40,
   });
 

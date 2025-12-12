@@ -153,7 +153,7 @@ class _ReportError extends StatelessWidget {
         children: [
           Icon(
             Icons.error_outline,
-            color: AppColors.accentRed,
+            color: AppColors.primaryColor,
             size: 48,
           ),
           const SizedBox(height: AppSpacing.sm),

@@ -126,7 +126,7 @@ class _LoadingBubble extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(AppSpacing.sm),
             decoration: BoxDecoration(
-              color: AppColors.pureWhite,
+              color: AppColors.basicColor,
               borderRadius: BorderRadius.circular(AppRadius.md),
               border: Border.all(color: AppColors.borderLight),
             ),
