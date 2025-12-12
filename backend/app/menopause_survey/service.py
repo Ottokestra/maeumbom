@@ -99,7 +99,15 @@ DEFAULT_SEED_DATA = FEMALE_DEFAULT_QUESTIONS + MALE_DEFAULT_QUESTIONS
 
 
 def _normalize_gender(gender: Optional[str]) -> Optional[str]:
-    return gender.upper() if gender else None
+    if not gender:
+        return None
+    
+    g = gender.upper().strip()
+    if g in ("M", "MALE"):
+        return "M"
+    if g in ("F", "FEMALE"):
+        return "F"
+    return g
 
 
 # ====================================================================

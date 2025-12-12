@@ -6,28 +6,28 @@ part 'menopause_question_response.g.dart';
 
 @JsonSerializable()
 class MenopauseQuestionResponse {
-  @JsonKey(name: 'ID')
+  @JsonKey(name: 'id')
   final int id;
 
-  @JsonKey(name: 'GENDER')
+  @JsonKey(name: 'gender')
   final String gender;
 
-  @JsonKey(name: 'CODE')
+  @JsonKey(name: 'code')
   final String code;
 
-  @JsonKey(name: 'ORDER_NO')
+  @JsonKey(name: 'order_no')
   final int orderNo;
 
-  @JsonKey(name: 'QUESTION_TEXT')
+  @JsonKey(name: 'question_text')
   final String questionText;
 
-  @JsonKey(name: 'POSITIVE_LABEL')
+  @JsonKey(name: 'positive_label')
   final String positiveLabel;
 
-  @JsonKey(name: 'NEGATIVE_LABEL')
+  @JsonKey(name: 'negative_label')
   final String negativeLabel;
 
-  @JsonKey(name: 'CHARACTER_KEY')
+  @JsonKey(name: 'character_key')
   final String? characterKey;
 
   MenopauseQuestionResponse({

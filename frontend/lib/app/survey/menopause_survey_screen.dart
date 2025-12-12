@@ -6,6 +6,7 @@ import 'package:lottie/lottie.dart';
 import '../../ui/app_ui.dart';
 import '../../data/dtos/menopause/menopause_question_response.dart';
 import 'menopause_survey_viewmodel.dart';
+import 'menopause_diagnosis_result_screen.dart';
 import '../../ui/components/system_bubble.dart';
 
 class MenopauseSurveyScreen extends ConsumerStatefulWidget {
@@ -23,8 +24,8 @@ class _MenopauseSurveyScreenState extends ConsumerState<MenopauseSurveyScreen> {
   @override
   void initState() {
     super.initState();
-    // 뷰모델 초기화 시점에 질문을 불러옵니다.
-    Future.microtask(() => ref.read(menopauseSurveyViewModelProvider.notifier).loadQuestions());
+    // 뷰모델이 생성될 때 자동으로 프로필을 조회하고 질문을 불러옵니다.
+    // 별도의 호출이 필요 없습니다.
   }
 
   // =======================================================
@@ -98,28 +99,10 @@ class _MenopauseSurveyScreenState extends ConsumerState<MenopauseSurveyScreen> {
     final result = await ref.read(menopauseSurveyViewModelProvider.notifier).submitSurvey();
 
     if (result != null && mounted) {
-      showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: const Text('진단 결과'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('위험도: ${result.riskLevel}'),
-              const SizedBox(height: 8),
-              Text(result.comment),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context); // Close dialog
-                Navigator.pop(context); // Close survey screen
-              },
-              child: const Text('확인'),
-            ),
-          ],
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => MenopauseDiagnosisResultScreen(result: result),
         ),
       );
     }

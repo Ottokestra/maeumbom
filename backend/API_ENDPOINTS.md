@@ -1246,7 +1246,7 @@
   ]
 }
 
-GET /api/menopause/questions?gender=FEMALE
+GET /api/menopause-survey/questions?gender=FEMALE
 
 [
   {
@@ -1276,7 +1276,7 @@ GET /api/menopause/questions?gender=FEMALE
 ]
 
 ### 2. 설문 문항 목록 조회
-**경로**: `GET /api/menopause/questions`  
+**경로**: `GET /api/menopause-survey/questions`  
 **인증**: 불필요  
 
 **Query Parameters**:
@@ -2219,12 +2219,12 @@ HTTP 상태 코드:
 | HTTP 메서드 | 경로 | 인증 필요 | 설명 |
 |------------|------|----------|------|
 | POST | `/api/menopause-survey/submit` | ❌ | 갱년기 설문 제출 및 위험도 평가 |
-| GET | `/api/menopause/questions` | ❌ | 설문 문항 목록 조회 (gender 별) |
-| GET | `/api/menopause/questions/{question_id}` | ❌ | 설문 문항 단건 조회 |
-| POST | `/api/menopause/questions` | ❌ | 설문 문항 생성 |
-| PATCH | `/api/menopause/questions/{question_id}` | ❌ | 설문 문항 수정 |
-| DELETE | `/api/menopause/questions/{question_id}` | ❌ | 설문 문항 삭제 |
-| POST | `/api/menopause/questions/seed-defaults` | ❌ | 기본 설문 문항 시드 생성 (개발/QA용) |
+| GET | `/api/menopause-survey/questions` | ❌ | 설문 문항 목록 조회 (gender 별) |
+| GET | `/api/menopause-survey/questions/{question_id}` | ❌ | 설문 문항 단건 조회 |
+| POST | `/api/menopause-survey/questions` | ❌ | 설문 문항 생성 |
+| PATCH | `/api/menopause-survey/questions/{question_id}` | ❌ | 설문 문항 수정 |
+| DELETE | `/api/menopause-survey/questions/{question_id}` | ❌ | 설문 문항 삭제 |
+| POST | `/api/menopause-survey/questions/seed-defaults` | ❌ | 기본 설문 문항 시드 생성 (개발/QA용) |
 
 ### 신조어 퀴즈 (Slang Quiz)
 

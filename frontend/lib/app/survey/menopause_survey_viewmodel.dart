@@ -1,10 +1,13 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import '../../data/dtos/menopause/menopause_question_response.dart';
 import '../../data/dtos/menopause/menopause_survey_request.dart';
 import '../../data/dtos/menopause/menopause_survey_response.dart';
 import '../../data/repositories/menopause_repository.dart';
 
-// State class for the ViewModel
+/// ---------------------------------------------------------------------------
+/// State
+/// ---------------------------------------------------------------------------
 class MenopauseSurveyState {
   final bool isLoading;
   final List<MenopauseQuestionResponse> questions;
@@ -37,42 +40,65 @@ class MenopauseSurveyState {
   }
 }
 
-// ViewModel Provider
+/// ---------------------------------------------------------------------------
+/// ViewModel Provider
+/// ---------------------------------------------------------------------------
 final menopauseSurveyViewModelProvider =
-    StateNotifierProvider.autoDispose<MenopauseSurveyViewModel, MenopauseSurveyState>((ref) {
-  final repository = ref.watch(menopauseRepositoryProvider);
-  return MenopauseSurveyViewModel(repository);
-});
+    StateNotifierProvider.autoDispose<MenopauseSurveyViewModel, MenopauseSurveyState>(
+  (ref) {
+    final repository = ref.watch(menopauseRepositoryProvider);
 
+    // OnboardingRepository 의존성 제거된 버전
+    return MenopauseSurveyViewModel(repository);
+  },
+);
+
+/// ---------------------------------------------------------------------------
+/// ViewModel
+/// ---------------------------------------------------------------------------
 class MenopauseSurveyViewModel extends StateNotifier<MenopauseSurveyState> {
   final MenopauseRepository _repository;
 
+  String? _selectedGender; // 선택된 성별 코드 (MALE / FEMALE)
+
   MenopauseSurveyViewModel(this._repository) : super(MenopauseSurveyState()) {
-    // 💡 ViewModel 생성 시 질문을 즉시 로드합니다.
-    loadQuestions(); 
+    // 생성 시 자동 로드
+    loadQuestions();
   }
 
-  // =======================================================
-  // 🐛 오류 해결: Private _loadQuestions()를 Public loadQuestions()로 변경
-  // =======================================================
   Future<void> loadQuestions() async {
-    // 로딩 중이거나 이미 질문이 있으면 다시 로드하지 않음 (선택 사항)
     if (state.isLoading || state.questions.isNotEmpty) {
-      return; 
+      return;
     }
-    
+
     state = state.copyWith(isLoading: true, error: null);
+
     try {
-      // TODO: Get actual gender from user profile if needed. defaulting to FEMALE for now as per screen.
-      final questions = await _repository.getQuestions(gender: 'FEMALE');
-      // Sort by orderNo
+      // ----------------------------------------------------------------------
+      // TODO: 실제 구현 시에는 프로필/로컬 저장소에서 성별을 가져오도록 변경
+      // 현재는 테스트를 위해 성별을 '여성'으로 하드코딩
+      // ----------------------------------------------------------------------
+      const genderStr = '여성';
+
+      String genderCode;
+      if (genderStr == '남성' || genderStr == 'MALE') {
+        genderCode = 'MALE';
+      } else if (genderStr == '여성' || genderStr == 'FEMALE') {
+        genderCode = 'FEMALE';
+      } else {
+        genderCode = 'FEMALE';
+      }
+      _selectedGender = genderCode;
+
+      // 질문 목록 조회
+      final questions = await _repository.getQuestions(gender: genderCode);
       questions.sort((a, b) => a.orderNo.compareTo(b.orderNo));
+
       state = state.copyWith(isLoading: false, questions: questions);
     } catch (e) {
       state = state.copyWith(isLoading: false, error: e.toString());
     }
   }
-  // =======================================================
 
   void setAnswer(int questionId, int value) {
     final newAnswers = Map<int, int>.from(state.answers);
@@ -90,18 +116,28 @@ class MenopauseSurveyViewModel extends StateNotifier<MenopauseSurveyState> {
   }
 
   Future<MenopauseSurveyResponse?> submitSurvey() async {
-      if (!isAllAnswered) {
-        // Should be handled by UI, but guard here
-        return null;
-      }
+    if (!isAllAnswered) {
+      return null;
+    }
 
     state = state.copyWith(isLoading: true, error: null);
+
     try {
-      // TODO: Replace MenopauseGender.female with actual gender derived from user profile or state
+      if (_selectedGender == null) {
+        throw Exception('Gender not selected');
+      }
+
       final request = MenopauseSurveyRequest(
-        gender: MenopauseGender.female,
+        gender: _selectedGender == 'MALE'
+            ? MenopauseGender.male
+            : MenopauseGender.female,
         answers: state.answers.entries
-            .map((e) => MenopauseAnswerItem(questionId: e.key, answerValue: e.value))
+            .map(
+              (e) => MenopauseAnswerItem(
+                questionId: e.key,
+                answerValue: e.value,
+              ),
+            )
             .toList(),
       );
 

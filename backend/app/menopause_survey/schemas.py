@@ -73,28 +73,22 @@ class MenopauseQuestionUpdate(BaseModel):
 
 
 class MenopauseQuestionOut(BaseModel):
-    id: int = Field(..., alias="ID")
-    gender: str = Field(..., alias="GENDER")
-    code: str = Field(..., alias="CODE")
-    order_no: int = Field(..., alias="ORDER_NO")
-    question_text: str = Field(..., alias="QUESTION_TEXT")
-    risk_when_yes: bool = Field(..., alias="RISK_WHEN_YES")
-    positive_label: str = Field(..., alias="POSITIVE_LABEL")
-    negative_label: str = Field(..., alias="NEGATIVE_LABEL")
-    character_key: Optional[str] = Field(None, alias="CHARACTER_KEY")
-    is_active: bool = Field(..., alias="IS_ACTIVE")
-    is_deleted: bool = Field(..., alias="IS_DELETED")
-    created_at: Optional[datetime] = Field(None, alias="CREATED_AT")
-    updated_at: Optional[datetime] = Field(None, alias="UPDATED_AT")
-    created_by: Optional[str] = Field(None, alias="CREATED_BY")
-    updated_by: Optional[str] = Field(None, alias="UPDATED_BY")
+    id: int = Field(..., validation_alias="ID")
+    gender: str = Field(..., validation_alias="GENDER")
+    code: str = Field(..., validation_alias="CODE")
+    order_no: int = Field(..., validation_alias="ORDER_NO")
+    question_text: str = Field(..., validation_alias="QUESTION_TEXT")
+    risk_when_yes: bool = Field(..., validation_alias="RISK_WHEN_YES")
+    positive_label: str = Field(..., validation_alias="POSITIVE_LABEL")
+    negative_label: str = Field(..., validation_alias="NEGATIVE_LABEL")
+    character_key: Optional[str] = Field(None, validation_alias="CHARACTER_KEY")
+    is_active: Optional[bool] = Field(False, validation_alias="IS_ACTIVE")
+    is_deleted: Optional[bool] = Field(False, validation_alias="IS_DELETED")
+    created_at: Optional[datetime] = Field(None, validation_alias="CREATED_AT")
+    updated_at: Optional[datetime] = Field(None, validation_alias="UPDATED_AT")
+    created_by: Optional[str] = Field(None, validation_alias="CREATED_BY")
+    updated_by: Optional[str] = Field(None, validation_alias="UPDATED_BY")
 
-<<<<<<< HEAD
-    model_config = {
-        "from_attributes": True, # orm_mode = True 대체
-        "populate_by_name": True # allow_population_by_field_name = True 대체
-    }
-=======
     class Config:
         from_attributes = True  # orm_mode is deprecated in v2
         populate_by_name = True  # allow_population_by_field_name is deprecated in v2
@@ -119,4 +113,3 @@ class MenopauseSurveyResultResponse(BaseModel):
 
     class Config:
         from_attributes = True
->>>>>>> 10eca562ebbed6cd5936665476546b0e09b9c1ee
