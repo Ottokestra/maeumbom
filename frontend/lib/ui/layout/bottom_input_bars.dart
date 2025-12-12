@@ -76,18 +76,41 @@ class _BottomInputBarState extends State<BottomInputBar> {
 
   @override
   Widget build(BuildContext context) {
+    final bottomInset = MediaQuery.of(context).viewInsets.bottom;
     final bottomPadding = MediaQuery.of(context).padding.bottom;
 
-    return Container(
-      height: 100 + bottomPadding,
-      decoration: BoxDecoration(
-        color: widget.backgroundColor,
+    return AnimatedPadding(
+      duration: const Duration(milliseconds: 150),
+      curve: Curves.easeOut,
+      // 키보드 높이(bottomInset)가 있으면 그만큼 올리고, 없으면 기본 하단 패딩 사용
+      padding: EdgeInsets.only(
+        bottom: bottomInset > 0 ? bottomInset : 0,
       ),
-      child: Padding(
-        padding: EdgeInsets.only(bottom: bottomPadding),
+      child: Container(
+        // 기본 높이 없이 내용물에 맞춤, 배경색은 패딩을 포함하지 않도록 주의 필요하나
+        // AppFrame의 bottomNavigationBar 위치 특성상 배경이 끊길 수 있음.
+        // 하지만 사용자 예시는 "Floating" 스타일처럼 보임 (SafeArea + Container margin/padding).
+        // 기존 디자인(꽉 찬 배경)을 유지하려면 Container가 바깥에 있어야 하는데...
+        // AppFrame의 bottomNavigationBar는 화면 하단 고정임.
+        // AnimatedPadding을 주면 내용물이 위로 올라감. Background는?
+        // 사용자의 의도는 "Input Bar 위젯 자체가 위로 올라감"임. 
+        // 배경색을 이 Container에 주면 키보드 따라 올라가는 Bar가 됨.
+        // 키보드 아래 영역(bottomInset)은 비어보일 수 있음 (AppFrame background color가 보임).
+        decoration: BoxDecoration(
+          color: widget.backgroundColor,
+          // 상단 테두리 추가 (기존 스타일 유지 시 필요할 수 있음)
+        ),
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20),
-          child: Center(
+          // 아이폰 하단 인디케이터 영역 처리 (키보드 없을 때)
+          // 키보드 있을 때는 bottomInset에 포함되거나 0임.
+          padding: EdgeInsets.only(
+            bottom: bottomInset > 0 ? 0 : bottomPadding,
+            top: 10, // 상단 여백
+            left: 20,
+            right: 20,
+          ),
+          child: SizedBox(
+            height: 60, // 내부 높이 고정 (기존 100 height - padding 고려)
             child: Row(
               children: [
                 // 텍스트 입력 필드

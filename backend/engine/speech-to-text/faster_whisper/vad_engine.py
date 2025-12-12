@@ -83,13 +83,15 @@ class SileroVAD:
         
     def process_chunk(
         self,
-        audio_chunk: np.ndarray
+        audio_chunk: np.ndarray,
+        on_speech_end_callback=None
     ) -> Tuple[bool, Optional[np.ndarray], bool]:
         """
         오디오 청크 처리
         
         Args:
             audio_chunk: 오디오 데이터 (numpy array, float32)
+            on_speech_end_callback: 긴 침묵 감지 시 호출될 콜백 함수 (optional)
             
         Returns:
             (발화 완료 여부, 발화 오디오 데이터, 짧은 침묵 감지 여부)
@@ -162,6 +164,13 @@ class SileroVAD:
                     speech_duration = self.current_sample - self.speech_start_sample
                     silence_ms = silence_duration / self.sample_rate * 1000
                     print(f"[VAD 디버그] 긴 침묵 감지 ({silence_ms:.0f}ms) -> 발화 종료!", flush=True)
+                    
+                    # 🆕 콜백 호출 (긴 침묵 감지 시)
+                    if on_speech_end_callback is not None:
+                        try:
+                            on_speech_end_callback()
+                        except Exception as e:
+                            print(f"[VAD] 콜백 오류: {e}", flush=True)
                     
                     if speech_duration >= self.min_speech_samples:
                         # 유효한 발화
