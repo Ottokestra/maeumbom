@@ -8,7 +8,7 @@ from app.db.models import MenopauseSurveyQuestion
 
 
 def list_questions(
-    db: Session, gender: Optional[str] = None, is_active: Optional[bool] = None
+    db: Session, gender: Optional[str] = None, is_active: Optional[bool] = True
 ) -> List[MenopauseSurveyQuestion]:
     query = db.query(MenopauseSurveyQuestion).filter(
         MenopauseSurveyQuestion.IS_DELETED == False
@@ -131,18 +131,24 @@ def soft_delete_question(
 
 def seed_questions(
     db: Session, defaults: Iterable[dict], created_by: str = "seed-defaults"
-) -> List[MenopauseSurveyQuestion]:
-    codes = [item["code"] for item in defaults]
-    existing_codes = {
-        q.CODE
+) -> tuple[List[MenopauseSurveyQuestion], int]:
+    codes = {item["code"] for item in defaults}
+    genders = {item["gender"] for item in defaults}
+    existing_pairs = {
+        (q.CODE, q.GENDER)
         for q in db.query(MenopauseSurveyQuestion)
         .filter(MenopauseSurveyQuestion.CODE.in_(codes))
+        .filter(MenopauseSurveyQuestion.GENDER.in_(genders))
+        .filter(MenopauseSurveyQuestion.IS_DELETED == False)
         .all()
     }
 
     created_items: List[MenopauseSurveyQuestion] = []
+    skipped_count = 0
     for item in defaults:
-        if item["code"] in existing_codes:
+        code_gender_pair = (item["code"], item["gender"])
+        if code_gender_pair in existing_pairs:
+            skipped_count += 1
             continue
 
         question = MenopauseSurveyQuestion(
@@ -165,4 +171,4 @@ def seed_questions(
         for question in created_items:
             db.refresh(question)
 
-    return created_items
+    return created_items, skipped_count

@@ -6,6 +6,7 @@ import '../../dtos/auth/kakao_login_request.dart';
 import '../../dtos/auth/naver_login_request.dart';
 import '../../dtos/auth/token_response.dart';
 import '../../dtos/auth/user_response.dart';
+import '../../../core/errors/exceptions.dart';
 
 /// Auth API Client - Handles all authentication API calls
 class AuthApiClient {
@@ -94,7 +95,12 @@ class AuthApiClient {
       );
       return UserResponse.fromJson(response.data);
     } on DioException catch (e) {
-      appLogger.e('Get user failed', error: e);
+      // 401 에러는 토큰 갱신 시도 전이므로 warning 레벨로 로깅하거나 생략 가능
+      if (e.response?.statusCode == 401) {
+        appLogger.w('Access token expired or invalid');
+      } else {
+        appLogger.e('Get user failed', error: e);
+      }
       throw _handleError(e);
     }
   }
@@ -123,7 +129,8 @@ class AuthApiClient {
         case 400:
           return Exception('Bad Request: $message');
         case 401:
-          return Exception('Unauthorized: $message');
+          // 401은 토큰 만료 등 정상적인 인증 흐름일 수 있으므로 UnauthorizedException 발생
+          return UnauthorizedException(message);
         case 500:
           return Exception('Server Error: $message');
         default:

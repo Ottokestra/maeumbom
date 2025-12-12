@@ -1,6 +1,7 @@
 """Service layer for menopause survey question management."""
 
 from typing import List, Optional
+import logging
 
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
@@ -13,36 +14,30 @@ from .repository import (
     seed_questions,
     soft_delete_question,
     update_question,
+    # TODO: 설문조사 응답 저장/조회용 repository 함수 추가 필요
 )
-from .schemas import MenopauseQuestionCreate, MenopauseQuestionUpdate
+from .schemas import (
+    MenopauseQuestionCreate, 
+    MenopauseQuestionUpdate, 
+    # 설문조사 제출/결과 스키마 임포트 추가
+    MenopauseSurveySubmitRequest, 
+    MenopauseSurveyResultResponse
+)
+
+logger = logging.getLogger(__name__)
 
 DEFAULT_SEED_CREATED_BY = "seed-defaults"
 
-# TODO: 캐릭터 매핑 테이블 연동 예정 - 현재는 임시 키를 사용
+# ... (FEMALE_CHARACTER_KEYS, MALE_CHARACTER_KEYS, DEFAULT_QUESTIONS 정의는 생략) ...
+
 FEMALE_CHARACTER_KEYS = [
-    "PEACH_WORRY",
-    "PEACH_CALM",
-    "PEACH_TIRED",
-    "PEACH_HEAT",
-    "PEACH_ANXIOUS",
-    "PEACH_PAIN",
-    "PEACH_SHY",
-    "PEACH_BALANCE",
-    "PEACH_BLUE",
-    "PEACH_EXHAUSTED",
+    "PEACH_WORRY", "PEACH_CALM", "PEACH_TIRED", "PEACH_HEAT", "PEACH_ANXIOUS", 
+    "PEACH_PAIN", "PEACH_SHY", "PEACH_BALANCE", "PEACH_BLUE", "PEACH_EXHAUSTED",
 ]
 
 MALE_CHARACTER_KEYS = [
-    "FIRE_FOCUS",
-    "FIRE_ENERGY",
-    "FIRE_DRIVE",
-    "FIRE_ANGRY",
-    "FIRE_EMPTY",
-    "FIRE_FORGET",
-    "FIRE_SLEEP",
-    "FIRE_STRESS",
-    "FIRE_WEIGHT",
-    "FIRE_CONFIDENCE",
+    "FIRE_FOCUS", "FIRE_ENERGY", "FIRE_DRIVE", "FIRE_ANGRY", "FIRE_EMPTY", 
+    "FIRE_FORGET", "FIRE_SLEEP", "FIRE_STRESS", "FIRE_WEIGHT", "FIRE_CONFIDENCE",
 ]
 
 
@@ -107,14 +102,77 @@ DEFAULT_SEED_DATA = FEMALE_DEFAULT_QUESTIONS + MALE_DEFAULT_QUESTIONS
 
 
 def _normalize_gender(gender: Optional[str]) -> Optional[str]:
-    return gender.upper() if gender else None
+    if not gender:
+        return None
+    
+    g = gender.upper().strip()
+    if g in ("M", "MALE"):
+        return "M"
+    if g in ("F", "FEMALE"):
+        return "F"
+    return g
 
+
+# ====================================================================
+# 설문조사 제출 핵심 서비스 함수 (ImportError 해결)
+# ====================================================================
+
+async def submit_menopause_survey_service(
+    db: Session,
+    request_data: MenopauseSurveySubmitRequest,
+    current_user_id: int,  # 사용자 인증 정보를 통해 현재 사용자 ID를 받는다고 가정
+) -> MenopauseSurveyResultResponse:
+    """
+    설문조사 응답을 받아 DB에 저장하고, 분석을 수행하여 결과를 반환합니다.
+    """
+    # 1. DB에 설문조사 결과 저장 (repository 함수 필요)
+    # submitted_record = save_survey_answers(db, request_data)
+
+    # 2. 위험 점수 계산
+    risk_score = sum(1 for answer in request_data.answers if answer.is_risk)
+    
+    # 3. 위험 레벨 및 텍스트 결정 로직 (간단한 예시)
+    if risk_score >= 8:
+        risk_level = "HIGH"
+        result_text = "위험 점수가 높아 전문가 상담을 권장합니다."
+    elif risk_score >= 4:
+        risk_level = "MEDIUM"
+        result_text = "주의가 필요합니다. 건강 상태를 점검해보세요."
+    else:
+        risk_level = "LOW"
+        result_text = "현재 상태는 양호합니다."
+
+    # 4. 결과 응답 객체 생성 및 반환
+    from datetime import datetime
+    
+    return MenopauseSurveyResultResponse(
+        user_id=current_user_id,
+        survey_id=1,  # 저장된 레코드 ID로 대체 필요
+        gender=request_data.gender,
+        risk_score=risk_score,
+        result_text=result_text,
+        risk_level=risk_level,
+        submitted_at=datetime.now()
+    )
+
+
+# ====================================================================
+# 기존 질문 관리 서비스 함수들
+# ====================================================================
 
 def list_question_items(
-    db: Session, *, gender: Optional[str] = None, is_active: Optional[bool] = None
+    db: Session, *, gender: Optional[str] = None, is_active: Optional[bool] = True
 ):
     normalized_gender = _normalize_gender(gender)
-    return list_questions(db, gender=normalized_gender, is_active=is_active)
+    questions = list_questions(db, gender=normalized_gender, is_active=is_active)
+
+    if not questions:
+        logger.warning(
+            "[MenopauseSurvey] No questions found for gender=%s",
+            normalized_gender or "ALL",
+        )
+
+    return questions
 
 
 def retrieve_question(db: Session, question_id: int):
@@ -125,7 +183,7 @@ def retrieve_question(db: Session, question_id: int):
 
 
 def create_question_item(db: Session, payload: MenopauseQuestionCreate):
-    gender = payload.gender.upper()
+    gender = payload.gender.value
     code = payload.code.upper()
 
     if get_by_code(db, code):
@@ -157,7 +215,7 @@ def update_question_item(
     return update_question(
         db,
         question,
-        gender=_normalize_gender(payload.gender),
+        gender=_normalize_gender(payload.gender.value if payload.gender else None),
         code=new_code,
         order_no=payload.order_no,
         question_text=payload.question_text,
@@ -175,9 +233,14 @@ def delete_question_item(db: Session, question_id: int):
     return soft_delete_question(db, question, updated_by="api")
 
 
-def seed_default_questions(db: Session) -> List:
-    created = seed_questions(db, DEFAULT_SEED_DATA, created_by=DEFAULT_SEED_CREATED_BY)
-    # 반환은 최신 활성 목록 기준으로 처리
+def seed_default_questions(db: Session) -> dict:
+    created, skipped_count = seed_questions(
+        db, DEFAULT_SEED_DATA, created_by=DEFAULT_SEED_CREATED_BY
+    )
+    return {
+        "created_count": len(created),
+        "skipped_count": skipped_count,
+    }
 
 
 from datetime import datetime
@@ -194,20 +257,32 @@ def submit_menopause_survey(
     for ans in payload.answers:
         total_score += ans.answer_value
 
-    # 2. Risk Level (Simple logic: <10 LOW, 10-20 MID, >20 HIGH)
-    if total_score < 10:
-        risk_level = "LOW"
-        comment = "증상이 경미합니다. 규칙적인 생활을 유지하세요."
-    elif total_score <= 20:
-        risk_level = "MID"
-        comment = "증상이 느껴집니다. 생활 습관 개선과 상담이 도움이 될 수 있습니다."
-    else:
-        risk_level = "HIGH"
-        comment = "증상이 심합니다. 전문의와의 상담을 적극 권장합니다."
+# 2. Risk Level (Simple logic: <10 LOW, 10-20 MID, >20 HIGH)
+if total_score < 10:
+    risk_level = "LOW"
+    comment = (
+        "현재로서는 갱년기와 관련된 변화가 크게 두드러지지 않거나 비교적 가벼운 수준으로 보여요. "
+        "생활 리듬을 잘 유지하고, 충분한 휴식과 가벼운 활동으로 컨디션을 살펴보세요."
+    )
+elif total_score <= 20:
+    risk_level = "MID"
+    comment = (
+        "최근 몸과 마음의 변화를 느끼고 있을 가능성이 있어요. "
+        "수면, 식사, 활동 습관을 조금만 조정해도 도움이 될 수 있으며, "
+        "증상이 지속되거나 불편하다면 상담을 받아보는 것도 좋은 선택이에요."
+    )
+else:
+    risk_level = "HIGH"
+    comment = (
+        "현재 증상이 일상생활에 영향을 주고 있을 가능성이 높아요. "
+        "혼자 참고 넘기기보다는 전문의와 상담을 통해 원인을 확인하고, "
+        "본인에게 맞는 관리나 치료 방법을 찾는 것을 적극 권장드려요."
+    )
+
 
     # 3. Save
     result = MenopauseSurveyResult(
-        GENDER=payload.gender,
+        GENDER=payload.gender.value,
         TOTAL_SCORE=total_score,
         RISK_LEVEL=risk_level,
         COMMENT=comment,

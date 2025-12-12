@@ -135,7 +135,9 @@ flutter:
     - assets/characters/animation/thinking/
     - assets/images/icons/
     - assets/images/logo/
-
+    - assets/training_images/randomQ.png
+    - assets/legal/terms_of_service.txt
+    - assets/legal/privacy_policy.txt
 
   fonts:
     - family: Pretendard

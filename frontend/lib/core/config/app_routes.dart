@@ -4,6 +4,8 @@ import '../../app/alarm/alarm_screen.dart';
 import '../../app/chat/chat_screen.dart';
 import '../../app/report/report_screen.dart';
 import '../../app/settings/mypage_screen.dart';
+import '../../app/settings/terms.dart';
+import '../../app/settings/privacy.dart';
 import '../../app/common/login_screen.dart';
 import '../../app/sign/sign_up1.dart';
 import '../../app/survey/menopause_survey_screen.dart';
@@ -111,6 +113,17 @@ class AppRoutes {
     requiresAuth: true,
   );
 
+  // Settings Routes
+  static const RouteMetadata terms = RouteMetadata(
+    routeName: '/settings/terms',
+    builder: TermsScreen.new,
+  );
+
+  static const RouteMetadata privacy = RouteMetadata(
+    routeName: '/settings/privacy',
+    builder: PrivacyPolicyScreen.new,
+  );
+
   /// 모든 라우트 목록
   // static const List<RouteMetadata> allRoutes = [
   static final List<RouteMetadata> allRoutes = [
@@ -127,6 +140,8 @@ class AppRoutes {
     training,
     menopauseSurvey,
     slangQuizStart,
+    terms,
+    privacy,
   ];
 
   /// 경로 이름으로 라우트 찾기

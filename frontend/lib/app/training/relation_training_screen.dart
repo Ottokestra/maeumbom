@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../ui/app_ui.dart';
 import '../../ui/components/buttons.dart';
+import '../../ui/components/list_bubble.dart';
 import 'relation_training_viewmodel.dart';
 import '../../data/models/training/relation_training.dart';
 import '../../core/config/api_config.dart';
@@ -187,40 +188,31 @@ class _RelationTrainingScreenState extends ConsumerState<RelationTrainingScreen>
 
           Padding(
             padding: const EdgeInsets.all(24),
-            child: Column(
-              children: node.options.map((option) {
-                final isSelected = _selectedOptionCode == option.optionCode;
-                
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
-                  child: AppButton(
-                    text: option.optionText,
-                    height: null,
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-                    onTap: () {
-                      if (_selectedOptionCode != null) return;
-                      
-                      setState(() {
-                          _selectedOptionCode = option.optionCode;
-                      });
+            child: ListBubble(
+                items: node.options.map((e) => e.optionText).toList(),
+                selectedIndex: node.options.indexWhere((e) => e.optionCode == _selectedOptionCode),
+                onItemSelected: (index, item) {
+                  if (_selectedOptionCode != null) return;
+                  
+                  final option = node.options[index];
+                  
+                  setState(() {
+                    _selectedOptionCode = option.optionCode;
+                  });
 
-                      Future.delayed(const Duration(milliseconds: 200), () {
-                        ref.read(relationTrainingViewModelProvider(widget.scenarioId).notifier)
-                           .selectOption(option)
-                           .then((_) {
-                             if (mounted) {
-                                setState(() {
-                                   _selectedOptionCode = null;
-                                });
-                             }
-                           });
-                      });
-                    },
-                    variant: isSelected ? ButtonVariant.primaryRed : ButtonVariant.secondaryRed,
-                  ),
-                );
-              }).toList(),
-            ),
+                  Future.delayed(const Duration(milliseconds: 200), () {
+                    ref.read(relationTrainingViewModelProvider(widget.scenarioId).notifier)
+                        .selectOption(option)
+                        .then((_) {
+                          if (mounted) {
+                            setState(() {
+                              _selectedOptionCode = null;
+                            });
+                          }
+                        });
+                  });
+                },
+              ),
           ),
       ],
     );

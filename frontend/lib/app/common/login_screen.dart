@@ -97,8 +97,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     return AppFrame(
       topBar: TopBar(
         title: '',
-        leftIcon: Icons.arrow_back,
-        onTapLeft: () => Navigator.pop(context),
       ),
       body: Column(
         children: [
