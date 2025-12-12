@@ -280,6 +280,7 @@ def submit_menopause_survey(
             "본인에게 맞는 관리나 치료 방법을 찾는 것을 적극 권장드려요."
         )
 
+
     # 3. Save
     result = MenopauseSurveyResult(
         GENDER=payload.gender,
