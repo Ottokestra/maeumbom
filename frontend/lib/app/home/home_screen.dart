@@ -4,9 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../ui/app_ui.dart';
 import '../../providers/daily_mood_provider.dart';
 import '../../core/utils/emotion_classifier.dart';
+import '../../core/services/navigation/navigation_service.dart';
 import 'components/home_header_section.dart';
 import 'components/conversation_temperature_bar.dart';
-import 'components/home_bottom_menu.dart';
 import 'daily_mood_check_screen.dart';
 
 /// Home Screen - 메인 홈 화면
@@ -22,6 +22,7 @@ class HomeScreen extends ConsumerWidget {
       useSafeArea: false,
       statusBarStyle: statusBarStyle,
       body: const HomeContent(),
+      bottomBar: const HomeBottomBar(),
     );
   }
 }
@@ -134,9 +135,6 @@ class _HomeContentState extends ConsumerState<HomeContent> {
                 ),
               ),
             ),
-
-            // 4. 하단 메뉴 (고정)
-            const HomeBottomMenu(),
           ],
         ),
       ),
@@ -153,5 +151,22 @@ class _HomeContentState extends ConsumerState<HomeContent> {
       case MoodCategory.bad:
         return AppColors.moodNormalColor; // 디자인 가이드/사용자 요청에 따라 변경
     }
+  }
+}
+
+/// 홈 화면 하단 네비게이션 바
+class HomeBottomBar extends ConsumerWidget {
+  const HomeBottomBar({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final navigationService = NavigationService(context, ref);
+
+    return BottomMenuBar(
+      currentIndex: 0,
+      onTap: (index) {
+        navigationService.navigateToTab(index);
+      },
+    );
   }
 }

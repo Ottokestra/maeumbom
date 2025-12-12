@@ -142,8 +142,10 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       await onboardingRepository.submitSurvey(request);
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('프로필이 저장되었습니다.')),
+        TopNotificationManager.show(
+          context,
+          message: '프로필이 저장되었습니다.',
+          type: TopNotificationType.green,
         );
         Navigator.pop(context, true); // true를 반환하여 마이페이지에서 새로고침
       }

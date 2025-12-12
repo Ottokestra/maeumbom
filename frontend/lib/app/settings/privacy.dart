@@ -16,7 +16,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
       topBar: TopBar(
         title: '개인정보처리방침',
         leftIcon: Icons.arrow_back,
-        onTapLeft: () => Navigator.pop(context),
+        onTapLeft: () => Navigator.of(context).pop(),
       ),
       body: FutureBuilder<String>(
         future: _loadPolicy(),
