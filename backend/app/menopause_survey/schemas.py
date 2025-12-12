@@ -1,13 +1,19 @@
 """Pydantic schemas for menopause survey questions."""
 
 from datetime import datetime
+from enum import Enum
 from typing import Optional
 
 from pydantic import BaseModel, Field
 
 
+class Gender(str, Enum):
+    FEMALE = "FEMALE"
+    MALE = "MALE"
+
+
 class MenopauseQuestionCreate(BaseModel):
-    gender: str = Field(..., description="성별 (FEMALE / MALE)")
+    gender: Gender = Field(..., description="성별 (FEMALE / MALE)")
     code: str = Field(..., description="문항 코드 (F1~F10, M1~M10)")
     order_no: int = Field(..., description="성별 내 문항 표시 순서")
     question_text: str = Field(..., description="문항 텍스트")
@@ -20,7 +26,7 @@ class MenopauseQuestionCreate(BaseModel):
 
 
 class MenopauseQuestionUpdate(BaseModel):
-    gender: Optional[str] = Field(None, description="성별 (FEMALE / MALE)")
+    gender: Optional[Gender] = Field(None, description="성별 (FEMALE / MALE)")
     code: Optional[str] = Field(None, description="문항 코드 (F1~F10, M1~M10)")
     order_no: Optional[int] = Field(None, description="성별 내 문항 표시 순서")
     question_text: Optional[str] = Field(None, description="문항 텍스트")
@@ -35,7 +41,7 @@ class MenopauseQuestionUpdate(BaseModel):
 
 class MenopauseQuestionOut(BaseModel):
     id: int = Field(..., alias="ID")
-    gender: str = Field(..., alias="GENDER")
+    gender: Gender = Field(..., alias="GENDER")
     code: str = Field(..., alias="CODE")
     order_no: int = Field(..., alias="ORDER_NO")
     question_text: str = Field(..., alias="QUESTION_TEXT")
@@ -61,7 +67,7 @@ class MenopauseAnswerItem(BaseModel):
 
 
 class MenopauseSurveySubmitRequest(BaseModel):
-    gender: str  # FEMALE / MALE (설문 대상 성별)
+    gender: Gender  # FEMALE / MALE (설문 대상 성별)
     answers: list[MenopauseAnswerItem]
 
 
@@ -74,3 +80,8 @@ class MenopauseSurveyResultResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class MenopauseSeedResponse(BaseModel):
+    created_count: int
+    skipped_count: int

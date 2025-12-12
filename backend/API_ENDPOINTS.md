@@ -1232,6 +1232,49 @@
 - MID (10-19점): 갱년기 관련 신호 보임
 - HIGH (20점 이상): 전문의 상담 권장
 
+응답 예시
+{
+  "gender": "FEMALE",
+  "total_score": 18,
+  "risk_level": "HIGH",
+  "risk_label": "심한 갱년기 의심",
+  "risk_description": "최근 4주 동안 신체적/정신적 증상이 일상에 영향을 줄 정도로 나타나고 있습니다.",
+  "recommendations": [
+    "충분한 휴식과 수면 시간을 우선적으로 확보해 주세요.",
+    "증상이 지속되거나 악화될 경우 전문의 상담을 권장합니다.",
+    "규칙적인 운동과 균형 잡힌 식단이 도움이 될 수 있습니다."
+  ]
+}
+
+GET /api/menopause/questions?gender=FEMALE
+
+[
+  {
+    "id": 1,
+    "gender": "FEMALE",
+    "code": "F1",
+    "order_no": 1,
+    "question_text": "일의 집중력이나 기억력이 예전 같지 않다고 느낀다.",
+    "risk_when_yes": true,
+    "positive_label": "그렇다",
+    "negative_label": "아니다",
+    "created_at": "2025-12-10T09:00:00",
+    "updated_at": "2025-12-10T09:00:00"
+  },
+  {
+    "id": 2,
+    "gender": "FEMALE",
+    "code": "F2",
+    "order_no": 2,
+    "question_text": "아무 이유 없이 짜증이 늘고 감정 기복이 심해졌다.",
+    "risk_when_yes": true,
+    "positive_label": "그렇다",
+    "negative_label": "아니다",
+    "created_at": "2025-12-10T09:00:00",
+    "updated_at": "2025-12-10T09:00:00"
+  }
+]
+
 ### 2. 설문 문항 목록 조회
 **경로**: `GET /api/menopause/questions`  
 **인증**: 불필요  
@@ -1283,6 +1326,20 @@
   "updated_at": "datetime"
 }
 ```
+
+응답 예시
+{
+  "id": 1,
+  "gender": "FEMALE",
+  "code": "F1",
+  "order_no": 1,
+  "question_text": "일의 집중력이나 기억력이 예전 같지 않다고 느낀다.",
+  "risk_when_yes": true,
+  "positive_label": "그렇다",
+  "negative_label": "아니다",
+  "created_at": "2025-12-10T09:00:00",
+  "updated_at": "2025-12-10T09:00:00"
+}
 
 ### 4. 설문 문항 생성
 **경로**: `POST /api/menopause/questions`  
@@ -1359,6 +1416,25 @@
 }
 ```
 
+{
+  "order_no": 3,
+  "question_text": "최근 4주 동안 이유 없이 짜증이 늘고 감정 기복이 심해졌다."
+}
+
+응답 예시
+{
+  "id": 2,
+  "gender": "FEMALE",
+  "code": "F2",
+  "order_no": 3,
+  "question_text": "최근 4주 동안 이유 없이 짜증이 늘고 감정 기복이 심해졌다.",
+  "risk_when_yes": true,
+  "positive_label": "그렇다",
+  "negative_label": "아니다",
+  "created_at": "2025-12-10T09:00:00",
+  "updated_at": "2025-12-10T09:20:00"
+}
+
 ### 6. 설문 문항 삭제
 **경로**: `DELETE /api/menopause/questions/{question_id}`  
 **인증**: 불필요  
@@ -1408,6 +1484,216 @@
   }
 ]
 ```
+
+## 주간 감정 리포트 (Weekly Emotion Report)
+
+### 1. 공통 모델
+
+**WeeklyEmotionReport (주간 감정 리포트 요약)**
+
+```json
+{
+  "reportId": 123,
+  "userId": 1,
+  "weekStart": "2025-12-08",
+  "weekEnd": "2025-12-14",
+  "emotionTemperature": 73,
+  "positiveScore": 42,
+  "negativeScore": 18,
+  "neutralScore": 10,
+  "mainEmotion": "불안",
+  "mainEmotionConfidence": 0.82,
+  "mainEmotionCharacterCode": "ANXIOUS_RABBIT",
+  "badges": [
+    "불안多",
+    "지침",
+    "회복시도"
+  ],
+  "summaryText": "이번 주에는 걱정과 피로가 자주 등장했어요. 스스로를 돌보려는 시도도 보였습니다.",
+  "createdAt": "2025-12-14T23:50:00Z"
+}
+
+
+WeeklyEmotionDialogSnippet (리포트용 대화 하이라이트)
+
+{
+  "role": "user",             // "user" 또는 "assistant"
+  "content": "요즘은 자꾸 불안해서 잠이 잘 안 와요.",
+  "emotion": "불안",
+  "createdAt": "2025-12-11T05:10:00Z"
+}
+
+
+2. 주간 리포트 생성 / 재생성
+
+경로: POST /api/v1/reports/emotion/weekly/generate
+인증: 필요 (Bearer Token)
+설명: 특정 사용자 + 특정 주간에 대한 주간 감정 리포트를 새로 생성하거나 갱신한다.
+
+요청 Body
+{
+  "userId": 1,
+  "weekStart": "2025-12-08",
+  "weekEnd": "2025-12-14",
+  "regenerate": true
+}
+
+응답 200
+{
+  "report": {
+    "reportId": 123,
+    "userId": 1,
+    "weekStart": "2025-12-08",
+    "weekEnd": "2025-12-14",
+    "emotionTemperature": 73,
+    "positiveScore": 42,
+    "negativeScore": 18,
+    "neutralScore": 10,
+    "mainEmotion": "불안",
+    "mainEmotionConfidence": 0.82,
+    "mainEmotionCharacterCode": "ANXIOUS_RABBIT",
+    "badges": [
+      "불안多",
+      "지침",
+      "회복시도"
+    ],
+    "summaryText": "이번 주에는 걱정과 피로가 자주 등장했어요. 스스로를 돌보려는 시도도 보였습니다.",
+    "createdAt": "2025-12-14T23:50:00Z"
+  }
+}
+
+3. 주간 리포트 상세 조회 (reportId 기준)
+
+경로: GET /api/v1/reports/emotion/weekly/{reportId}
+인증: 필요 (Bearer Token)
+설명: 리포트 ID를 기준으로 상세 요약 + 대화 하이라이트를 조회한다.
+
+경로 변수
+
+reportId: 주간 감정 리포트 ID
+
+응답 200
+{
+  "report": {
+    "reportId": 123,
+    "userId": 1,
+    "weekStart": "2025-12-08",
+    "weekEnd": "2025-12-14",
+    "emotionTemperature": 73,
+    "positiveScore": 42,
+    "negativeScore": 18,
+    "neutralScore": 10,
+    "mainEmotion": "불안",
+    "mainEmotionConfidence": 0.82,
+    "mainEmotionCharacterCode": "ANXIOUS_RABBIT",
+    "badges": [
+      "불안多",
+      "지침",
+      "회복시도"
+    ],
+    "summaryText": "이번 주에는 걱정과 피로가 자주 등장했어요. 스스로를 돌보려는 시도도 보였습니다.",
+    "createdAt": "2025-12-14T23:50:00Z"
+  },
+  "dialogSnippets": [
+    {
+      "role": "user",
+      "content": "요즘은 자꾸 불안해서 잠이 잘 안 와요.",
+      "emotion": "불안",
+      "createdAt": "2025-12-11T05:10:00Z"
+    },
+    {
+      "role": "assistant",
+      "content": "그럴수록 스스로를 돌보는 시간이 더 필요해요.",
+      "emotion": "공감",
+      "createdAt": "2025-12-11T05:10:10Z"
+    }
+  ]
+}
+
+4. 주간 리포트 조회 (userId + week 기준)
+
+경로: GET /api/v1/reports/emotion/weekly
+인증: 필요 (Bearer Token)
+설명: 특정 사용자 + 특정 주간(weekStart~weekEnd)의 리포트 1건을 조회한다.
+
+Query Parameters
+
+userId (필수): 사용자 ID
+
+weekStart (필수): 주 시작일 (YYYY-MM-DD)
+
+weekEnd (선택): 주 종료일 (YYYY-MM-DD), 없으면 weekStart + 6일로 계산
+
+예시
+GET /api/v1/reports/emotion/weekly?userId=1&weekStart=2025-12-08
+
+응답 200
+{
+  "report": {
+    "reportId": 123,
+    "userId": 1,
+    "weekStart": "2025-12-08",
+    "weekEnd": "2025-12-14",
+    "emotionTemperature": 73,
+    "positiveScore": 42,
+    "negativeScore": 18,
+    "neutralScore": 10,
+    "mainEmotion": "불안",
+    "mainEmotionConfidence": 0.82,
+    "mainEmotionCharacterCode": "ANXIOUS_RABBIT",
+    "badges": [
+      "불안多",
+      "지침",
+      "회복시도"
+    ],
+    "summaryText": "이번 주에는 걱정과 피로가 자주 등장했어요. 스스로를 돌보려는 시도도 보였습니다.",
+    "createdAt": "2025-12-14T23:50:00Z"
+  }
+}
+
+5. 주간 리포트 목록 조회 (최근 N주)
+
+경로: GET /api/v1/reports/emotion/weekly/list
+인증: 필요 (Bearer Token)
+설명: 특정 사용자의 최근 N주 주간 감정 리포트 요약 목록을 조회한다.
+FE에서 주간 선택 드롭다운/타임라인에 사용한다.
+
+Query Parameters
+
+userId (필수): 사용자 ID
+
+limit (선택, 기본값 8): 조회할 주간 개수
+
+예시
+GET /api/v1/reports/emotion/weekly/list?userId=1&limit=8
+
+응답 200
+{
+  "items": [
+    {
+      "reportId": 123,
+      "weekStart": "2025-12-08",
+      "weekEnd": "2025-12-14",
+      "emotionTemperature": 73,
+      "mainEmotion": "불안",
+      "badges": [
+        "불안多",
+        "지침"
+      ]
+    },
+    {
+      "reportId": 122,
+      "weekStart": "2025-12-01",
+      "weekEnd": "2025-12-07",
+      "emotionTemperature": 61,
+      "mainEmotion": "피로",
+      "badges": [
+        "지침",
+        "회복시도"
+      ]
+    }
+  ]
+}
 
 ---
 
@@ -1932,13 +2218,13 @@ HTTP 상태 코드:
 
 | HTTP 메서드 | 경로 | 인증 필요 | 설명 |
 |------------|------|----------|------|
-| POST | `/api/menopause-survey/submit` | ❌ | 갱년기 설문 제출 |
-| GET | `/api/menopause/questions` | ❌ | 설문 문항 목록 조회 |
+| POST | `/api/menopause-survey/submit` | ❌ | 갱년기 설문 제출 및 위험도 평가 |
+| GET | `/api/menopause/questions` | ❌ | 설문 문항 목록 조회 (gender 별) |
 | GET | `/api/menopause/questions/{question_id}` | ❌ | 설문 문항 단건 조회 |
 | POST | `/api/menopause/questions` | ❌ | 설문 문항 생성 |
 | PATCH | `/api/menopause/questions/{question_id}` | ❌ | 설문 문항 수정 |
 | DELETE | `/api/menopause/questions/{question_id}` | ❌ | 설문 문항 삭제 |
-| POST | `/api/menopause/questions/seed-defaults` | ❌ | 기본 설문 문항 생성 |
+| POST | `/api/menopause/questions/seed-defaults` | ❌ | 기본 설문 문항 시드 생성 (개발/QA용) |
 
 ### 신조어 퀴즈 (Slang Quiz)
 
@@ -1986,5 +2272,131 @@ HTTP 상태 코드:
 
 ---
 
+## 주간 감정 리포트 (Weekly Emotion Report)`
+
+### 1. 주간 감정 리포트 생성/갱신
+**경로**: `POST /api/v1/reports/emotion/weekly/generate`  
+**인증**: 필요 (Bearer Token)  
+**설명**: 주간 감정 리포트를 생성하거나 갱신합니다. 동일한 주차의 리포트가 이미 있으면 업데이트됩니다.
+
+**Query Parameters**:
+- `week_start` (required, string): 주 시작일 (YYYY-MM-DD 형식)
+- `week_end` (optional, string): 주 종료일 (YYYY-MM-DD 형식, 기본값: week_start + 6일)
+
+**요청 예시**:
+```http
+POST /api/v1/reports/emotion/weekly/generate?week_start=2025-12-09
+Authorization: Bearer YOUR_ACCESS_TOKEN
+```
+
+**응답**:
+```json
+{
+  "id": 1,
+  "user_id": 123,
+  "week_start": "2025-12-09",
+  "week_end": "2025-12-15",
+  "emotion_temperature": 38,
+  "positive_score": 65,
+  "negative_score": 25,
+  "neutral_score": 10,
+  "main_emotion": "happiness",
+  "main_emotion_confidence": 0.85,
+  "main_emotion_character_code": "CHAR_HAPPINESS",
+  "badges": ["긍정", "활력"],
+  "summary_text": "이번 주는 happiness 감정이 주를 이루었습니다. 전반적으로 안정적인 한 주였어요.",
+  "created_at": "2025-12-11T20:00:00+09:00",
+  "updated_at": "2025-12-11T20:00:00+09:00"
+}
+```
+
+### 2. 리포트 ID로 조회
+**경로**: `GET /api/v1/reports/emotion/weekly/{report_id}`  
+**인증**: 필요 (Bearer Token)  
+**설명**: 특정 리포트 ID로 주간 감정 리포트를 조회합니다. 본인의 리포트만 조회 가능합니다.
+
+**Path Parameters**:
+- `report_id` (required, integer): 리포트 ID
+
+**요청 예시**:
+```http
+GET /api/v1/reports/emotion/weekly/1
+Authorization: Bearer YOUR_ACCESS_TOKEN
+```
+
+**응답**: (생성 API와 동일한 형식)
+
+**에러 응답** (404):
+```json
+{
+  "detail": "Report not found"
+}
+```
+
+### 3. 주차로 리포트 조회
+**경로**: `GET /api/v1/reports/emotion/weekly`  
+**인증**: 필요 (Bearer Token)  
+**설명**: 특정 주차의 감정 리포트를 조회합니다.
+
+**Query Parameters**:
+- `week_start` (required, string): 주 시작일 (YYYY-MM-DD 형식)
+- `week_end` (optional, string): 주 종료일 (YYYY-MM-DD 형식, 기본값: week_start + 6일)
+
+**요청 예시**:
+```http
+GET /api/v1/reports/emotion/weekly?week_start=2025-12-09
+Authorization: Bearer YOUR_ACCESS_TOKEN
+```
+
+**응답**: (생성 API와 동일한 형식)
+
+**에러 응답** (404):
+```json
+{
+  "detail": "Report not found for this week"
+}
+```
+
+### 4. 최근 N주 리포트 목록 조회
+**경로**: `GET /api/v1/reports/emotion/weekly/list`  
+**인증**: 필요 (Bearer Token)  
+**설명**: 최근 N주의 감정 리포트 목록을 조회합니다 (마이페이지용).
+
+**Query Parameters**:
+- `limit` (optional, integer): 조회할 리포트 개수 (기본값: 8, 최대: 100)
+
+**요청 예시**:
+```http
+GET /api/v1/reports/emotion/weekly/list?limit=8
+Authorization: Bearer YOUR_ACCESS_TOKEN
+```
+
+**응답**:
+```json
+{
+  "items": [
+    {
+      "id": 3,
+      "week_start": "2025-12-09",
+      "week_end": "2025-12-15",
+      "emotion_temperature": 38,
+      "main_emotion": "happiness",
+      "badges": ["긍정", "활력"]
+    },
+    {
+      "id": 2,
+      "week_start": "2025-12-02",
+      "week_end": "2025-12-08",
+      "emotion_temperature": 35,
+      "main_emotion": "calm",
+      "badges": ["불안多", "회복시도"]
+    }
+  ]
+}
+```
+
+---
+
 **총 엔드포인트 수**: 81개  
 **인증 필요**: 45개 | **인증 불필요**: 36개
+

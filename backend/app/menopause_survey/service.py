@@ -1,6 +1,7 @@
 """Service layer for menopause survey question management."""
 
 from typing import List, Optional
+import logging
 
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
@@ -15,6 +16,8 @@ from .repository import (
     update_question,
 )
 from .schemas import MenopauseQuestionCreate, MenopauseQuestionUpdate
+
+logger = logging.getLogger(__name__)
 
 DEFAULT_SEED_CREATED_BY = "seed-defaults"
 
@@ -111,10 +114,18 @@ def _normalize_gender(gender: Optional[str]) -> Optional[str]:
 
 
 def list_question_items(
-    db: Session, *, gender: Optional[str] = None, is_active: Optional[bool] = None
+    db: Session, *, gender: Optional[str] = None, is_active: Optional[bool] = True
 ):
     normalized_gender = _normalize_gender(gender)
-    return list_questions(db, gender=normalized_gender, is_active=is_active)
+    questions = list_questions(db, gender=normalized_gender, is_active=is_active)
+
+    if not questions:
+        logger.warning(
+            "[MenopauseSurvey] No questions found for gender=%s",
+            normalized_gender or "ALL",
+        )
+
+    return questions
 
 
 def retrieve_question(db: Session, question_id: int):
@@ -125,7 +136,7 @@ def retrieve_question(db: Session, question_id: int):
 
 
 def create_question_item(db: Session, payload: MenopauseQuestionCreate):
-    gender = payload.gender.upper()
+    gender = payload.gender.value
     code = payload.code.upper()
 
     if get_by_code(db, code):
@@ -157,7 +168,7 @@ def update_question_item(
     return update_question(
         db,
         question,
-        gender=_normalize_gender(payload.gender),
+        gender=_normalize_gender(payload.gender.value if payload.gender else None),
         code=new_code,
         order_no=payload.order_no,
         question_text=payload.question_text,
@@ -175,9 +186,14 @@ def delete_question_item(db: Session, question_id: int):
     return soft_delete_question(db, question, updated_by="api")
 
 
-def seed_default_questions(db: Session) -> List:
-    created = seed_questions(db, DEFAULT_SEED_DATA, created_by=DEFAULT_SEED_CREATED_BY)
-    # 반환은 최신 활성 목록 기준으로 처리
+def seed_default_questions(db: Session) -> dict:
+    created, skipped_count = seed_questions(
+        db, DEFAULT_SEED_DATA, created_by=DEFAULT_SEED_CREATED_BY
+    )
+    return {
+        "created_count": len(created),
+        "skipped_count": skipped_count,
+    }
 
 
 from datetime import datetime
@@ -207,7 +223,7 @@ def submit_menopause_survey(
 
     # 3. Save
     result = MenopauseSurveyResult(
-        GENDER=payload.gender,
+        GENDER=payload.gender.value,
         TOTAL_SCORE=total_score,
         RISK_LEVEL=risk_level,
         COMMENT=comment,

@@ -1,65 +1,59 @@
-from __future__ import annotations
-from datetime import datetime
+"""
+Pydantic schemas for Weekly Emotion Report API
+"""
+
+from datetime import date, datetime
 from typing import List, Optional
-from pydantic import BaseModel, ConfigDict, Field
-
-
-class WeeklyEmotionDialogSnippetBase(BaseModel):
-    role: str
-    content: str
-    emotion: Optional[str] = None
-    created_at: Optional[datetime] = Field(None, alias="createdAt")
-
-
-class WeeklyEmotionDialogSnippet(WeeklyEmotionDialogSnippetBase):
-    id: int
-
-    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
+from pydantic import BaseModel, ConfigDict
 
 
 class WeeklyEmotionReportBase(BaseModel):
-    user_id: int = Field(..., alias="userId")
-    week_start: datetime = Field(..., alias="weekStart")
-    week_end: datetime = Field(..., alias="weekEnd")
+    """Base schema for weekly emotion report"""
 
-    emotion_temperature: float = Field(..., alias="emotionTemperature")
-    positive_score: float = Field(0.0, alias="positiveScore")
-    negative_score: float = Field(0.0, alias="negativeScore")
-    neutral_score: float = Field(0.0, alias="neutralScore")
-
-    main_emotion: Optional[str] = Field(None, alias="mainEmotion")
-    main_emotion_confidence: float = Field(0.0, alias="mainEmotionConfidence")
-    main_emotion_character_code: Optional[str] = Field(
-        None, alias="mainEmotionCharacterCode"
-    )
-
-    badges: List[str] = Field(default_factory=list)
-    summary_text: Optional[str] = Field(None, alias="summaryText")
+    week_start: date
+    week_end: date
+    emotion_temperature: int
+    positive_score: int
+    negative_score: int
+    neutral_score: int
+    main_emotion: Optional[str] = None
+    main_emotion_confidence: Optional[float] = None
+    main_emotion_character_code: Optional[str] = None
+    badges: Optional[List[str]] = None
+    summary_text: Optional[str] = None
 
 
-class WeeklyEmotionReport(WeeklyEmotionReportBase):
-    report_id: int = Field(..., alias="reportId")  # Maps to ID in DB
-    created_at: datetime = Field(..., alias="createdAt")
+class WeeklyEmotionReportCreate(WeeklyEmotionReportBase):
+    """Schema for creating a weekly emotion report"""
 
-    # Snippets usually fetched separately or included?
-    # PDF spec: "GET .../{reportId} to retrieve a specific weekly report and its dialog snippets."
-    # So we might need a Detail schema including snippets.
-
-    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
+    user_id: Optional[int] = None  # Will be set from current_user
 
 
-class WeeklyEmotionReportDetail(WeeklyEmotionReport):
-    dialog_snippets: List[WeeklyEmotionDialogSnippet] = Field(
-        default_factory=list, alias="dialogSnippets"
-    )
+class WeeklyEmotionReportRead(WeeklyEmotionReportBase):
+    """Schema for reading a weekly emotion report"""
+
+    id: int
+    user_id: int
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
 
 
-class WeeklyReportGenerateRequest(BaseModel):
-    user_id: int = Field(..., alias="userId")
-    week_start: datetime = Field(..., alias="weekStart")
-    week_end: Optional[datetime] = Field(None, alias="weekEnd")
-    regenerate: bool = False
+class WeeklyEmotionReportListItem(BaseModel):
+    """Schema for weekly emotion report list item (simplified)"""
+
+    id: int
+    week_start: date
+    week_end: date
+    emotion_temperature: int
+    main_emotion: Optional[str] = None
+    badges: Optional[List[str]] = None
+
+    model_config = ConfigDict(from_attributes=True)
 
 
 class WeeklyReportListResponse(BaseModel):
-    items: List[WeeklyEmotionReport]
+    """Schema for list response"""
+
+    items: List[WeeklyEmotionReportListItem]
