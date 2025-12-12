@@ -52,42 +52,60 @@ class MenopauseDiagnosisResultScreen extends ConsumerWidget {
               Center(
                 child: EmotionCharacter(
                   id: emotionId,
-                  size: 180,
+                  size: 140,
                   use2d: false,
                 ),
               ),
-              const SizedBox(height: 40),
+              const SizedBox(height: 32),
 
               // 3. Result Card
               Container(
-                padding: const EdgeInsets.all(24),
+                padding: const EdgeInsets.all(32),
                 decoration: BoxDecoration(
-                  color: riskColor.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: riskColor.withOpacity(0.3)),
+                  color: riskColor.withOpacity(0.08),
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(
+                    color: riskColor.withOpacity(0.2),
+                    width: 2,
+                  ),
                 ),
                 child: Column(
                   children: [
-                    Text(
-                      riskLabel,
-                      style: AppTypography.h3.copyWith(
+                    // Risk Level Badge
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 8,
+                      ),
+                      decoration: BoxDecoration(
                         color: riskColor,
-                        fontWeight: FontWeight.bold,
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        riskLabel,
+                        style: AppTypography.bodyBold.copyWith(
+                          color: AppColors.textWhite,
+                        ),
                       ),
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 16),
+
+                    // Score
                     Text(
                       '총점 ${result.totalScore}점',
-                      style: AppTypography.bodyLarge.copyWith(
-                        color: AppColors.textSecondary,
+                      style: AppTypography.h3.copyWith(
+                        color: riskColor,
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 24),
+
+                    // Comment
                     Text(
                       result.comment,
                       style: AppTypography.body.copyWith(
                         color: AppColors.textPrimary,
-                        height: 1.5,
+                        height: 1.6,
                       ),
                       textAlign: TextAlign.center,
                     ),
@@ -98,15 +116,18 @@ class MenopauseDiagnosisResultScreen extends ConsumerWidget {
               const Spacer(),
 
               // 4. Confirm Button
-              AppButton(
-                text: '확인',
-                variant: ButtonVariant.primaryRed,
-                onTap: () {
-                  // Pop until home or appropriate screen
-                  Navigator.of(context).popUntil((route) => route.isFirst);
-                },
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 0),
+                child: AppButton(
+                  text: '확인',
+                  variant: ButtonVariant.primaryRed,
+                  onTap: () {
+                    // Pop until home or appropriate screen
+                    Navigator.of(context).popUntil((route) => route.isFirst);
+                  },
+                ),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 32),
             ],
           ),
         ),
@@ -125,7 +146,7 @@ class MenopauseDiagnosisResultScreen extends ConsumerWidget {
       case 'MID':
         return (
           EmotionId.sadness,
-          AppColors.homeGoodYellow, // Use yellow/orange for Warning
+          AppColors.normalYellow, // Use normalYellow for Warning
           '주의',
         );
       case 'HIGH':

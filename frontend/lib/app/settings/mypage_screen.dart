@@ -10,7 +10,6 @@ import '../../providers/onboarding_provider.dart';
 import 'edit_profile_screen.dart';
 import 'settings_screen.dart';
 import '../chat/chat_list_screen.dart';
-import '../survey/menopause_survey_screen.dart';
 import 'components/profile_header.dart';
 import 'components/menu_list_item.dart';
 
@@ -295,12 +294,9 @@ class _MypageScreenState extends ConsumerState<MypageScreen> {
                               icon: Icons.favorite_border,
                               label: '갱년기 테스트',
                               onTap: () {
-                                Navigator.push(
+                                Navigator.pushNamed(
                                   context,
-                                  MaterialPageRoute(
-                                    builder: (context) =>
-                                        const MenopauseSurveyScreen(),
-                                  ),
+                                  '/menopause-survey-intro',
                                 );
                               },
                             ),

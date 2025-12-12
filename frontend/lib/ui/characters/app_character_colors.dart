@@ -132,12 +132,6 @@ const Map<EmotionId, EmotionColorPair> emotionColorMap = {
     primary: AppColors.emotionConfusionPrimary, // #B28CFF
     secondary: AppColors.emotionConfusionSecondary, // #C7A4FF
   ),
-
-  // 테스트
-  EmotionId.test: EmotionColorPair(
-    primary: Color(0xFF90A4AE), // Silver
-    secondary: Color(0xFFB0BEC5),
-  ),
 };
 
 /// EmotionCharacter 위젯에 컬러 옵션을 추가한 확장 위젯
@@ -194,17 +188,17 @@ class EmotionCharacterWithColor extends StatelessWidget {
 
 /// 감정별 컬러를 가져오는 헬퍼 함수
 EmotionColorPair getEmotionColors(EmotionId id) {
-  return emotionColorMap[id] ?? emotionColorMap[EmotionId.test]!;
+  return emotionColorMap[id] ?? emotionColorMap[EmotionId.relief]!;
 }
 
 /// 감정별 Primary 컬러만 가져오는 헬퍼 함수
 Color getEmotionPrimaryColor(EmotionId id) {
   return emotionColorMap[id]?.primary ??
-      emotionColorMap[EmotionId.test]!.primary;
+      emotionColorMap[EmotionId.relief]!.primary;
 }
 
 /// 감정별 Secondary 컬러만 가져오는 헬퍼 함수
 Color getEmotionSecondaryColor(EmotionId id) {
   return emotionColorMap[id]?.secondary ??
-      emotionColorMap[EmotionId.test]!.secondary;
+      emotionColorMap[EmotionId.relief]!.secondary;
 }
