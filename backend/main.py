@@ -147,6 +147,46 @@ if emotion_router is not None:
 try:
     app.include_router(menopause_survey_router)
     print("[INFO] Menopause survey router loaded successfully.")
+
+    # 갱년기 설문 문항 자동 import (DB에 없으면 자동으로 로드)
+    try:
+        from app.menopause_survey.service import seed_default_questions
+        from app.db.database import SessionLocal
+        from app.db.models import MenopauseSurveyQuestion
+
+        db = SessionLocal()
+        try:
+            # Check if questions already exist
+            existing_count = (
+                db.query(MenopauseSurveyQuestion)
+                .filter(MenopauseSurveyQuestion.IS_DELETED == False)
+                .count()
+            )
+
+            if existing_count == 0:
+                # Seed default questions
+                result = seed_default_questions(db)
+                print(
+                    f"[INFO] Menopause survey: {result['created_count']}개 기본 문항 자동 import됨 "
+                    f"(FEMALE: 10개, MALE: 10개)"
+                )
+            else:
+                print(
+                    f"[INFO] Menopause survey: {existing_count}개 문항이 이미 DB에 있습니다."
+                )
+        except Exception as import_error:
+            import traceback
+
+            print(f"[ERROR] Menopause survey 자동 import 실패: {import_error}")
+            traceback.print_exc()
+        finally:
+            db.close()
+    except Exception as e:
+        import traceback
+
+        print(f"[ERROR] Menopause survey 자동 import 설정 실패: {e}")
+        traceback.print_exc()
+
 except Exception as e:
     import traceback
 
@@ -351,54 +391,57 @@ try:
         tags=["slang-quiz"],
     )
     print("[INFO] Slang quiz router loaded successfully.")
-    
+
     # 신조어 퀴즈 JSON 파일 자동 import (DB에 없으면 자동으로 로드)
     try:
-        from app.slang_quiz.service import load_questions_from_json, save_questions_to_db
+        from app.slang_quiz.service import (
+            load_questions_from_json,
+            save_questions_to_db,
+        )
         from app.db.database import SessionLocal
         from app.db.models import SlangQuizQuestion
         from pathlib import Path as _Path
-        
-        data_dir = (
-            _Path(__file__).parent
-            / "app"
-            / "slang_quiz"
-            / "data"
-        )
-        
+
+        data_dir = _Path(__file__).parent / "app" / "slang_quiz" / "data"
+
         if data_dir.exists():
             levels = ["beginner", "intermediate", "advanced"]
             quiz_types = ["word_to_meaning", "meaning_to_word"]
-            
+
             total_imported = 0
             db = SessionLocal()
-            
+
             try:
                 for level in levels:
                     for quiz_type in quiz_types:
                         # Load questions from JSON
-                        questions = load_questions_from_json(level=level, quiz_type=quiz_type)
-                        
+                        questions = load_questions_from_json(
+                            level=level, quiz_type=quiz_type
+                        )
+
                         if not questions:
                             continue
-                        
+
                         # Check which questions already exist in DB
                         existing_words = set()
-                        existing_questions = db.query(SlangQuizQuestion).filter(
-                            SlangQuizQuestion.LEVEL == level,
-                            SlangQuizQuestion.QUIZ_TYPE == quiz_type,
-                            SlangQuizQuestion.IS_DELETED == False
-                        ).all()
-                        
+                        existing_questions = (
+                            db.query(SlangQuizQuestion)
+                            .filter(
+                                SlangQuizQuestion.LEVEL == level,
+                                SlangQuizQuestion.QUIZ_TYPE == quiz_type,
+                                SlangQuizQuestion.IS_DELETED == False,
+                            )
+                            .all()
+                        )
+
                         for eq in existing_questions:
                             existing_words.add(eq.WORD)
-                        
+
                         # Filter out existing questions
                         new_questions = [
-                            q for q in questions 
-                            if q["word"] not in existing_words
+                            q for q in questions if q["word"] not in existing_words
                         ]
-                        
+
                         if new_questions:
                             # Save new questions to DB
                             saved_questions = save_questions_to_db(
@@ -406,20 +449,23 @@ try:
                                 questions=new_questions,
                                 level=level,
                                 quiz_type=quiz_type,
-                                created_by=None  # System imported
+                                created_by=None,  # System imported
                             )
                             total_imported += len(saved_questions)
                             print(
                                 f"[INFO] Slang quiz: {level} - {quiz_type}: "
                                 f"{len(saved_questions)}개 문제 자동 import됨"
                             )
-                
+
                 if total_imported > 0:
-                    print(f"[INFO] Slang quiz: 총 {total_imported}개 문제가 DB에 자동 import되었습니다.")
+                    print(
+                        f"[INFO] Slang quiz: 총 {total_imported}개 문제가 DB에 자동 import되었습니다."
+                    )
                 else:
                     print("[INFO] Slang quiz: 모든 문제가 이미 DB에 있습니다.")
             except Exception as import_error:
                 import traceback
+
                 print(f"[ERROR] Slang quiz 자동 import 실패: {import_error}")
                 traceback.print_exc()
             finally:
@@ -428,9 +474,10 @@ try:
             print(f"[WARN] Slang quiz data directory not found: {data_dir}")
     except Exception as e:
         import traceback
+
         print(f"[ERROR] Slang quiz 자동 import 설정 실패: {e}")
         traceback.print_exc()
-        
+
 except Exception as e:
     import traceback
 
@@ -465,10 +512,7 @@ async def generate_tts_async(text: str) -> Path:
     """비동기로 TTS 생성"""
     # synthesize_to_wav는 이제 async 함수이므로 직접 await
     audio_path = await synthesize_to_wav(
-        text=text,
-        speed=None,
-        tone="neutral",
-        engine=None
+        text=text, speed=None, tone="neutral", engine=None
     )
     return audio_path
 
@@ -559,18 +603,20 @@ async def agent_text_v2_endpoint(
             try:
                 # TTS 생성 - audio tag 포함 텍스트 사용
                 tts_text = result.get("reply_text_with_tags", result["reply_text"])
-                print(f"[TTS] 🎤 Starting TTS generation with text: {tts_text[:100]}...")
-                
+                print(
+                    f"[TTS] 🎤 Starting TTS generation with text: {tts_text[:100]}..."
+                )
+
                 # ⚠️ 응답에 URL 포함되어야 하므로 await 필수!
                 audio_path = await asyncio.wait_for(
                     generate_tts_async(tts_text),
-                    timeout=30.0  # 30초로 증가 (긴 텍스트 대응)
+                    timeout=30.0,  # 30초로 증가 (긴 텍스트 대응)
                 )
-                
+
                 # 서버 URL 포함 (프론트엔드가 접근 가능하도록)
                 server_url = os.getenv("SERVER_URL", "http://localhost:8000")
                 audio_url = f"{server_url}/tts-outputs/{audio_path.name}"
-                
+
                 # Root에 설정 (하위 호환성)
                 result["tts_audio_url"] = audio_url
                 result["tts_status"] = "ready"
@@ -581,7 +627,7 @@ async def agent_text_v2_endpoint(
 
                 result["meta"]["tts_audio_url"] = audio_url
                 result["meta"]["tts_status"] = "ready"
-                
+
                 print(f"[TTS] 음성 파일 생성 완료: {audio_path.name}")
             except asyncio.TimeoutError:
                 result["tts_audio_url"] = None
@@ -599,11 +645,10 @@ async def agent_text_v2_endpoint(
         # 🆕 Celery: Queue emotion analysis task (after TTS completion)
         try:
             from tasks.emotion_tasks import analyze_emotion_task
-            
+
             # Queue task asynchronously (don't wait for result)
             task = analyze_emotion_task.delay(
-                user_text=request.user_text,
-                user_id=user_id
+                user_text=request.user_text, user_id=user_id
             )
             print(f"[Celery] 🚀 Emotion analysis task queued: {task.id}")
         except Exception as e:
@@ -869,7 +914,6 @@ async def cleanup_global_memories(
 
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
-
 
 
 # =====================================================================

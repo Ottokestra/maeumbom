@@ -1,14 +1,16 @@
-from typing import List, Optional
+from typing import List
 
-from fastapi import APIRouter, Depends, Query, Body
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
 from app.db.database import get_db
 
 from .schemas import (
+    Gender,
     MenopauseQuestionCreate,
     MenopauseQuestionOut,
     MenopauseQuestionUpdate,
+    MenopauseSeedResponse,
     MenopauseSurveySubmitRequest,
     MenopauseSurveyResultResponse,
 )
@@ -27,12 +29,15 @@ router = APIRouter(prefix="/api", tags=["menopause-survey"])
 
 @router.get("/menopause/questions", response_model=List[MenopauseQuestionOut])
 def list_questions(
-    gender: Optional[str] = Query(None, description="FEMALE 또는 MALE"),
-    is_active: Optional[bool] = Query(None, description="활성화 여부 필터"),
+    gender: Gender = Query(
+        ...,
+        description="FEMALE 또는 MALE (필수)",
+    ),
+    is_active: bool = Query(True, description="활성화된 문항만 조회"),
     db: Session = Depends(get_db),
 ):
     """설문 문항 목록 조회."""
-    return list_question_items(db, gender=gender, is_active=is_active)
+    return list_question_items(db, gender=gender.value, is_active=is_active)
 
 
 @router.get("/menopause/questions/{question_id}", response_model=MenopauseQuestionOut)
@@ -63,9 +68,7 @@ def delete_question(question_id: int, db: Session = Depends(get_db)):
     return delete_question_item(db, question_id)
 
 
-@router.post(
-    "/menopause/questions/seed-defaults", response_model=List[MenopauseQuestionOut]
-)
+@router.post("/menopause/questions/seed-defaults", response_model=MenopauseSeedResponse)
 def seed_default(db: Session = Depends(get_db)):
     """기본 남/녀 설문 문항 10개씩을 한번에 생성한다 (존재하지 않는 코드만 추가)."""
     return seed_default_questions(db)

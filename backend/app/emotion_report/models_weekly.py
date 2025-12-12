@@ -2,7 +2,7 @@
 SQLAlchemy models for Weekly Emotion Report.
 """
 
-from sqlalchemy import Column, Integer, String, DateTime, Text, ForeignKey, Float, JSON
+from sqlalchemy import Column, Integer, String, DateTime, Date, Text, ForeignKey, Float
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 
@@ -10,60 +10,57 @@ from app.db.database import Base
 
 
 class WeeklyEmotionReport(Base):
-    __tablename__ = "TB_EMOTION_WEEKLY_REPORT"
+    """
+    Weekly Emotion Report model
+    Stores aggregated weekly emotion analysis results for user's "My Page"
 
-    reportId = Column(
-        "ID", Integer, primary_key=True, autoincrement=True
-    )  # Mapped to reportId in schema if needed, but DB convention usually ID
-    # User requested 'reportId' field in model description, but DB_GUIDE says PK is ID.
-    # Pydantic schema will map ID -> reportId.
+    Attributes:
+        ID: Primary key
+        USER_ID: Foreign key to TB_USERS
+        WEEK_START: Start date of the week (Monday, Date type)
+        WEEK_END: End date of the week (Sunday, Date type)
+        EMOTION_TEMPERATURE: Emotion temperature score (0-100)
+        POSITIVE_SCORE: Positive emotion score (0-100)
+        NEGATIVE_SCORE: Negative emotion score (0-100)
+        NEUTRAL_SCORE: Neutral emotion score (0-100)
+        MAIN_EMOTION: Main emotion of the week
+        MAIN_EMOTION_CONFIDENCE: Confidence score for main emotion (0.0-1.0)
+        MAIN_EMOTION_CHARACTER_CODE: Character code for main emotion
+        BADGES: JSON array of badge strings
+        SUMMARY_TEXT: Summary text for the week
+        CREATED_AT: Creation timestamp
+        UPDATED_AT: Last update timestamp
+    """
 
-    userId = Column(
-        "USER_ID", Integer, ForeignKey("TB_USERS.ID"), nullable=False, index=True
+    __tablename__ = "TB_WEEKLY_EMOTION_REPORTS"
+
+    ID = Column(Integer, primary_key=True, autoincrement=True, index=True)
+    USER_ID = Column(Integer, ForeignKey("TB_USERS.ID"), nullable=False, index=True)
+
+    # Week range (Date type, not DateTime)
+    WEEK_START = Column(Date, nullable=False, index=True)
+    WEEK_END = Column(Date, nullable=False)
+
+    # Scores (Integer type, 0-100 range)
+    EMOTION_TEMPERATURE = Column(Integer, nullable=False, default=0)
+    POSITIVE_SCORE = Column(Integer, nullable=False, default=0)
+    NEGATIVE_SCORE = Column(Integer, nullable=False, default=0)
+    NEUTRAL_SCORE = Column(Integer, nullable=False, default=0)
+
+    # Main emotion
+    MAIN_EMOTION = Column(String(50), nullable=True)
+    MAIN_EMOTION_CONFIDENCE = Column(Float, nullable=True)
+    MAIN_EMOTION_CHARACTER_CODE = Column(String(100), nullable=True)
+
+    # Badges and summary
+    BADGES = Column(Text, nullable=True)  # JSON string stored as Text
+    SUMMARY_TEXT = Column(Text, nullable=True)
+
+    # Timestamps
+    CREATED_AT = Column(DateTime(timezone=True), server_default=func.now())
+    UPDATED_AT = Column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
-    weekStart = Column("WEEK_START", DateTime(timezone=True), nullable=False)
-    weekEnd = Column("WEEK_END", DateTime(timezone=True), nullable=False)
-
-    emotionTemperature = Column("EMOTION_TEMPERATURE", Float, default=36.5)
-    positiveScore = Column("POSITIVE_SCORE", Float, default=0.0)
-    negativeScore = Column("NEGATIVE_SCORE", Float, default=0.0)
-    neutralScore = Column("NEUTRAL_SCORE", Float, default=0.0)
-
-    mainEmotion = Column("MAIN_EMOTION", String(50), nullable=True)
-    mainEmotionConfidence = Column("MAIN_EMOTION_CONFIDENCE", Float, default=0.0)
-    mainEmotionCharacterCode = Column(
-        "MAIN_EMOTION_CHARACTER_CODE", String(50), nullable=True
-    )
-
-    badges = Column("BADGES", JSON, nullable=True)  # JSON Array of strings
-    summaryText = Column("SUMMARY_TEXT", Text, nullable=True)
-
-    createdAt = Column("CREATED_AT", DateTime(timezone=True), server_default=func.now())
 
     # Relationships
-    snippets = relationship(
-        "WeeklyEmotionDialogSnippet",
-        back_populates="report",
-        cascade="all, delete-orphan",
-    )
-
-
-class WeeklyEmotionDialogSnippet(Base):
-    __tablename__ = "TB_EMOTION_WEEKLY_DIALOG_SNIPPET"
-
-    id = Column("ID", Integer, primary_key=True, autoincrement=True)
-    reportId = Column(
-        "REPORT_ID",
-        Integer,
-        ForeignKey("TB_EMOTION_WEEKLY_REPORT.ID"),
-        nullable=False,
-        index=True,
-    )
-
-    role = Column("ROLE", String(20), nullable=False)  # USER / ASSISTANT
-    content = Column("CONTENT", Text, nullable=False)
-    emotion = Column("EMOTION", String(50), nullable=True)
-
-    createdAt = Column("CREATED_AT", DateTime(timezone=True), server_default=func.now())
-
-    report = relationship("WeeklyEmotionReport", back_populates="snippets")
+    user = relationship("User", backref="weekly_emotion_reports")

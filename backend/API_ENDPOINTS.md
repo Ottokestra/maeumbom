@@ -2270,17 +2270,133 @@ HTTP 상태 코드:
 | GET | `/health` | ❌ | 헬스 체크 |
 | GET | `/` | ❌ | Root 정보 |
 
+---
 
-### 주간 감정 리포트 (Weekly Emotion Report)
+## 주간 감정 리포트 (Weekly Emotion Report)`
 
-| HTTP 메서드 | 경로 | 인증 필요 | 설명 |
-|------------|------|----------|------|
-| POST | `/api/v1/reports/emotion/weekly/generate` | ✅ | 주간 감정 리포트 생성/갱신 |
-| GET  | `/api/v1/reports/emotion/weekly/{reportId}` | ✅ | reportId 기준 리포트 상세 + 대화 하이라이트 조회 |
-| GET  | `/api/v1/reports/emotion/weekly` | ✅ | userId + weekStart(+weekEnd) 기준 리포트 조회 |
-| GET  | `/api/v1/reports/emotion/weekly/list` | ✅ | 최근 N주 리포트 요약 목록 조회 |
+### 1. 주간 감정 리포트 생성/갱신
+**경로**: `POST /api/v1/reports/emotion/weekly/generate`  
+**인증**: 필요 (Bearer Token)  
+**설명**: 주간 감정 리포트를 생성하거나 갱신합니다. 동일한 주차의 리포트가 이미 있으면 업데이트됩니다.
+
+**Query Parameters**:
+- `week_start` (required, string): 주 시작일 (YYYY-MM-DD 형식)
+- `week_end` (optional, string): 주 종료일 (YYYY-MM-DD 형식, 기본값: week_start + 6일)
+
+**요청 예시**:
+```http
+POST /api/v1/reports/emotion/weekly/generate?week_start=2025-12-09
+Authorization: Bearer YOUR_ACCESS_TOKEN
+```
+
+**응답**:
+```json
+{
+  "id": 1,
+  "user_id": 123,
+  "week_start": "2025-12-09",
+  "week_end": "2025-12-15",
+  "emotion_temperature": 38,
+  "positive_score": 65,
+  "negative_score": 25,
+  "neutral_score": 10,
+  "main_emotion": "happiness",
+  "main_emotion_confidence": 0.85,
+  "main_emotion_character_code": "CHAR_HAPPINESS",
+  "badges": ["긍정", "활력"],
+  "summary_text": "이번 주는 happiness 감정이 주를 이루었습니다. 전반적으로 안정적인 한 주였어요.",
+  "created_at": "2025-12-11T20:00:00+09:00",
+  "updated_at": "2025-12-11T20:00:00+09:00"
+}
+```
+
+### 2. 리포트 ID로 조회
+**경로**: `GET /api/v1/reports/emotion/weekly/{report_id}`  
+**인증**: 필요 (Bearer Token)  
+**설명**: 특정 리포트 ID로 주간 감정 리포트를 조회합니다. 본인의 리포트만 조회 가능합니다.
+
+**Path Parameters**:
+- `report_id` (required, integer): 리포트 ID
+
+**요청 예시**:
+```http
+GET /api/v1/reports/emotion/weekly/1
+Authorization: Bearer YOUR_ACCESS_TOKEN
+```
+
+**응답**: (생성 API와 동일한 형식)
+
+**에러 응답** (404):
+```json
+{
+  "detail": "Report not found"
+}
+```
+
+### 3. 주차로 리포트 조회
+**경로**: `GET /api/v1/reports/emotion/weekly`  
+**인증**: 필요 (Bearer Token)  
+**설명**: 특정 주차의 감정 리포트를 조회합니다.
+
+**Query Parameters**:
+- `week_start` (required, string): 주 시작일 (YYYY-MM-DD 형식)
+- `week_end` (optional, string): 주 종료일 (YYYY-MM-DD 형식, 기본값: week_start + 6일)
+
+**요청 예시**:
+```http
+GET /api/v1/reports/emotion/weekly?week_start=2025-12-09
+Authorization: Bearer YOUR_ACCESS_TOKEN
+```
+
+**응답**: (생성 API와 동일한 형식)
+
+**에러 응답** (404):
+```json
+{
+  "detail": "Report not found for this week"
+}
+```
+
+### 4. 최근 N주 리포트 목록 조회
+**경로**: `GET /api/v1/reports/emotion/weekly/list`  
+**인증**: 필요 (Bearer Token)  
+**설명**: 최근 N주의 감정 리포트 목록을 조회합니다 (마이페이지용).
+
+**Query Parameters**:
+- `limit` (optional, integer): 조회할 리포트 개수 (기본값: 8, 최대: 100)
+
+**요청 예시**:
+```http
+GET /api/v1/reports/emotion/weekly/list?limit=8
+Authorization: Bearer YOUR_ACCESS_TOKEN
+```
+
+**응답**:
+```json
+{
+  "items": [
+    {
+      "id": 3,
+      "week_start": "2025-12-09",
+      "week_end": "2025-12-15",
+      "emotion_temperature": 38,
+      "main_emotion": "happiness",
+      "badges": ["긍정", "활력"]
+    },
+    {
+      "id": 2,
+      "week_start": "2025-12-02",
+      "week_end": "2025-12-08",
+      "emotion_temperature": 35,
+      "main_emotion": "calm",
+      "badges": ["불안多", "회복시도"]
+    }
+  ]
+}
+```
 
 ---
 
 **총 엔드포인트 수**: 81개  
 **인증 필요**: 45개 | **인증 불필요**: 36개
+
