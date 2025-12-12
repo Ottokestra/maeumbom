@@ -32,7 +32,7 @@ class CircularRipple extends StatefulWidget {
     super.key,
     required this.child,
     this.voiceState = VoiceInterfaceState.idle,
-    this.color = AppColors.accentRed,
+    this.color = AppColors.primaryColor,
     this.size = 200,
     this.rippleCount = 3,
   });

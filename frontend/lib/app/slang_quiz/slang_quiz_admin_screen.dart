@@ -248,11 +248,11 @@ class _SlangQuizAdminScreenState extends ConsumerState<SlangQuizAdminScreen> {
                 padding: const EdgeInsets.all(AppSpacing.md),
                 decoration: BoxDecoration(
                   color: _isSuccess
-                      ? AppColors.natureGreen.withOpacity(0.1)
+                      ? AppColors.secondaryColor.withOpacity(0.1)
                       : AppColors.errorRed.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(AppRadius.md),
                   border: Border.all(
-                    color: _isSuccess ? AppColors.natureGreen : AppColors.errorRed,
+                    color: _isSuccess ? AppColors.secondaryColor : AppColors.errorRed,
                   ),
                 ),
                 child: Text(

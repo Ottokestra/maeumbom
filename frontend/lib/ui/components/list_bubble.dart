@@ -63,11 +63,11 @@ class ListBubble extends StatelessWidget {
                 ),
                 decoration: BoxDecoration(
                   color: isSelected
-                      ? AppColors.accentRed.withOpacity(0.1)
+                      ? AppColors.primaryColor.withOpacity(0.1)
                       : Colors.transparent,
                   border: Border.all(
                     color: isSelected
-                        ? AppColors.accentRed
+                        ? AppColors.primaryColor
                         : isDisabled
                             ? AppColors.borderLightGray
                             : AppColors.textSecondary,
@@ -83,7 +83,7 @@ class ListBubble extends StatelessWidget {
                       height: 24,
                       decoration: BoxDecoration(
                         color: isSelected
-                            ? AppColors.accentRed
+                            ? AppColors.primaryColor
                             : isDisabled
                                 ? AppColors.borderLightGray
                                 : AppColors.textSecondary,
@@ -93,7 +93,7 @@ class ListBubble extends StatelessWidget {
                         child: Text(
                           '${index + 1}',
                           style: AppTypography.caption.copyWith(
-                            color: AppColors.pureWhite,
+                            color: AppColors.basicColor,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
@@ -108,7 +108,7 @@ class ListBubble extends StatelessWidget {
                           color: isDisabled
                               ? AppColors.textSecondary.withOpacity(0.5)
                               : isSelected
-                                  ? AppColors.accentRed
+                                  ? AppColors.primaryColor
                                   : AppColors.textPrimary,
                           fontWeight:
                               isSelected ? FontWeight.bold : FontWeight.normal,
@@ -119,7 +119,7 @@ class ListBubble extends StatelessWidget {
                     if (isSelected)
                       Icon(
                         Icons.check_circle,
-                        color: AppColors.accentRed,
+                        color: AppColors.primaryColor,
                         size: 20,
                       ),
                   ],

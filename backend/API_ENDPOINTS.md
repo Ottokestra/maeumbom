@@ -1276,7 +1276,7 @@ GET /api/menopause-survey/questions?gender=FEMALE
 ]
 
 ### 2. 설문 문항 목록 조회
-**경로**: `GET /api/menopause-survey/questions`  
+**경로**: `GET /api/menopause/questions`  
 **인증**: 불필요  
 
 **Query Parameters**:

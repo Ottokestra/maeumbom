@@ -222,7 +222,20 @@ class MenopauseSurveyQuestion(Base):
         CREATED_BY/UPDATED_BY: 생성/수정자 정보
     """
 
-    __tablename__ = "TB_MENOPAUSE_SURVEY_QUESTION"
+    __tablename__ = "TB_MENOPAUSE_SURVEY_QUESTIONS"
+
+    # NOTE: 기존 오타 테이블에서 데이터 이전 시 참고용 SQL (직접 실행 필요)
+    # -- 개발 DB에서 한 번만 실행
+    # -- INSERT INTO TB_MENOPAUSE_SURVEY_QUESTIONS (
+    # --   GENDER, CODE, ORDER_NO, QUESTION_TEXT, RISK_WHEN_YES,
+    # --   POSITIVE_LABEL, NEGATIVE_LABEL, CHARACTER_KEY,
+    # --   IS_ACTIVE, IS_DELETED, CREATED_AT, UPDATED_AT, CREATED_BY, UPDATED_BY
+    # -- )
+    # -- SELECT
+    # --   GENDER, CODE, ORDER_NO, QUESTION_TEXT, RISK_WHEN_YES,
+    # --   POSITIVE_LABEL, NEGATIVE_LABEL, CHARACTER_KEY,
+    # --   IS_ACTIVE, IS_DELETED, CREATED_AT, UPDATED_AT, CREATED_BY, UPDATED_BY
+    # -- FROM TB_MENOPAUSE_SURVEY_QEUSTION;
 
     ID = Column(Integer, primary_key=True, index=True, autoincrement=True)
     GENDER = Column(String(10), nullable=False, index=True)
@@ -1286,7 +1299,7 @@ class MenopauseSurveyAnswer(Base):
     )
     QUESTION_ID = Column(
         Integer,
-        ForeignKey("TB_MENOPAUSE_SURVEY_QUESTION.ID"),
+        ForeignKey("TB_MENOPAUSE_SURVEY_QUESTIONS.ID"),
         nullable=False,
         index=True,
     )
@@ -1299,3 +1312,10 @@ class MenopauseSurveyAnswer(Base):
 
     result = relationship("MenopauseSurveyResult", back_populates="answers")
     question = relationship("MenopauseSurveyQuestion")
+
+
+# ============================================================================
+# Weekly Emotion Report (for My Page)
+# ============================================================================
+
+from app.emotion_report.models_weekly import WeeklyEmotionReport  # noqa: F401, E402

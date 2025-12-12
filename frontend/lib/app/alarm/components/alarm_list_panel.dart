@@ -150,7 +150,7 @@ class _AlarmListPanelState extends ConsumerState<AlarmListPanel>
               maxHeight: targetHeight,
             ),
             decoration: const BoxDecoration(
-              color: AppColors.pureWhite,
+              color: AppColors.basicColor,
               borderRadius: BorderRadius.only(
                 topLeft: Radius.circular(AppRadius.xxl),
                 topRight: Radius.circular(AppRadius.xxl),
@@ -217,12 +217,12 @@ class _AlarmListPanelState extends ConsumerState<AlarmListPanel>
             width: 48,
             height: 48,
             decoration: BoxDecoration(
-              color: AppColors.accentRed.withValues(alpha: 0.1),
+              color: AppColors.primaryColor.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(AppRadius.md),
             ),
             child: const Icon(
               Icons.alarm,
-              color: AppColors.accentRed,
+              color: AppColors.primaryColor,
               size: 24,
             ),
           ),
@@ -309,7 +309,7 @@ class _AlarmListPanelState extends ConsumerState<AlarmListPanel>
             height: 48,
             decoration: BoxDecoration(
               border: Border.all(
-                color: AppColors.accentRed,
+                color: AppColors.primaryColor,
                 width: 1.5,
               ),
               borderRadius: BorderRadius.circular(AppRadius.md),
@@ -318,7 +318,7 @@ class _AlarmListPanelState extends ConsumerState<AlarmListPanel>
               child: Text(
                 '전체 알람 보기',
                 style: AppTypography.body.copyWith(
-                  color: AppColors.accentRed,
+                  color: AppColors.primaryColor,
                   fontWeight: FontWeight.w700,
                 ),
               ),

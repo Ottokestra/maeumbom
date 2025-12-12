@@ -20,8 +20,7 @@ logger = logging.getLogger(__name__)
 
 async def orchestrator_llm(
     user_text: str,
-    context: Dict,
-    classifier_hint: str
+    context: Dict
 ) -> List:
     """
     Orchestrator: 사용자 의도 파악 및 도구 선택
@@ -29,7 +28,6 @@ async def orchestrator_llm(
     Args:
         user_text: 사용자 입력
         context: 대화 컨텍스트 (memory, history 등)
-        classifier_hint: Lightweight Classifier 결과 ("필요"/"불필요"/"애매")
         
     Returns:
         tool_calls: OpenAI tool_calls 리스트
@@ -40,12 +38,6 @@ async def orchestrator_llm(
     system_prompt = f"""You are an **Orchestrator** for an AI companion assisting middle-aged women experiencing menopause.
 
 Your role is to analyze user input and select appropriate tools to execute.
-
-[Lightweight Classifier Hint]
-- Emotion Analysis Needed: {classifier_hint}
-  * "필요" (Needed): Clear emotional expression → Call search_emotion_cache() first
-  * "불필요" (Not Needed): Neutral question/greeting → Skip emotion analysis  
-  * "애매" (Unclear): You decide based on context
 
 [Tool Selection Principles]
 1. **Emotion Analysis** (if emotional content detected):

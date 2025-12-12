@@ -4,6 +4,34 @@
 
 ---
 
+## 🆕 최근 업데이트 (2025-12-12)
+
+### 새로운 컴포넌트
+
+- **BottomVoiceBar**: 음성 입력 전용 3버튼 레이아웃 (TTS 토글, 마이크, 텍스트 모드)
+- **BottomMenuBar**: 5탭 네비게이션 바 (중앙 마이크 버튼 포함)
+- **HomeGaugeSection**: Fear & Greed Index 스타일 반원형 감정 게이지
+- **HomeBannerSlider**: 마음연습실 소개 슬라이드 배너
+- **BottomAddModalBar**: 재사용 가능한 모달 Bottom Sheet
+- **SplashScreen**: Lottie 애니메이션 기반 스플래시 화면
+
+### 주요 변경사항
+
+- **BottomInputBar 리팩토링**: SlideToActionButton 제거, 직접 입력 방식으로 변경
+  - 텍스트 입력 필드 항상 표시
+  - 마이크 ↔ 전송 버튼 자동 토글
+  - 간소화된 API (controller, onSend, onMicTap)
+- **BottomVoiceBar 신규 추가**: 음성 입력 전용 인터페이스
+  - 3버튼 레이아웃 (TTS, 마이크, 텍스트)
+  - 음성 상태별 애니메이션
+  - Input bar ↔ Voice bar 토글 지원
+- **알람 UI 개선**: Bottom sheet 모달 제거, TopNotification만 사용
+- **네비게이션 구조 개편**: 5탭 시스템 (홈, 마음서랍, 봄이, 마음연습실, 마이페이지)
+- **홈 화면 리뉴얼**: 감정 게이지, 배너 슬라이더 추가
+- **스플래시 화면**: 기존 정적 이미지에서 Lottie 애니메이션으로 전환
+
+---
+
 ## 📚 목차
 
 0. [Design Philosophy](#-0-design-philosophy)
@@ -283,14 +311,14 @@ SlideToActionButton(
 ```dart
 VoiceWaveform(
   isActive: isRecording,
-  color: AppColors.accentRed,
+  color: AppColors.primaryColor,
   height: 40,
 )
 ```
 
 **디자인 스펙:**
 - 높이: 40px (기본)
-- 색상: `AppColors.accentRed` (기본)
+- 색상: `AppColors.primaryColor` (기본)
 - 파동: Sine wave (5개 주기)
 - 애니메이션: 1.5초 주기로 반복
 - 진폭: 높이의 30%
@@ -480,11 +508,11 @@ class BubbleTokens {
   static const double maxWidthRatio = 0.85;
   
   // User Bubble
-  static const Color userBg = AppColors.accentRed;
+  static const Color userBg = AppColors.primaryColor;
   static const Color userText = AppColors.textWhite;
   
   // Bot Bubble
-  static const Color botBg = AppColors.pureWhite;
+  static const Color botBg = AppColors.basicColor;
   static const Color botText = AppColors.textPrimary;
   static const Color botBorder = AppColors.borderLight;
   static const double borderWidth = 1.0;
@@ -523,15 +551,15 @@ class BubbleTokens {
 ```dart
 class ToggleTokens {
   // Primary Toggle (Red) - 주요 토글
-  static const Color primaryActiveThumb = AppColors.pureWhite;      // 활성화 토글 원 (흰색)
-  static const Color primaryActiveTrack = AppColors.accentRed;      // 활성화 배경 (빨간색)
-  static const Color primaryInactiveThumb = AppColors.pureWhite;    // 비활성 토글 원 (흰색)
+  static const Color primaryActiveThumb = AppColors.basicColor;      // 활성화 토글 원 (흰색)
+  static const Color primaryActiveTrack = AppColors.primaryColor;      // 활성화 배경 (빨간색)
+  static const Color primaryInactiveThumb = AppColors.basicColor;    // 비활성 토글 원 (흰색)
   static const Color primaryInactiveTrack = AppColors.borderLightGray; // 비활성 배경 (회색)
 
   // Secondary Toggle (Green) - 보조 토글
-  static const Color secondaryActiveThumb = AppColors.pureWhite;    // 활성화 토글 원 (흰색)
-  static const Color secondaryActiveTrack = AppColors.natureGreen;  // 활성화 배경 (초록색)
-  static const Color secondaryInactiveThumb = AppColors.pureWhite;  // 비활성 토글 원 (흰색)
+  static const Color secondaryActiveThumb = AppColors.basicColor;    // 활성화 토글 원 (흰색)
+  static const Color secondaryActiveTrack = AppColors.secondaryColor;  // 활성화 배경 (초록색)
+  static const Color secondaryInactiveThumb = AppColors.basicColor;  // 비활성 토글 원 (흰색)
   static const Color secondaryInactiveTrack = AppColors.borderLightGray; // 비활성 배경 (회색)
 
   // Toggle Scale
@@ -761,7 +789,186 @@ HomeBottomMenu()
 
 ---
 
-### 5.5 일일 기분 체크 다이얼로그
+#### 5.4.4 HomeGaugeSection
+
+**파일:** `lib/app/home/components/home_gauge_section.dart`
+
+"Fear & Greed Index" 스타일의 반원형 게이지로 사용자의 감정 상태를 시각화합니다.
+
+**구성 요소:**
+- 반원형 게이지 (320×150px)
+- 진행률 표시 (0~100%)
+- 감정 라벨 배지 (pill 형태)
+- 좌/중/우 감정 라벨 (좌절, 슬픔, 기쁨)
+
+**디자인 스펙:**
+- **컨테이너**:
+  - 배경: `basicColor` (흰색)
+  - 모서리: 32px 둥근 모서리
+  - 패딩: 가로 16px, 세로 8px
+- **게이지**:
+  - 크기: 320×150px
+  - 배경: 회색 반원 (비활성)
+  - 진행: 감정 색상 반원 (활성)
+  - 선 두께: 24px
+- **퍼센트 텍스트**:
+  - 크기: 60px
+  - 굵기: 800 (extra bold)
+  - 색상: `textBlack`
+- **감정 배지**:
+  - 배경: 감정 색상 20% 투명도
+  - 텍스트: 감정 색상, 700 weight
+  - 모서리: pill 형태
+
+```dart
+HomeGaugeSection(
+  temperaturePercentage: 0.65, // 0.0 ~ 1.0
+  emotionColor: getEmotionPrimaryColor(EmotionId.fear),
+)
+```
+
+**사용 예시:**
+```dart
+// 동적 감정 기반 게이지
+final currentEmotion = EmotionId.joy;
+final emotionColor = getEmotionPrimaryColor(currentEmotion);
+final percentage = _calculateEmotionPercentage(currentEmotion);
+
+HomeGaugeSection(
+  temperaturePercentage: percentage,
+  emotionColor: emotionColor,
+)
+```
+
+---
+
+#### 5.4.5 HomeBannerSlider
+
+**파일:** `lib/app/home/components/home_banner_slider.dart`
+
+마음연습실 기능을 소개하는 슬라이드 배너입니다. PageView를 사용하여 2개의 배너를 좌우로 스와이프할 수 있습니다.
+
+**구성 요소:**
+- 2개 배너 슬라이더 (관계 연습하기, 신조어 퀴즈)
+- 페이지 인디케이터 (하단 점)
+- 각 배너: 제목, 부제목, 화살표 아이콘
+
+**디자인 스펙:**
+- **배너 높이**: 100px
+- **배너 1 (관계 연습하기)**:
+  - 배경: `#FFE0B2` (연한 오렌지)
+  - 텍스트: `#E65100` (진한 오렌지)
+- **배너 2 (신조어 퀴즈)**:
+  - 배경: `#C8E6C9` (연한 초록)
+  - 텍스트: `#2E7D32` (진한 초록)
+- **모서리**: 16px 둥근 모서리
+- **패딩**: 가로 32px
+- **인디케이터**:
+  - 크기: 8×8px
+  - 활성: `textPrimary`
+  - 비활성: `borderLightGray`
+
+```dart
+HomeBannerSlider(
+  onTraining1Tap: () {
+    Navigator.pushNamed(context, '/training/relationship');
+  },
+  onTraining2Tap: () {
+    Navigator.pushNamed(context, '/training/quiz');
+  },
+)
+```
+
+**특징:**
+- 자동 스와이프 지원
+- 탭하여 해당 연습실로 이동
+- 현재 페이지 인디케이터 표시
+
+---
+
+#### 5.4.6 DailyMoodCheckWidget
+
+**파일:** `lib/app/home/components/daily_mood_check_widget.dart`
+
+일일 기분 체크를 위한 감정 선택 위젯입니다.
+
+**구성 요소:**
+- 3개 카테고리 (좋음, 보통, 나쁨)
+- 각 카테고리별 랜덤 감정 캐릭터 3개
+- 선택 시 확대 효과
+
+```dart
+DailyMoodCheckWidget(
+  onEmotionSelected: (EmotionId emotion) {
+    // 감정 선택 처리
+    ref.read(dailyMoodProvider.notifier).selectEmotion(emotion);
+  },
+)
+```
+
+---
+
+### 5.5 홈 화면 전체 구성 예시
+
+```dart
+class HomeScreen extends ConsumerWidget {
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final dailyState = ref.watch(dailyMoodProvider);
+    final currentEmotion = dailyState.selectedEmotion ?? EmotionId.joy;
+    final moodCategory = EmotionClassifier.classify(currentEmotion);
+    final backgroundColor = _getBackgroundColor(moodCategory);
+
+    return AppFrame(
+      topBar: null,
+      useSafeArea: false,
+      statusBarStyle: SystemUiOverlayStyle.light,
+      bottomBar: const BottomMenuBar(currentIndex: 0),
+      body: Container(
+        color: backgroundColor,
+        child: SafeArea(
+          child: SingleChildScrollView(
+            padding: EdgeInsets.all(AppSpacing.md),
+            child: Column(
+              children: [
+                // 헤더
+                const HomeHeaderSection(),
+                const SizedBox(height: AppSpacing.md),
+                
+                // 감정 캐릭터
+                Center(
+                  child: EmotionCharacter(
+                    id: currentEmotion,
+                    size: 240,
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.xl),
+                
+                // 감정 게이지
+                HomeGaugeSection(
+                  temperaturePercentage: 0.65,
+                  emotionColor: getEmotionPrimaryColor(currentEmotion),
+                ),
+                const SizedBox(height: AppSpacing.lg),
+                
+                // 배너 슬라이더
+                HomeBannerSlider(
+                  onTraining1Tap: () => Navigator.pushNamed(context, '/training/relationship'),
+                  onTraining2Tap: () => Navigator.pushNamed(context, '/training/quiz'),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+```
+
+---
+
+### 5.6 일일 기분 체크 다이얼로그
 
 홈 화면 진입 시 아직 오늘의 감정을 선택하지 않은 경우 자동으로 표시됩니다.
 
@@ -772,7 +979,7 @@ HomeBottomMenu()
 
 ---
 
-### 5.6 똑똑 알람 (Alarm Screen) Design
+### 5.9 똑똑 알람 (Alarm Screen) Design
 
 알람 화면은 홈 화면의 디자인 언어를 계승하면서 기능적인 요소를 추가했습니다.
 
@@ -817,7 +1024,7 @@ Container(
     color: Colors.white.withValues(alpha: 0.2),
     shape: BoxShape.circle,
   ),
-  child: Icon(Icons.arrow_forward, color: AppColors.pureWhite),
+  child: Icon(Icons.arrow_forward, color: AppColors.basicColor),
 )
 ```
 
@@ -831,7 +1038,119 @@ Container(
 
 ---
 
-### 5.7 일일 기분 체크 다이얼로그
+### 5.7 스플래시 화면 (Splash Screen) Design
+
+**파일:** `lib/app/onboarding/splash_screen.dart`
+
+앱 시작 시 표시되는 스플래시 화면입니다. 마음봄 로고 애니메이션을 재생하며 인증 상태를 확인합니다.
+
+#### 디자인 철학
+- **미니멀**: 로고 애니메이션만 중앙에 표시
+- **부드러운 전환**: Lottie 애니메이션으로 브랜드 경험 제공
+- **빠른 로딩**: 최소 2초 표시 후 다음 화면으로 전환
+
+#### 화면 구조
+
+```
+┌─────────────────────────────┐
+│                             │ ← 상태바 (다크 아이콘)
+│                             │
+│                             │
+│                             │
+│       [로고 애니메이션]        │ ← Lottie 애니메이션 (256×256)
+│                             │
+│                             │
+│                             │
+│                             │
+└─────────────────────────────┘
+```
+
+#### 디자인 스펙
+
+- **배경색**: `basicGray` (#F5F5F5)
+- **상태바**: 다크 아이콘 (`SystemUiOverlayStyle.dark`)
+- **로고 애니메이션**:
+  - 파일: `assets/images/logo/splash.json`
+  - 크기: 256×256px
+  - 재생: 1회만 (`repeat: false`)
+  - 위치: 화면 중앙
+
+#### 동작 흐름
+
+1. **스플래시 표시**: 앱 시작 시 자동 표시
+2. **애니메이션 재생**: Lottie 애니메이션 1회 재생
+3. **인증 확인**: 백그라운드에서 인증 상태 확인
+4. **화면 전환**: 최소 2초 후 다음 화면으로 이동
+   - 로그인 상태: `/home`으로 이동
+   - 비로그인 상태: `/login`으로 이동
+
+**구현 예시:**
+
+```dart
+class SplashScreen extends ConsumerStatefulWidget {
+  const SplashScreen({super.key});
+
+  @override
+  ConsumerState<SplashScreen> createState() => _SplashScreenState();
+}
+
+class _SplashScreenState extends ConsumerState<SplashScreen> {
+  @override
+  void initState() {
+    super.initState();
+    _navigateToNextScreen();
+  }
+
+  Future<void> _navigateToNextScreen() async {
+    // 최소 2초 대기
+    final minDisplayTime = Future.delayed(const Duration(seconds: 2));
+
+    // 인증 상태 확인
+    while (mounted) {
+      final authState = ref.read(authProvider);
+      
+      if (!authState.isLoading) {
+        await minDisplayTime;
+        
+        if (!mounted) return;
+
+        // 화면 전환
+        final isLoggedIn = authState.value != null;
+        if (isLoggedIn) {
+          Navigator.pushReplacementNamed(context, '/home');
+        } else {
+          Navigator.pushReplacementNamed(context, '/login');
+        }
+        return;
+      }
+      
+      await Future.delayed(const Duration(milliseconds: 100));
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle.dark,
+      child: Scaffold(
+        backgroundColor: AppColors.basicGray,
+        body: Center(
+          child: Lottie.asset(
+            'assets/images/logo/splash.json',
+            width: 256,
+            height: 256,
+            repeat: false,
+          ),
+        ),
+      ),
+    );
+  }
+}
+```
+
+---
+
+### 5.8 일일 기분 체크 다이얼로그
 
 ```dart
 class HomeScreen extends ConsumerWidget {
@@ -902,26 +1221,73 @@ class HomeContent extends ConsumerStatefulWidget {
 
 **파일:** `lib/ui/layout/bottom_menu_bars.dart`
 
+마음봄의 메인 네비게이션 바로 5개의 탭을 제공합니다. 중앙에는 마이크 버튼이 돌출되어 음성 입력을 강조합니다.
+
 ```
-┌─────┬─────┬─────┬─────┬─────┐
-│ 홈  │알람 │ 🎙️  │리포트│마이 │
-└─────┴─────┴─────┴─────┴─────┘
+┌──────────────────────────────────────┐
+│                                      │
+│  홈   마음서랍   🎙️   마음연습실  마이  │
+│                ↑                     │
+│            (중앙 돌출)                 │
+└──────────────────────────────────────┘
 ```
 
 **구성:**
-- 탭 0: 홈
-- 탭 1: 알람
-- 탭 2: 녹음 (중앙 원형 버튼)
-- 탭 3: 리포트
-- 탭 4: 마이페이지
+- 탭 0: **홈** (`icon-home.svg`)
+- 탭 1: **마음서랍** (`icon-report.svg`)
+- 탭 2: **봄이 (마이크)** - 중앙 원형 버튼 (`icon-mic.svg`)
+- 탭 3: **마음연습실** (`icon-apps.svg`)
+- 탭 4: **마이페이지** (`icon-mypage.svg`)
+
+**디자인 스펙:**
+- **높이**: 100px (전체), 80px (배경)
+- **배경색**: `pureWhite` (기본값, 커스터마이징 가능)
+- **상단 테두리**: 1px, `borderLight`
+- **중앙 마이크 버튼**:
+  - 크기: 56×56px
+  - 배경: `primaryColor` (기본값, 커스터마이징 가능)
+  - 아이콘: 흰색 마이크 (42×42px)
+  - 위치: 상단으로 20px 돌출
+- **메뉴 아이템**:
+  - 아이콘 크기: 28×28px
+  - 라벨: `label` 스타일 (8px, 500 weight)
+  - 선택 시: `primaryColor`
+  - 미선택 시: `textPrimary`
 
 **사용 예시:**
 ```dart
+// 기본 사용
 BottomMenuBar(
   currentIndex: 0,
   onTap: (index) {
     // 탭 전환 로직
+    switch (index) {
+      case 0:
+        Navigator.pushNamed(context, '/home');
+        break;
+      case 1:
+        Navigator.pushNamed(context, '/alarm');
+        break;
+      case 2:
+        Navigator.pushNamed(context, '/bomi');
+        break;
+      case 3:
+        Navigator.pushNamed(context, '/training');
+        break;
+      case 4:
+        Navigator.pushNamed(context, '/mypage');
+        break;
+    }
   },
+)
+
+// 색상 커스터마이징
+BottomMenuBar(
+  currentIndex: 2,
+  backgroundColor: AppColors.warmWhite,
+  foregroundColor: AppColors.textSecondary,
+  primaryColor: AppColors.secondaryColor,
+  onTap: (index) => _handleNavigation(index),
 )
 ```
 
@@ -958,14 +1324,16 @@ MoreMenuSheet.show(context);
 |------|------|------|
 | `accentRed` | `#D8454D` | 주요 액센트 컬러 (CTA 버튼, 강조) |
 | `accentCoral` | `#E6757A` | 보조 액센트 컬러 |
-| `natureGreen` | `#2F6A53` | 성공 상태, 자연 테마 |
+| `secondaryColor` | `#2F6A53` | 성공 상태, 자연 테마 |
 | `errorRed` | `#C62828` | 에러, 경고 |
 
 #### Neutral Colors
 
 | 이름 | 값 | 용도 |
 |------|------|------|
-| `pureWhite` | `#FFFFFF` | 기본 배경 |
+| `basicColor` | `#FFFFFF` | 기본 배경 |
+| `pureWhite` | `#FFFFFF` | 순수 흰색 (네비게이션 바) |
+| `basicGray` | `#F5F5F5` | 연한 회색 배경 (스플래시 화면) |
 | `warmWhite` | `#FFFBFA` | 따뜻한 배경 |
 | `lightPink` | `#F4E6E4` | 연한 핑크 배경 |
 | `softMint` | `#CDE7DE` | 연한 민트 배경 |
@@ -1010,12 +1378,12 @@ AppColors.emotionConfusionSecondary  // #C7A4FF
 
 ```dart
 // Background
-AppColors.bgBasic      // 기본 배경 (pureWhite)
+AppColors.bgBasic      // 기본 배경 (basicColor)
 AppColors.bgWarm       // 따뜻한 배경 (warmWhite)
 AppColors.bgLightPink  // 핑크 배경
 AppColors.bgSoftMint   // 민트 배경
 AppColors.bgRed        // 레드 배경 (accentRed)
-AppColors.bgGreen      // 그린 배경 (natureGreen)
+AppColors.bgGreen      // 그린 배경 (secondaryColor)
 
 // Home Screen Mood-based Backgrounds
 AppColors.homeGoodYellow   // #FFB84C (좋은 기분)
@@ -1033,7 +1401,7 @@ AppColors.borderLight      // #F0EAE8
 AppColors.borderLightGray  // #B0B0B0
 
 // Status
-AppColors.success  // natureGreen
+AppColors.success  // secondaryColor
 AppColors.error    // errorRed
 
 // Disabled
@@ -1282,7 +1650,79 @@ BottomInputBar(
 
 ---
 
-#### 8.3.4 BottomHomeBar
+#### 8.3.4 BottomAddModalBar
+
+**파일:** `lib/ui/layout/bottom_add_modal_bar.dart`
+
+재사용 가능한 모달 Bottom Sheet 컴포넌트입니다. 타이틀과 커스텀 컨텐츠를 주입받아 표시합니다.
+
+**디자인 스펙:**
+- **배경**: `basicColor` (흰색)
+- **모서리**: 상단 좌우 32px 둥근 모서리
+- **패딩**: 24px (기본) + 키보드 높이 (자동)
+- **헤더**:
+  - 타이틀: `h3` 스타일, 700 weight, 중앙 정렬
+  - 닫기 버튼: 우측 상단, `close_rounded` 아이콘 (24px)
+- **컨텐츠**: 주입받은 child 위젯 표시
+- **SafeArea**: 하단 안전 영역 자동 적용
+
+**사용 예시:**
+
+```dart
+// 기본 사용 - show 헬퍼 메서드
+BottomAddModalBar.show(
+  context,
+  title: '알람 추가',
+  child: Column(
+    children: [
+      AppInput(caption: '알람 제목', controller: _titleController),
+      const SizedBox(height: AppSpacing.md),
+      // 시간 선택 위젯
+      TimePicker(onTimeSelected: (time) => _selectedTime = time),
+      const SizedBox(height: AppSpacing.lg),
+      AppButton(
+        text: '저장',
+        variant: ButtonVariant.primaryRed,
+        onTap: () {
+          _saveAlarm();
+          Navigator.pop(context);
+        },
+      ),
+    ],
+  ),
+);
+
+// 직접 사용
+showModalBottomSheet(
+  context: context,
+  backgroundColor: Colors.transparent,
+  isScrollControlled: true,
+  builder: (context) => BottomAddModalBar(
+    title: '메모 작성',
+    onClose: () => Navigator.pop(context),
+    child: Padding(
+      padding: const EdgeInsets.all(AppSpacing.md),
+      child: TextField(
+        maxLines: 5,
+        decoration: InputDecoration(
+          hintText: '메모를 입력하세요',
+        ),
+      ),
+    ),
+  ),
+);
+```
+
+**특징:**
+- 키보드 자동 대응 (`viewInsets.bottom`)
+- 투명 배경으로 둥근 모서리 표현
+- 닫기 버튼 옵션 (`onClose` 콜백)
+- 스크롤 제어 가능 (`isScrollControlled`)
+- 재사용 가능한 헬퍼 메서드 제공
+
+---
+
+#### 8.3.5 BottomHomeBar
 
 **파일:** `lib/ui/layout/bottom_home_bar.dart`
 
@@ -1340,7 +1780,7 @@ AppButton(
 **States:**
 - `normal`: 기본 상태
 - `focus`: 포커스 (accentRed 테두리)
-- `success`: 성공 (natureGreen 테두리)
+- `success`: 성공 (secondaryColor 테두리)
 - `error`: 에러 (errorRed 테두리, 두꺼운 선)
 - `disabled`: 비활성화
 
@@ -1371,7 +1811,7 @@ AppInput(
 
 **타입:**
 - `red`: 경고, 삭제, 중요한 알림 (`accentRed`)
-- `green`: 성공, 완료 (`natureGreen`)
+- `green`: 성공, 완료 (`secondaryColor`)
 
 ```dart
 // 표시
@@ -1456,7 +1896,7 @@ Widget _buildToggle({
 ```dart
 CircularRipple(
   isActive: isRecording,
-  color: AppColors.accentRed,
+  color: AppColors.primaryColor,
 )
 ```
 
@@ -1569,7 +2009,7 @@ Container(color: primaryColor)
 Container(
   padding: EdgeInsets.all(24),  // AppSpacing.md 사용
   decoration: BoxDecoration(
-    color: Color(0xFFFFFFFF),    // AppColors.pureWhite 사용
+    color: Color(0xFFFFFFFF),    // AppColors.basicColor 사용
   ),
 )
 
@@ -1586,8 +2026,171 @@ Card(
 
 ---
 
+## 🎤 9. Bottom Bar Components
+
+### 9.1 BottomInputBar (텍스트 입력 바)
+
+**파일:** `lib/ui/layout/bottom_input_bars.dart`
+
+텍스트 메시지 입력을 위한 Bottom Bar입니다.
+
+#### 특징
+
+- 텍스트 입력 필드 항상 표시
+- 마이크 ↔ 전송 버튼 자동 토글
+- 텍스트 입력 시 전송 버튼으로 변경
+- 간소화된 API
+
+#### 사용 예시
+
+```dart
+BottomInputBar(
+  controller: _textController,
+  hintText: '메시지를 입력하세요',
+  onSend: () {
+    // 전송 버튼 탭 시
+    final text = _textController.text.trim();
+    if (text.isNotEmpty) {
+      sendMessage(text);
+      _textController.clear();
+    }
+  },
+  onMicTap: () {
+    // 마이크 버튼 탭 시 (Voice Bar로 전환)
+    setState(() => _showVoiceBar = true);
+  },
+)
+```
+
+#### API
+
+| 파라미터 | 타입 | 필수 | 기본값 | 설명 |
+|---------|------|------|--------|------|
+| `controller` | `TextEditingController` | ✅ | - | 텍스트 입력 컨트롤러 |
+| `hintText` | `String` | ❌ | '메시지를 입력하세요' | 플레이스홀더 텍스트 |
+| `onSend` | `VoidCallback?` | ❌ | null | 전송 버튼 탭 콜백 |
+| `onMicTap` | `VoidCallback?` | ❌ | null | 마이크 버튼 탭 콜백 |
+| `backgroundColor` | `Color` | ❌ | `AppColors.basicColor` | 배경색 |
+
+#### 디자인 스펙
+
+- **높이**: 100px + safeArea bottom
+- **배경색**: `basicColor` (흰색)
+- **입력 필드**: 
+  - 배경: `warmWhite`
+  - 테두리: `borderLight`
+  - 둥근 모서리: `pill`
+- **버튼**:
+  - 크기: 44×44
+  - 배경: `primaryColor` (빨간색)
+  - 아이콘: 흰색
+  - 둥근 모서리: `pill`
+
+---
+
+### 9.2 BottomVoiceBar (음성 입력 바)
+
+**파일:** `lib/ui/layout/bottom_voice_bar.dart`
+
+음성 입력을 위한 3버튼 레이아웃 Bottom Bar입니다.
+
+#### 특징
+
+- 3버튼 레이아웃 (TTS 토글, 마이크, 텍스트 모드)
+- 가운데 마이크 버튼 크게 표시 (80×80)
+- 음성 상태별 애니메이션
+- 원형 파동 효과
+
+#### 사용 예시
+
+```dart
+BottomVoiceBar(
+  voiceState: chatState.voiceState,
+  onMicTap: () {
+    // 마이크 버튼 탭 시 (녹음 시작/중지)
+    if (isRecording) {
+      stopRecording();
+    } else {
+      startRecording();
+    }
+  },
+  onTextModeTap: () {
+    // 텍스트 버튼 탭 시 (Input Bar로 전환)
+    setState(() => _showVoiceBar = false);
+  },
+  // TTS 기능은 선택적
+  isTtsEnabled: true,
+  onTtsToggle: () {
+    toggleTts();
+  },
+)
+```
+
+#### API
+
+| 파라미터 | 타입 | 필수 | 기본값 | 설명 |
+|---------|------|------|--------|------|
+| `voiceState` | `VoiceInterfaceState` | ✅ | - | 현재 음성 상태 |
+| `onMicTap` | `VoidCallback` | ✅ | - | 마이크 버튼 탭 콜백 |
+| `onTextModeTap` | `VoidCallback` | ✅ | - | 텍스트 모드 전환 콜백 |
+| `isTtsEnabled` | `bool?` | ❌ | null | TTS 활성화 여부 |
+| `onTtsToggle` | `VoidCallback?` | ❌ | null | TTS 토글 콜백 |
+| `backgroundColor` | `Color` | ❌ | `AppColors.basicColor` | 배경색 |
+
+#### 음성 상태별 표시
+
+| 상태 | 버튼 색상 | 아이콘/애니메이션 | 파동 효과 |
+|------|----------|-----------------|----------|
+| `idle` | `primaryColor` | 마이크 아이콘 | ❌ |
+| `loading` | `primaryColor` | 타이핑 애니메이션 (점 3개) | ✅ |
+| `listening` | `primaryColor` | 파형 애니메이션 | ✅ |
+| `processing` | `orangeAccent` | 타이핑 애니메이션 | ✅ (breathing) |
+| `replying` | `green` | 체크 아이콘 | ✅ |
+
+#### 버튼 레이아웃
+
+```
+┌─────────────────────────────────┐
+│  [TTS]    [마이크]    [텍스트]    │
+│   50px      80px      50px     │
+└─────────────────────────────────┘
+```
+
+#### 디자인 스펙
+
+- **높이**: 100px + safeArea bottom
+- **배경색**: `basicColor` (흰색)
+- **왼쪽 버튼 (TTS)**:
+  - 크기: 50×50
+  - ON: `primaryColor` 테두리 + 연한 배경
+  - OFF: `borderLight` 테두리 + `warmWhite` 배경
+- **가운데 버튼 (마이크)**:
+  - 크기: 80×80 (크게)
+  - 배경: 상태별 색상
+  - 그림자: 활성화 시 강조
+- **오른쪽 버튼 (텍스트)**:
+  - 크기: 50×50
+  - 배경: `warmWhite`
+  - 아이콘: `edit` (`primaryColor`)
+
+#### 애니메이션
+
+**파형 애니메이션** (listening):
+- 4개 막대, 1000ms 주기
+- 높이: 14~32px
+
+**타이핑 애니메이션** (loading, processing):
+- 3개 점, 1200ms 주기
+- 투명도 변화
+
+**파동 효과**:
+- listening/replying: 3개 원형 파동
+- processing: breathing 효과
+
+---
+
 ## 📞 문의 및 기여
 
 디자인 시스템 관련 문의사항이나 개선 제안은 팀 채널로 연락해주세요.
 
-**마지막 업데이트**: 2025-12-09
+**마지막 업데이트**: 2025-12-12

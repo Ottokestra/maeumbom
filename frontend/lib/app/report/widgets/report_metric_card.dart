@@ -41,13 +41,13 @@ class ReportMetricCard extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(AppSpacing.xs),
                   decoration: BoxDecoration(
-                    color: AppColors.accentRed.withOpacity(0.08),
+                    color: AppColors.primaryColor.withOpacity(0.08),
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
                     icon,
                     size: 20,
-                    color: AppColors.accentRed,
+                    color: AppColors.primaryColor,
                   ),
                 ),
               if (icon != null) const SizedBox(width: AppSpacing.xs),

@@ -2,15 +2,20 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../ui/app_ui.dart';
 import 'relation_training_list_screen.dart';
+import '../../core/services/navigation/navigation_service.dart';
 
 class TrainingScreen extends ConsumerWidget {
   const TrainingScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final navigationService = NavigationService(context, ref);
+    
     return AppFrame(
       topBar: TopBar(
         title: '마음연습실',
+        leftIcon: Icons.arrow_back,
+        onTapLeft: () => navigationService.navigateToTab(0),
         rightIcon: Icons.more_horiz,
         onTapRight: () => MoreMenuSheet.show(context),
       ),

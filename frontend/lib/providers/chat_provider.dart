@@ -104,7 +104,7 @@ class ChatNotifier extends StateNotifier<ChatState> {
   final Ref _ref;
 
   // ✅ Session 관리
-  static const _sessionDuration = Duration(minutes: 5);
+  static const _sessionDuration = Duration(minutes: 10);
   static const _sessionIdKey = 'chat_session_id';
   static const _sessionTimeKey = 'chat_session_time';
   static const _ttsEnabledKey = 'chat_tts_enabled'; // ✅ TTS 상태 저장 키
@@ -113,7 +113,7 @@ class ChatNotifier extends StateNotifier<ChatState> {
   void Function(Map<String, dynamic> alarmInfo, String replyText)?
       onShowAlarmDialog;
   void Function(Map<String, dynamic> alarmInfo)? onShowWarningDialog;
-  
+
   // 🆕 음성 입력 여부 추적
   bool _isVoiceInput = false;
 
@@ -167,7 +167,7 @@ class ChatNotifier extends StateNotifier<ChatState> {
     try {
       // 🆕 음성 입력 플래그 설정
       _isVoiceInput = true;
-      
+
       // 권한 확인
       final hasPermission = await _permissionService.hasMicrophonePermission();
       if (!hasPermission) {
@@ -193,7 +193,7 @@ class ChatNotifier extends StateNotifier<ChatState> {
         userId: _userId.toString(),
         sessionId: state.sessionId,
       );
-      
+
       // 녹음 시작 시 TTS 중지
       await _ttsPlayerService.stop();
 
@@ -258,8 +258,9 @@ class ChatNotifier extends StateNotifier<ChatState> {
       if (responseType == 'alarm' && alarmInfo != null) {
         print('[ChatProvider] 🔔 [VOICE] Alarm detected');
         print('[ChatProvider] 🔔 [VOICE] _isVoiceInput: $_isVoiceInput');
-        print('[ChatProvider] 🔔 [VOICE] onShowAlarmDialog: $onShowAlarmDialog');
-        
+        print(
+            '[ChatProvider] 🔔 [VOICE] onShowAlarmDialog: $onShowAlarmDialog');
+
         // 🆕 음성/텍스트 모두 다이얼로그 표시
         onShowAlarmDialog?.call(alarmInfo, replyText);
 
@@ -315,9 +316,32 @@ class ChatNotifier extends StateNotifier<ChatState> {
   /// Send text message via HTTP API
   Future<void> sendTextMessage(String text) async {
     if (text.trim().isEmpty) return;
-    
+
     // 🆕 텍스트 입력 플래그 설정
     _isVoiceInput = false;
+
+    // 🆕 세션 만료 감지 (메시지 전송 전에 체크)
+    String? expiredSessionId;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final savedTimeStr = prefs.getString(_sessionTimeKey);
+
+      if (savedTimeStr != null) {
+        final savedTime = DateTime.parse(savedTimeStr);
+        final elapsed = DateTime.now().difference(savedTime);
+
+        // 세션 시간 초과 감지 (하지만 아직 변경하지 않음)
+        if (elapsed >= _sessionDuration) {
+          expiredSessionId = state.sessionId;
+          print('⏰ [Session Expiry] Detected: $expiredSessionId');
+          print(
+              '⏰ [Session Expiry] Elapsed: ${elapsed.inMinutes}m ${elapsed.inSeconds % 60}s');
+          print('⏰ [Session Expiry] Will trigger analysis AFTER message send');
+        }
+      }
+    } catch (e) {
+      print('❌ Session expiry check failed: $e');
+    }
 
     // Add user message to UI
     final userMessage = ChatMessage(
@@ -334,16 +358,13 @@ class ChatNotifier extends StateNotifier<ChatState> {
     );
 
     try {
-      // ✅ Update session time
-      await _onMessageSent();
-
       print('[ChatProvider] 📤 Sending text message...');
 
-      // ✅ Call ChatRepository to send text message
+      // ✅ Call ChatRepository to send text message (기존 세션으로 전송)
       final response = await _chatRepository.sendTextMessageRaw(
         text: text,
         userId: _userId,
-        sessionId: state.sessionId,
+        sessionId: state.sessionId, // 만료된 세션 ID로 전송
         ttsEnabled: state.ttsEnabled, // ✅ TTS 활성화 여부 전달
       );
 
@@ -384,7 +405,7 @@ class ChatNotifier extends StateNotifier<ChatState> {
       if (responseType == 'alarm' && alarmInfo != null && replyText != null) {
         print('[ChatProvider] 🔔 [TEXT] Alarm detected');
         print('[ChatProvider] 🔔 [TEXT] onShowAlarmDialog: $onShowAlarmDialog');
-        
+
         // 🆕 다이얼로그 표시
         onShowAlarmDialog?.call(alarmInfo, replyText);
 
@@ -404,10 +425,22 @@ class ChatNotifier extends StateNotifier<ChatState> {
           }
         }
       }
-      
-      // ✅ TTS 재생
+
+      // TTS 플레이
       if (state.ttsEnabled && ttsAudioUrl != null && ttsAudioUrl.isNotEmpty) {
-         _playTtsAudio(ttsAudioUrl);
+        await _playTtsAudio(ttsAudioUrl);
+      }
+
+      print('[ChatProvider] ✅ Text message sent successfully');
+
+      // 🆕 메시지 전송 완료 후 세션 처리
+      if (expiredSessionId != null) {
+        // 세션이 만료되었으므로 새 세션 생성 및 감정분석 trigger
+        print('⏰ [Session Expiry] Message sent. Now creating new session...');
+        await _createNewSession(expiredSessionId: expiredSessionId);
+      } else {
+        // 세션 시간만 업데이트
+        await _updateSessionTime();
       }
     } catch (e) {
       print('[ChatProvider] ❌ Error in sendTextMessage: $e');
@@ -465,10 +498,16 @@ class ChatNotifier extends StateNotifier<ChatState> {
           print(
               '✅ Session restored: $savedSessionId (${elapsed.inMinutes}m ago)');
           return;
+        } else {
+          // 🆕 5분 초과 → 세션 만료 → 감정분석 trigger
+          print(
+              '⏰ Session expired: $savedSessionId (${elapsed.inMinutes}m ago)');
+          await _createNewSession(expiredSessionId: savedSessionId);
+          return;
         }
       }
 
-      // 새 session 생성
+      // 새 session 생성 (처음 실행)
       await _createNewSession();
     } catch (e) {
       print('❌ Session init failed: $e');
@@ -477,12 +516,35 @@ class ChatNotifier extends StateNotifier<ChatState> {
   }
 
   /// Create new session
-  Future<void> _createNewSession() async {
+  Future<void> _createNewSession({String? expiredSessionId}) async {
     final newSessionId =
         'user_${_userId}_${DateTime.now().millisecondsSinceEpoch}';
     state = state.copyWith(sessionId: newSessionId);
     await _saveSession(newSessionId);
     print('🆕 New session created: $newSessionId');
+
+    // 🆕 이전 세션이 있었다면 감정분석 trigger
+    if (expiredSessionId != null && !expiredSessionId.endsWith('_default')) {
+      _triggerSessionEmotionAnalysis(expiredSessionId);
+    }
+  }
+
+  /// 🆕 세션 만료 시 감정분석 트리거
+  Future<void> _triggerSessionEmotionAnalysis(String expiredSessionId) async {
+    try {
+      print('[Emotion] 🔄 Session expired: $expiredSessionId');
+      print('[Emotion] 📊 Triggering emotion analysis...');
+
+      final dio = _ref.read(dioWithAuthProvider);
+      await dio.post('/emotion/api/analyze-session', data: {
+        'session_id': expiredSessionId,
+      });
+
+      print('[Emotion] ✅ Session emotion analysis completed');
+    } catch (e) {
+      print('[Emotion] ❌ Session emotion analysis failed: $e');
+      // Silent fail - 백그라운드 작업이므로 UI에 영향 없음
+    }
   }
 
   /// Save session to SharedPreferences
@@ -544,6 +606,33 @@ class ChatNotifier extends StateNotifier<ChatState> {
 
   /// Update session time on message send
   Future<void> _onMessageSent() async {
+    // 🆕 세션 만료 감지 (메시지 전송 시점에 체크)
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final savedTimeStr = prefs.getString(_sessionTimeKey);
+
+      if (savedTimeStr != null) {
+        final savedTime = DateTime.parse(savedTimeStr);
+        final elapsed = DateTime.now().difference(savedTime);
+
+        // 세션 시간 초과 시 → 이전 세션 만료로 처리
+        if (elapsed >= _sessionDuration) {
+          final expiredSessionId = state.sessionId;
+          print(
+              '⏰ [Session Expiry] Detected during message send: $expiredSessionId');
+          print(
+              '⏰ [Session Expiry] Elapsed: ${elapsed.inMinutes}m ${elapsed.inSeconds % 60}s');
+
+          // 새 세션 생성 (감정분석 trigger 포함)
+          await _createNewSession(expiredSessionId: expiredSessionId);
+          return;
+        }
+      }
+    } catch (e) {
+      print('❌ Session expiry check failed: $e');
+    }
+
+    // 세션 시간 갱신
     await _updateSessionTime();
   }
 
@@ -582,25 +671,25 @@ class ChatNotifier extends StateNotifier<ChatState> {
     _bomChatService.dispose();
     super.dispose();
   }
-  
+
   /// Play TTS Audio
   Future<void> _playTtsAudio(String source) async {
     // 음성 채팅 중이면 재생하지 않음 (backend가 처리하거나 중복 방지)
-    if (state.voiceState == VoiceInterfaceState.listening || 
+    if (state.voiceState == VoiceInterfaceState.listening ||
         state.voiceState == VoiceInterfaceState.processing) {
-       return;   
+      return;
     }
-    
+
     // 🆕 음성 채팅 중이 아닐 때만 (텍스트 입력 시) voiceState 변경
     final isVoiceChatActive = _bomChatService.isActive;
-    
+
     if (!isVoiceChatActive) {
       // 텍스트 모드: replying 상태로 변경
       state = state.copyWith(voiceState: VoiceInterfaceState.replying);
     }
-    
+
     await _ttsPlayerService.play(source);
-    
+
     // 🆕 텍스트 모드일 때는 TTS 재생 후 idle로 복귀
     if (!isVoiceChatActive) {
       // 약간의 딜레이 후 idle로 복귀 (TTS 재생 완료 시간 고려)

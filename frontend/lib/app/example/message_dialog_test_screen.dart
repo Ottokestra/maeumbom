@@ -31,7 +31,7 @@ class MessageDialogTestScreen extends StatelessWidget {
             ElevatedButton(
               onPressed: () => _showRedConfirmWithIcon(context),
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.accentRed,
+                backgroundColor: AppColors.primaryColor,
                 foregroundColor: AppColors.textWhite,
               ),
               child: const Text('Red Confirm (아이콘 있음)'),
@@ -42,7 +42,7 @@ class MessageDialogTestScreen extends StatelessWidget {
             ElevatedButton(
               onPressed: () => _showRedConfirmWithoutIcon(context),
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.accentRed,
+                backgroundColor: AppColors.primaryColor,
                 foregroundColor: AppColors.textWhite,
               ),
               child: const Text('Red Confirm (아이콘 없음)'),
@@ -53,7 +53,7 @@ class MessageDialogTestScreen extends StatelessWidget {
             ElevatedButton(
               onPressed: () => _showGreenConfirmWithIcon(context),
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.natureGreen,
+                backgroundColor: AppColors.secondaryColor,
                 foregroundColor: AppColors.textWhite,
               ),
               child: const Text('Green Confirm (아이콘 있음)'),
@@ -64,7 +64,7 @@ class MessageDialogTestScreen extends StatelessWidget {
             ElevatedButton(
               onPressed: () => _showGreenConfirmWithoutIcon(context),
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.natureGreen,
+                backgroundColor: AppColors.secondaryColor,
                 foregroundColor: AppColors.textWhite,
               ),
               child: const Text('Green Confirm (아이콘 없음)'),
@@ -83,7 +83,7 @@ class MessageDialogTestScreen extends StatelessWidget {
             ElevatedButton(
               onPressed: () => _showRedAlertWithIcon(context),
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.accentRed,
+                backgroundColor: AppColors.primaryColor,
                 foregroundColor: AppColors.textWhite,
               ),
               child: const Text('Red Alert (아이콘 있음)'),
@@ -94,7 +94,7 @@ class MessageDialogTestScreen extends StatelessWidget {
             ElevatedButton(
               onPressed: () => _showRedAlertWithoutIcon(context),
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.accentRed,
+                backgroundColor: AppColors.primaryColor,
                 foregroundColor: AppColors.textWhite,
               ),
               child: const Text('Red Alert (아이콘 없음)'),
@@ -105,7 +105,7 @@ class MessageDialogTestScreen extends StatelessWidget {
             ElevatedButton(
               onPressed: () => _showGreenAlertWithIcon(context),
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.natureGreen,
+                backgroundColor: AppColors.secondaryColor,
                 foregroundColor: AppColors.textWhite,
               ),
               child: const Text('Green Alert (아이콘 있음)'),
@@ -116,7 +116,7 @@ class MessageDialogTestScreen extends StatelessWidget {
             ElevatedButton(
               onPressed: () => _showGreenAlertWithoutIcon(context),
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.natureGreen,
+                backgroundColor: AppColors.secondaryColor,
                 foregroundColor: AppColors.textWhite,
               ),
               child: const Text('Green Alert (아이콘 없음)'),

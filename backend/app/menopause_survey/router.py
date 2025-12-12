@@ -13,6 +13,8 @@ from .schemas import (
     MenopauseSurveyResultResponse,
 )
 from .service import (
+    create_question_item,
+    delete_question_item,
     list_question_items,
     retrieve_question,
     create_question_item,

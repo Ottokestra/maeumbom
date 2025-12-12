@@ -63,11 +63,23 @@ class MaeumBomApp extends ConsumerWidget {
       darkTheme: AppTheme.dark,
       initialRoute: '/splash',
       onGenerateRoute: (settings) {
-        // RouteGuard를 사용하여 인증 체크
         final routeGuard = ref.read(routeGuardProvider);
         final routeName = settings.name ?? '/';
 
-        // Custom routes with arguments
+        // 인증이 필요한 경로인지 확인
+        if (routeGuard.requiresAuth(routeName)) {
+          // 인증 상태 확인
+          if (!routeGuard.canAccess(routeName)) {
+            // 로그인되지 않았으면 로그인 화면으로 리다이렉트
+            return MaterialPageRoute(
+              builder: (context) => const LoginScreen(),
+              settings:
+                  RouteSettings(name: '/login', arguments: settings.arguments),
+            );
+          }
+        }
+
+        // Custom routes with arguments (Slang Quiz)
         if (routeName == '/training/slang-quiz/game') {
           final args = settings.arguments as Map<String, dynamic>?;
           if (args != null) {
@@ -98,19 +110,7 @@ class MaeumBomApp extends ConsumerWidget {
           );
         }
 
-        // 인증이 필요한 경로인지 확인
-        if (routeGuard.requiresAuth(routeName)) {
-          // 인증 상태 확인
-          if (!routeGuard.canAccess(routeName)) {
-            // 로그인되지 않았으면 로그인 화면으로 리다이렉트
-            return MaterialPageRoute(
-              builder: (context) => const LoginScreen(),
-              settings:
-                  RouteSettings(name: '/login', arguments: settings.arguments),
-            );
-          }
-        }
-        // 인증이 필요 없거나 인증된 경우 정상 라우트 반환
+        // 표준 라우트 처리
         final routeMetadata = AppRoutes.findByRouteName(routeName);
         if (routeMetadata != null) {
           return MaterialPageRoute(
@@ -118,6 +118,7 @@ class MaeumBomApp extends ConsumerWidget {
             settings: settings,
           );
         }
+
         // 라우트를 찾을 수 없으면 홈으로 리다이렉트
         return MaterialPageRoute(
           builder: (context) => const HomeScreen(),

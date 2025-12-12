@@ -590,10 +590,9 @@ async def run_ai_bomi_from_text_v2(
         store.add_message(user_id, session_id, "user", user_text, speaker_id=speaker_id)
     
     # ⚡ 2. Lightweight Classifier Only (for Orchestrator hint)
-    # Full emotion analysis moved to background after LLM response
-    classifier = get_emotion_classifier()
-    classifier_hint = classifier.predict(user_text)
-    logger.info(f"🔍 [Classifier] Hint: {classifier_hint}")
+    # ========================================
+    # Emotion analysis moved to session-based (triggered on session expiry)
+    # ========================================
     
     # ========================================
     # [PHASE 2] Orchestrator LLM 통합
@@ -620,11 +619,10 @@ async def run_ai_bomi_from_text_v2(
             "history": store.get_history(user_id, session_id, limit=3)
         }
         
-        # Call orchestrator LLM (with lightweight hint)
+        # Call orchestrator LLM
         tool_calls = await orchestrator_llm(
             user_text=user_text,
-            context=context,
-            classifier_hint=classifier_hint  # ✅ Use lightweight classifier hint
+            context=context
         )
         
         orchestrator_tools = [tc.function.name for tc in tool_calls]
@@ -809,22 +807,11 @@ async def run_ai_bomi_from_text_v2(
                 
             # Save to DB + ChromaDB cache (if fresh analysis)
             if not emotion_response.get("cached"):
+                from sentence_transformers import SentenceTransformer
                 import json
-                import asyncio
                 
-                # ⚡ SentenceTransformer를 executor에서 실행 (블로킹 방지!)
-                def encode_text_sync():
-                    """동기 함수: Sentence Transformer 로드 및 인코딩"""
-                    from sentence_transformers import SentenceTransformer
-                    embedder = SentenceTransformer('jhgan/ko-sroberta-multitask')
-                    embedding = embedder.encode(user_text).tolist()
-                    return embedding
-                
-                loop = asyncio.get_event_loop()
-                logger.info("🔍 [Background] Loading embedding model (in executor)...")
-                embedding = await loop.run_in_executor(None, encode_text_sync)
-                logger.info("✅ [Background] Embedding generation complete")
-                
+                embedder = SentenceTransformer('jhgan/ko-sroberta-multitask')
+                embedding = embedder.encode(user_text).tolist()
                 embedding_json = json.dumps(embedding)
                 
                 analysis_id = store.save_emotion_analysis(
@@ -844,11 +831,17 @@ async def run_ai_bomi_from_text_v2(
             logger.error(f"❌ [Background] Background tasks failed: {e}")
     
     
-    # ⚠️ 백그라운드 태스크 임시 비활성화 (TTS와 리소스 경쟁 방지)
-    # TODO: TTS 완료 후 실행하도록 main.py로 이동 필요
-    # asyncio.create_task(background_tasks())
-    # logger.info("🚀 [Background] Background tasks created (non-blocking)")
-    logger.info("⚠️ [Background] Background tasks disabled (TTS optimization)")
+    # ⚠️ 백그라운드 감정분석 비활성화 (별도 엔드포인트로 분리)
+    # Frontend가 need_emotion_analysis=1일 때 POST /emotion/api/analyze 호출
+    # 💾 Memory Manager는 계속 실행 (감정분석 분리와 무관)
+    asyncio.create_task(run_slow_track(
+        user_text=user_text,
+        emotion_result=emotion,
+        user_id=user_id,
+        session_id=session_id
+    ))
+    logger.info("🚀 [Memory Manager] Background task created (run_slow_track)")
+    logger.info("🚀 [Endpoint Separation] Emotion analysis moved to /emotion/api/analyze")
 
     
     logger.info(f"✅ [DeepAgents] Both text versions ready for return")
@@ -871,7 +864,6 @@ async def run_ai_bomi_from_text_v2(
             "memory_used": bool(memory_context),
             "rag_used": bool(rag_context),
             "stt_quality": stt_quality,
-            "classifier_hint": classifier_hint,  # ⚡ Lightweight hint
             # 🆕 Frontend compatibility: meta에도 emotion/response_type 포함
             "emotion": response_metadata.get("emotion", "happiness"),
             "response_type": response_metadata.get("response_type", "normal")

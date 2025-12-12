@@ -5,10 +5,8 @@ import '../../app/chat/chat_screen.dart';
 import '../../app/report/report_screen.dart';
 import '../../app/settings/mypage_screen.dart';
 import '../../app/common/login_screen.dart';
-import '../../app/example/example_screen.dart';
 import '../../app/sign/sign_up1.dart';
 import '../../app/survey/menopause_survey_screen.dart';
-import '../../app/example/bubble_screen.dart';
 import '../../app/onboarding/splash_screen.dart';
 import '../../app/chat/bomi_screen.dart';
 import '../../app/chat/chat_list_screen.dart';
@@ -41,19 +39,20 @@ class AppRoutes {
   static const RouteMetadata home = RouteMetadata(
     routeName: '/home',
     builder: HomeScreen.new,
-    tabIndex: 0, // BottomMenuBar: 홈 아이콘
+    tabIndex: 0, // BottomMenuBar: 홈
   );
 
   static const RouteMetadata alarm = RouteMetadata(
     routeName: '/alarm',
     builder: AlarmScreen.new,
+    tabIndex: 1, // BottomMenuBar: 마음서랍
   );
 
   static const RouteMetadata bomi = RouteMetadata(
     routeName: '/bomi',
     builder: BomiScreen.new,
     requiresAuth: true,
-    tabIndex: 1, // BottomMenuBar: 마이크 버튼 (중앙)
+    tabIndex: 2, // BottomMenuBar: 마이크 버튼 (중앙)
   );
 
   static const RouteMetadata report = RouteMetadata(
@@ -62,30 +61,22 @@ class AppRoutes {
     requiresAuth: true,
   );
 
+  static const RouteMetadata training = RouteMetadata(
+    routeName: '/training',
+    builder: TrainingScreen.new,
+    tabIndex: 3, // BottomMenuBar: 마음연습실
+  );
+
   static const RouteMetadata mypage = RouteMetadata(
     routeName: '/mypage',
     builder: MypageScreen.new,
     requiresAuth: true,
+    tabIndex: 4, // BottomMenuBar: 마이페이지
   );
 
   static const RouteMetadata login = RouteMetadata(
     routeName: '/login',
     builder: LoginScreen.new,
-  );
-
-  static const RouteMetadata example = RouteMetadata(
-    routeName: '/example',
-    builder: ExampleScreen.new,
-  );
-
-  static const RouteMetadata bubbleTest = RouteMetadata(
-    routeName: '/bubble-test',
-    builder: BubbleScreen.new,
-  );
-
-  static const RouteMetadata training = RouteMetadata(
-    routeName: '/training',
-    builder: TrainingScreen.new,
   );
 
   // 보호된 경로 (인증 필요)
@@ -131,9 +122,7 @@ class AppRoutes {
     report,
     mypage,
     login,
-    example,
     signUpSlide,
-    bubbleTest,
     bomi,
     training,
     menopauseSurvey,

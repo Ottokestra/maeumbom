@@ -80,12 +80,12 @@ class WeeklyTemperatureGauge extends StatelessWidget {
                     width: 150,
                     height: 150,
                     decoration: BoxDecoration(
-                      color: AppColors.pureWhite,
+                      color: AppColors.basicColor,
                       shape: BoxShape.circle,
                       border: Border.all(color: AppColors.borderLight),
                       boxShadow: const [
                         BoxShadow(
-                          color: AppColors.accentRedShadow,
+                          color: AppColors.primaryColorShadow,
                           blurRadius: 16,
                           offset: Offset(0, 6),
                         ),
@@ -135,13 +135,13 @@ class WeeklyTemperatureGauge extends StatelessWidget {
             _RatioChip(
               label: '긍정',
               value: temperature.positiveRatio,
-              color: AppColors.natureGreen,
+              color: AppColors.secondaryColor,
             ),
             const SizedBox(width: AppSpacing.sm),
             _RatioChip(
               label: '부정',
               value: temperature.negativeRatio,
-              color: AppColors.accentRed,
+              color: AppColors.primaryColor,
             ),
           ],
         ),
@@ -207,7 +207,7 @@ class _RatioChip extends StatelessWidget {
 const Map<String, List<Color>> _levelGradients = {
   'cold': [Color(0xFF8EC5FC), Color(0xFF56A8F7)],
   'neutral': [Color(0xFFA9ADC1), Color(0xFF7885A1)],
-  'warm': [AppColors.accentCoral, AppColors.accentRed],
+  'warm': [AppColors.accentCoral, AppColors.primaryColor],
   'hot': [Color(0xFFFF8F8F), Color(0xFFD8454D)],
 };
 

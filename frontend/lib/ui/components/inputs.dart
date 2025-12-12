@@ -10,16 +10,16 @@ class InputTokens {
       EdgeInsets.symmetric(horizontal: 16, vertical: 8);
 
   // Normal
-  static const Color normalBg = AppColors.pureWhite;
+  static const Color normalBg = AppColors.basicColor;
   static const Color normalBorder = AppColors.borderLightGray;
 
   // Focus (Red)
-  static const Color focusBorder = AppColors.accentRed;
-  static const Color focusShadow = AppColors.accentRedShadow;
+  static const Color focusBorder = AppColors.primaryColor;
+  static const Color focusShadow = AppColors.primaryColorShadow;
 
   // Success (Green)
-  static const Color successBorder = AppColors.natureGreen;
-  static const Color successShadow = AppColors.natureGreenShadow;
+  static const Color successBorder = AppColors.secondaryColor;
+  static const Color successShadow = AppColors.secondaryColorShadow;
 
   // Disabled
   static const Color disabledBg = AppColors.disabledBg;

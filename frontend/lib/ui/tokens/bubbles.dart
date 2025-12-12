@@ -27,13 +27,13 @@ class BubbleTokens {
   static const double maxWidthRatio = 0.85;
 
   /// 사용자 말풍선 배경색
-  static const Color userBg = AppColors.accentRed;
+  static const Color userBg = AppColors.primaryColor;
 
   /// 사용자 말풍선 텍스트 색상
   static const Color userText = AppColors.textWhite;
 
   /// 봄이 말풍선 배경색
-  static const Color botBg = AppColors.pureWhite;
+  static const Color botBg = AppColors.basicColor;
 
   /// 봄이 말풍선 텍스트 색상
   static const Color botText = AppColors.textPrimary;

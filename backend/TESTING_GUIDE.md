@@ -60,7 +60,20 @@ curl -X POST "http://localhost:8000/api/routine-survey/submit" \
 
 ## 3. Menopause Survey
 
-**Submit Menopause Survey (POST /api/menopause-survey/submit)**
+1) **Seed default questions (POST /api/menopause/questions/seed-defaults)**  
+   기존 코드/성별 조합이 있으면 건너뛰고 없는 것만 생성합니다.
+   ```bash
+   curl -X POST "http://localhost:8000/api/menopause/questions/seed-defaults"
+   ```
+
+2) **List Questions (GET /api/menopause/questions)**  
+   gender 는 필수이며 FEMALE/MALE 모두 확인합니다.
+   ```bash
+   curl "http://localhost:8000/api/menopause/questions?gender=FEMALE"
+   curl "http://localhost:8000/api/menopause/questions?gender=MALE"
+   ```
+
+3) **Submit Menopause Survey (POST /api/menopause-survey/submit)**  
 *Note: MVP does not require auth.*
 
 ```bash
@@ -74,12 +87,6 @@ curl -X POST "http://localhost:8000/api/menopause-survey/submit" \
       {"question_id": 3, "answer_value": 3}
     ]
   }'
-```
-
-**List Questions (GET /api/menopause/questions)**
-
-```bash
-curl "http://localhost:8000/api/menopause/questions?gender=FEMALE"
 ```
 
 ## 4. Weekly Emotion Report
