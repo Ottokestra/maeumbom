@@ -22,20 +22,20 @@ class BottomMenuBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bottomPadding = MediaQuery.of(context).padding.bottom;
-    final totalHeight = 100 + bottomPadding;
+    final totalHeight = 80 + bottomPadding;
 
     return SizedBox(
       height: totalHeight,
       child: Stack(
         clipBehavior: Clip.none,
         children: [
-          // 1. Background (80px + bottom padding, top border 포함)
+          // 1. Background (90px + bottom padding, top border 포함)
           Positioned(
             left: 0,
             right: 0,
             bottom: 0,
+            top: 0,
             child: Container(
-              height: 80 + bottomPadding,
               decoration: BoxDecoration(
                 color: backgroundColor,
                 border: Border(
@@ -47,12 +47,12 @@ class BottomMenuBar extends StatelessWidget {
               ),
             ),
           ),
-          // 2. 메뉴 아이콘들 (100px 높이로 중앙 버튼 포함)
+          // 2. 메뉴 아이콘들 (90px 높이로 중앙 버튼 포함)
           Positioned(
             left: 0,
             right: 0,
-            top: 0,
-            height: 100,
+            top: -20,
+            height: 90,
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: Row(
@@ -137,7 +137,7 @@ class _MenuItem extends StatelessWidget {
       onTap: () => onTap?.call(index),
       child: SizedBox(
         width: 52,
-        height: 80,
+        height: 70,
         child: Padding(
           padding: const EdgeInsets.only(top: 10, bottom: 0),
           child: Column(
@@ -151,7 +151,6 @@ class _MenuItem extends StatelessWidget {
                   colorFilter: ColorFilter.mode(color, BlendMode.srcIn),
                 ),
               ),
-              const SizedBox(height: 5),
               Text(
                 label,
                 textAlign: TextAlign.center,

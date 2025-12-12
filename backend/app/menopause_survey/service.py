@@ -257,16 +257,28 @@ def submit_menopause_survey(
     for ans in payload.answers:
         total_score += ans.answer_value
 
-    # 2. Risk Level (Simple logic: <10 LOW, 10-20 MID, >20 HIGH)
-    if total_score < 10:
-        risk_level = "LOW"
-        comment = "증상이 경미합니다. 규칙적인 생활을 유지하세요."
-    elif total_score <= 20:
-        risk_level = "MID"
-        comment = "증상이 느껴집니다. 생활 습관 개선과 상담이 도움이 될 수 있습니다."
-    else:
-        risk_level = "HIGH"
-        comment = "증상이 심합니다. 전문의와의 상담을 적극 권장합니다."
+# 2. Risk Level (Simple logic: <10 LOW, 10-20 MID, >20 HIGH)
+if total_score < 10:
+    risk_level = "LOW"
+    comment = (
+        "현재로서는 갱년기와 관련된 변화가 크게 두드러지지 않거나 비교적 가벼운 수준으로 보여요. "
+        "생활 리듬을 잘 유지하고, 충분한 휴식과 가벼운 활동으로 컨디션을 살펴보세요."
+    )
+elif total_score <= 20:
+    risk_level = "MID"
+    comment = (
+        "최근 몸과 마음의 변화를 느끼고 있을 가능성이 있어요. "
+        "수면, 식사, 활동 습관을 조금만 조정해도 도움이 될 수 있으며, "
+        "증상이 지속되거나 불편하다면 상담을 받아보는 것도 좋은 선택이에요."
+    )
+else:
+    risk_level = "HIGH"
+    comment = (
+        "현재 증상이 일상생활에 영향을 주고 있을 가능성이 높아요. "
+        "혼자 참고 넘기기보다는 전문의와 상담을 통해 원인을 확인하고, "
+        "본인에게 맞는 관리나 치료 방법을 찾는 것을 적극 권장드려요."
+    )
+
 
     # 3. Save
     result = MenopauseSurveyResult(

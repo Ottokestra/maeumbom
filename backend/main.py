@@ -1376,9 +1376,29 @@ async def agent_websocket(websocket: WebSocket, user_id: int = 1):
                     )
                     continue
 
-                # VAD 처리
+                # 🆕 VAD 콜백 함수 정의 (긴 침묵 감지 시 호출)
+                async def on_vad_speech_end():
+                    """VAD에서 긴 침묵 감지 시 프론트엔드에 처리 중 알림"""
+                    try:
+                        await websocket.send_json({
+                            "type": "status",
+                            "status": "processing_voice",
+                            "message": "음성을 처리하고 있어요..."
+                        })
+                        print("[Agent WebSocket] 🎤 음성 처리 시작 알림 전송")
+                    except Exception as e:
+                        print(f"[Agent WebSocket] 콜백 전송 오류: {e}")
+
+                # VAD 처리 (콜백 전달)
+                # Note: on_vad_speech_end는 async이지만 VAD는 sync 함수이므로
+                # asyncio.create_task로 비동기 실행
+                speech_end_callback = lambda: asyncio.create_task(on_vad_speech_end())
+                
                 is_speech_end, speech_audio, is_short_pause = (
-                    stt_engine_instance.vad.process_chunk(audio_chunk)
+                    stt_engine_instance.vad.process_chunk(
+                        audio_chunk,
+                        on_speech_end_callback=speech_end_callback
+                    )
                 )
 
                 # VAD 결과 로깅

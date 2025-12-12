@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'top_bars.dart';
+import 'bottom_menu_bars.dart';
 
 /// AppFrame - 화면의 기본 레이아웃 구조
 ///
@@ -43,14 +44,33 @@ class AppFrame extends StatelessWidget {
     // 상태바 스타일 자동 감지
     final effectiveStatusBarStyle = statusBarStyle ?? _getStatusBarStyle();
 
+    // BottomMenuBar일 경우에만 처리 (투명 영역 20px + 불투명 영역 90px)
+    // - extendBody: true로 바디를 바텀바 뒤까지 확장
+    // - padding-bottom: 90px로 불투명 영역만큼 패딩 처리
+    final isBottomMenuBar = bottomBar is BottomMenuBar;
+    
+final bodyWidget = isBottomMenuBar
+    ? Padding(
+        padding: const EdgeInsets.only(bottom: 90),
+        child: useSafeArea
+            ? SafeArea(
+                top: true,
+                bottom: false,
+                child: body,
+              )
+            : body,
+      )
+    : (useSafeArea ? SafeArea(child: body) : body);
+
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: effectiveStatusBarStyle,
       child: Scaffold(
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         resizeToAvoidBottomInset: resizeToAvoidBottomInset,
         appBar: safeTopBar,
-        body: useSafeArea ? SafeArea(child: body) : body,
+        body: bodyWidget,
         bottomNavigationBar: bottomBar,
+        extendBody: isBottomMenuBar,
       ),
     );
   }
