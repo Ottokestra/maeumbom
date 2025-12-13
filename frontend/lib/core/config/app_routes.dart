@@ -9,11 +9,13 @@ import '../../app/settings/privacy.dart';
 import '../../app/common/login_screen.dart';
 import '../../app/sign/sign_up1.dart';
 import '../../app/survey/menopause_survey_screen.dart';
+import '../../app/survey/menopause_survey_intro_screen.dart';
 import '../../app/onboarding/splash_screen.dart';
 import '../../app/chat/bomi_screen.dart';
 import '../../app/chat/chat_list_screen.dart';
 import '../../app/training/training_screen.dart';
 import '../../app/slang_quiz/slang_quiz_start_screen.dart';
+import '../../app/settings/settings_screen.dart';
 
 /// 라우트 메타데이터
 class RouteMetadata {
@@ -94,8 +96,14 @@ class AppRoutes {
     requiresAuth: true, // 로그인 직후 진입하므로 인증 필요
   );
 
+  static const RouteMetadata menopauseSurveyIntro = RouteMetadata(
+    routeName: '/menopause-survey-intro',
+    builder: MenopauseSurveyIntroScreen.new,
+    requiresAuth: true,
+  );
+
   static const RouteMetadata menopauseSurvey = RouteMetadata(
-    routeName: '/menopause_survey',
+    routeName: '/menopause-survey',
     builder: MenopauseSurveyScreen.new,
     requiresAuth: true,
   );
@@ -110,6 +118,13 @@ class AppRoutes {
   static const RouteMetadata slangQuizStart = RouteMetadata(
     routeName: '/training/slang-quiz/start',
     builder: SlangQuizStartScreen.new,
+    requiresAuth: true,
+  );
+
+  // Settings Routes
+  static const RouteMetadata settings = RouteMetadata(
+    routeName: '/settings',
+    builder: SettingsScreen.new,
     requiresAuth: true,
   );
 
@@ -138,8 +153,10 @@ class AppRoutes {
     signUpSlide,
     bomi,
     training,
+    menopauseSurveyIntro,
     menopauseSurvey,
     slangQuizStart,
+    settings,
     terms,
     privacy,
   ];

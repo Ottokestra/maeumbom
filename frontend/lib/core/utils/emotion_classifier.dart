@@ -22,7 +22,6 @@ class EmotionClassifier {
       case EmotionId.interest:
       case EmotionId.boredom:
       case EmotionId.confusion:
-      case EmotionId.test: // Treat test as neutral
         return MoodCategory.neutral;
 
       // Bad
@@ -39,8 +38,6 @@ class EmotionClassifier {
   }
 
   static List<EmotionId> getEmotionsByCategory(MoodCategory category) {
-    return EmotionId.values
-        .where((id) => classify(id) == category)
-        .toList();
+    return EmotionId.values.where((id) => classify(id) == category).toList();
   }
 }
