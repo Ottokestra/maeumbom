@@ -16,6 +16,7 @@ import '../../app/chat/chat_list_screen.dart';
 import '../../app/training/training_screen.dart';
 import '../../app/slang_quiz/slang_quiz_start_screen.dart';
 import '../../app/settings/settings_screen.dart';
+import '../../app/home/home_new_screen.dart';
 
 /// 라우트 메타데이터
 class RouteMetadata {
@@ -139,6 +140,11 @@ class AppRoutes {
     builder: PrivacyPolicyScreen.new,
   );
 
+  static const RouteMetadata homeNew = RouteMetadata(
+    routeName: '/home_new',
+    builder: HomeNewScreen.new,
+  );
+
   /// 모든 라우트 목록
   // static const List<RouteMetadata> allRoutes = [
   static final List<RouteMetadata> allRoutes = [
@@ -159,6 +165,7 @@ class AppRoutes {
     settings,
     terms,
     privacy,
+    homeNew,
   ];
 
   /// 경로 이름으로 라우트 찾기
