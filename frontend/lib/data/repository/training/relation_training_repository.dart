@@ -1,6 +1,6 @@
 // 기존 (오류): import '../../data/api/training/relation_training_api_client.dart';
 // 수정:
-import '../../api/training/relation_training_api_client.dart'; 
+import '../../api/training/relation_training_api_client.dart';
 
 // 기존 (오류): import '../../data/dtos/training/relation_training_request.dart';
 // 수정:
@@ -13,7 +13,6 @@ import '../../models/training/relation_training.dart';
 // 여기 수정해야 하는 부분
 import '../../../core/config/api_config.dart'; // Import ApiConfig
 
-
 class RelationTrainingRepository {
   final RelationTrainingApiClient _apiClient;
 
@@ -21,7 +20,7 @@ class RelationTrainingRepository {
 
   Future<ScenarioStartResponse> startScenario(int scenarioId) async {
     final response = await _apiClient.startScenario(scenarioId);
-    
+
     // Fix image URLs in the response
     if (response.currentNode != null) {
       return response.copyWith(

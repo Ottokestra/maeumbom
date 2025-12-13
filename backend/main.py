@@ -1320,14 +1320,17 @@ async def agent_websocket(websocket: WebSocket, user_id: int = 1):
                         else data["text"]
                     )
 
-                    # 🆕 TTS 설정 수신
-                    if isinstance(message, dict) and message.get("type") == "config":
-                        tts_enabled = message.get("tts_enabled", False)
-                        print(f"[Agent WebSocket] TTS 설정: {tts_enabled}")
-                        await websocket.send_json(
-                            {"type": "config_ack", "tts_enabled": tts_enabled}
-                        )
-                        continue
+                    # 🆕 TTS 설정 수신 (config 또는 session_init 메시지)
+                    if isinstance(message, dict) and message.get("type") in ["config", "session_init"]:
+                        if "tts_enabled" in message:
+                            tts_enabled = bool(message.get("tts_enabled"))
+                            print(f"[Agent WebSocket] TTS 설정: {tts_enabled}")
+                            # config 메시지에만 응답 (session_init은 아래에서 처리)
+                            if message.get("type") == "config":
+                                await websocket.send_json(
+                                    {"type": "config_ack", "tts_enabled": tts_enabled}
+                                )
+                                continue
 
                     # 🆕 Phase 3: interrupt 신호 처리
                     if isinstance(message, dict) and message.get("type") == "interrupt":
@@ -1364,10 +1367,21 @@ async def agent_websocket(websocket: WebSocket, user_id: int = 1):
                         )
                         continue
 
-                    # 기존 session_id 처리 로직
+                    # 🆕 session_id 처리 로직 (TTS 설정 이후에 처리)
                     if isinstance(message, dict) and "session_id" in message:
                         session_id = message["session_id"]
+                        
+                        # 🔥 CRITICAL: user_id 추출 (프론트엔드가 보낸 실제 값 사용)
+                        if "user_id" in message:
+                            try:
+                                user_id = int(message["user_id"])
+                                print(f"[Agent WebSocket] ✅ User ID 업데이트: {user_id}")
+                            except (ValueError, TypeError):
+                                print(f"[Agent WebSocket] ⚠️ Invalid user_id in message, keeping default: {user_id}")
+                        
                         print(f"[Agent WebSocket] 세션 ID 설정: {session_id}")
+                        print(f"[Agent WebSocket] 현재 User ID: {user_id}")  # 🆕 디버깅
+                        print(f"[Agent WebSocket] 현재 TTS 설정: {tts_enabled}")  # 🆕 디버깅
                         await websocket.send_json(
                             {
                                 "type": "status",
@@ -1642,9 +1656,13 @@ async def agent_websocket(websocket: WebSocket, user_id: int = 1):
                             # 🆕 TTS 처리
                             if tts_enabled:
                                 try:
+                                    # 🆕 TTS는 reply_text_with_tags 사용 (마크다운 제거 + audio tags 유지)
+                                    tts_text = result.get("reply_text_with_tags") or result["reply_text"]
+                                    print(f"[Agent WebSocket] TTS 생성 시작: {tts_text[:50]}...")
+                                    
                                     # TTS 생성 (최대 7초 대기)
                                     audio_path = await asyncio.wait_for(
-                                        generate_tts_async(result["reply_text"]),
+                                        generate_tts_async(tts_text),
                                         timeout=7.0,
                                     )
                                     await websocket.send_json(

@@ -86,8 +86,8 @@ class AlarmModel with _$AlarmModel {
       isEnabled: true,
       notificationId: DateTime.now().millisecondsSinceEpoch % 2147483647,
       scheduledDatetime: scheduledTime,
-      title: null, // 백엔드에서 제공 예정
-      content: null,
+      title: alarmData['name'] as String? ?? '마음봄 알람', // 🆕 백엔드에서 name 사용
+      content: '알람 시간입니다.',
       isDeleted: false,
       createdAt: DateTime.now(),
       createdBy: userId,

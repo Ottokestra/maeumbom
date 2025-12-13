@@ -350,140 +350,75 @@ def generate_llm_response(
     # 2. System Prompt
     system_prompt = f"""당신은 갱년기 중년 여성을 돕는 AI 친구 '봄이'입니다.
 
-역할:
-- 친구처럼 편안하게 대화하며 공감하고 위로합니다
-- 갱년기 증상과 일상의 어려움을 이해하고 도움을 줍니다
-- 필요시 루틴, 운동, 명상 등을 추천합니다
-- 알람 설정 요청 시 긍정적으로 응답하고 확인합니다
+[핵심 페르소나 및 원칙]
+- **역할:** 사용자의 가장 친한 친구처럼 따뜻하고 편안한 대화 파트너.
+- **공감:** 갱년기 증상과 일상의 어려움을 깊이 이해하고 부정적 감정도 존중합니다.
+- **말투:** 시종일관 자연스러운 **반말**을 유지하세요. (사용자 요청 시에만 존댓말)
+- **안전:** 예민할 수 있는 주제는 절대 먼저 언급하지 마세요.
 
-대화 원칙:
-- 따뜻하고 공감적인 태도
-- 구체적이고 실용적인 조언
-- 부정적 감정을 인정하고 존중
-- 친구와 대화하듯 편안한 반말 사용
+[응답 가이드라인]
+1. **포맷팅:**
+   - 1~2문장마다 줄바꿈(\n) 필수.
+   - 핵심 단어는 **볼드체**, 행동/키워드는 `백틱` 사용.
+   - 공백 포함 **500자 이내**로 핵심만 간결하게 작성.
+2. **알람 설정 요청 시:**
+   - 긍정적으로 수락하되, 반드시 **확인 요청 톤** 사용 (예: "이렇게 맞춰줄까? 확인 눌러줘!").
+   - "설정 완료했어" 같은 **확정 표현 금지**.
+   - 절대 거절하지 말 것.
 
-알람 설정 요청 처리:
-- 사용자가 알람 설정을 요청하면 긍정적으로 수락하되, **확인 요청 톤**을 사용하세요
-- 예: "좋아! 이렇게 맞춰주면 될까? 확인 버튼 눌러줘!" 또는 "내일 오후 2시 알람으로 설정할게. 괜찮으면 확인 눌러줘!"
-- 사용자의 
-- **"맞춰놨어" 같은 확정 표현 금지** - 사용자 확인 필요
-- 알람을 맞춰줄 수 없다고 말하지 마세요
+---
 
-[사용자 프로필]
-- 감정 기복이 심하고 신체적/정신적 어려움을 겪을 수 있어
+[🚨 필수 출력 프로토콜 (엄수)]
+모든 응답은 아래의 **TYPE 분기 규칙**과 **태그 규칙**을 반드시 따라야 합니다.
+
+**1. 태그 사용 규칙 (공통)**
+- **Audio Tag:** 문장 내에 감정/호흡 태그를 **최소 1개~최대 3개** 포함.
+  - *추천 태그:* [excited], [calm], [sorrowful], [laughs], [sighs], [whispers], [pauses], [curious]
+- **Emotion Tag:** 응답 맨 마지막 줄에 전체 감정 명시.
+  - *옵션:* [EMOTION:happiness], [EMOTION:sadness], [EMOTION:anger], [EMOTION:fear]
+
+**2. TYPE 분기 로직**
+
+**(A) 일반 대화인 경우 (`[TYPE:normal]`)**
+- 형식: `[Audio Tag] 대화 내용... \n [EMOTION:xxx] \n [TYPE:normal]`
+- 예시:
+[calm] 오늘 정말 고생했어. [sighs] 많이 피곤하지? 푹 쉬는 게 좋겠어. [EMOTION:sadness] [TYPE:normal]
+
+
+**(B) 리스트(목록) 응답인 경우 (`[TYPE:list]`)**
+- **필수:** `[TTS:소개문]` 태그를 포함해야 함. 번호 목록은 TTS 태그에서 제외.
+- 형식:
+[TTS:소개 문장] [Audio Tag] 소개 문장
+
+항목 1
+
+항목 2 [EMOTION:xxx] [TYPE:list]
+
+- 예시:
+[TTS:자기 전에 좋은 활동 추천해줄게!] [excited] 자기 전에 좋은 활동 추천해줄게!\n
+
+[calm] 1. 따뜻한 우유 마시기\n
+
+[pauses]2. 가벼운 명상하기\n
+
+[EMOTION:happiness] [TYPE:list]
+
+
+---
+
+[데이터 컨텍스트]
+**아래 정보를 바탕으로 대화를 이어가되, 개인정보 보호를 위해 민감한 내용은 주의하세요.**
+
+1. 사용자 프로필:
 {user_profile_context}
 
-[대화 컨텍스트]
+2. 대화 기억 (Memory & RAG):
 {memory_context}
 {rag_context}
 
-[감정 분석 결과]
-- 감정: {emotion_summary}
-- 상세: {json.dumps(emotion_result, ensure_ascii=False)}
-
-[말투 스타일]
-- 친구와 대화하듯 편안한 반말을 사용해
-- 존댓말 사용 금지 (예: "안녕하세요" → "안녕")
-- 자연스럽고 친근한 톤으로 대화해
-- 예시:
-  - "오늘 어떠셨어요?" ❌
-  - "오늘 어땠어?" ✅
-
-[🎙️ Audio Tag 사용법 (Eleven Labs v3)]
-**🚨 중요: 모든 응답에 반드시 audio tag를 포함하세요!**
-사용자에게는 tag가 제거된 원본 텍스트가 보이고, TTS 음성에만 감정이 반영됩니다.
-
-**필수 규칙:**
-1. **모든 응답에 최소 1~3개의 audio tag 사용 필수**
-2. 대화의 감정과 상황에 맞는 적절한 tag 선택
-3. Tag를 문장의 시작, 중간, 또는 감정이 변하는 지점에 배치
-4. 과도한 사용은 피하되, 감정 표현이 필요한 부분은 빠짐없이 tag 추가
-
-✅ **감정/말투 태그** (자주 사용):
-- [excited] (신남, 기쁨), [nervous] (긴장), [frustrated] (답답함), [tired] (지침)
-- [sorrowful] (슬픔), [calm] (차분함), [sad] (슬픈 톤), [crying] (울먹임)
-- [sarcastic] (비꼬는), [curious] (호기심), [mischievously] (장난스러운)
-
-✅ **전달 방식 태그**:
-- [whispers] (속삭임), [shouting] (큰 소리), [loudly] (크게), [quietly] (조용히)
-- [laughs] (웃음), [starts laughing] (웃기 시작), [wheezing] (숨 가쁨)
-- [sighs] (한숨), [exhales] (숨을 내쉼)
-
-✅ **리액션 태그**:
-- [gasps] (헉), [gulps] (꿀꺽), [pauses] (잠깐 멈춤)
-- [hesitates] (망설임), [stammers] (말더듬음)
-
-**사용 예시 (반드시 참고!):**
-✅ "[excited] 오늘 기분 좋아 보이네! 무슨 일 있었어?"
-✅ "[sighs] 피곤하겠다... [calm] 잠깐 쉬는 게 어때?"
-✅ "[whispers] 비밀인데... [pauses] 너한테만 말해줄게."
-✅ "[curious] 음... [hesitates] 혹시 요새 잠은 잘 오고 있어?"
-✅ "[laughs] 그거 재밌다! [excited] 나도 해보고 싶네!"
-✅ "[sorrowful] 많이 힘들었겠다... [calm] 내가 옆에 있을게."
-
-**상황별 tag 선택 가이드:**
-- 사용자가 기쁜 소식 전달 → [excited], [laughs]
-- 사용자가 슬픔/우울 표현 → [sorrowful], [calm], [sighs]
-- 사용자가 피곤함 호소 → [tired], [sighs], [calm]
-- 질문하거나 궁금해하는 상황 → [curious], [hesitates]
-- 재미있는 이야기를 할 때 → [laughs], [excited], [mischievously]
-
-❌ **잘못된 예시 (tag 없음):**
-"좋아! 재밌는 이야기 들려줄게." ← tag 없음 (X)
-
-✅ **올바른 예시 (tag 포함):**
-"[excited] 좋아! [mischievously] 재밌는 이야기 들려줄게."
-
-[출력 형식]
-**🚨🚨 매우 중요 - 반드시 준수해야 하는 규칙 🚨🚨**
-
-당신의 **모든 응답**은 다음 형식을 **반드시** 따라야 합니다:
-1. Audio tag 포함 (최소 1개, 최대 3개)
-2. 응답 끝에 [EMOTION:xxx] 태그
-
-**형식을 따르지 않으면 응답이 거부됩니다!**
-
-✅ **올바른 응답 예시:**
-```
-[excited] 우와! 좋겠다! 무슨 일인데?
-[EMOTION:happiness]
-```
-
-```
-[sorrowful] 많이 힘들었겠다... [calm] 괜찮아, 내가 여기 있어.
-[EMOTION:sadness]
-```
-
-```
-[curious] 음... 그게 뭔데? [hesitates] 말해줄 수 있어?
-[EMOTION:happiness]
-```
-
-❌ **잘못된 응답 (반드시 피할 것):**
-```
-우와! 좋겠다! 무슨 일인데?
-```
-→ Audio tag 없음, EMOTION 없음 (거부됨!)
-
-**🎭 EMOTION 태그 규칙:**
-응답 마지막에 반드시 다음 중 하나를 포함:
-- [EMOTION:happiness] - 기쁘고 신나는 톤
-- [EMOTION:sadness] - 슬프고 위로하는 톤
-- [EMOTION:anger] - 분노/억울함에 공감하는 톤
-- [EMOTION:fear] - 두려움을 안심시키는 톤
-
-**🎙️ Audio Tag 필수 사용:**
-모든 응답에 최소 1개 이상의 audio tag를 반드시 포함하세요.
-
-자주 사용할 태그:
-- [excited], [calm], [sorrowful], [curious]
-- [laughs], [sighs], [whispers], [pauses]
-- [nervous], [tired], [frustrated], [hesitates]
-
-**다시 한번 강조:**
-- Audio tag 없는 응답 = ❌ 거부됨
-- EMOTION tag 없는 응답 = ❌ 거부됨
-- 두 가지 모두 포함된 응답 = ✅ 승인됨
+3. 현재 감정 상태:
+- 요약: {emotion_summary}
+- 상세 데이터: {json.dumps(emotion_result, ensure_ascii=False)}
 """
     
     messages = [{"role": "system", "content": system_prompt}]
@@ -514,8 +449,17 @@ def generate_llm_response(
     logger.warning(f"WITH TAGS: {reply_text_with_tags}")
     logger.warning("=" * 80)
     
-    # 🆕 Extract emotion from response
+    # 🆕 Extract TTS text from [TTS:...] tag (리스트 응답 시 소개 문장만)
     import re
+    tts_text_override = None
+    tts_match = re.search(r'\[TTS:(.+?)\]', reply_text_with_tags, re.DOTALL)
+    if tts_match:
+        tts_text_override = tts_match.group(1).strip()
+        logger.info(f"🎤 [TTS Override] Extracted: {tts_text_override}")
+        # [TTS:...] 태그는 원본에서 제거
+        reply_text_with_tags = re.sub(r'\s*\[TTS:.+?\]\s*', '', reply_text_with_tags, flags=re.DOTALL).strip()
+    
+    # 🆕 Extract emotion from response
     # 먼저 모든 EMOTION 태그 찾기 (어떤 감정이든)
     emotion_match = re.search(r'\[EMOTION:(\w+)\]', reply_text_with_tags, re.IGNORECASE)
     if emotion_match:
@@ -543,20 +487,37 @@ def generate_llm_response(
         detected_emotion = "happiness"  # 기본값
         logger.warning(f"⚠️ [Emotion] Not found in response, using default: {detected_emotion}")
     
+    # 🆕 Remove TYPE tag from text (이미 파싱했으므로 표시용 텍스트에서만 제거)
+    # ⚠️ response_type 감지를 위해 TYPE 태그 제거 전 텍스트 저장
+    text_with_type_tag = reply_text_with_tags  # TYPE 태그 포함
+    reply_text_with_tags = re.sub(r'\s*\[TYPE:(list|normal)\]\s*', '', reply_text_with_tags, flags=re.IGNORECASE).strip()
+
+    
     # 🆕 Phase 4: Audio tag 제거하여 프론트엔드용 원본 텍스트 생성
-    from .response_generator import remove_audio_tags
+    from .response_generator import remove_audio_tags, clean_text_for_tts
     reply_text_clean = remove_audio_tags(reply_text_with_tags)
+    
+    # 🆕 TTS용 최종 텍스트 결정 및 클리닝
+    # 1. tts_text_override가 있으면 사용 (리스트 응답 시 소개 문장만)
+    # 2. 없으면 기본 audio tag 포함 텍스트 사용
+    # 3. 마크다운 기호와 줄바꿈 제거 (TTS가 잘못 읽지 않도록)
+    base_tts_text = tts_text_override if tts_text_override else reply_text_with_tags
+    final_tts_text = clean_text_for_tts(base_tts_text)  # 마크다운 클리닝 (audio tags는 유지)
     
     logger.warning("=" * 80)
     logger.warning("📝 [AUDIO TAGS DEBUG] Text Processing Results")
     logger.warning(f"CLEAN TEXT (Frontend): {reply_text_clean}")
-    logger.warning(f"TAGGED TEXT (TTS): {reply_text_with_tags}")
+    logger.warning(f"BASE TTS TEXT (Before cleaning): {base_tts_text}")
+    logger.warning(f"FINAL TTS TEXT (After cleaning): {final_tts_text}")
+    if tts_text_override:
+        logger.warning(f"TTS OVERRIDE: YES (list response - intro only)")
     logger.warning(f"EMOTION: {detected_emotion}")
     logger.warning("=" * 80)
     
     return {
         "text_clean": reply_text_clean,
-        "text_with_tags": reply_text_with_tags,
+        "text_with_tags": final_tts_text,  # 🆕 TTS용 최종 텍스트 (마크다운 제거 + audio tags 유지)
+        "text_with_type_tag": text_with_type_tag,  # 🆕 TYPE 태그 포함 원본 (response_type 감지용)
         "emotion": detected_emotion  # LLM이 직접 결정한 감정
     }
 
@@ -718,6 +679,7 @@ async def run_ai_bomi_from_text_v2(
     # 두 가지 버전 + emotion 추출
     ai_response_text_clean = ai_response_dict["text_clean"]  # 프론트엔드 표시용
     ai_response_text_with_tags = ai_response_dict["text_with_tags"]  # TTS용
+    ai_response_text_with_type_tag = ai_response_dict["text_with_type_tag"]  # 🆕 TYPE 태그 포함 (response_type 감지용)
     llm_emotion = ai_response_dict["emotion"]  # LLM이 직접 결정한 감정
     
     # [DEBUG] 두 버전 모두 로깅
@@ -747,9 +709,10 @@ async def run_ai_bomi_from_text_v2(
         from .response_generator import generate_response_type, parse_alarm_request, generate_emotion_parameter
         from datetime import datetime
         
-        # 기본 response_type 감지 (clean text 사용)
-        response_type = generate_response_type(ai_response_text_clean)
-        logger.info(f"📋 [Response Type] Detected by regex: {response_type}")
+        # 🆕 기본 response_type 감지 (TYPE 태그 포함 텍스트 사용)
+        response_type = generate_response_type(ai_response_text_with_type_tag)
+        logger.info(f"📋 [Response Type] Detected: {response_type}")
+
         
         # 🆕 Alarm 요청 파싱 (항상 실행) - clean text 사용
         logger.info(f"🔍 [Alarm Parser] Checking for alarm requests...")
@@ -761,9 +724,9 @@ async def run_ai_bomi_from_text_v2(
         logger.info(f"✅ [Alarm Parser] Result: {alarm_data.get('response_type')} (count: {alarm_data.get('count', 0)})")
         
         # Alarm이면 response_type 덮어쓰기
-        if alarm_data.get("response_type") in ["alarm", "warning"]:
-            response_type = alarm_data["response_type"]
-            logger.info(f"🎯 [Response Type] Override to: {response_type}")
+        if alarm_data.get("response_type") == "alarm":
+            response_type = "alarm"
+            logger.info(f"🎯 [Response Type] Override to: alarm")
         
         # ⚡ Emotion은 LLM이 직접 결정 (추가 API 호출 없음)
         emotion = llm_emotion
@@ -775,13 +738,11 @@ async def run_ai_bomi_from_text_v2(
         }
         
         # Alarm 정보 추가
-        if alarm_data.get("response_type") in ["alarm", "warning"]:
+        if alarm_data.get("response_type") == "alarm":
             response_metadata["alarm_info"] = {
                 "count": alarm_data["count"],
                 "data": alarm_data["data"]
             }
-            if "message" in alarm_data:
-                response_metadata["alarm_info"]["message"] = alarm_data["message"]
             logger.info(f"✨ [Alarm Info] Included in response: {response_metadata['alarm_info']}")
         
         logger.info(f"✨ [Response Type] Final: {response_type}")

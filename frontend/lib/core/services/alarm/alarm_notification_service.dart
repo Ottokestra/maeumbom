@@ -10,7 +10,7 @@ class AlarmNotificationService {
       FlutterLocalNotificationsPlugin();
 
   bool _initialized = false;
-  
+
   /// 알림 탭 콜백 (외부에서 설정 가능)
   Function(int notificationId)? onNotificationTapped;
 
@@ -29,7 +29,8 @@ class AlarmNotificationService {
       requestSoundPermission: true,
       onDidReceiveLocalNotification: (id, title, body, payload) async {
         // iOS 10 이하에서 포그라운드 알림 처리
-        print('[AlarmNotificationService] Foreground notification received: $id');
+        print(
+            '[AlarmNotificationService] Foreground notification received: $id');
       },
     );
 
@@ -57,7 +58,7 @@ class AlarmNotificationService {
   /// 알림 탭 핸들러
   void _onNotificationTapped(NotificationResponse response) {
     print('[AlarmNotificationService] Notification tapped: ${response.id}');
-    
+
     // 외부 콜백 호출 (알람 화면으로 이동 등)
     onNotificationTapped?.call(response.id ?? 0);
   }
@@ -77,10 +78,14 @@ class AlarmNotificationService {
       );
 
       // 과거 시간 체크
-      if (scheduledDate
-          .isBefore(tz.TZDateTime.now(tz.getLocation('Asia/Seoul')))) {
-        print(
-            '[AlarmNotificationService] Alarm time is in the past: ${alarm.id}');
+      final currentTime = tz.TZDateTime.now(tz.getLocation('Asia/Seoul'));
+      if (scheduledDate.isBefore(currentTime)) {
+        final timeDifference = currentTime.difference(scheduledDate);
+        print('[AlarmNotificationService] ❌ Alarm time is in the PAST:\n'
+            '  - ID: ${alarm.id}\n'
+            '  - Current time: $currentTime\n'
+            '  - Scheduled time: $scheduledDate\n'
+            '  - PAST by: ${timeDifference.inMinutes} min ${timeDifference.inSeconds % 60} sec');
         return;
       }
 
@@ -106,13 +111,19 @@ class AlarmNotificationService {
             presentSound: true,
           ),
         ),
-        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+        androidScheduleMode:
+            AndroidScheduleMode.exact, // 🔧 exact로 변경 (정확한 시간에 울리도록)
         uiLocalNotificationDateInterpretation:
             UILocalNotificationDateInterpretation.absoluteTime,
       );
 
-      print(
-          '[AlarmNotificationService] Alarm scheduled: ${alarm.id} at ${scheduledDate}');
+      final timeDifference = scheduledDate.difference(currentTime);
+
+      print('[AlarmNotificationService] ⏰ Alarm scheduled:\n'
+          '  - ID: ${alarm.id}\n'
+          '  - Current time: $currentTime\n'
+          '  - Scheduled time: $scheduledDate\n'
+          '  - Time until alarm: ${timeDifference.inMinutes} min ${timeDifference.inSeconds % 60} sec');
     } catch (e) {
       print('[AlarmNotificationService] Failed to schedule alarm: $e');
       rethrow;
@@ -201,6 +212,51 @@ class AlarmNotificationService {
     // Android는 기본적으로 허용 (Android 13 미만)
     // Android 13+는 requestPermissions에서 처리
     return true;
+  }
+
+  /// Android 12+ exact alarm 권한 확인
+  Future<bool> canScheduleExactAlarms() async {
+    final androidPlugin = _notifications.resolvePlatformSpecificImplementation<
+        AndroidFlutterLocalNotificationsPlugin>();
+
+    if (androidPlugin == null) {
+      return true; // iOS or unsupported platform
+    }
+
+    try {
+      return await androidPlugin.canScheduleExactNotifications() ?? false;
+    } catch (e) {
+      print(
+          '[AlarmNotificationService] Failed to check exact alarm permission: $e');
+      return false;
+    }
+  }
+
+  /// Android 12+ exact alarm 권한 요청
+  Future<bool> requestExactAlarmPermission() async {
+    final androidPlugin = _notifications.resolvePlatformSpecificImplementation<
+        AndroidFlutterLocalNotificationsPlugin>();
+
+    if (androidPlugin == null) {
+      return true; // iOS or unsupported platform
+    }
+
+    try {
+      final canSchedule =
+          await androidPlugin.canScheduleExactNotifications() ?? false;
+
+      if (!canSchedule) {
+        print(
+            '[AlarmNotificationService] Requesting exact alarm permission...');
+        return await androidPlugin.requestExactAlarmsPermission() ?? false;
+      }
+
+      return true;
+    } catch (e) {
+      print(
+          '[AlarmNotificationService] Failed to request exact alarm permission: $e');
+      return false;
+    }
   }
 
   /// 알림 채널 생성 (Android)
