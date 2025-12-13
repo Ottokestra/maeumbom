@@ -6,11 +6,31 @@
 import numpy as np
 from typing import Optional, List, Callable
 from pathlib import Path
+import sys
 
-# faster_whisper import (상단에서 import하여 sys.path 문제 회피)
+# faster_whisper import (site-packages에서 import하기 위해 sys.path 조작)
+WhisperModel = None
 try:
-    from faster_whisper import WhisperModel
-except ImportError:
+    # 프로젝토리 디렉토리를 sys.path에서 제거
+    current_file = Path(__file__).resolve()
+    project_dirs = [
+        str(current_file.parent),  # faster_whisper 디렉토리
+        str(current_file.parent.parent),  # speech-to-text 디렉토리
+        str(current_file.parent.parent.parent),  # engine 디렉토리
+        str(current_file.parent.parent.parent.parent),  # backend 디렉토리
+    ]
+
+    original_path = sys.path.copy()
+    sys.path = [p for p in sys.path if p not in project_dirs]
+
+    from faster_whisper import WhisperModel as _WhisperModel
+
+    WhisperModel = _WhisperModel
+
+    # sys.path 복원
+    sys.path = original_path
+except ImportError as e:
+    print(f"[WARNING] faster_whisper import failed: {e}")
     WhisperModel = None
 
 
