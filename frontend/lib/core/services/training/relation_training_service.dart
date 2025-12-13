@@ -10,8 +10,8 @@ class RelationTrainingService {
     return _repository.startScenario(scenarioId);
   }
 
-  Future<List<TrainingScenario>> getScenarios() async {
-    return _repository.getScenarios();
+  Future<List<TrainingScenario>> getScenarios({String? category}) async {
+    return _repository.getScenarios(category: category);
   }
 
   Future<ScenarioProgressResponse> progressScenario({

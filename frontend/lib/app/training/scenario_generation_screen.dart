@@ -1,15 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../ui/app_ui.dart';
 import '../../ui/components/top_notification.dart';
+import 'viewmodel/relation_training_list_viewmodel.dart';
 
-class ScenarioGenerationDialog extends StatefulWidget {
-  const ScenarioGenerationDialog({super.key});
+/// 시나리오 생성 화면
+///
+/// 관계 개선 훈련 또는 드라마 시나리오를 생성하는 화면
+class ScenarioGenerationScreen extends ConsumerStatefulWidget {
+  const ScenarioGenerationScreen({super.key});
 
   @override
-  State<ScenarioGenerationDialog> createState() => _ScenarioGenerationDialogState();
+  ConsumerState<ScenarioGenerationScreen> createState() =>
+      _ScenarioGenerationScreenState();
 }
 
-class _ScenarioGenerationDialogState extends State<ScenarioGenerationDialog> {
+class _ScenarioGenerationScreenState
+    extends ConsumerState<ScenarioGenerationScreen> {
   String? _selectedTarget;
   String _selectedCategory = 'TRAINING'; // 기본값: 관계 개선 훈련
   String? _selectedGenre; // 드라마 선택 시 장르
@@ -18,7 +25,8 @@ class _ScenarioGenerationDialogState extends State<ScenarioGenerationDialog> {
   bool _isGenerating = false;
 
   final Map<String, String> _targetOptions = {
-    'HUSBAND': '남편',
+    'HUSBAND': '배우자',
+    'PARENT': '부모',
     'CHILD': '자식',
     'FRIEND': '친구',
     'COLLEAGUE': '직장동료',
@@ -41,16 +49,16 @@ class _ScenarioGenerationDialogState extends State<ScenarioGenerationDialog> {
     super.dispose();
   }
 
-  void _generateScenario() {
+  Future<void> _generateScenario() async {
     // 이미 처리 중이면 무시
     if (_isGenerating) {
       return;
     }
-    
+
     // AUTO 옵션 체크
     final isAutoTarget = _selectedTarget == 'AUTO';
     final isAutoTopic = _isAutoTopic;
-    
+
     // 검증 로직: AUTO가 아닌 경우에만 필수 입력 검증
     if (!isAutoTarget && _selectedTarget == null) {
       TopNotificationManager.show(
@@ -61,7 +69,7 @@ class _ScenarioGenerationDialogState extends State<ScenarioGenerationDialog> {
       );
       return;
     }
-    
+
     if (!isAutoTopic && _topicController.text.trim().isEmpty) {
       TopNotificationManager.show(
         context,
@@ -85,68 +93,80 @@ class _ScenarioGenerationDialogState extends State<ScenarioGenerationDialog> {
 
     // mounted 체크 및 상태 설정
     if (!mounted) return;
-    
-    // 즉시 상태를 변경하여 중복 호출 방지
+
     setState(() {
       _isGenerating = true;
     });
-    
-    // 다음 프레임에서 pop 실행 (setState 완료 후)
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      
+
+    try {
+      final viewModel =
+          ref.read(relationTrainingListViewModelProvider.notifier);
+
       // AUTO 처리: target이 AUTO이면 그대로, topic은 AUTO 체크 시 "AUTO" 전송
       final target = _selectedTarget ?? 'AUTO';
       final topic = _isAutoTopic ? 'AUTO' : _topicController.text.trim();
-      
-      final result = <String, String>{
-        'target': target,
-        'topic': topic,
-        'category': _selectedCategory,
-      };
-      
-      // 드라마 선택 시 장르도 전달
-      if (_selectedCategory == 'DRAMA' && _selectedGenre != null) {
-        result['genre'] = _selectedGenre!;
-      }
-      
-      Navigator.of(context).pop(result);
-    });
+
+      // 시나리오 생성
+      await viewModel.generateScenario(
+        target: target,
+        topic: topic,
+        category: _selectedCategory,
+        genre: _selectedGenre,
+      );
+
+      if (!mounted) return;
+
+      // 성공 메시지 표시
+      TopNotificationManager.show(
+        context,
+        message: '시나리오 생성이 완료되었습니다!',
+        type: TopNotificationType.green,
+        duration: const Duration(seconds: 3),
+      );
+
+      // 이전 화면으로 돌아가기
+      Navigator.of(context).pop(true); // true를 반환하여 새로고침 필요 알림
+    } catch (e) {
+      if (!mounted) return;
+
+      setState(() {
+        _isGenerating = false;
+      });
+
+      TopNotificationManager.show(
+        context,
+        message: '오류 발생: $e',
+        type: TopNotificationType.red,
+        duration: const Duration(seconds: 5),
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Dialog(
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
+    return AppFrame(
+      topBar: TopBar(
+        title: '시나리오 생성',
+        leftIcon: Icons.arrow_back,
+        onTapLeft: () => Navigator.pop(context),
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text(
-                  '시나리오 생성',
-                  style: AppTypography.h2,
-                ),
-                IconButton(
-                  icon: const Icon(Icons.close),
-                  onPressed: () => Navigator.of(context).pop(),
-                ),
-              ],
+      bottomBar: _isGenerating
+          ? null
+          : BottomButtonBar(
+              primaryText: '생성하기',
+              onPrimaryTap: _generateScenario,
             ),
-            const SizedBox(height: 24),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
             const Text(
               '관계 대상',
               style: AppTypography.bodyBold,
             ),
-            const SizedBox(height: 8),
-              Wrap(
+            const SizedBox(height: 12),
+            Wrap(
               spacing: 8,
               runSpacing: 8,
               children: [
@@ -162,7 +182,9 @@ class _ScenarioGenerationDialogState extends State<ScenarioGenerationDialog> {
                     },
                     selectedColor: AppColors.primaryColor,
                     labelStyle: TextStyle(
-                      color: _selectedTarget == 'AUTO' ? Colors.white : AppColors.textPrimary,
+                      color: _selectedTarget == 'AUTO'
+                          ? Colors.white
+                          : AppColors.textPrimary,
                     ),
                   ),
                 // 기존 관계 대상 버튼들
@@ -189,7 +211,7 @@ class _ScenarioGenerationDialogState extends State<ScenarioGenerationDialog> {
               '카테고리',
               style: AppTypography.bodyBold,
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 12),
             Wrap(
               spacing: 8,
               runSpacing: 8,
@@ -204,7 +226,8 @@ class _ScenarioGenerationDialogState extends State<ScenarioGenerationDialog> {
                       // 카테고리 변경 시 AUTO 상태 초기화
                       if (entry.key != 'DRAMA') {
                         _isAutoTopic = false;
-                        _selectedTarget = _selectedTarget == 'AUTO' ? null : _selectedTarget;
+                        _selectedTarget =
+                            _selectedTarget == 'AUTO' ? null : _selectedTarget;
                       }
                     });
                   },
@@ -222,7 +245,7 @@ class _ScenarioGenerationDialogState extends State<ScenarioGenerationDialog> {
                 '장르',
                 style: AppTypography.bodyBold,
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 12),
               Wrap(
                 spacing: 8,
                 runSpacing: 8,
@@ -249,7 +272,7 @@ class _ScenarioGenerationDialogState extends State<ScenarioGenerationDialog> {
               '주제',
               style: AppTypography.bodyBold,
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 12),
             // AI 자동 창작 체크박스 (드라마 모드에서만 표시)
             if (_selectedCategory == 'DRAMA') ...[
               CheckboxListTile(
@@ -259,18 +282,20 @@ class _ScenarioGenerationDialogState extends State<ScenarioGenerationDialog> {
                   style: AppTypography.body,
                 ),
                 value: _isAutoTopic,
-                onChanged: _isGenerating ? null : (value) {
-                  setState(() {
-                    _isAutoTopic = value ?? false;
-                    if (_isAutoTopic) {
-                      // 자동 창작 선택 시 입력창 비우기
-                      _topicController.clear();
-                    }
-                  });
-                },
+                onChanged: _isGenerating
+                    ? null
+                    : (value) {
+                        setState(() {
+                          _isAutoTopic = value ?? false;
+                          if (_isAutoTopic) {
+                            // 자동 창작 선택 시 입력창 비우기
+                            _topicController.clear();
+                          }
+                        });
+                      },
                 controlAffinity: ListTileControlAffinity.leading,
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 12),
             ],
             TextField(
               controller: _topicController,
@@ -282,37 +307,33 @@ class _ScenarioGenerationDialogState extends State<ScenarioGenerationDialog> {
                   borderRadius: BorderRadius.circular(12),
                 ),
                 filled: true,
-                fillColor: (_selectedCategory == 'DRAMA' && _isAutoTopic) 
-                    ? AppColors.bgWarm.withOpacity(0.5) 
+                fillColor: (_selectedCategory == 'DRAMA' && _isAutoTopic)
+                    ? AppColors.bgWarm.withOpacity(0.5)
                     : AppColors.bgWarm,
               ),
               maxLines: 3,
-              enabled: !_isGenerating && !(_selectedCategory == 'DRAMA' && _isAutoTopic),
+              enabled: !_isGenerating &&
+                  !(_selectedCategory == 'DRAMA' && _isAutoTopic),
             ),
-            const SizedBox(height: 24),
-            if (_isGenerating)
-              const Column(
-                children: [
-                  CircularProgressIndicator(),
-                  SizedBox(height: 16),
-                  Text(
-                    '시나리오를 생성하고 있습니다...\n약 20-30초 소요됩니다.',
-                    textAlign: TextAlign.center,
-                    style: AppTypography.caption,
-                  ),
-                ],
-              )
-            else
-              AppButton(
-                text: '생성하기',
-                onTap: _generateScenario,
-                variant: ButtonVariant.primaryRed,
+            if (_isGenerating) ...[
+              const SizedBox(height: 32),
+              const Center(
+                child: Column(
+                  children: [
+                    CircularProgressIndicator(),
+                    SizedBox(height: 16),
+                    Text(
+                      '시나리오를 생성하고 있습니다...\n약 20-30초 소요됩니다.',
+                      textAlign: TextAlign.center,
+                      style: AppTypography.body,
+                    ),
+                  ],
+                ),
               ),
             ],
-          ),
+          ],
         ),
       ),
     );
   }
 }
-

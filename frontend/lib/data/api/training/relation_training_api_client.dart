@@ -20,14 +20,16 @@ class RelationTrainingApiClient {
     }
   }
 
-  Future<List<TrainingScenario>> getScenarios() async {
+  Future<List<TrainingScenario>> getScenarios({String? category}) async {
     try {
+      // category가 있으면 쿼리 파라미터 추가
+      final queryParams = category != null ? '?category=$category' : '';
       final response = await _dio.get(
-        ApiConfig.relationTrainingScenarios,
+        '${ApiConfig.relationTrainingScenarios}$queryParams',
       );
       // Backend returns { "scenarios": [...], "total": 4 }
       final list = response.data['scenarios'] as List;
-      print('[RelationTraining API] Scenarios List: $list'); // Debug Log
+      print('[RelationTraining API] Scenarios List (category: $category): $list'); // Debug Log
       final scenarios = <TrainingScenario>[];
       for (final e in list) {
         try {

@@ -18,3 +18,4 @@ export 'components/app_component.dart';
 export 'characters/app_characters.dart';
 export 'characters/app_animations.dart';
 export 'characters/app_character_colors.dart';
+export 'components/question_progress_view.dart';

@@ -75,7 +75,6 @@ class _DailyMoodCheckScreenState extends ConsumerState<DailyMoodCheckScreen> {
       bottomBar: BottomButtonBar(
         primaryText: '선택하기',
         onPrimaryTap: _onConfirm,
-        style: BottomButtonBarStyle.block,
       ),
       body: Column(
         children: [

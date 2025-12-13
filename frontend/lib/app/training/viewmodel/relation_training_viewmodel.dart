@@ -1,9 +1,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../data/api/training/relation_training_api_client.dart';
-import '../../data/repository/training/relation_training_repository.dart';
-import '../../core/services/training/relation_training_service.dart';
-import '../../data/models/training/relation_training.dart';
-import '../../providers/auth_provider.dart'; // Import auth_provider
+import '../../../data/api/training/relation_training_api_client.dart';
+import '../../../data/repository/training/relation_training_repository.dart';
+import '../../../core/services/training/relation_training_service.dart';
+import '../../../data/models/training/relation_training.dart';
+import '../../../providers/auth_provider.dart'; // Import auth_provider
 
 // --- Providers ---
 

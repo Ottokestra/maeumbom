@@ -89,4 +89,47 @@ class TextFormatter {
 
     return buffer.toString();
   }
+
+  /// 트레이닝 전용 마크다운 포맷팅
+  ///
+  /// 다음 규칙을 적용합니다:
+  /// - "" 로 감싸진 텍스트를 **볼드** 마크다운으로 변환
+  /// - 맞춤표(.) 뒤에 줄바꿈 추가
+  /// - 기본 마크다운 정제 (볼드, 이탤릭 등)
+  static String formatTrainingText(String text) {
+    if (text.trim().isEmpty) return text;
+
+    String formatted = text;
+
+    // 1. "" 텍스트를 **볼드** 마크다운으로 변환
+    // "텍스트" → **텍스트**
+    formatted = formatted.replaceAllMapped(
+      RegExp(r'"([^"]+)"'),
+      (match) => '**${match.group(1)}**',
+    );
+
+    // 2. 맞춤표(.) 뒤에 공백이 있고 다음에 문자가 오는 경우 줄바꿈 추가
+    // 단, 이미 줄바꿈이 있거나 URL, 숫자가 아닌 경우에만
+    formatted = formatted.replaceAllMapped(
+      RegExp(r'(\.)(\s+)(?=[가-힣A-Z"**])'),
+      (match) => '${match.group(1)}\n',
+    );
+
+    // 3. 기본 마크다운 정제 적용 (볼드 유지, 나머지 정리)
+    // 여기서는 볼드를 유지하기 위해 커스텀 처리
+
+    // 이탤릭 제거 (*text* → text) - 볼드가 아닌 단일 * 처리
+    formatted = formatted.replaceAllMapped(
+      RegExp(r'(?<!\*)\*(?!\*)([^\*]+?)(?<!\*)\*(?!\*)'),
+      (match) => match.group(1) ?? '',
+    );
+
+    // 연속된 줄바꿈 정규화 (3개 이상을 2개로)
+    formatted = formatted.replaceAll(RegExp(r'\n{3,}'), '\n\n');
+
+    // 앞뒤 공백 제거
+    formatted = formatted.trim();
+
+    return formatted;
+  }
 }

@@ -159,61 +159,6 @@ class _MenopauseSurveyScreenState extends ConsumerState<MenopauseSurveyScreen> {
                   ),
                 ),
 
-                // Progress Bar Section
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24),
-                  child: Column(
-                    children: [
-                      // Progress Bar
-                      Container(
-                        width: double.infinity,
-                        height: 6,
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFF3F4F6),
-                          borderRadius: BorderRadius.circular(999),
-                        ),
-                        child: FractionallySizedBox(
-                          widthFactor: ((_currentPage + 1) / questions.length).clamp(0.0, 1.0),
-                          alignment: Alignment.centerLeft,
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: AppColors.primaryColor,
-                              borderRadius: BorderRadius.circular(999),
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      // Progress Text
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            '${_currentPage + 1} / ${questions.length}',
-                            style: const TextStyle(
-                              color: Color(0xFF99A1AE),
-                              fontSize: 12,
-                              fontFamily: 'Inter',
-                              fontWeight: FontWeight.w400,
-                            ),
-                          ),
-                          Text(
-                            '${((_currentPage + 1) / questions.length * 100).toInt()}%',
-                            style: const TextStyle(
-                              color: Color(0xFFD7454D),
-                              fontSize: 12,
-                              fontFamily: 'Pretendard',
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-
-                const SizedBox(height: 18),
-
                 // PageView
                 Expanded(
                   child: PageView.builder(
@@ -229,140 +174,105 @@ class _MenopauseSurveyScreenState extends ConsumerState<MenopauseSurveyScreen> {
                       final question = questions[index];
                       final selectedValue = ref.read(menopauseSurveyViewModelProvider.notifier).getAnswer(question.id);
 
-                      return Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 24),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                      return QuestionProgressView(
+                        currentStep: _currentPage,
+                        totalSteps: questions.length,
+                        questionNumber: 'Q${index + 1}.',
+                        questionText: question.questionText,
+                        enableToggle: false,
+                        content: Column(
                           children: [
-                            // Question Content
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  // Question Number
-                                  Text(
-                                    'Q${index + 1}.',
-                                    style: const TextStyle(
-                                      color: Color(0xFFD7454D),
-                                      fontSize: 16,
+                            // 예 버튼
+                            GestureDetector(
+                              onTap: () => _onAnswer(question.id, 1),
+                              child: Container(
+                                width: double.infinity,
+                                height: 68,
+                                decoration: BoxDecoration(
+                                  color: selectedValue == 1
+                                      ? const Color(0xFFD7454D)
+                                      : const Color(0xFFF3F4F6),
+                                  borderRadius: BorderRadius.circular(16),
+                                  boxShadow: selectedValue == 1
+                                      ? [
+                                          const BoxShadow(
+                                            color: Color(0x19000000),
+                                            blurRadius: 2,
+                                            offset: Offset(0, 1),
+                                            spreadRadius: -1,
+                                          ),
+                                          const BoxShadow(
+                                            color: Color(0x19000000),
+                                            blurRadius: 3,
+                                            offset: Offset(0, 1),
+                                            spreadRadius: 0,
+                                          ),
+                                        ]
+                                      : null,
+                                ),
+                                child: Center(
+                                  child: Text(
+                                    question.positiveLabel,
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                      color: selectedValue == 1
+                                          ? Colors.white
+                                          : const Color(0xFF243447),
+                                      fontSize: 18,
                                       fontFamily: 'Pretendard',
                                       fontWeight: FontWeight.w700,
-                                      height: 1.50,
+                                      height: 1.56,
                                     ),
                                   ),
-                                  const SizedBox(height: 12),
-                                  // Question Text
-                                  Text(
-                                    question.questionText,
-                                    style: const TextStyle(
-                                      color: Color(0xFF243447),
-                                      fontSize: 24,
-                                      fontFamily: 'Pretendard',
-                                      fontWeight: FontWeight.w700,
-                                      height: 1.25,
-                                    ),
-                                  ),
-                                ],
+                                ),
                               ),
                             ),
-
-                            // Answer Buttons
-                            Column(
-                              children: [
-                                // 예 버튼
-                                GestureDetector(
-                                  onTap: () => _onAnswer(question.id, 1),
-                                  child: Container(
-                                    width: double.infinity,
-                                    height: 68,
-                                    decoration: BoxDecoration(
-                                      color: selectedValue == 1
-                                          ? const Color(0xFFD7454D)
-                                          : const Color(0xFFF3F4F6),
-                                      borderRadius: BorderRadius.circular(16),
-                                      boxShadow: selectedValue == 1
-                                          ? [
-                                              const BoxShadow(
-                                                color: Color(0x19000000),
-                                                blurRadius: 2,
-                                                offset: Offset(0, 1),
-                                                spreadRadius: -1,
-                                              ),
-                                              const BoxShadow(
-                                                color: Color(0x19000000),
-                                                blurRadius: 3,
-                                                offset: Offset(0, 1),
-                                                spreadRadius: 0,
-                                              ),
-                                            ]
-                                          : null,
-                                    ),
-                                    child: Center(
-                                      child: Text(
-                                        question.positiveLabel,
-                                        textAlign: TextAlign.center,
-                                        style: TextStyle(
-                                          color: selectedValue == 1
-                                              ? Colors.white
-                                              : const Color(0xFF243447),
-                                          fontSize: 18,
-                                          fontFamily: 'Pretendard',
-                                          fontWeight: FontWeight.w700,
-                                          height: 1.56,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
+                            const SizedBox(height: 12),
+                            // 아니오 버튼
+                            GestureDetector(
+                              onTap: () => _onAnswer(question.id, 0),
+                              child: Container(
+                                width: double.infinity,
+                                height: 68,
+                                decoration: BoxDecoration(
+                                  color: selectedValue == 0
+                                      ? const Color(0xFFD7454D)
+                                      : const Color(0xFFF3F4F6),
+                                  borderRadius: BorderRadius.circular(16),
+                                  boxShadow: selectedValue == 0
+                                      ? [
+                                          const BoxShadow(
+                                            color: Color(0x19000000),
+                                            blurRadius: 2,
+                                            offset: Offset(0, 1),
+                                            spreadRadius: -1,
+                                          ),
+                                          const BoxShadow(
+                                            color: Color(0x19000000),
+                                            blurRadius: 3,
+                                            offset: Offset(0, 1),
+                                            spreadRadius: 0,
+                                          ),
+                                        ]
+                                      : null,
                                 ),
-                                const SizedBox(height: 12),
-                                // 아니오 버튼
-                                GestureDetector(
-                                  onTap: () => _onAnswer(question.id, 0),
-                                  child: Container(
-                                    width: double.infinity,
-                                    height: 68,
-                                    decoration: BoxDecoration(
+                                child: Center(
+                                  child: Text(
+                                    question.negativeLabel,
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
                                       color: selectedValue == 0
-                                          ? const Color(0xFFD7454D)
-                                          : const Color(0xFFF3F4F6),
-                                      borderRadius: BorderRadius.circular(16),
-                                      boxShadow: selectedValue == 0
-                                          ? [
-                                              const BoxShadow(
-                                                color: Color(0x19000000),
-                                                blurRadius: 2,
-                                                offset: Offset(0, 1),
-                                                spreadRadius: -1,
-                                              ),
-                                              const BoxShadow(
-                                                color: Color(0x19000000),
-                                                blurRadius: 3,
-                                                offset: Offset(0, 1),
-                                                spreadRadius: 0,
-                                              ),
-                                            ]
-                                          : null,
-                                    ),
-                                    child: Center(
-                                      child: Text(
-                                        question.negativeLabel,
-                                        textAlign: TextAlign.center,
-                                        style: TextStyle(
-                                          color: selectedValue == 0
-                                              ? Colors.white
-                                              : const Color(0xFF243447),
-                                          fontSize: 18,
-                                          fontFamily: 'Pretendard',
-                                          fontWeight: FontWeight.w700,
-                                          height: 1.56,
-                                        ),
-                                      ),
+                                          ? Colors.white
+                                          : const Color(0xFF243447),
+                                      fontSize: 18,
+                                      fontFamily: 'Pretendard',
+                                      fontWeight: FontWeight.w700,
+                                      height: 1.56,
                                     ),
                                   ),
                                 ),
-                              ],
+                              ),
                             ),
-                            const SizedBox(height: 40),
                           ],
                         ),
                       );

@@ -19,6 +19,7 @@
 - **HomeBannerSlider**: 마음연습실 소개 슬라이드 배너
 - **BottomAddModalBar**: 재사용 가능한 모달 Bottom Sheet
 - **SplashScreen**: Lottie 애니메이션 기반 스플래시 화면
+- **QuestionProgressView**: 설문 및 연습용 질문/진행률 통합 컴포넌트
 
 ### 주요 변경사항
 
@@ -1908,26 +1909,29 @@ Widget _buildToggle({
 개별 선택지 버튼을 표시합니다.
 
 ```dart
-ChoiceButton(
-  text: "선택지 텍스트",
-  index: 0,
-  isSelected: false,
-  emotionId: EmotionId.relief,
-  showBorder: true,
-  showNumber: true,
-  onTap: () {},
+QuestionProgressView(
+  currentStep: 0,
+  totalSteps: 10,
+  questionNumber: 'Q1.',
+  questionText: '오늘 기분이 어떠신가요?',
+  media: Image.asset('assets/images/scenario.png'), // 선택적 미디어 (질문 아래 표시)
+  content: ChoiceButtonGroup(...), // 선택지 영역
 )
 ```
 
 **파라미터:**
-- `text` (필수): 버튼에 표시될 텍스트
-- `index` (필수): 버튼의 순서 (0부터 시작)
-- `isSelected`: 선택 상태 (기본값: false)
-- `emotionId`: 감정 기반 색상 (null이면 기본 색상)
-- `onTap`: 클릭 콜백
-- `showBorder`: 테두리 표시 여부 (기본값: true)
-- `showNumber`: 번호 표시 여부 (기본값: true)
+- `currentStep` (필수): 현재 단계 (0-based)
+- `totalSteps` (필수): 전체 단계 수
+- `questionNumber`: 질문 번호 텍스트 (예: "Q1.")
+- `questionText`: 질문 텍스트
+- `titleWidget`: 질문 텍스트 대신 사용할 커스텀 위젯 (RichText 등)
+- `media`: 질문 텍스트 아래에 표시할 미디어/이미지 위젯
+- `content` (필수): 하단 콘텐츠 영역 (주로 `ChoiceButtonGroup`)
 
+**특징:**
+- 상단 진행률 바 자동 계산 및 표시
+- 일관된 질문 텍스트 스타일
+- 유연한 미디어 및 콘텐츠 영역 (질문 -> 미디어 -> 콘텐츠 순서)
 #### 9.5.2 ChoiceButtonGroup (버튼 그룹)
 
 여러 선택지를 그룹으로 표시합니다.
