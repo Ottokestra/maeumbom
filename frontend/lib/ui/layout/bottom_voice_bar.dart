@@ -80,6 +80,12 @@ class _BottomVoiceBarState extends State<BottomVoiceBar>
         _rippleController.duration = const Duration(milliseconds: 1500);
         if (!_rippleController.isAnimating) _rippleController.repeat();
         break;
+      case VoiceInterfaceState.processingVoice:
+        _rippleController.duration = const Duration(milliseconds: 3000);
+        if (!_rippleController.isAnimating) {
+          _rippleController.repeat(reverse: true);
+        }
+        break;
       case VoiceInterfaceState.processing:
         _rippleController.duration = const Duration(milliseconds: 3000);
         if (!_rippleController.isAnimating) {
@@ -104,6 +110,8 @@ class _BottomVoiceBarState extends State<BottomVoiceBar>
         return AppColors.primaryColor;
       case VoiceInterfaceState.listening:
         return AppColors.primaryColor;
+      case VoiceInterfaceState.processingVoice:
+        return Colors.orangeAccent;
       case VoiceInterfaceState.processing:
         return Colors.orangeAccent;
       case VoiceInterfaceState.replying:
@@ -120,6 +128,8 @@ class _BottomVoiceBarState extends State<BottomVoiceBar>
         return const _MicTypingIndicator();
       case VoiceInterfaceState.listening:
         return const _MicWaveformIndicator();
+      case VoiceInterfaceState.processingVoice:
+        return const _MicTypingIndicator();
       case VoiceInterfaceState.processing:
         return const _MicTypingIndicator();
       case VoiceInterfaceState.replying:

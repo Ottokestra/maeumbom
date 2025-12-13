@@ -22,6 +22,7 @@ class BomChatService {
   Function()? onSessionEnd;
   Function(String)? onPartialText; // Phase 3 (비활성화)
   Function(String)? onSttResult; // ✅ STT 결과 → 사용자 메시지 표시
+  Function(String status, String message)? onStatusChange; // 🆕 WebSocket 상태 변경
 
   /// 음성 채팅 시작
   /// [userId]: 사용자 ID
@@ -127,9 +128,13 @@ class BomChatService {
 
       switch (type) {
         case 'status':
-          // 상태 메시지 (연결 확인 등) - 무시
+          // 🆕 상태 메시지 처리 - 콜백 호출
+          final status = response['status'] as String?;
           final message = response['message'] as String?;
-          debugPrint('[BomChatService] 상태: $message');
+          debugPrint('[BomChatService] 상태: $status - $message');
+          if (status != null && message != null) {
+            onStatusChange?.call(status, message);
+          }
           break;
 
         case 'stt_result':

@@ -29,8 +29,8 @@ class HomeMainButtons extends StatelessWidget {
         Expanded(
           child: _buildButton(
             context: context,
-            title: '똑똑 알림',
-            subtitle: '약 먹을 시간\n잊지 마세요',
+            title: '마음서랍',
+            subtitle: '봄이가 기억했다가\n알려줄게',
             icon: Icons.notifications_none,
             iconColor: const Color(0xFFFF7A5C), // Soft Red/Orange
             onTap: onAlarmTap,

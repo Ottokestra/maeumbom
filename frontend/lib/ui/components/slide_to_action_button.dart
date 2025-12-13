@@ -147,6 +147,12 @@ class _SlideToActionButtonState extends State<SlideToActionButton>
         _rippleController.duration = const Duration(milliseconds: 1500);
         if (!_rippleController.isAnimating) _rippleController.repeat();
         break;
+      case VoiceInterfaceState.processingVoice:
+        // 음성 처리 중 - processing과 동일
+        _rippleController.duration = const Duration(milliseconds: 3000);
+        if (!_rippleController.isAnimating)
+          _rippleController.repeat(reverse: true);
+        break;
       case VoiceInterfaceState.processing:
         _rippleController.duration = const Duration(milliseconds: 3000);
         if (!_rippleController.isAnimating)
@@ -171,6 +177,9 @@ class _SlideToActionButtonState extends State<SlideToActionButton>
         break;
       case VoiceInterfaceState.listening:
         targetText = '나에게 얘기해줘...';
+        break;
+      case VoiceInterfaceState.processingVoice:
+        targetText = '음성 처리 중...';
         break;
       case VoiceInterfaceState.processing:
         targetText = '생각하는 중...';
@@ -340,6 +349,8 @@ class _SlideToActionButtonState extends State<SlideToActionButton>
         return AppColors.primaryColor; // 준비 중 - 빨간색
       case VoiceInterfaceState.listening:
         return AppColors.primaryColor; // 듣는 중 - 빨간색
+      case VoiceInterfaceState.processingVoice:
+        return Colors.orangeAccent; // 음성 처리 중 - 주황색
       case VoiceInterfaceState.processing:
         return Colors.orangeAccent; // 생각 중 - 주황색
       case VoiceInterfaceState.replying:
@@ -359,6 +370,10 @@ class _SlideToActionButtonState extends State<SlideToActionButton>
       case VoiceInterfaceState.listening:
         // 듣는 중 - 파형 애니메이션
         return const _MicWaveformIndicator();
+
+      case VoiceInterfaceState.processingVoice:
+        // 음성 처리 중 - 점 3개 타이핑 애니메이션
+        return const _MicTypingIndicator();
 
       case VoiceInterfaceState.processing:
         // 생각 중 - 점 3개 타이핑 애니메이션

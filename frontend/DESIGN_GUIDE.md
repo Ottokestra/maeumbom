@@ -4,10 +4,15 @@
 
 ---
 
-## 🆕 최근 업데이트 (2025-12-12)
+## 🆕 최근 업데이트 (2025-12-13)
 
 ### 새로운 컴포넌트
 
+- **ChoiceButton**: 사용자 선택지를 표시하는 버튼 컴포넌트
+  - `ChoiceButton`: 개별 선택지 버튼
+  - `ChoiceButtonGroup`: 가로/세로 레이아웃 지원 (2-5개 선택지)
+  - 감정 기반 색상 시스템
+  - 테두리/번호 표시 제어 가능
 - **BottomVoiceBar**: 음성 입력 전용 3버튼 레이아웃 (TTS 토글, 마이크, 텍스트 모드)
 - **BottomMenuBar**: 5탭 네비게이션 바 (중앙 마이크 버튼 포함)
 - **HomeGaugeSection**: Fear & Greed Index 스타일 반원형 감정 게이지
@@ -17,6 +22,11 @@
 
 ### 주요 변경사항
 
+- **ChoiceButton 추가**: ListBubble을 대체하는 새로운 선택지 버튼 시스템
+  - 깔끔한 단일 배경색 (그라데이션 제거)
+  - 선택적 테두리 및 번호 표시
+  - 그림자 효과 제거로 미니멀한 디자인
+  - 2개 선택지는 가로 배치, 3개 이상은 세로 배치
 - **BottomInputBar 리팩토링**: SlideToActionButton 제거, 직접 입력 방식으로 변경
   - 텍스트 입력 필드 항상 표시
   - 마이크 ↔ 전송 버튼 자동 토글
@@ -1240,7 +1250,7 @@ class HomeContent extends ConsumerStatefulWidget {
 - 탭 4: **마이페이지** (`icon-mypage.svg`)
 
 **디자인 스펙:**
-- **높이**: 100px (전체), 80px (배경)
+- **높이**: 90px (전체)
 - **배경색**: `pureWhite` (기본값, 커스터마이징 가능)
 - **상단 테두리**: 1px, `borderLight`
 - **중앙 마이크 버튼**:
@@ -1887,7 +1897,174 @@ Widget _buildToggle({
 
 ---
 
-### 9.5 CircularRipple
+### 9.5 ChoiceButton
+
+**파일:** `lib/ui/components/choice_button.dart`
+
+사용자 선택지를 표시하는 버튼 컴포넌트입니다. 단일 버튼(`ChoiceButton`)과 버튼 그룹(`ChoiceButtonGroup`)으로 구성됩니다.
+
+#### 9.5.1 ChoiceButton (개별 버튼)
+
+개별 선택지 버튼을 표시합니다.
+
+```dart
+ChoiceButton(
+  text: "선택지 텍스트",
+  index: 0,
+  isSelected: false,
+  emotionId: EmotionId.relief,
+  showBorder: true,
+  showNumber: true,
+  onTap: () {},
+)
+```
+
+**파라미터:**
+- `text` (필수): 버튼에 표시될 텍스트
+- `index` (필수): 버튼의 순서 (0부터 시작)
+- `isSelected`: 선택 상태 (기본값: false)
+- `emotionId`: 감정 기반 색상 (null이면 기본 색상)
+- `onTap`: 클릭 콜백
+- `showBorder`: 테두리 표시 여부 (기본값: true)
+- `showNumber`: 번호 표시 여부 (기본값: true)
+
+#### 9.5.2 ChoiceButtonGroup (버튼 그룹)
+
+여러 선택지를 그룹으로 표시합니다.
+
+```dart
+ChoiceButtonGroup(
+  choices: ['선택지 1', '선택지 2'],
+  selectedIndex: 0,
+  layout: ChoiceLayout.horizontal,  // 가로/세로 레이아웃 선택
+  emotionIds: [EmotionId.relief, EmotionId.joy],
+  showBorder: true,
+  showNumber: true,
+  onChoiceSelected: (index, choice) {
+    print('Selected: $choice');
+  },
+)
+```
+
+**파라미터:**
+- `choices` (필수): 선택지 텍스트 리스트
+- `selectedIndex`: 현재 선택된 인덱스 (-1이면 선택 안 됨)
+- `onChoiceSelected`: 선택 콜백 `(int index, String choice)`
+- `layout`: 레이아웃 타입 (기본값: `ChoiceLayout.vertical`)
+  - `ChoiceLayout.horizontal`: **가로 배치** - 선택지를 가로로 나란히 배치 (주로 2개)
+  - `ChoiceLayout.vertical`: **세로 배치** - 선택지를 세로로 쌓아서 배치 (2-5개)
+- `emotionIds`: 각 선택지별 감정 ID (null이면 기본 패턴 사용)
+- `showBorder`: 테두리 표시 여부 (기본값: true)
+- `showNumber`: 번호 표시 여부 (기본값: true)
+
+**레이아웃 선택 가이드:**
+
+| 선택지 개수 | 권장 레이아웃 | 이유 |
+|-----------|-------------|------|
+| 2개 | `horizontal` | 화면을 효율적으로 사용하고 선택이 명확함 |
+| 3-5개 | `vertical` | 긴 텍스트도 편하게 읽을 수 있음 |
+
+**Note**: 레이아웃은 선택지 개수에 따라 자동 결정되지 않으며, 개발자가 `layout` 파라미터로 직접 지정해야 합니다.
+
+**디자인 스펙:**
+
+- **배경색**: 감정별 `secondary` 색상 20% 투명도
+- **테두리**: 
+  - 선택 시: 감정별 `primary` 색상
+  - 미선택 시: 감정별 `primary` 색상 50% 투명도
+- **모서리**: 16px 둥근 모서리
+- **패딩**: 18px
+- **번호 표시**:
+  - 크기: 32×32px
+  - 배경: 흰색
+  - 텍스트: `textPrimary`, 16px, 700 weight
+- **간격**:
+  - 버튼 간: 12px
+
+**기본 감정 패턴:**
+
+1. `EmotionId.relief` (파랑)
+2. `EmotionId.joy` (노랑)
+3. `EmotionId.love` (핑크)
+4. `EmotionId.interest` (보라)
+5. `EmotionId.confidence` (골드)
+
+**사용 예시:**
+
+```dart
+// 가로 배치 (2개 선택지) - 짧은 답변에 적합
+ChoiceButtonGroup(
+  choices: ['예', '아니오'],
+  layout: ChoiceLayout.horizontal,
+  onChoiceSelected: (index, choice) {
+    print('Selected: $choice');
+  },
+)
+
+// 가로 배치 (3개 선택지도 가능)
+ChoiceButtonGroup(
+  choices: ['좋음', '보통', '나쁨'],
+  layout: ChoiceLayout.horizontal,
+  emotionIds: [EmotionId.joy, EmotionId.relief, EmotionId.sadness],
+  onChoiceSelected: (index, choice) {
+    _handleChoice(choice);
+  },
+)
+
+// 세로 배치 (2개 선택지) - 긴 텍스트에 적합
+ChoiceButtonGroup(
+  choices: [
+    '네, 지금 바로 시작하고 싶어요',
+    '아니요, 나중에 할게요'
+  ],
+  layout: ChoiceLayout.vertical,
+  onChoiceSelected: (index, choice) {
+    _handleChoice(choice);
+  },
+)
+
+// 세로 배치 (3개 이상 선택지)
+ChoiceButtonGroup(
+  choices: ['요가', '산책', '수영', '헬스', '필라테스'],
+  layout: ChoiceLayout.vertical,
+  emotionIds: [
+    EmotionId.relief, 
+    EmotionId.joy, 
+    EmotionId.love,
+    EmotionId.interest,
+    EmotionId.confidence
+  ],
+  onChoiceSelected: (index, choice) {
+    _handleChoice(choice);
+  },
+)
+
+// 선택지 개수에 따라 자동으로 레이아웃 결정
+ChoiceButtonGroup(
+  choices: choices,
+  layout: choices.length == 2 
+    ? ChoiceLayout.horizontal 
+    : ChoiceLayout.vertical,
+  onChoiceSelected: (index, choice) {
+    _handleChoice(choice);
+  },
+)
+
+// 테두리 없이, 번호 표시 없이
+ChoiceButtonGroup(
+  choices: ['선택 1', '선택 2', '선택 3'],
+  layout: ChoiceLayout.vertical,
+  showBorder: false,
+  showNumber: false,
+  onChoiceSelected: (index, choice) {
+    _handleChoice(choice);
+  },
+)
+```
+
+---
+
+### 9.6 CircularRipple
 
 **파일:** `lib/ui/components/circular_ripple.dart`
 
@@ -1902,7 +2079,7 @@ CircularRipple(
 
 ---
 
-### 9.5 ProcessIndicator
+### 9.7 ProcessIndicator
 
 **파일:** `lib/ui/components/process_indicator.dart`
 
@@ -2193,4 +2370,4 @@ BottomVoiceBar(
 
 디자인 시스템 관련 문의사항이나 개선 제안은 팀 채널로 연락해주세요.
 
-**마지막 업데이트**: 2025-12-12
+**마지막 업데이트**: 2025-12-13
