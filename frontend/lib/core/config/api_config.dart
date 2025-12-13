@@ -1,8 +1,15 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 
 /// API Configuration - Base URLs and endpoints
 class ApiConfig {
-  // Base URL - 플랫폼별로 다른 URL 사용
+  /// 테스트용 (로컬 FastAPI / Docker)
+  static const String _localDev = 'http://localhost:8000';
+  static const String _androidEmulator = 'http://10.0.2.2:8000';
+
+  /// 운영용 (Real)
+  static const String _production = 'https://api.apricity.com';
+
   static String get baseUrl {
     // 환경 변수로 설정된 경우 우선 사용 (실제 디바이스용)
     const apiBaseUrl = String.fromEnvironment('API_BASE_URL');
@@ -10,12 +17,16 @@ class ApiConfig {
       return apiBaseUrl;
     }
 
-    // Android 에뮬레이터는 10.0.2.2를 사용 (호스트 머신의 localhost)
-    if (Platform.isAndroid) {
-      return 'http://localhost:8000';
+    // 테스트용
+    if (!kReleaseMode) {
+      if (Platform.isAndroid) {
+        return _androidEmulator;
+      }
+      return _localDev;
     }
-    // iOS 시뮬레이터 및 웹은 localhost 사용
-    return 'http://localhost:8000';
+
+    // 운영용
+    return _production;
   }
 
   // Auth Endpoints

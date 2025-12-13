@@ -19,7 +19,6 @@ enum EmotionId {
   anger,
   fear,
   confusion,
-  test
 }
 
 /// 감정 메타정보
@@ -219,17 +218,6 @@ const Map<EmotionId, EmotionMeta> emotionMetaMap = {
     shortDesc: '무엇이 맞는지 모르는 상태',
     assetNormal: 'assets/characters/normal/char_confusion.png',
     assetNormal2d: 'assets/characters/normal_2d/char_confusion.png',
-  ),
-
-  EmotionId.test: EmotionMeta(
-    id: EmotionId.test,
-    nameKo: 'test',
-    nameEn: 'test',
-    characterKo: '테스트',
-    characterEn: 'test',
-    shortDesc: '테스트용 더미 데이터',
-    assetNormal: 'assets/characters/normal/char_test.png',
-    assetNormal2d: 'assets/characters/normal_2d/char_test.png',
   ),
 };
 

@@ -12,6 +12,7 @@ class AppColors {
   static const warmWhite = Color(0xFFFFFBFA);
   static const darkBlack = Color(0xFF000000);
   static const basicGray = Color(0xFFF5F5F5);
+  static const normalYellow = Color(0xFFF3BE63);
 
   // 메인 컬러
   static const primaryColor = accentRed;
@@ -19,13 +20,13 @@ class AppColors {
   static const basicColor = pureWhite;
   // static const moodGoodColor = Color(0xFFFFB84C);
   // static const moodNormalColor = Color(0xFF63C96B);
-  // static const moodBadColor = Color(0xFF6C8CD5); 
-  static const moodGoodColor    = Color(0xFFF3BE63);
-  static const moodGoodbgColor    = Color(0xFFF3BE63);
-  static const moodNormalColor  = Color(0xFF7ECF8A);
-  static const moodNormalbgColor    = Color(0xFF8EE89C);
-  static const moodBadColor     = Color(0xFF6C8CD5);
-  static const moodBadbgColor    = Color(0xFF8AA7E2);
+  // static const moodBadColor = Color(0xFF6C8CD5);
+  static const moodGoodColor = Color(0xFFF3BE63);
+  static const moodGoodbgColor = Color(0xFFF3BE63);
+  static const moodNormalColor = Color(0xFF7ECF8A);
+  static const moodNormalbgColor = Color(0xFF8EE89C);
+  static const moodBadColor = Color(0xFF6C8CD5);
+  static const moodBadbgColor = Color(0xFF8AA7E2);
 
   // Background
   static const bgBasic = basicColor;
@@ -42,7 +43,7 @@ class AppColors {
   static const textSecondary = Color(0xFF6B6B6B);
 
   // Text (Dark Theme 전용)
-  static const textPrimaryDark = Color(0xFFE7E7E7); 
+  static const textPrimaryDark = Color(0xFFE7E7E7);
   static const textSecondaryDark = Color(0xFFBDBDBD);
   static const surfaceDark = Color(0xFF1A1A1A);
   static const cardDark = Color(0xFF242424);
@@ -67,8 +68,8 @@ class AppColors {
   static const disabledText = Color(0xFFB0B0B0);
 
   // Variant Text Colors
-  static const textPrimaryRed = primaryColor; 
-  static const textPrimaryGreen = secondaryColor; 
+  static const textPrimaryRed = primaryColor;
+  static const textPrimaryGreen = secondaryColor;
   static const textDisabledVariant = Color(0xFF98A2B3); // Disabled variant text
 
   // Mood Category Theme Colors
