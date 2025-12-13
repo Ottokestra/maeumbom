@@ -6,7 +6,8 @@ import '../data/api/onboarding/onboarding_survey_api_client.dart';
 import '../data/repository/onboarding/onboarding_survey_repository.dart';
 import 'api_client_provider.dart';
 
-final onboardingSurveyApiClientProvider = Provider<OnboardingSurveyApiClient>((ref) {
+final onboardingSurveyApiClientProvider =
+    Provider<OnboardingSurveyApiClient>((ref) {
   final apiClient = ref.watch(apiClientProvider);
   return OnboardingSurveyApiClient(apiClient);
 });
