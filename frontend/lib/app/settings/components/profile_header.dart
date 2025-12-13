@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../ui/app_ui.dart';
-import 'level_progress_card.dart';
+import '../../../ui/components/progress_card.dart';
 
 /// Profile Header - 프로필 헤더
 ///
@@ -83,10 +83,13 @@ class ProfileHeader extends StatelessWidget {
             ],
           ),
           const SizedBox(height: AppSpacing.md),
-          // 레벨 진행도 카드
-          LevelProgressCard(
-            percentage: levelPercentage,
-            conversationsRemaining: conversationsRemaining,
+          // 레벨 진행도 카드 - ProgressCard 사용 (퍼플 테마)
+          ProgressCard(
+            topLabel: '친밀도 UP까지',
+            currentValue: levelPercentage,
+            totalValue: 100,
+            bottomMessage: '$conversationsRemaining번 더 대화하면 친밀도 UP! ✨',
+            theme: ProgressCardTheme.purple,
           ),
         ],
       ),

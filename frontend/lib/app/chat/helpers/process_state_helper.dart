@@ -47,6 +47,9 @@ class ProcessStateHelper {
       case VoiceInterfaceState.listening:
         return ProcessStep.input;
 
+      case VoiceInterfaceState.processingVoice: // 🆕 음성 처리 중 (STT)
+        return ProcessStep.analysis;
+
       case VoiceInterfaceState.processing:
         return ProcessStep.analysis;
 
