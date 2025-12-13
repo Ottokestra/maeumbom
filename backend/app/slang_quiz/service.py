@@ -485,12 +485,11 @@ def calculate_score(is_correct: bool, response_time: int) -> int:
     """
     Calculate score based on correctness and response time
     
-    Linear decrease: 10초부터 1초당 -1점
-    - 10초 이내: 150점 (100 + 50)
-    - 20초: 140점 (100 + 40)
-    - 30초: 130점 (100 + 30)
-    - 40초: 120점 (100 + 20)
-    - 40초 초과: 100점
+    100점에서 시작하여 1초당 0.5점씩 선형 감소:
+    - 1초: 100점
+    - 10초: 95.5점
+    - 20초: 90.5점
+    - 20초 초과: 0점 (타임아웃)
     - 오답: 0점
     
     Args:
@@ -498,21 +497,25 @@ def calculate_score(is_correct: bool, response_time: int) -> int:
         response_time: Time taken to answer (seconds)
         
     Returns:
-        Score earned
+        Score earned (rounded to integer)
     """
     if not is_correct:
         return 0
     
+    # 타임아웃 체크 (20초 초과)
+    if response_time > 20:
+        return 0
+    
     base_score = 100
+    penalty_per_second = 0.5
     
-    if response_time <= 10:
-        bonus = 50
-    elif response_time <= 40:
-        bonus = 50 - (response_time - 10)
-    else:
-        bonus = 0
+    # 1초부터 페널티 시작 (0초는 없으므로)
+    penalty = penalty_per_second * (response_time - 1) if response_time > 0 else 0
     
-    return base_score + bonus
+    final_score = base_score - penalty
+    
+    # 반올림하여 정수로 반환
+    return round(final_score)
 
 
 # ============================================================================

@@ -53,7 +53,7 @@ class StartGameRequest(BaseModel):
 class SubmitAnswerRequest(BaseModel):
     """Request model for submitting an answer"""
     question_number: int = Field(..., ge=1, le=5, description="Question number (1-5)")
-    user_answer_index: int = Field(..., ge=0, le=3, description="User's selected answer index (0-3)")
+    user_answer_index: int = Field(..., ge=-1, le=3, description="User's selected answer index (0-3, -1 for timeout)")
     response_time_seconds: int = Field(..., ge=0, description="Time taken to answer (seconds)")
     
     class Config:
@@ -90,7 +90,7 @@ class QuestionData(BaseModel):
     word: str = Field(..., description="Slang word")
     question: str = Field(..., description="Question text")
     options: List[str] = Field(..., min_length=4, max_length=4, description="Answer options (4)")
-    time_limit: int = Field(default=40, description="Time limit in seconds")
+    time_limit: int = Field(default=20, description="Time limit in seconds")
     
     class Config:
         json_schema_extra = {
@@ -99,7 +99,7 @@ class QuestionData(BaseModel):
                 "word": "킹받네",
                 "question": "자녀가 '킹받네'라고 했다면 무슨 뜻일까요?",
                 "options": ["기분이 좋다", "화가 난다", "배가 고프다", "졸리다"],
-                "time_limit": 40
+                "time_limit": 20
             }
         }
 
@@ -122,7 +122,7 @@ class StartGameResponse(BaseModel):
                     "word": "킹받네",
                     "question": "자녀가 '킹받네'라고 했다면 무슨 뜻일까요?",
                     "options": ["기분이 좋다", "화가 난다", "배가 고프다", "졸리다"],
-                    "time_limit": 40
+                    "time_limit": 20
                 }
             }
         }
@@ -134,7 +134,7 @@ class QuestionResponse(BaseModel):
     word: str = Field(..., description="Slang word")
     question: str = Field(..., description="Question text")
     options: List[str] = Field(..., min_length=4, max_length=4, description="Answer options")
-    time_limit: int = Field(default=40, description="Time limit in seconds")
+    time_limit: int = Field(default=20, description="Time limit in seconds")
 
 
 class SubmitAnswerResponse(BaseModel):
