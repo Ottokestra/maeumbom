@@ -25,7 +25,7 @@ class SlangQuizGameScreen extends ConsumerStatefulWidget {
 
 class _SlangQuizGameScreenState extends ConsumerState<SlangQuizGameScreen> {
   SlangQuizApiClient? _apiClient;
-  
+
   int? _gameId;
   int _currentQuestion = 1;
   int _totalQuestions = 5;
@@ -42,7 +42,6 @@ class _SlangQuizGameScreenState extends ConsumerState<SlangQuizGameScreen> {
   @override
   void initState() {
     super.initState();
-    // API 클라이언트는 _startGame에서 초기화
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _startGame();
     });
@@ -56,17 +55,16 @@ class _SlangQuizGameScreenState extends ConsumerState<SlangQuizGameScreen> {
 
   Future<void> _startGame() async {
     try {
-      // API 클라이언트 초기화
       final dio = ref.read(dioWithAuthProvider);
       _apiClient = SlangQuizApiClient(dio);
-      
+
       final request = StartGameRequest(
         level: widget.level,
         quizType: widget.quizType,
       );
-      
+
       final response = await _apiClient!.startGame(request);
-      
+
       setState(() {
         _gameId = response.gameId;
         _totalQuestions = response.totalQuestions;
@@ -76,13 +74,15 @@ class _SlangQuizGameScreenState extends ConsumerState<SlangQuizGameScreen> {
         _isLoading = false;
         _questionStartTime = DateTime.now();
       });
-      
+
       _startTimer();
     } catch (e) {
       print('[SlangQuiz] Start game error: $e');
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('게임 시작 실패: $e')),
+        TopNotificationManager.show(
+          context,
+          message: '게임 시작 실패: $e',
+          type: TopNotificationType.red,
         );
         Navigator.pop(context);
       }
@@ -95,7 +95,6 @@ class _SlangQuizGameScreenState extends ConsumerState<SlangQuizGameScreen> {
       if (_timeRemaining > 0) {
         setState(() => _timeRemaining--);
       } else {
-        // 시간 초과 - 자동으로 오답 처리
         _submitAnswer(null);
       }
     });
@@ -103,7 +102,7 @@ class _SlangQuizGameScreenState extends ConsumerState<SlangQuizGameScreen> {
 
   Future<void> _submitAnswer(int? answerIndex) async {
     if (_isSubmitting || _gameId == null || _questionData == null || _apiClient == null) return;
-    
+
     setState(() => _isSubmitting = true);
     _timer?.cancel();
 
@@ -113,17 +112,16 @@ class _SlangQuizGameScreenState extends ConsumerState<SlangQuizGameScreen> {
           : 20;
 
       final isTimeout = answerIndex == null;
-      
+
       final request = SubmitAnswerRequest(
         questionNumber: _currentQuestion,
-        userAnswerIndex: answerIndex ?? -1, // -1은 시간 초과
+        userAnswerIndex: answerIndex ?? -1,
         responseTimeSeconds: responseTime,
       );
 
       final response = await _apiClient!.submitAnswer(_gameId!, request);
 
       if (mounted) {
-        // 결과 다이얼로그 표시
         await _showResultDialog(
           isCorrect: response.isCorrect,
           correctAnswerIndex: response.correctAnswerIndex,
@@ -138,7 +136,6 @@ class _SlangQuizGameScreenState extends ConsumerState<SlangQuizGameScreen> {
           _isSubmitting = false;
         });
 
-        // 다음 문제로 이동 또는 게임 종료
         if (_currentQuestion < _totalQuestions) {
           await _loadNextQuestion();
         } else {
@@ -149,8 +146,10 @@ class _SlangQuizGameScreenState extends ConsumerState<SlangQuizGameScreen> {
       print('[SlangQuiz] Submit answer error: $e');
       if (mounted) {
         setState(() => _isSubmitting = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('답안 제출 실패: $e')),
+        TopNotificationManager.show(
+          context,
+          message: '답안 제출 실패: $e',
+          type: TopNotificationType.red,
         );
       }
     }
@@ -158,13 +157,13 @@ class _SlangQuizGameScreenState extends ConsumerState<SlangQuizGameScreen> {
 
   Future<void> _loadNextQuestion() async {
     if (_apiClient == null) return;
-    
+
     try {
       setState(() => _isLoading = true);
-      
+
       final nextQuestionNumber = _currentQuestion + 1;
       final questionData = await _apiClient!.getQuestion(_gameId!, nextQuestionNumber);
-      
+
       setState(() {
         _currentQuestion = nextQuestionNumber;
         _questionData = questionData;
@@ -173,13 +172,15 @@ class _SlangQuizGameScreenState extends ConsumerState<SlangQuizGameScreen> {
         _isLoading = false;
         _questionStartTime = DateTime.now();
       });
-      
+
       _startTimer();
     } catch (e) {
       print('[SlangQuiz] Load next question error: $e');
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('다음 문제 로드 실패: $e')),
+        TopNotificationManager.show(
+          context,
+          message: '다음 문제 로드 실패: $e',
+          type: TopNotificationType.red,
         );
       }
     }
@@ -187,10 +188,10 @@ class _SlangQuizGameScreenState extends ConsumerState<SlangQuizGameScreen> {
 
   Future<void> _endGame() async {
     if (_apiClient == null) return;
-    
+
     try {
       final response = await _apiClient!.endGame(_gameId!);
-      
+
       if (mounted) {
         Navigator.pushReplacementNamed(
           context,
@@ -201,8 +202,10 @@ class _SlangQuizGameScreenState extends ConsumerState<SlangQuizGameScreen> {
     } catch (e) {
       print('[SlangQuiz] End game error: $e');
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('게임 종료 실패: $e')),
+        TopNotificationManager.show(
+          context,
+          message: '게임 종료 실패: $e',
+          type: TopNotificationType.red,
         );
       }
     }
@@ -216,61 +219,35 @@ class _SlangQuizGameScreenState extends ConsumerState<SlangQuizGameScreen> {
     required String rewardMessage,
     bool isTimeout = false,
   }) async {
-    String title;
     if (isTimeout) {
-      title = '시간 초과! ⏰';
+      final correctAnswer = _questionData?.options[correctAnswerIndex] ?? '';
+      await MessageDialogHelper.showRedAlert(
+        context,
+        icon: Icons.timer_off_outlined,
+        title: '시간 초과! ⏰',
+        message: '정답은 "$correctAnswer"였어요.\n\n$explanation',
+        primaryButtonText: '다음 문제',
+        onPressed: () => Navigator.pop(context),
+      );
     } else if (isCorrect) {
-      title = '정답입니다! 🎉';
+      await MessageDialogHelper.showGreenAlert(
+        context,
+        icon: Icons.check_circle_outline,
+        title: '정답이에요! 🎉',
+        message: '$explanation\n\n획득 점수: $earnedScore점\n\n$rewardMessage',
+        primaryButtonText: '다음 문제',
+        onPressed: () => Navigator.pop(context),
+      );
     } else {
-      title = '아쉬워요 😢';
+      await MessageDialogHelper.showRedAlert(
+        context,
+        icon: Icons.close_outlined,
+        title: '아쉬워요 😢',
+        message: '$explanation\n\n획득 점수: $earnedScore점\n\n$rewardMessage',
+        primaryButtonText: '다음 문제',
+        onPressed: () => Navigator.pop(context),
+      );
     }
-    
-    return showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => AlertDialog(
-        title: Text(
-          title,
-          style: AppTypography.h3,
-          textAlign: TextAlign.center,
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              '획득 점수: $earnedScore점',
-              style: AppTypography.h2.copyWith(color: AppColors.primaryColor),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: AppSpacing.sm),
-            Text(
-              explanation,
-              style: AppTypography.body,
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: AppSpacing.md),
-            Container(
-              padding: const EdgeInsets.all(AppSpacing.sm),
-              decoration: BoxDecoration(
-                color: AppColors.bgLightPink,
-                borderRadius: BorderRadius.circular(AppRadius.md),
-              ),
-              child: Text(
-                rewardMessage,
-                style: AppTypography.body,
-                textAlign: TextAlign.center,
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('다음'),
-          ),
-        ],
-      ),
-    );
   }
 
   @override
@@ -280,105 +257,137 @@ class _SlangQuizGameScreenState extends ConsumerState<SlangQuizGameScreen> {
 
     if (_isLoading) {
       return AppFrame(
-        topBar: TopBar(title: '신조어 퀴즈'),
+        backgroundColor: AppColors.bgBasic,
+        topBar: TopBar(
+          title: '신조어 퀴즈',
+          backgroundColor: AppColors.bgBasic,
+        ),
         body: const Center(child: CircularProgressIndicator()),
       );
     }
 
     if (_questionData == null) {
       return AppFrame(
-        topBar: TopBar(title: '신조어 퀴즈'),
+        backgroundColor: AppColors.bgBasic,
+        topBar: TopBar(
+          title: '신조어 퀴즈',
+          backgroundColor: AppColors.bgBasic,
+        ),
         body: const Center(child: Text('문제를 불러올 수 없습니다.')),
       );
     }
 
     return AppFrame(
+      backgroundColor: AppColors.bgBasic,
       topBar: TopBar(
-        title: '문제 $_currentQuestion/$_totalQuestions  ⏱️ $_timeRemaining초',
+        title: '',
+        rightIcon: Icons.close,
+        onTapRight: () => Navigator.pop(context),
+        backgroundColor: AppColors.bgBasic,
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(AppSpacing.lg),
-        child: Column(
-          children: [
-            // 캐릭터 (크기 축소)
-            EmotionCharacter(
-              id: currentEmotion,
-              use2d: true,
-              size: 120,
-            ),
-            const SizedBox(height: AppSpacing.md),
-            
-            // 문제
-            Container(
-              padding: const EdgeInsets.all(AppSpacing.md),
-              decoration: BoxDecoration(
-                color: AppColors.bgLightPink,
-                borderRadius: BorderRadius.circular(AppRadius.md),
-              ),
-              child: Text(
-                _questionData!.question,
-                style: AppTypography.h3,
-                textAlign: TextAlign.center,
-              ),
-            ),
-            const SizedBox(height: AppSpacing.lg),
-            
-            // 선택지 (4개 모두 표시, 스크롤 없음)
-            ...List.generate(_questionData!.options.length, (index) {
-              final isSelected = _selectedIndex == index;
-              return Padding(
-                padding: EdgeInsets.only(
-                  bottom: index < _questionData!.options.length - 1 
-                      ? AppSpacing.sm 
-                      : 0,
-                ),
-                child: GestureDetector(
-                  onTap: _isSubmitting ? null : () {
-                    setState(() => _selectedIndex = index);
-                  },
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppSpacing.md,
-                      vertical: AppSpacing.sm,
-                    ),
-                    decoration: BoxDecoration(
-                      color: isSelected
-                          ? AppColors.primaryColor.withOpacity(0.1)
-                          : Colors.white,
-                      borderRadius: BorderRadius.circular(AppRadius.md),
-                      border: Border.all(
-                        color: isSelected
-                            ? AppColors.primaryColor
-                            : AppColors.borderLight,
-                        width: isSelected ? 2 : 1,
-                      ),
-                    ),
-                    child: Text(
-                      _questionData!.options[index],
-                      style: AppTypography.body,
-                      textAlign: TextAlign.center,
+      body: QuestionProgressView.withoutModal(
+        currentStep: _currentQuestion - 1,
+        totalSteps: _totalQuestions,
+        topWidget: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+          child: Column(
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    '문제 $_currentQuestion/$_totalQuestions',
+                    style: AppTypography.h3.copyWith(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 18,
                     ),
                   ),
-                ),
-              );
-            }),
-            const SizedBox(height: AppSpacing.lg),
-            
-            // 제출 버튼
-            SizedBox(
-              width: double.infinity,
-              child: AppButton(
-                text: _isSubmitting ? '제출 중...' : '답안 제출',
-                variant: ButtonVariant.primaryRed,
-                onTap: _selectedIndex != null && !_isSubmitting
-                    ? () => _submitAnswer(_selectedIndex)
-                    : null,
+                  _TimerBadge(seconds: _timeRemaining),
+                ],
               ),
-            ),
-          ],
+              const SizedBox(height: AppSpacing.md),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(AppRadius.pill),
+                child: LinearProgressIndicator(
+                  value: _currentQuestion / _totalQuestions,
+                  backgroundColor: AppColors.bgWarm,
+                  color: AppColors.primaryColor,
+                  minHeight: 8,
+                ),
+              ),
+            ],
+          ),
+        ),
+        questionText: _questionData!.question,
+        questionTextStyle: AppTypography.h3.copyWith(
+          fontWeight: FontWeight.w700,
+          color: AppColors.textPrimary,
+        ),
+        media: EmotionCharacter(
+          id: currentEmotion,
+          use2d: true,
+          size: 100,
+        ),
+        content: ChoiceButtonGroup(
+          choices: _questionData!.options,
+          selectedIndex: _selectedIndex,
+          layout: ChoiceLayout.vertical,
+          mode: ChoiceButtonMode.basic,
+          showBorder: true,
+          showNumber: true,
+          onChoiceSelected: (index, choice) {
+            if (_isSubmitting) return;
+
+            setState(() => _selectedIndex = index);
+
+            // Auto-submit with visual feedback delay
+            Future.delayed(const Duration(milliseconds: 200), () {
+              _submitAnswer(index);
+            });
+          },
         ),
       ),
     );
   }
 }
 
+/// Timer Badge Widget
+class _TimerBadge extends StatelessWidget {
+  final int seconds;
+
+  const _TimerBadge({required this.seconds});
+
+  @override
+  Widget build(BuildContext context) {
+    final isWarning = seconds <= 10;
+    final badgeColor =
+        isWarning ? AppColors.errorRed : AppColors.secondaryColor;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      decoration: BoxDecoration(
+        color: badgeColor.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(AppRadius.pill),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            Icons.timer_outlined,
+            size: AppSpacing.sm,
+            color: badgeColor,
+          ),
+          const SizedBox(width: AppSpacing.xxs),
+          Text(
+            '$seconds초',
+            style: AppTypography.caption.copyWith(
+              color: badgeColor,
+              fontWeight: FontWeight.w600,
+              fontSize: 14,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}

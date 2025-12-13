@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lottie/lottie.dart';
 import '../../ui/app_ui.dart';
 import '../../data/dtos/slang_quiz/end_game_response.dart';
 
@@ -13,8 +14,6 @@ class SlangQuizResultScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final resultEmotion = _getResultEmotion(result.correctCount);
-
     return AppFrame(
       topBar: TopBar(
         title: '퀴즈 결과',
@@ -23,33 +22,46 @@ class SlangQuizResultScreen extends ConsumerWidget {
           Navigator.popUntil(context, (route) => route.isFirst);
         },
       ),
+      bottomBar: BottomButtonBar(
+        primaryText: '돌아가기',
+        onPrimaryTap: () {
+          Navigator.pushReplacementNamed(
+            context,
+            '/training/slang-quiz/start',
+          );
+        },
+      ),
       body: Padding(
         padding: const EdgeInsets.all(AppSpacing.lg),
         child: Column(
           children: [
-            const SizedBox(height: AppSpacing.xl),
+            const SizedBox(height: AppSpacing.xs),
             
-            // 결과 캐릭터
-            EmotionCharacter(
-              id: resultEmotion,
-              use2d: true,
-              size: 200,
+            // 결과 캐릭터 (Lottie)
+            Lottie.asset(
+              result.correctCount >= 3
+                  ? 'assets/images/button/game_clear.json'
+                  : 'assets/images/button/game_over.json',
+              width: 140,
+              height: 140,
+              fit: BoxFit.contain,
             ),
-            const SizedBox(height: AppSpacing.xl),
-            
+
             // 총점
             Text(
               '${result.totalScore}점',
-              style: AppTypography.display.copyWith(
+              style: AppTypography.h1.copyWith(
                 color: AppColors.primaryColor,
               ),
             ),
-            const SizedBox(height: AppSpacing.sm),
+            const SizedBox(height: AppSpacing.xs),
+
+            
             
             // 정답 개수
             Text(
-              '${result.totalQuestions}문제 중 ${result.correctCount}문제 정답!',
-              style: AppTypography.h2,
+              '${result.totalQuestions}문제 중 ${result.correctCount}문제 성공',
+              style: AppTypography.h3,
             ),
             const SizedBox(height: AppSpacing.xs),
             
@@ -60,7 +72,7 @@ class SlangQuizResultScreen extends ConsumerWidget {
                 color: AppColors.textSecondary,
               ),
             ),
-            const SizedBox(height: AppSpacing.xl),
+            const SizedBox(height: AppSpacing.lg),
             
             // 문제별 요약
             Expanded(
@@ -79,9 +91,8 @@ class SlangQuizResultScreen extends ConsumerWidget {
                     ),
                     const SizedBox(height: AppSpacing.sm),
                     Expanded(
-                      child: ListView.separated(
+                      child: ListView.builder(
                         itemCount: result.questionsSummary.length,
-                        separatorBuilder: (_, __) => const Divider(),
                         itemBuilder: (context, index) {
                           final summary = result.questionsSummary[index];
                           return _buildQuestionSummaryItem(summary);
@@ -91,35 +102,6 @@ class SlangQuizResultScreen extends ConsumerWidget {
                   ],
                 ),
               ),
-            ),
-            const SizedBox(height: AppSpacing.lg),
-            
-            // 버튼들
-            Row(
-              children: [
-                Expanded(
-                  child: AppButton(
-                    text: '나가기',
-                    variant: ButtonVariant.secondaryRed,
-                    onTap: () {
-                      Navigator.popUntil(context, (route) => route.isFirst);
-                    },
-                  ),
-                ),
-                const SizedBox(width: AppSpacing.sm),
-                Expanded(
-                  child: AppButton(
-                    text: '다시 하기',
-                    variant: ButtonVariant.primaryRed,
-                    onTap: () {
-                      Navigator.pushReplacementNamed(
-                        context,
-                        '/training/slang-quiz/start',
-                      );
-                    },
-                  ),
-                ),
-              ],
             ),
           ],
         ),
@@ -131,32 +113,34 @@ class SlangQuizResultScreen extends ConsumerWidget {
     final isCorrect = summary.isCorrect ?? false;
     final score = summary.earnedScore ?? 0;
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           // 문제 번호
           Container(
-            width: 32,
-            height: 32,
+            width: AppSpacing.lg,
+            height: AppSpacing.lg,
             decoration: BoxDecoration(
               color: isCorrect
-                  ? AppColors.secondaryColor.withOpacity(0.2)
-                  : AppColors.errorRed.withOpacity(0.2),
+                  ? AppColors.secondaryColor.withValues(alpha: 0.2)
+                  : AppColors.errorRed.withValues(alpha: 0.2),
               shape: BoxShape.circle,
             ),
-            child: Center(
-              child: Text(
-                '${summary.questionNumber}',
-                style: AppTypography.bodyBold.copyWith(
-                  color: isCorrect ? AppColors.secondaryColor : AppColors.errorRed,
-                ),
+            alignment: Alignment.center,
+            child: Text(
+              '${summary.questionNumber}',
+              style: AppTypography.caption.copyWith(
+                color:
+                    isCorrect ? AppColors.secondaryColor : AppColors.errorRed,
+                fontWeight: FontWeight.w700,
               ),
             ),
           ),
-          const SizedBox(width: AppSpacing.sm),
+          const SizedBox(width: AppSpacing.xs),
           
-          // 단어
+          // 문제 단어
           Expanded(
             child: Text(
               summary.word,
@@ -168,27 +152,20 @@ class SlangQuizResultScreen extends ConsumerWidget {
           Icon(
             isCorrect ? Icons.check_circle : Icons.cancel,
             color: isCorrect ? AppColors.secondaryColor : AppColors.errorRed,
-            size: 20,
+            size: AppSpacing.md,
           ),
           const SizedBox(width: AppSpacing.xs),
           
-          // 점수
+          // 획득 점수
           Text(
-            '$score점',
-            style: AppTypography.bodyBold.copyWith(
-              color: isCorrect ? AppColors.secondaryColor : AppColors.errorRed,
+            '+$score점',
+            style: AppTypography.caption.copyWith(
+              color: isCorrect ? AppColors.secondaryColor : AppColors.textSecondary,
+              fontWeight: FontWeight.w600,
             ),
           ),
         ],
       ),
     );
   }
-
-  EmotionId _getResultEmotion(int correctCount) {
-    if (correctCount >= 4) return EmotionId.joy;
-    if (correctCount >= 3) return EmotionId.relief;
-    if (correctCount >= 2) return EmotionId.interest;
-    return EmotionId.sadness;
-  }
 }
-

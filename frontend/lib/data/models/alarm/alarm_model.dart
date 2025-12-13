@@ -1,10 +1,58 @@
 import 'dart:convert';
+import 'package:flutter/material.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:drift/drift.dart' hide JsonKey;
 import '../../local/database/app_database.dart';
 
 part 'alarm_model.freezed.dart';
 part 'alarm_model.g.dart';
+
+/// 아이템 타입 enum
+enum ItemType {
+  memory,  // 기억
+  alarm,   // 알림
+  event;   // 이벤트
+
+  String get label {
+    switch (this) {
+      case ItemType.memory:
+        return '기억';
+      case ItemType.alarm:
+        return '알람';
+      case ItemType.event:
+        return '이벤트';
+    }
+  }
+
+  /// 타입별 배경색
+  Color get backgroundColor {
+    switch (this) {
+      case ItemType.memory:
+        return const Color(0xFFFFE8EA); // 연한 핑크
+      case ItemType.alarm:
+        return const Color(0xFFFFF4E6); // 연한 노랑/오렌지
+      case ItemType.event:
+        return const Color(0xFFE8F0FF); // 연한 파랑
+    }
+  }
+
+  /// 타입별 텍스트 색상
+  Color get textColor {
+    switch (this) {
+      case ItemType.memory:
+        return const Color(0xFFD7454D); // 진한 핑크
+      case ItemType.alarm:
+        return const Color(0xFFFFB84C); // 진한 노랑/오렌지
+      case ItemType.event:
+        return const Color(0xFF6C8CD5); // 진한 파랑
+    }
+  }
+
+  /// 토글 필요 여부
+  bool get needsToggle {
+    return this == ItemType.alarm;
+  }
+}
 
 /// 알람 도메인 모델
 /// Drift의 AlarmData를 래핑하여 비즈니스 로직에서 사용
@@ -32,6 +80,7 @@ class AlarmModel with _$AlarmModel {
     int? createdBy,
     required DateTime updatedAt,
     int? updatedBy,
+    @Default(ItemType.alarm) ItemType itemType, // 기본값: 알람
   }) = _AlarmModel;
 
   /// Drift AlarmData에서 변환
@@ -56,6 +105,7 @@ class AlarmModel with _$AlarmModel {
       createdBy: data.createdBy,
       updatedAt: data.updatedAt,
       updatedBy: data.updatedBy,
+      itemType: ItemType.alarm, // 기본값
     );
   }
 
@@ -72,6 +122,16 @@ class AlarmModel with _$AlarmModel {
       minute: alarmData['minute'] as int? ?? 0,
       amPm: alarmData['am_pm'] as String,
     );
+
+    // itemType 파싱 (기본값: alarm)
+    ItemType itemType = ItemType.alarm;
+    if (alarmData['item_type'] != null) {
+      final typeStr = alarmData['item_type'] as String;
+      itemType = ItemType.values.firstWhere(
+        (e) => e.name == typeStr,
+        orElse: () => ItemType.alarm,
+      );
+    }
 
     return AlarmModel(
       id: 0, // Auto-increment
@@ -93,6 +153,7 @@ class AlarmModel with _$AlarmModel {
       createdBy: userId,
       updatedAt: DateTime.now(),
       updatedBy: userId,
+      itemType: itemType,
     );
   }
 

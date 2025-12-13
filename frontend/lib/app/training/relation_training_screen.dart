@@ -186,7 +186,7 @@ class _RelationTrainingScreenState
       questionNumber: 'STEP${node.stepLevel}.',
       enableToggle: true,
       initiallyExpanded: false,
-      toggleTitle: "답변 보기",
+      toggleTitle: "문항 보기",
       enableAnimation: true,
       questionText: TextFormatter.formatTrainingText(node.situationText),
       questionTextStyle: AppTypography.bodyLarge.copyWith(
