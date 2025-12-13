@@ -20,6 +20,7 @@ class AppFrame extends StatelessWidget {
     this.statusBarStyle,
     this.useSafeArea = true,
     this.resizeToAvoidBottomInset = false,
+    this.backgroundColor,
   });
 
   final PreferredSizeWidget? topBar;
@@ -28,6 +29,7 @@ class AppFrame extends StatelessWidget {
   final SystemUiOverlayStyle? statusBarStyle;
   final bool useSafeArea;
   final bool resizeToAvoidBottomInset;
+  final Color? backgroundColor;
 
   @override
   Widget build(BuildContext context) {
@@ -65,7 +67,7 @@ final bodyWidget = isBottomMenuBar
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: effectiveStatusBarStyle,
       child: Scaffold(
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        backgroundColor: backgroundColor ?? Theme.of(context).scaffoldBackgroundColor,
         resizeToAvoidBottomInset: resizeToAvoidBottomInset,
         appBar: safeTopBar,
         body: bodyWidget,

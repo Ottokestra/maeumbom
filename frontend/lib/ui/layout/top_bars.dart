@@ -11,6 +11,8 @@ class TopBar extends StatelessWidget implements PreferredSizeWidget {
     required this.title,
     this.leftIcon,
     this.rightIcon,
+    this.leftAction,
+    this.rightAction,
     this.onTapLeft,
     this.onTapRight,
     this.height = 60,
@@ -21,6 +23,8 @@ class TopBar extends StatelessWidget implements PreferredSizeWidget {
   final String title;
   final IconData? leftIcon;
   final IconData? rightIcon;
+  final Widget? leftAction;
+  final Widget? rightAction;
   final VoidCallback? onTapLeft;
   final VoidCallback? onTapRight;
   final double height;
@@ -38,7 +42,11 @@ class TopBar extends StatelessWidget implements PreferredSizeWidget {
       color: backgroundColor,
       child: Row(
         children: [
-          _buildIconSlot(icon: leftIcon, onTap: onTapLeft),
+          _buildIconSlot(
+            icon: leftIcon,
+            action: leftAction,
+            onTap: onTapLeft,
+          ),
           Expanded(
             child: Center(
               child: Text(
@@ -49,27 +57,42 @@ class TopBar extends StatelessWidget implements PreferredSizeWidget {
               ),
             ),
           ),
-          _buildIconSlot(icon: rightIcon, onTap: onTapRight),
+          _buildIconSlot(
+            icon: rightIcon,
+            action: rightAction,
+            onTap: onTapRight,
+          ),
         ],
       ),
     );
   }
 
   Widget _buildIconSlot({
-    required IconData? icon,
-    required VoidCallback? onTap,
+    IconData? icon,
+    Widget? action,
+    VoidCallback? onTap,
   }) {
+    if (action != null) {
+      return SizedBox(
+        width: 48,
+        height: 48,
+        child: Center(child: action),
+      );
+    }
+    
     if (icon == null) {
       return const SizedBox(
-        width: 28,
-        height: 28,
+        width: 48,
+        height: 48,
       );
     }
 
-    return SizedBox.fromSize(
-      size: AppIconSizes.mdSize,
+    return SizedBox(
+      width: 48,
+      height: 48,
       child: GestureDetector(
         onTap: onTap,
+        behavior: HitTestBehavior.translucent,
         child: Icon(
           icon,
           color: foregroundColor,

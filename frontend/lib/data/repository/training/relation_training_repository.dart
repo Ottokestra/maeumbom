@@ -35,8 +35,8 @@ class RelationTrainingRepository {
     return response;
   }
 
-  Future<List<TrainingScenario>> getScenarios() async {
-    final scenarios = await _apiClient.getScenarios();
+  Future<List<TrainingScenario>> getScenarios({String? category}) async {
+    final scenarios = await _apiClient.getScenarios(category: category);
     return scenarios.map((s) => s.copyWith(
       imageUrl: _fixImageUrl(s.imageUrl)
     )).toList();
