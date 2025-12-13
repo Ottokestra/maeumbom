@@ -14,20 +14,26 @@ class ChatWebSocketService {
 
   bool _isConnected = false;
   String? _currentSessionId;
+  bool _ttsEnabled = true; // 🆕 TTS 설정 저장
 
-  /// WebSocket 연결
+  /// Web Socket 연결
   /// [userId]: 사용자 ID
   /// [sessionId]: 세션 ID (생성된 경우)
   /// [wsUrl]: WebSocket URL (기본값: localhost)
+  /// [ttsEnabled]: TTS 생성 여부 (기본값: true)
   Future<void> connect({
     required String userId,
     String? sessionId,
     String wsUrl = 'ws://localhost:8000/agent/stream', // Android 에뮬레이터용
+    bool ttsEnabled = true, // 🆕 TTS 토글 설정
   }) async {
     if (_isConnected) {
       debugPrint('[ChatWebSocketService] 이미 연결되어 있습니다');
       return;
     }
+
+    // 🆕 TTS 설정 저장
+    _ttsEnabled = ttsEnabled;
 
     try {
       debugPrint('[ChatWebSocketService] 연결 시작: $wsUrl');
@@ -78,9 +84,10 @@ class ChatWebSocketService {
         'type': 'session_init',
         'user_id': userId,
         'session_id': _currentSessionId,
-        'tts_enabled': 1, // ✅ TTS 토글 (hardcoded to 1)
+        'tts_enabled': _ttsEnabled ? 1 : 0, // 🆕 TTS 토글 (사용자 설정 반영)
       });
 
+      debugPrint('[ChatWebSocketService] 🔍 세션 초기화 메시지: $initMessage');
       _channel!.sink.add(initMessage);
       debugPrint('[ChatWebSocketService] 세션 초기화 메시지 전송');
     } catch (e) {

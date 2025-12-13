@@ -142,10 +142,36 @@ class ChatNotifier extends StateNotifier<ChatState> {
     _bomChatService.onPartialText = _handlePartialText; // Phase 3 (비활성화)
     _bomChatService.onSttResult = _handleSttResult; // ✅ STT 결과
     _bomChatService.onStatusChange = _handleStatusChange; // 🆕 WebSocket 상태 변경
+    _bomChatService.onSpeechEnd = _handleSpeechEnd; // 🆕 발화 종료
+    _bomChatService.onLowQuality = _handleLowQuality; // 🆕 low_quality STT
+  }
+
+  // 🆕 발화 종료 처리
+  void _handleSpeechEnd() {
+    print('[ChatProvider] ⚡⚡⚡ 발화 종료 콜백 호출됨! ⚡⚡⚡');
+    print('[ChatProvider] 이전 상태: ${state.voiceState}');
+    state = state.copyWith(voiceState: VoiceInterfaceState.processingVoice);
+    _bomChatService.pauseAudioTransmission(); // 🆕 오디오 전송 일시 중지
+    print(
+        '[ChatProvider] ✅ 상태 변경 완료 → processingVoice (노란색 버튼, STT 처리, 오디오 중지)');
+  }
+
+  // 🆕 low_quality STT 처리
+  void _handleLowQuality(String message) {
+    print('[ChatProvider] ⚠️⚠️⚠️ low_quality STT 감지! ⚠️⚠️⚠️');
+    print('[ChatProvider] 메시지: $message');
+    print('[ChatProvider] 이전 상태: ${state.voiceState}');
+    // listening 상태로 전환하여 다시 녹음 계속
+    state = state.copyWith(voiceState: VoiceInterfaceState.listening);
+    _bomChatService.resumeAudioTransmission(); // 🆕 오디오 전송 재개
+    print('[ChatProvider] ✅ 상태 변경 완료 → listening (빨간색 버튼, 다시 녹음, 오디오 재개)');
   }
 
   // ✅ STT 결과 처리 - 사용자 메시지 UI에 표시 및 processing 상태로 전환
   void _handleSttResult(String sttText) {
+    print('[ChatProvider] 📝 STT 결과 수신: "$sttText"');
+    print('[ChatProvider] 현재 상태: ${state.voiceState}');
+
     final userMessage = ChatMessage(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
       text: sttText,
@@ -156,6 +182,8 @@ class ChatNotifier extends StateNotifier<ChatState> {
     state = state.copyWith(
       messages: [...state.messages, userMessage],
     );
+
+    print('[ChatProvider] ✅ STT 메시지 추가 완료 (상태는 유지: ${state.voiceState})');
   }
 
   // Phase 3: STT partial 결과 처리 (비활성화)
@@ -218,6 +246,7 @@ class ChatNotifier extends StateNotifier<ChatState> {
       await _bomChatService.startVoiceChat(
         userId: _userId.toString(),
         sessionId: state.sessionId,
+        ttsEnabled: state.ttsEnabled, // 🆕 TTS 토글 설정 전달
       );
 
       // 녹음 시작 시 TTS 중지
@@ -264,7 +293,8 @@ class ChatNotifier extends StateNotifier<ChatState> {
           if (state.voiceState == VoiceInterfaceState.replying &&
               _bomChatService.isActive) {
             state = state.copyWith(voiceState: VoiceInterfaceState.listening);
-            print('[ChatProvider] TTS 재생 완료 - listening으로 전환');
+            _bomChatService.resumeAudioTransmission(); // 🆕 오디오 전송 재개
+            print('[ChatProvider] TTS 재생 완료 - listening으로 전환 (오디오 재개)');
           }
         }).catchError((error) {
           print('[ChatProvider] ❌ TTS 재생 실패: $error');
@@ -347,7 +377,8 @@ class ChatNotifier extends StateNotifier<ChatState> {
           if (state.voiceState == VoiceInterfaceState.replying &&
               _bomChatService.isActive) {
             state = state.copyWith(voiceState: VoiceInterfaceState.listening);
-            print('[ChatProvider] TTS 없음 - listening으로 전환');
+            _bomChatService.resumeAudioTransmission(); // 🆕 오디오 전송 재개
+            print('[ChatProvider] TTS 없음 - listening으로 전환 (오디오 재개)');
           }
         });
       }
@@ -597,7 +628,13 @@ class ChatNotifier extends StateNotifier<ChatState> {
 
       print('[Emotion] ✅ Session emotion analysis completed');
     } catch (e) {
-      print('[Emotion] ❌ Session emotion analysis failed: $e');
+      // 404는 메시지가 없는 정상 상황
+      if (e.toString().contains('404') ||
+          e.toString().contains('No user messages')) {
+        print('[Emotion] ⚠️ No messages in session (skipped analysis)');
+      } else {
+        print('[Emotion] ❌ Session emotion analysis failed: $e');
+      }
       // Silent fail - 백그라운드 작업이므로 UI에 영향 없음
     }
   }

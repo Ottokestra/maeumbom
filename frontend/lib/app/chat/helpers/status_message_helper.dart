@@ -23,7 +23,7 @@ class StatusMessageHelper {
 
     // 3. AI 생각 중 (Agent 처리 중)
     if (voiceState == VoiceInterfaceState.processing || isLoading) {
-      return '음.. 답변을 생각해볼게. 잠깐만 기다려줘!';
+      return '음.. 생각해볼게. 잠시만 기다려줘!';
     }
 
     // 4. 상태 메시지 없음 (일반 답변 표시)
