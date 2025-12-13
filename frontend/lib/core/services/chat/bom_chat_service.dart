@@ -166,6 +166,19 @@ class BomChatService {
           onError?.call(errorMsg);
           break;
 
+        case 'tts_ready':
+          // 🆕 TTS 오디오 준비 완료 - URL 전달
+          final audioUrl = response['audio_url'] as String?;
+          if (audioUrl != null) {
+            debugPrint('[BomChatService] TTS 오디오 준비: $audioUrl');
+            // TTS URL을 onResponse 콜백으로 전달
+            onResponse?.call({
+              'tts_audio': audioUrl,
+              'type': 'tts_ready',
+            });
+          }
+          break;
+
         default:
           debugPrint('[BomChatService] 알 수 없는 응답 타입: $type');
       }

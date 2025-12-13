@@ -28,7 +28,18 @@ class _BomiScreenState extends ConsumerState<BomiScreen> {
     super.dispose();
   }
 
-  void _handleTextModeToggle() {
+  Future<void> _handleTextModeToggle() async {
+    // 🆕 음성 대화가 진행 중이면 중지
+    final chatState = ref.read(chatProvider);
+    if (chatState.voiceState != VoiceInterfaceState.idle) {
+      try {
+        await ref.read(chatProvider.notifier).stopAudioRecording();
+        print('[BomiScreen] 음성 대화 중지 (텍스트 모드로 전환)');
+      } catch (e) {
+        print('[BomiScreen] 음성 중지 실패: $e');
+      }
+    }
+
     setState(() {
       _showInputBar = true;
     });
@@ -131,6 +142,24 @@ class _BomiScreenState extends ConsumerState<BomiScreen> {
     }
   }
 
+  /// 🆕 음성 대화 중지 후 네비게이션
+  Future<void> _stopVoiceAndNavigate(VoidCallback navigation) async {
+    final chatState = ref.read(chatProvider);
+
+    // 음성 대화가 진행 중이면 중지
+    if (chatState.voiceState != VoiceInterfaceState.idle) {
+      try {
+        await ref.read(chatProvider.notifier).stopAudioRecording();
+        print('[BomiScreen] 음성 대화 중지 (네비게이션)');
+      } catch (e) {
+        print('[BomiScreen] 음성 중지 실패: $e');
+      }
+    }
+
+    // 네비게이션 실행
+    navigation();
+  }
+
   @override
   Widget build(BuildContext context) {
     final chatState = ref.watch(chatProvider);
@@ -142,8 +171,10 @@ class _BomiScreenState extends ConsumerState<BomiScreen> {
         title: '',
         leftIcon: Icons.arrow_back_ios,
         rightIcon: Icons.more_horiz,
-        onTapLeft: () => navigationService.navigateToTab(0),
-        onTapRight: () => MoreMenuSheet.show(context),
+        onTapLeft: () =>
+            _stopVoiceAndNavigate(() => navigationService.navigateToTab(0)),
+        onTapRight: () =>
+            _stopVoiceAndNavigate(() => MoreMenuSheet.show(context)),
       ),
       bottomBar: _showInputBar
           ? BottomInputBar(

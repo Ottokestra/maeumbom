@@ -32,10 +32,53 @@ def remove_audio_tags(text: str) -> str:
     # 패턴: [로 시작하여 ]로 끝나는 단어들
     cleaned_text = re.sub(r'\[[\w\s]+\]\s*', '', text)
     
-    # 여러 공백을 하나로 정리
-    cleaned_text = re.sub(r'\s+', ' ', cleaned_text).strip()
+    # 🆕 줄바꿈은 보존하고, 연속된 공백만 하나로 정리
+    # 줄바꿈이 아닌 공백만 정리 (탭, 스페이스 등)
+    cleaned_text = re.sub(r'[^\S\n]+', ' ', cleaned_text)  # \S = 공백 아닌 문자, [^\S\n] = 줄바꿈 제외한 공백
     
-    return cleaned_text
+    return cleaned_text.strip()
+
+
+def clean_text_for_tts(text: str) -> str:
+    """
+    TTS 음성 출력용 텍스트 정리 (마크다운 기호 제거, 줄바꿈 처리)
+    
+    Args:
+        text: 마크다운과 줄바꿈이 포함된 텍스트
+        
+    Returns:
+        TTS에 적합하게 정리된 텍스트 (audio tags는 유지)
+        
+    Examples:
+        "오늘은 **휴식**이 필요해" -> "오늘은 휴식이 필요해"
+        "충분히 쉬어.\n내가 옆에 있을게." -> "충분히 쉬어. 내가 옆에 있을게."
+        "`가벼운 스트레칭`만 해봐" -> "가벼운 스트레칭만 해봐"
+    """
+    # 1. 마크다운 기호 제거
+    # **볼드** 또는 __볼드__ -> 볼드
+    cleaned = re.sub(r'\*\*(.+?)\*\*', r'\1', text)
+    cleaned = re.sub(r'__(.+?)__', r'\1', cleaned)
+    
+    # `코드` 또는 ``코드`` -> 코드
+    cleaned = re.sub(r'`+(.+?)`+', r'\1', cleaned)
+    
+    # # 헤더 기호 제거
+    cleaned = re.sub(r'^#+\s+', '', cleaned, flags=re.MULTILINE)
+    
+    # - 리스트 기호 제거 (줄 시작 부분만)
+    cleaned = re.sub(r'^\s*[-*]\s+', '', cleaned, flags=re.MULTILINE)
+    
+    # 2. 줄바꿈 처리
+    # 두 개 이상의 줄바꿈 -> 마침표 + 공백 (문단 구분)
+    cleaned = re.sub(r'\n\n+', '. ', cleaned)
+    
+    # 단일 줄바꿈 -> 공백 (자연스러운 읽기)
+    cleaned = re.sub(r'\n', ' ', cleaned)
+    
+    # 3. 여러 공백을 하나로 정리
+    cleaned = re.sub(r'\s+', ' ', cleaned).strip()
+    
+    return cleaned
 
 
 
@@ -119,6 +162,14 @@ def generate_response_type(llm_response: str) -> str:
         response_type: "list" 또는 "normal"
     """
     try:
+        # 🆕 Method 1: LLM이 명시한 TYPE 태그 체크 (우선순위 1)
+        type_match = re.search(r'\[TYPE:(list|normal)\]', llm_response, re.IGNORECASE)
+        if type_match:
+            detected_type = type_match.group(1).lower()
+            logger.info(f"📋 [Response Type] Detected from [TYPE] tag: {detected_type}")
+            return detected_type
+        
+        # Method 2: 정규식 fallback (기존 방식)
         # 정규식: "1." 또는 "1)" 형태로 시작하는 라인 찾기
         # 최소 2개 이상의 번호 목록이 있어야 list로 판단
         pattern = r'^\s*\d+[\.\)]\s+'
@@ -131,10 +182,10 @@ def generate_response_type(llm_response: str) -> str:
         
         # 2개 이상의 번호 목록이 있으면 list type
         if numbered_lines >= 2:
-            logger.info(f"📋 [Response Type] Detected: list (found {numbered_lines} numbered items)")
+            logger.info(f"📋 [Response Type] Detected from regex: list (found {numbered_lines} numbered items)")
             return "list"
         else:
-            logger.info(f"💬 [Response Type] Detected: normal")
+            logger.info(f"💬 [Response Type] Detected: normal (no list pattern found)")
             return "normal"
             
     except Exception as e:
@@ -269,10 +320,9 @@ def parse_alarm_request(
         
     Returns:
         {
-            "response_type": "alarm" | "warning" | None,
+            "response_type": "alarm" | None,
             "count": int,
-            "data": [...],
-            "message": str (warning일 때만)
+            "data": [...]
         }
     """
     print("=" * 80)
@@ -430,18 +480,7 @@ AI 응답: "{llm_response}"
         
         print(f"[ALARM PARSER] Step 10: Found {len(alarms)} alarms")
         
-        # 3개 초과 검증
-        if len(alarms) > 3:
-            logger.warning(f"⚠️ [Alarm] Too many alarms requested: {len(alarms)}")
-            print(f"[ALARM PARSER] Step 11: TOO MANY alarms ({len(alarms)}), returning warning")
-            return {
-                "response_type": "warning",
-                "message": "알람은 한번의 요청에서 세개까지만 등록이 가능합니다.",
-                "count": len(alarms),
-                "data": []
-            }
-        
-        print("[AL ARM PARSER] Step 11: Processing alarms...")
+        print("[ALARM PARSER] Step 11: Processing alarms...")
         
         # 각 알람 처리 및 검증
         processed_alarms = []

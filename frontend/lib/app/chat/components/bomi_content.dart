@@ -86,16 +86,6 @@ class _BomiContentState extends ConsumerState<BomiContent> {
   /// 알람 취소 처리 (제거)
   // void _cancelAlarm() { ... }
 
-  /// Warning 다이얼로그 표시
-  void _showWarningDialog(Map<String, dynamic> alarmInfo) {
-    if (!mounted) return;
-
-    ChatAlarmDialogs.showAlarmWarningDialog(
-      context,
-      alarmInfo: alarmInfo,
-    );
-  }
-
   /// 리스트 항목 선택 핸들러
   Future<void> _handleListItemSelected(String item) async {
     if (!mounted) return;
@@ -124,7 +114,6 @@ class _BomiContentState extends ConsumerState<BomiContent> {
     // Alarm dialog callbacks 등록 (한 번만)
     if (!_callbacksRegistered) {
       ref.read(chatProvider.notifier).onShowAlarmDialog = _showAlarmDialog;
-      ref.read(chatProvider.notifier).onShowWarningDialog = _showWarningDialog;
       _callbacksRegistered = true;
       print('[BomiContent] ✅ Alarm dialog callbacks registered');
     }

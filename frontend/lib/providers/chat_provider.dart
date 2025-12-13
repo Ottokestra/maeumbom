@@ -113,7 +113,6 @@ class ChatNotifier extends StateNotifier<ChatState> {
   // 🆕 Alarm dialog callback
   void Function(Map<String, dynamic> alarmInfo, String replyText)?
       onShowAlarmDialog;
-  void Function(Map<String, dynamic> alarmInfo)? onShowWarningDialog;
 
   // 🆕 음성 입력 여부 추적
   bool _isVoiceInput = false;
@@ -167,21 +166,21 @@ class ChatNotifier extends StateNotifier<ChatState> {
   // 🆕 WebSocket 상태 변경 처리
   void _handleStatusChange(String status, String message) {
     print('[ChatProvider] 🔔 Status change: $status - $message');
-    
+
     switch (status) {
       case 'connecting':
         // 모델 로딩 중 - 이미 loading 상태로 설정되어 있음
         break;
-        
+
       case 'ready':
         // 준비 완료 - listening 상태로 전환 (startAudioRecording에서 처리)
         break;
-        
+
       case 'processing_voice':
         // 🆕 음성 처리 중 (STT) - 발화 종료 감지 후
         state = state.copyWith(voiceState: VoiceInterfaceState.processingVoice);
         break;
-        
+
       case 'processing':
         // AI 생각 중
         state = state.copyWith(voiceState: VoiceInterfaceState.processing);
@@ -245,6 +244,36 @@ class ChatNotifier extends StateNotifier<ChatState> {
 
   /// Handle agent response from BomChatService
   void _handleAgentResponse(Map<String, dynamic> response) {
+    // 🆕 tts_ready 타입 처리
+    if (response['type'] == 'tts_ready') {
+      final ttsAudio = response['tts_audio'] as String?;
+      print('[ChatProvider] 🎵 TTS 준비 완료: $ttsAudio');
+
+      if (state.ttsEnabled && ttsAudio != null && ttsAudio.isNotEmpty) {
+        // TTS URL을 완전한 HTTP URL로 변환
+        String ttsUrl = ttsAudio;
+        if (ttsAudio.startsWith('/')) {
+          ttsUrl = 'http://localhost:8000$ttsAudio';
+        }
+
+        print('[ChatProvider] 🎵 TTS 재생 시작: $ttsUrl');
+
+        // TTS 재생
+        _ttsPlayerService.play(ttsUrl).then((_) {
+          print('[ChatProvider] ✅ TTS 재생 완료');
+          if (state.voiceState == VoiceInterfaceState.replying &&
+              _bomChatService.isActive) {
+            state = state.copyWith(voiceState: VoiceInterfaceState.listening);
+            print('[ChatProvider] TTS 재생 완료 - listening으로 전환');
+          }
+        }).catchError((error) {
+          print('[ChatProvider] ❌ TTS 재생 실패: $error');
+        });
+      }
+      return;
+    }
+
+    // 기존 agent_response 처리
     final replyText = response['reply_text'] as String?;
     final emotion = response['emotion'] as String?;
     final responseType = response['response_type'] as String?;
@@ -306,23 +335,22 @@ class ChatNotifier extends StateNotifier<ChatState> {
                 '[ChatProvider] 📝 [VOICE] ${validAlarms.length} valid alarms sent to AlarmProvider');
           }
         }
-      } else if (responseType == 'warning' && alarmInfo != null) {
-        print('[ChatProvider] ⚠️ [VOICE] Triggering warning dialog callback');
-        onShowWarningDialog?.call(alarmInfo);
       }
 
       // ✅ TTS 재생
       if (state.ttsEnabled && ttsAudio != null && ttsAudio.isNotEmpty) {
         _playTtsAudio(ttsAudio);
+        // TTS 재생 중이므로 listening 전환은 _playTtsAudio에서 처리
+      } else {
+        // TTS 없음 - 3초 후 listening으로 전환 (WebSocket 연결 유지)
+        Future.delayed(const Duration(seconds: 3), () {
+          if (state.voiceState == VoiceInterfaceState.replying &&
+              _bomChatService.isActive) {
+            state = state.copyWith(voiceState: VoiceInterfaceState.listening);
+            print('[ChatProvider] TTS 없음 - listening으로 전환');
+          }
+        });
       }
-
-      // ✅ WebSocket 연결 유지! - TTS 재생 후 다시 listening으로 전환
-      Future.delayed(const Duration(seconds: 3), () {
-        if (state.voiceState == VoiceInterfaceState.replying &&
-            _bomChatService.isActive) {
-          state = state.copyWith(voiceState: VoiceInterfaceState.listening);
-        }
-      });
     }
   }
 
