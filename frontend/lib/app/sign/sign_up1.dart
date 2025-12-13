@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter/services.dart';
 import '../../ui/app_ui.dart';
-import '../../ui/layout/app_frame.dart';
-import '../../ui/layout/bottom_button_bars.dart';
 import 'survey_data_holder.dart';
 import '../../data/dtos/onboarding/onboarding_survey_request.dart';
 import '../../core/utils/logger.dart';
@@ -42,25 +39,51 @@ class _SignUp1ScreenState extends ConsumerState<SignUp1Screen> {
   String? _livingWith;
   final List<String> _maritalOptions = ['미혼', '기혼', '이혼/사별', '말하고 싶지 않음'];
   final List<String> _childrenOptions = ['있음', '없음'];
-  final List<String> _livingOptions = ['혼자', '배우자와', '자녀와', '부모님과', '가족과 함께', '기타'];
+  final List<String> _livingOptions = [
+    '혼자',
+    '배우자와',
+    '자녀와',
+    '부모님과',
+    '가족과 함께',
+    '기타'
+  ];
 
   // --- 4. 성향 State ---
   String? _personality;
   String? _activityPreference;
   final List<String> _personalityOptions = ['내향적', '외향적', '상황에따라'];
-  final List<String> _activityOptions = ['조용한 활동이 좋아요', '활동적인게 좋아요', '상황에 따라 달라요'];
+  final List<String> _activityOptions = [
+    '조용한 활동이 좋아요',
+    '활동적인게 좋아요',
+    '상황에 따라 달라요'
+  ];
 
   // --- 5. 취미/스트레스 State ---
   final Set<String> _stressReliefMethods = {};
   final Set<String> _hobbies = {};
   final TextEditingController _otherHobbyController = TextEditingController();
   final List<String> _stressReliefOptions = [
-    '혼자 조용히 해결해요', '취미 활동을 해요', '그냥 잊고 넘어가요', '바로 감정이 격해져요',
-    '산책을 해요', '누군가와 대화를 나눠요', '운동을 해요', '기타'
+    '혼자 조용히 해결해요',
+    '취미 활동을 해요',
+    '그냥 잊고 넘어가요',
+    '바로 감정이 격해져요',
+    '산책을 해요',
+    '누군가와 대화를 나눠요',
+    '운동을 해요',
+    '기타'
   ];
   final List<String> _hobbyOptions = [
-    '등산', '산책', '독서', '요리', '음악감상', '여행',
-    '정리정돈', '공예/DIY', '반려동물', '영화/드라마', '정원/식물'
+    '등산',
+    '산책',
+    '독서',
+    '요리',
+    '음악감상',
+    '여행',
+    '정리정돈',
+    '공예/DIY',
+    '반려동물',
+    '영화/드라마',
+    '정원/식물'
   ];
 
   // --- 6. 분위기(Q11) State ---
@@ -73,7 +96,6 @@ class _SignUp1ScreenState extends ConsumerState<SignUp1Screen> {
     {'label': '차분함', 'left': 164.0, 'top': 115.0, 'width': 97.0},
     {'label': '밝고 명랑한 분위기', 'left': 0.0, 'top': 115.0, 'width': 161.0},
   ];
-
 
   @override
   void dispose() {
@@ -104,9 +126,12 @@ class _SignUp1ScreenState extends ConsumerState<SignUp1Screen> {
     // 1. 약관
     if (!_allAgreed) return false;
     // 2. 기본 정보
-    if (_nicknameController.text.isEmpty || _selectedGender == null || _selectedAge == null) return false;
+    if (_nicknameController.text.isEmpty ||
+        _selectedGender == null ||
+        _selectedAge == null) return false;
     // 3. 가족 정보
-    if (_maritalStatus == null || _hasChildren == null || _livingWith == null) return false;
+    if (_maritalStatus == null || _hasChildren == null || _livingWith == null)
+      return false;
     // 4. 성향
     if (_personality == null || _activityPreference == null) return false;
     // 5. 취미
@@ -195,7 +220,9 @@ class _SignUp1ScreenState extends ConsumerState<SignUp1Screen> {
         personalityType: _personality!,
         activityStyle: _activityPreference!,
         stressRelief: _stressReliefMethods.toList(),
-        hobbies: _hobbies.map((e) => e.startsWith('기타:') ? e.substring(4).trim() : e).toList(),
+        hobbies: _hobbies
+            .map((e) => e.startsWith('기타:') ? e.substring(4).trim() : e)
+            .toList(),
         atmosphere: [_selectedAtmosphere!],
       );
 
@@ -205,7 +232,8 @@ class _SignUp1ScreenState extends ConsumerState<SignUp1Screen> {
       if (mounted) Navigator.pop(context); // Close loading
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('회원가입 완료!'), backgroundColor: Colors.green),
+          const SnackBar(
+              content: Text('회원가입 완료!'), backgroundColor: Colors.green),
         );
         Navigator.pushReplacementNamed(context, '/');
       }
@@ -256,13 +284,37 @@ class _SignUp1ScreenState extends ConsumerState<SignUp1Screen> {
               style: AppTypography.h2.copyWith(height: 1.3),
             ),
             const SizedBox(height: 16),
-            Text('서비스 이용을 위해 아래 내용에 동의해주세요.', style: AppTypography.body.copyWith(color: AppColors.textSecondary)),
+            Text('서비스 이용을 위해 아래 내용에 동의해주세요.',
+                style: AppTypography.body
+                    .copyWith(color: AppColors.textSecondary)),
             const SizedBox(height: 32),
-            _buildTermItem(title: '전체 동의합니다.', value: _allAgreed, onChanged: _updateAllTerms, isBold: true),
+            _buildTermItem(
+                title: '전체 동의합니다.',
+                value: _allAgreed,
+                onChanged: _updateAllTerms,
+                isBold: true),
             const Divider(height: 1, color: AppColors.borderLight),
-            _buildTermItem(title: '만 14세 이상입니다. (필수)', value: _isAgeVerified, onChanged: (v) { _isAgeVerified = v!; _updateTermItem(); }),
-            _buildTermItem(title: '서비스 이용약관(필수)', value: _isServiceAgreed, onChanged: (v) { _isServiceAgreed = v!; _updateTermItem(); }),
-            _buildTermItem(title: '개인정보 수집 및 이용 동의(필수)', value: _isPrivacyAgreed, onChanged: (v) { _isPrivacyAgreed = v!; _updateTermItem(); }),
+            _buildTermItem(
+                title: '만 14세 이상입니다. (필수)',
+                value: _isAgeVerified,
+                onChanged: (v) {
+                  _isAgeVerified = v!;
+                  _updateTermItem();
+                }),
+            _buildTermItem(
+                title: '서비스 이용약관(필수)',
+                value: _isServiceAgreed,
+                onChanged: (v) {
+                  _isServiceAgreed = v!;
+                  _updateTermItem();
+                }),
+            _buildTermItem(
+                title: '개인정보 수집 및 이용 동의(필수)',
+                value: _isPrivacyAgreed,
+                onChanged: (v) {
+                  _isPrivacyAgreed = v!;
+                  _updateTermItem();
+                }),
 
             const SizedBox(height: 60),
 
@@ -278,47 +330,58 @@ class _SignUp1ScreenState extends ConsumerState<SignUp1Screen> {
 
             // --- Q2: Gender ---
             _buildSectionTitle('Q2. 성별을 선택해주세요.'),
-            _buildWrapOptions(_genderOptions, _selectedGender, (val) => setState(() => _selectedGender = val)),
+            _buildWrapOptions(_genderOptions, _selectedGender,
+                (val) => setState(() => _selectedGender = val)),
 
             const SizedBox(height: 40),
 
             // --- Q3: Age ---
             _buildSectionTitle('Q3. 연령대를 선택해주세요.'),
-            _buildWrapOptions(_ageOptions, _selectedAge, (val) => setState(() => _selectedAge = val)),
+            _buildWrapOptions(_ageOptions, _selectedAge,
+                (val) => setState(() => _selectedAge = val)),
 
             const SizedBox(height: 40),
 
             // --- Q4: Marital ---
             _buildSectionTitle('Q4. 결혼 여부를 알려주세요.'),
-            _buildWrapOptions(_maritalOptions, _maritalStatus, (val) => setState(() => _maritalStatus = val)),
+            _buildWrapOptions(_maritalOptions, _maritalStatus,
+                (val) => setState(() => _maritalStatus = val)),
 
             const SizedBox(height: 40),
 
             // --- Q5: Children ---
             _buildSectionTitle('Q5. 자녀가 있으신가요?'),
-            _buildWrapOptions(_childrenOptions, _hasChildren, (val) => setState(() => _hasChildren = val)),
+            _buildWrapOptions(_childrenOptions, _hasChildren,
+                (val) => setState(() => _hasChildren = val)),
 
             const SizedBox(height: 40),
 
             // --- Q6: Living With ---
             _buildSectionTitle('Q6. 현재 누구와 함께 생활하고 계신가요?'),
-            _buildWrapOptions(_livingOptions, _livingWith, (val) => setState(() => _livingWith = val)),
+            _buildWrapOptions(_livingOptions, _livingWith,
+                (val) => setState(() => _livingWith = val)),
 
             const SizedBox(height: 40),
 
             // --- Q7: Personality ---
             _buildSectionTitle('Q7. 나는 어떤 성향에 더 가까워요?'),
-            _buildWrapOptions(_personalityOptions, _personality, (val) => setState(() => _personality = val)),
+            _buildWrapOptions(_personalityOptions, _personality,
+                (val) => setState(() => _personality = val)),
 
             const SizedBox(height: 40),
 
             // --- Q8: Activity ---
             _buildSectionTitle('Q8. 선호하는 활동을 골라주세요'),
             Column(
-              children: _activityOptions.map((opt) => Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                child: _buildFullWidthOption(opt, _activityPreference == opt, () => setState(() => _activityPreference = opt)),
-              )).toList(),
+              children: _activityOptions
+                  .map((opt) => Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: _buildFullWidthOption(
+                            opt,
+                            _activityPreference == opt,
+                            () => setState(() => _activityPreference = opt)),
+                      ))
+                  .toList(),
             ),
 
             const SizedBox(height: 40),
@@ -338,8 +401,10 @@ class _SignUp1ScreenState extends ConsumerState<SignUp1Screen> {
               decoration: _inputDecoration('기타(직접입력)'),
               onChanged: (val) {
                 setState(() {
-                  if (val.isNotEmpty) _hobbies.add('기타: $val');
-                  else _hobbies.removeWhere((h) => h.startsWith('기타:'));
+                  if (val.isNotEmpty)
+                    _hobbies.add('기타: $val');
+                  else
+                    _hobbies.removeWhere((h) => h.startsWith('기타:'));
                 });
               },
             ),
@@ -369,30 +434,42 @@ class _SignUp1ScreenState extends ConsumerState<SignUp1Screen> {
     );
   }
 
-  Widget _buildTermItem({required String title, required bool value, required ValueChanged<bool?> onChanged, bool isBold = false}) {
+  Widget _buildTermItem(
+      {required String title,
+      required bool value,
+      required ValueChanged<bool?> onChanged,
+      bool isBold = false}) {
     return InkWell(
       onTap: () => onChanged(!value),
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 8),
         child: Row(
           children: [
-            Checkbox(value: value, onChanged: onChanged, activeColor: AppColors.secondaryColor),
-            Text(title, style: AppTypography.body.copyWith(fontWeight: isBold ? FontWeight.bold : FontWeight.normal)),
+            Checkbox(
+                value: value,
+                onChanged: onChanged,
+                activeColor: AppColors.secondaryColor),
+            Text(title,
+                style: AppTypography.body.copyWith(
+                    fontWeight: isBold ? FontWeight.bold : FontWeight.normal)),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildWrapOptions(List<String> options, String? selected, ValueChanged<String> onSelect) {
+  Widget _buildWrapOptions(
+      List<String> options, String? selected, ValueChanged<String> onSelect) {
     return Wrap(
       spacing: 12,
       runSpacing: 12,
-      children: options.map((opt) => _buildOptionButton(
-        text: opt,
-        isSelected: selected == opt,
-        onTap: () => onSelect(opt),
-      )).toList(),
+      children: options
+          .map((opt) => _buildOptionButton(
+                text: opt,
+                isSelected: selected == opt,
+                onTap: () => onSelect(opt),
+              ))
+          .toList(),
     );
   }
 
@@ -406,15 +483,20 @@ class _SignUp1ScreenState extends ConsumerState<SignUp1Screen> {
           text: opt,
           isSelected: isSelected,
           onTap: () => setState(() {
-            if (isSelected) selectedSet.remove(opt);
-            else selectedSet.add(opt);
+            if (isSelected)
+              selectedSet.remove(opt);
+            else
+              selectedSet.add(opt);
           }),
         );
       }).toList(),
     );
   }
 
-  Widget _buildOptionButton({required String text, required bool isSelected, required VoidCallback onTap}) {
+  Widget _buildOptionButton(
+      {required String text,
+      required bool isSelected,
+      required VoidCallback onTap}) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -426,18 +508,23 @@ class _SignUp1ScreenState extends ConsumerState<SignUp1Screen> {
         ),
         child: Text(
           text,
-          style: AppTypography.body.copyWith(color: isSelected ? Colors.white : AppColors.textPrimary),
+          style: AppTypography.body.copyWith(
+              color: isSelected ? Colors.white : AppColors.textPrimary),
         ),
       ),
     );
   }
 
-  Widget _buildChipButton({required String text, required bool isSelected, required VoidCallback onTap}) {
+  Widget _buildChipButton(
+      {required String text,
+      required bool isSelected,
+      required VoidCallback onTap}) {
     // Similar to OptionButton but maybe smaller padding or different style if needed
     return _buildOptionButton(text: text, isSelected: isSelected, onTap: onTap);
   }
 
-  Widget _buildFullWidthOption(String text, bool isSelected, VoidCallback onTap) {
+  Widget _buildFullWidthOption(
+      String text, bool isSelected, VoidCallback onTap) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -451,7 +538,8 @@ class _SignUp1ScreenState extends ConsumerState<SignUp1Screen> {
         child: Text(
           text,
           textAlign: TextAlign.center,
-          style: AppTypography.body.copyWith(color: isSelected ? Colors.white : AppColors.textPrimary),
+          style: AppTypography.body.copyWith(
+              color: isSelected ? Colors.white : AppColors.textPrimary),
         ),
       ),
     );
@@ -462,9 +550,15 @@ class _SignUp1ScreenState extends ConsumerState<SignUp1Screen> {
       hintText: hint,
       filled: true,
       fillColor: Colors.white,
-      border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: AppColors.borderLight)),
-      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: AppColors.borderLight)),
-      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: AppColors.primaryColor)),
+      border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(color: AppColors.borderLight)),
+      enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(color: AppColors.borderLight)),
+      focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(color: AppColors.primaryColor)),
     );
   }
 
@@ -512,11 +606,14 @@ class _SignUp1ScreenState extends ConsumerState<SignUp1Screen> {
                     child: Container(
                       width: opt['width'],
                       height: 44,
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 8),
                       decoration: ShapeDecoration(
-                        color: isSelected ? AppColors.primaryColor : Colors.white,
+                        color:
+                            isSelected ? AppColors.primaryColor : Colors.white,
                         shape: RoundedRectangleBorder(
-                          side: BorderSide(width: 1, color: const Color(0xFFF0EAE8)),
+                          side: BorderSide(
+                              width: 1, color: const Color(0xFFF0EAE8)),
                           borderRadius: BorderRadius.circular(14),
                         ),
                       ),
@@ -524,10 +621,14 @@ class _SignUp1ScreenState extends ConsumerState<SignUp1Screen> {
                         child: Text(
                           label,
                           softWrap: false,
-                          overflow: TextOverflow.visible, // Allow slight overflow if font differs
+                          overflow: TextOverflow
+                              .visible, // Allow slight overflow if font differs
                           style: TextStyle(
-                            color: isSelected ? Colors.white : const Color(0xFF233446),
-                            fontSize: 14, // Slightly reduced to fit fixed widths if needed
+                            color: isSelected
+                                ? Colors.white
+                                : const Color(0xFF233446),
+                            fontSize:
+                                14, // Slightly reduced to fit fixed widths if needed
                             fontFamily: 'Pretendard',
                             height: 1.0,
                           ),

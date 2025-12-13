@@ -9,11 +9,14 @@ import '../../app/settings/privacy.dart';
 import '../../app/common/login_screen.dart';
 import '../../app/sign/sign_up1.dart';
 import '../../app/survey/menopause_survey_screen.dart';
+import '../../app/survey/menopause_survey_intro_screen.dart';
 import '../../app/onboarding/splash_screen.dart';
 import '../../app/chat/bomi_screen.dart';
 import '../../app/chat/chat_list_screen.dart';
 import '../../app/training/training_screen.dart';
 import '../../app/slang_quiz/slang_quiz_start_screen.dart';
+import '../../app/settings/settings_screen.dart';
+import '../../app/home/home_new_screen.dart';
 
 /// 라우트 메타데이터
 class RouteMetadata {
@@ -94,8 +97,14 @@ class AppRoutes {
     requiresAuth: true, // 로그인 직후 진입하므로 인증 필요
   );
 
+  static const RouteMetadata menopauseSurveyIntro = RouteMetadata(
+    routeName: '/menopause-survey-intro',
+    builder: MenopauseSurveyIntroScreen.new,
+    requiresAuth: true,
+  );
+
   static const RouteMetadata menopauseSurvey = RouteMetadata(
-    routeName: '/menopause_survey',
+    routeName: '/menopause-survey',
     builder: MenopauseSurveyScreen.new,
     requiresAuth: true,
   );
@@ -114,6 +123,13 @@ class AppRoutes {
   );
 
   // Settings Routes
+  static const RouteMetadata settings = RouteMetadata(
+    routeName: '/settings',
+    builder: SettingsScreen.new,
+    requiresAuth: true,
+  );
+
+  // Settings Routes
   static const RouteMetadata terms = RouteMetadata(
     routeName: '/settings/terms',
     builder: TermsScreen.new,
@@ -122,6 +138,11 @@ class AppRoutes {
   static const RouteMetadata privacy = RouteMetadata(
     routeName: '/settings/privacy',
     builder: PrivacyPolicyScreen.new,
+  );
+
+  static const RouteMetadata homeNew = RouteMetadata(
+    routeName: '/home_new',
+    builder: HomeNewScreen.new,
   );
 
   /// 모든 라우트 목록
@@ -138,10 +159,13 @@ class AppRoutes {
     signUpSlide,
     bomi,
     training,
+    menopauseSurveyIntro,
     menopauseSurvey,
     slangQuizStart,
+    settings,
     terms,
     privacy,
+    homeNew,
   ];
 
   /// 경로 이름으로 라우트 찾기

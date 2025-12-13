@@ -14,6 +14,7 @@
 - [루틴 설문 (Routine Survey)](#루틴-설문-routine-survey)
 - [갱년기 설문 (Menopause Survey)](#갱년기-설문-menopause-survey)
 - [신조어 퀴즈 (Slang Quiz)](#신조어-퀴즈-slang-quiz)
+- [대상별 이벤트 (Target Events)](#대상별-이벤트-target-events---마음서랍)
 - [음성 인식 (STT)](#음성-인식-stt)
 - [음성 합성 (TTS)](#음성-합성-tts)
 - [디버그/정리 (Debug/Cleanup)](#디버그정리-debugcleanup)
@@ -2280,7 +2281,235 @@ HTTP 상태 코드:
 | GET  | `/api/v1/reports/emotion/weekly` | ✅ | userId + weekStart(+weekEnd) 기준 리포트 조회 |
 | GET  | `/api/v1/reports/emotion/weekly/list` | ✅ | 최근 N주 리포트 요약 목록 조회 |
 
+### 대상별 이벤트 (Target Events - 마음서랍)
+
+| HTTP 메서드 | 경로 | 인증 필요 | 설명 |
+|------------|------|----------|------|
+| POST | `/api/target-events/analyze-daily` | ✅ | 특정 날짜의 대화 분석 실행 |
+| POST | `/api/target-events/analyze-weekly` | ✅ | 특정 주간의 이벤트 요약 실행 |
+| GET  | `/api/target-events/daily` | ✅ | 일간 이벤트 목록 조회 (태그 필터링 지원) |
+| GET  | `/api/target-events/weekly` | ✅ | 주간 이벤트 목록 조회 (태그 필터링 지원) |
+| GET  | `/api/target-events/tags/popular` | ✅ | 자주 사용되는 태그 목록 조회 |
+| GET  | `/api/target-events/health` | ❌ | 헬스 체크 |
+
+#### 1. 일일 대화 분석
+**경로**: `POST /api/target-events/analyze-daily`  
+**인증**: 필요 (Bearer Token)  
+**설명**: 특정 날짜의 대화를 LLM으로 분석하여 대상별 이벤트 추출  
+
+**요청 Body**:
+```json
+{
+  "target_date": "2024-12-13"
+}
+```
+
+**응답**:
+```json
+{
+  "analyzed_date": "2024-12-13",
+  "events_count": 1,
+  "events": [
+    {
+      "id": 1,
+      "user_id": 1,
+      "event_date": "2024-12-13",
+      "event_type": "event",
+      "target_type": "CHILD",
+      "event_summary": "봄이와 건강 상담, 아들 학교 픽업 약속",
+      "event_time": "2024-12-13T18:00:00",
+      "importance": 4,
+      "is_future_event": false,
+      "tags": ["#자녀", "#픽업", "#오늘", "#중요"],
+      "created_at": "2024-12-13T10:00:00",
+      "updated_at": "2024-12-13T10:00:00"
+    }
+  ]
+}
+```
+
+#### 2. 주간 이벤트 요약
+**경로**: `POST /api/target-events/analyze-weekly`  
+**인증**: 필요 (Bearer Token)  
+**설명**: 특정 주간(월~일)의 일간 이벤트를 대상별로 요약  
+
+**요청 Body**:
+```json
+{
+  "week_start": "2024-12-09"
+}
+```
+
+**응답**:
+```json
+{
+  "week_start": "2024-12-09",
+  "week_end": "2024-12-15",
+  "summaries_count": 2,
+  "summaries": [
+    {
+      "id": 1,
+      "user_id": 1,
+      "week_start": "2024-12-09",
+      "week_end": "2024-12-15",
+      "target_type": "HUSBAND",
+      "events_summary": [
+        {
+          "date": "2024-12-11",
+          "summary": "남편과 저녁 약속"
+        },
+        {
+          "date": "2024-12-13",
+          "summary": "남편 생일 준비"
+        }
+      ],
+      "total_events": 2,
+      "tags": ["#남편", "#약속", "#기념일"],
+      "created_at": "2024-12-15T20:00:00",
+      "updated_at": "2024-12-15T20:00:00"
+    }
+  ]
+}
+```
+
+#### 3. 일간 이벤트 목록 조회
+**경로**: `GET /api/target-events/daily`  
+**인증**: 필요 (Bearer Token)  
+**설명**: 일간 이벤트 목록 조회 (이벤트 타입 및 태그 필터링 지원)  
+
+**Query Parameters**:
+- `event_type` (optional): 이벤트 타입 (alarm/event/memory)
+- `tags` (optional): 쉼표로 구분된 태그 (예: `#아들,#픽업`)
+- `start_date` (optional): 시작 날짜 (YYYY-MM-DD)
+- `end_date` (optional): 종료 날짜 (YYYY-MM-DD)
+- `target_type` (optional): 대상 유형 (HUSBAND/CHILD/FRIEND/COLLEAGUE/SELF)
+
+**응답**:
+```json
+{
+  "daily_events": [
+    {
+      "id": 1,
+      "user_id": 1,
+      "event_date": "2024-12-13",
+      "event_type": "event",
+      "target_type": "CHILD",
+      "event_summary": "봄이와 건강 상담, 아들 학교 픽업 약속",
+      "event_time": "2024-12-13T18:00:00",
+      "importance": 4,
+      "is_future_event": false,
+      "tags": ["#자녀", "#픽업", "#오늘", "#중요"],
+      "created_at": "2024-12-13T10:00:00",
+      "updated_at": "2024-12-13T10:00:00"
+    }
+  ],
+  "total_count": 1,
+  "available_tags": {
+    "target": ["#남편", "#자녀", "#친구"],
+    "event_type": ["#약속", "#픽업", "#만남"],
+    "time": ["#오늘", "#이번주"],
+    "importance": ["#중요", "#보통"],
+    "other": [],
+    "all": ["#자녀", "#픽업", "#약속", "#남편"]
+  }
+}
+```
+
+#### 4. 주간 이벤트 목록 조회
+**경로**: `GET /api/target-events/weekly`  
+**인증**: 필요 (Bearer Token)  
+**설명**: 주간 이벤트 목록 조회 (태그 필터링 지원)  
+
+**Query Parameters**:
+- `tags` (optional): 쉼표로 구분된 태그
+- `start_date` (optional): 시작 날짜 (YYYY-MM-DD)
+- `end_date` (optional): 종료 날짜 (YYYY-MM-DD)
+- `target_type` (optional): 대상 유형 (HUSBAND/CHILD/FRIEND/COLLEAGUE/SELF)
+
+**응답**:
+```json
+{
+  "weekly_events": [
+    {
+      "id": 1,
+      "user_id": 1,
+      "week_start": "2024-12-09",
+      "week_end": "2024-12-15",
+      "target_type": "HUSBAND",
+      "events_summary": [...],
+      "total_events": 2,
+      "tags": ["#남편", "#약속"],
+      "created_at": "2024-12-15T20:00:00",
+      "updated_at": "2024-12-15T20:00:00"
+    }
+  ],
+  "total_count": 1
+}
+```
+
+#### 5. 인기 태그 조회
+**경로**: `GET /api/target-events/tags/popular`  
+**인증**: 필요 (Bearer Token)  
+**설명**: 최근 30일간 자주 사용된 태그 목록 조회  
+
+**Query Parameters**:
+- `limit` (optional, default=20): 카테고리별 최대 태그 수
+
+**응답**:
+```json
+{
+  "target": ["#남편", "#자녀", "#친구"],
+  "event_type": ["#약속", "#픽업", "#만남"],
+  "time": ["#오늘", "#이번주"],
+  "importance": ["#중요", "#보통"],
+  "other": [],
+  "all": ["#남편", "#약속", "#자녀", "#픽업"]
+}
+```
+
+### 이벤트 타입 (Event Type)
+
+이벤트는 다음 3가지 타입으로 분류됩니다:
+
+- **alarm**: 알람/알림 요청 (사용자가 "알려줘", "리마인드해줘" 등 명시적 요청)
+  - **주의**: 알람 타입은 무조건 `TARGET_TYPE=SELF`로 저장됩니다
+- **event**: 약속/일정 (구체적인 날짜/시간이 있는 약속, 만남 등) - 기본값
+- **memory**: 일반 대화 기억 (위 두 가지가 아닌 일반적인 대화 내용)
+
+### 대상 타입 (Target Type)
+
+대상은 다음 5가지 타입으로 분류됩니다 (TB_SCENARIOS와 동일):
+
+- **HUSBAND**: 남편 관련
+- **CHILD**: 자녀 관련 (아들/딸 통합)
+- **FRIEND**: 친구 관련
+- **COLLEAGUE**: 직장동료 관련
+- **SELF**: 봄이와 대화, 알람 등 (자기 자신)
+
+**특징**:
+- 하루에 사용자당 **1개의 이벤트만** 저장됨 (여러 대상과 대화해도 통합 요약)
+- 알람 타입은 무조건 `SELF`로 설정됨
+- `EVENT_DATE`는 분석한 날짜로 저장됨 (LLM이 계산한 날짜가 아님)
+
+**사용 예시**:
+```bash
+# 알람만 조회
+GET /api/target-events/daily?event_type=alarm
+
+# 일정만 조회
+GET /api/target-events/daily?event_type=event
+
+# 일반 기억만 조회
+GET /api/target-events/daily?event_type=memory
+
+# 알람 + SELF (알람은 항상 SELF)
+GET /api/target-events/daily?event_type=alarm&target_type=SELF
+
+# 자녀 관련 이벤트만 조회
+GET /api/target-events/daily?target_type=CHILD
+```
+
 ---
 
-**총 엔드포인트 수**: 81개  
-**인증 필요**: 45개 | **인증 불필요**: 36개
+**총 엔드포인트 수**: 87개  
+**인증 필요**: 50개 | **인증 불필요**: 37개

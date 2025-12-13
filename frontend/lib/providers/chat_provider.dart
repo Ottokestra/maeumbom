@@ -46,6 +46,7 @@ enum VoiceInterfaceState {
   idle, // 대기 중
   loading, // Backend 모델 로딩 중 (잠시만 기다려주세요)
   listening, // 사용자가 말하는 중 (말씀하세요!)
+  processingVoice, // 🆕 음성 처리 중 (STT) - 발화 종료 감지 후
   processing, // AI가 생각하는 중
   replying, // 봄이가 대답하는 중
 }
@@ -141,6 +142,7 @@ class ChatNotifier extends StateNotifier<ChatState> {
     _bomChatService.onSessionEnd = _handleSessionEnd;
     _bomChatService.onPartialText = _handlePartialText; // Phase 3 (비활성화)
     _bomChatService.onSttResult = _handleSttResult; // ✅ STT 결과
+    _bomChatService.onStatusChange = _handleStatusChange; // 🆕 WebSocket 상태 변경
   }
 
   // ✅ STT 결과 처리 - 사용자 메시지 UI에 표시 및 processing 상태로 전환
@@ -160,6 +162,31 @@ class ChatNotifier extends StateNotifier<ChatState> {
   // Phase 3: STT partial 결과 처리 (비활성화)
   void _handlePartialText(String partialText) {
     state = state.copyWith(sttPartialText: partialText);
+  }
+
+  // 🆕 WebSocket 상태 변경 처리
+  void _handleStatusChange(String status, String message) {
+    print('[ChatProvider] 🔔 Status change: $status - $message');
+    
+    switch (status) {
+      case 'connecting':
+        // 모델 로딩 중 - 이미 loading 상태로 설정되어 있음
+        break;
+        
+      case 'ready':
+        // 준비 완료 - listening 상태로 전환 (startAudioRecording에서 처리)
+        break;
+        
+      case 'processing_voice':
+        // 🆕 음성 처리 중 (STT) - 발화 종료 감지 후
+        state = state.copyWith(voiceState: VoiceInterfaceState.processingVoice);
+        break;
+        
+      case 'processing':
+        // AI 생각 중
+        state = state.copyWith(voiceState: VoiceInterfaceState.processing);
+        break;
+    }
   }
 
   /// Start audio recording (Phase 2)

@@ -112,7 +112,7 @@ async def start_game(
                 word=first_question.WORD,
                 question=first_question.QUESTION,
                 options=first_question.OPTIONS,
-                time_limit=40
+                time_limit=20
             )
         )
         
@@ -176,7 +176,7 @@ async def get_question(
             word=question.WORD,
             question=question.QUESTION,
             options=question.OPTIONS,
-            time_limit=40
+            time_limit=20
         )
         
     except HTTPException:
@@ -237,8 +237,15 @@ async def submit_answer(
         if not question:
             raise HTTPException(status_code=404, detail="Question not found")
         
+        # Check for timeout
+        is_timeout = (request.user_answer_index == -1)
+        
         # Calculate correctness and score
-        is_correct = (request.user_answer_index == question.ANSWER_INDEX)
+        if is_timeout:
+            is_correct = False
+        else:
+            is_correct = (request.user_answer_index == question.ANSWER_INDEX)
+        
         earned_score = calculate_score(is_correct, request.response_time_seconds)
         
         # Update answer record

@@ -32,8 +32,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       final sleepStartTime = DateTime.parse(result.sleepStartTime!);
       final sleepEndTime = DateTime.parse(result.sleepEndTime!);
       final sleepStartHour = sleepStartTime.hour.toString().padLeft(2, '0');
-      final sleepStartMinute =
-          sleepStartTime.minute.toString().padLeft(2, '0');
+      final sleepStartMinute = sleepStartTime.minute.toString().padLeft(2, '0');
       final sleepEndHour = sleepEndTime.hour.toString().padLeft(2, '0');
       final sleepEndMinute = sleepEndTime.minute.toString().padLeft(2, '0');
 
@@ -269,6 +268,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       ),
     );
   }
+
   @override
   Widget build(BuildContext context) {
     final navigationService = NavigationService(context, ref);
@@ -278,12 +278,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         title: '설정',
         leftIcon: Icons.arrow_back,
         onTapLeft: () => Navigator.pop(context),
-      ),
-      bottomBar: BottomMenuBar(
-        currentIndex: 4,
-        onTap: (index) {
-          navigationService.navigateToTab(index);
-        },
       ),
       body: Container(
         color: AppColors.basicGray,
@@ -352,14 +346,16 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                             icon: Icons.description_outlined,
                             label: '서비스 이용 약관',
                             onTap: () {
-                              navigationService.navigateToRoute('/settings/terms');
+                              navigationService
+                                  .navigateToRoute('/settings/terms');
                             },
                           ),
                           MenuListItem(
                             icon: Icons.privacy_tip_outlined,
                             label: '개인 정보 처리 방침',
                             onTap: () {
-                              navigationService.navigateToRoute('/settings/privacy');
+                              navigationService
+                                  .navigateToRoute('/settings/privacy');
                             },
                           ),
                         ],

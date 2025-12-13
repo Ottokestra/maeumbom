@@ -15,6 +15,9 @@ from .models import (
     SlangQuizQuestion,
     SlangQuizGame,
     SlangQuizAnswer,
+    RoutineRecommendation,
+    DailyTargetEvent,
+    WeeklyTargetEvent,
 )
 
 __all__ = [
@@ -35,5 +38,8 @@ __all__ = [
     "SlangQuizQuestion",
     "SlangQuizGame",
     "SlangQuizAnswer",
+    "RoutineRecommendation",
+    "DailyTargetEvent",
+    "WeeklyTargetEvent",
 ]
 

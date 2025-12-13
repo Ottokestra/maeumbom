@@ -217,18 +217,6 @@ class MoreMenuSheet extends ConsumerWidget {
     );
   }
 
-  /// 기분 카테고리에 따른 배경색 반환
-  Color _getMoodColor(MoodCategory category) {
-    switch (category) {
-      case MoodCategory.good:
-        return AppColors.homeGoodYellow;
-      case MoodCategory.neutral:
-        return AppColors.homeNormalGreen;
-      case MoodCategory.bad:
-        return AppColors.homeBadBlue;
-    }
-  }
-
   /// 리스트 메뉴 항목 빌더
   Widget _buildListMenuItem({
     IconData? icon,

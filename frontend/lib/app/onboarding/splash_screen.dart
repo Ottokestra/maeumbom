@@ -29,12 +29,12 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
     // authProvider가 로딩 중이면 완료될 때까지 기다림
     while (mounted) {
       final authState = ref.read(authProvider);
-      
+
       // 로딩이 완료되었는지 확인
       if (!authState.isLoading) {
         // 로딩 완료 - 최소 표시 시간도 기다림
         await minDisplayTime;
-        
+
         if (!mounted) return;
 
         // 인증 상태에 따라 화면 분기
@@ -46,7 +46,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
         }
         return;
       }
-      
+
       // 아직 로딩 중이면 잠시 대기 후 다시 확인
       await Future.delayed(const Duration(milliseconds: 100));
     }

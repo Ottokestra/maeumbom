@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../ui/app_ui.dart';
 import '../../../core/utils/emotion_classifier.dart';
+import '../../../core/utils/mood_color_helper.dart';
 import '../../../providers/daily_mood_provider.dart';
 
 /// 일일 감정 체크 풀스크린
@@ -48,33 +49,19 @@ class _DailyMoodCheckScreenState extends ConsumerState<DailyMoodCheckScreen> {
   }
 
   Color _getThemeColor(EmotionId emotion) {
-    final category = EmotionClassifier.classify(emotion);
-    switch (category) {
-      case MoodCategory.good:
-        return AppColors.moodGoodYellow;
-      case MoodCategory.neutral:
-        return AppColors.moodNormalGreen;
-      case MoodCategory.bad:
-        return AppColors.moodBadBlue;
-    }
+    return MoodColorHelper.getBackgroundColorFromEmotion(emotion);
   }
 
   Color _getBorderColor(EmotionId emotion) {
-    final category = EmotionClassifier.classify(emotion);
-    switch (category) {
-      case MoodCategory.good:
-        return AppColors.homeGoodYellow;
-      case MoodCategory.neutral:
-        return AppColors.homeNormalGreen;
-      case MoodCategory.bad:
-        return AppColors.homeBadBlue;
-    }
+    return MoodColorHelper.getBorderColorFromEmotion(emotion);
   }
 
-  void _onConfirm() {
+  Future<void> _onConfirm() async {
     final selectedEmotion = _options[_currentPage];
-    ref.read(dailyMoodProvider.notifier).selectEmotion(selectedEmotion);
-    Navigator.pop(context);
+    await ref.read(dailyMoodProvider.notifier).selectEmotion(selectedEmotion);
+    if (mounted) {
+      Navigator.pop(context);
+    }
   }
 
   @override
@@ -86,22 +73,23 @@ class _DailyMoodCheckScreenState extends ConsumerState<DailyMoodCheckScreen> {
         onTapRight: () => Navigator.pop(context),
       ),
       bottomBar: BottomButtonBar(
-        primaryText: '이 감정으로 선택',
+        primaryText: '선택하기',
         onPrimaryTap: _onConfirm,
+        style: BottomButtonBarStyle.block,
       ),
       body: Column(
         children: [
           const SizedBox(height: AppSpacing.md),
           // 안내 텍스트
           Text(
-            '지금 기분이 어떠신가요?',
+            '오늘은 어떤게 좋아?',
             style: AppTypography.h2.copyWith(
               fontWeight: FontWeight.bold,
             ),
           ),
           const SizedBox(height: AppSpacing.xs),
           Text(
-            '좌우로 넘겨서 선택해주세요',
+            '좌우로 넘겨서 선택해줘!',
             style: AppTypography.body.copyWith(
               color: AppColors.textSecondary,
             ),
@@ -201,8 +189,9 @@ class _EmotionCard extends StatelessWidget {
           builder: (context, constraints) {
             // 사용 가능한 공간 계산
             final availableHeight = constraints.maxHeight;
-            final textHeight = 80; // 캐릭터 이름 + 설명 + 여백
-            final imageHeight = availableHeight - textHeight;
+            final textHeight = 100; // 캐릭터 이름 + 설명 + 여백
+            final imageHeight =
+                (availableHeight - textHeight).clamp(80.0, double.infinity);
 
             return Column(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -216,25 +205,42 @@ class _EmotionCard extends StatelessWidget {
                   ),
                 ),
                 // 캐릭터 이미지 (최대한 크게)
-                SizedBox(
-                  height: imageHeight,
+                Expanded(
                   child: Center(
                     child: EmotionCharacter(
                       id: emotion,
-                      size: imageHeight * 0.9, // 여백 고려
+                      size: imageHeight * 0.7, // 여백 고려
                       use2d: true,
                     ),
                   ),
                 ),
-                // 짧은 설명
-                Text(
-                  meta.shortDesc,
-                  style: AppTypography.body.copyWith(
-                    color: AppColors.textSecondary,
+                // 짧은 설명 (가독성 개선을 위한 배경 추가)
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.md,
+                    vertical: AppSpacing.xs,
                   ),
-                  textAlign: TextAlign.center,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.9),
+                    borderRadius: BorderRadius.circular(AppRadius.pill),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.05),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Text(
+                    meta.shortDesc,
+                    style: AppTypography.body.copyWith(
+                      color: AppColors.textPrimary,
+                      fontWeight: FontWeight.w500,
+                    ),
+                    textAlign: TextAlign.center,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
               ],
             );

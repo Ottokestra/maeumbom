@@ -1,0 +1,478 @@
+{
+  "scenario": {
+    "title": "[로맨스] 차가운 팀장님의 심장이 녹는 법",
+    "target_type": "The Cold Chaebol CEO",
+    "category": "DRAMA",
+    "start_image_url": "/api/service/relation-training/images/office_romance/start.png"
+  },
+  "character_design": {
+    "protagonist_visual": "Korean woman, late 20s, assistant manager, diligent but a bit clumsy, wears simple but neat office attire, bright and cheerful despite challenges.",
+    "target_visual": "Korean man, early 30s, handsome, tall, sharp suit, cold and intelligent expression, looks like a perfect CEO with a hidden warm side."
+  },
+  "nodes": [
+    {
+      "id": "node_1",
+      "step_level": 1,
+      "text": "팀장님은 늘 칼퇴하는 나를 못마땅하게 여겼다. 오늘도 야근 중인 나를 지나치며 싸늘하게 묻는다. \"김미소 대리, 또 야근입니까? 왜 이렇게 능률이 안 오릅니까?\"",
+      "image_url": ""
+    },
+    {
+      "id": "node_2_a",
+      "step_level": 2,
+      "text": "내 대담한 대답에 팀장님의 차가운 눈빛이 흔들린다. 그는 내게 한 발짝 다가와 조용히 말한다. \"김미소 대리, 지금 나에게 작업 거는 겁니까?\"",
+      "image_url": ""
+    },
+    {
+      "id": "node_2_b",
+      "step_level": 2,
+      "text": "내 당황한 모습에 팀장님은 피식 웃음을 흘린다. \"농담입니다. 빨리 퇴근해서 쉬세요. 제가 할 일이 많아서.\" 그는 내게 따뜻한 커피를 건넨다.",
+      "image_url": ""
+    },
+    {
+      "id": "node_3_aa",
+      "step_level": 3,
+      "text": "팀장님은 내 말에 묘한 미소를 짓더니 내 손목을 잡고 끌어당긴다. \"김미소 대리, 위험한 농담은 안 하는 게 좋을 겁니다. 나, 당신에게 진심이 되어버릴 것 같으니까.\"",
+      "image_url": ""
+    },
+    {
+      "id": "node_3_ab",
+      "step_level": 3,
+      "text": "팀장님은 내 당황한 모습에 다시 차가운 표정으로 돌아온다. \"알겠습니다. 다음부턴 그런 불필요한 농담은 삼가세요. 업무에 집중하세요.\" 그리고는 돌아선다.",
+      "image_url": ""
+    },
+    {
+      "id": "node_3_ba",
+      "step_level": 3,
+      "text": "내 말에 팀장님은 옅은 미소를 지으며 고개를 끄덕인다. \"당연하죠. 내 팀원은 내가 챙겨야 하니까.\" 그의 눈빛이 부드러워진다. \"근데, 김미소 대리는 왜 아직 퇴근 안 하고 있습니까?\"",
+      "image_url": ""
+    },
+    {
+      "id": "node_3_bb",
+      "step_level": 3,
+      "text": "내가 황급히 퇴근하려 하자 팀장님은 내 앞을 막아선다. \"김미소 대리, 그렇게 도망갈 필요 없습니다. 내가 불편합니까?\" 그의 목소리에 실망감이 섞여있다.",
+      "image_url": ""
+    },
+    {
+      "id": "node_4_aaa",
+      "step_level": 4,
+      "text": "팀장님은 내 진심에 깊은 숨을 내쉬더니 나를 끌어안는다. \"그래, 우리 둘 다 더 이상 숨기지 맙시다. 김미소 대리, 아니 미소야. 사랑해.\"",
+      "image_url": ""
+    },
+    {
+      "id": "node_4_aab",
+      "step_level": 4,
+      "text": "팀장님은 잠시 망설이더니 내 손을 놓는다. \"알겠습니다. 제가 너무 앞서나갔군요. 업무적인 관계를 유지하죠.\" 그의 눈에 아쉬움이 스친다.",
+      "image_url": ""
+    },
+    {
+      "id": "node_4_aba",
+      "step_level": 4,
+      "text": "팀장님은 놀란 표정으로 날 바라보더니 이내 미소 짓는다. \"어쩔 수 없군요. 당신의 용기에 내가 답해야겠지. 나도 당신이 신경 쓰였어.\" 그가 내 머리를 쓰다듬는다.",
+      "image_url": ""
+    },
+    {
+      "id": "node_4_abb",
+      "step_level": 4,
+      "text": "팀장님은 아무 말 없이 뒤돌아 자신의 자리로 돌아간다. 차가운 공기가 흐르고, 사무실은 다시 침묵에 잠긴다.",
+      "image_url": ""
+    },
+    {
+      "id": "node_4_baa",
+      "step_level": 4,
+      "text": "팀장님은 내 말에 놀란 듯 눈을 크게 뜨더니 이내 다정한 미소를 짓는다. \"바보 같긴. 나도 당신과 더 있고 싶었는데. 우리, 퇴근하고 같이 저녁이라도 할까요?\"",
+      "image_url": ""
+    },
+    {
+      "id": "node_4_bab",
+      "step_level": 4,
+      "text": "팀장님은 잠시 나를 바라보더니 고개를 끄덕인다. \"알겠습니다. 그럼 업무 마무리 잘 하세요. 먼저 퇴근하겠습니다.\" 그의 표정에 약간의 실망감이 비친다.",
+      "image_url": ""
+    },
+    {
+      "id": "node_4_bba",
+      "step_level": 4,
+      "text": "팀장님은 내 솔직한 고백에 놀란 표정을 짓더니 이내 부드러운 눈빛으로 나를 바라본다. \"나를 의식한다니... 그게 무슨 의미인지 내가 알아도 될까요?\" 그가 한 발짝 더 다가온다.",
+      "image_url": ""
+    },
+    {
+      "id": "node_4_bbb",
+      "step_level": 4,
+      "text": "팀장님은 씁쓸한 미소를 지으며 내 앞을 비켜준다. \"그렇군요. 그럼 조심히 들어가세요.\" 그의 뒷모습에서 쓸쓸함이 느껴진다.",
+      "image_url": ""
+    }
+  ],
+  "options": [
+    {
+      "from_node_id": "node_1",
+      "option_code": "A",
+      "text": "\"팀장님 보려고요. 팀장님 계실 때까지 저도 남아있고 싶어서요.\" (당돌한 미소)",
+      "to_node_id": "node_2_a",
+      "result_code": null
+    },
+    {
+      "from_node_id": "node_1",
+      "option_code": "B",
+      "text": "\"죄... 죄송합니다! 빨리 마무리하고 퇴근하겠습니다!\" (어쩔 줄 몰라 하며)",
+      "to_node_id": "node_2_b",
+      "result_code": null
+    },
+    {
+      "from_node_id": "node_2_a",
+      "option_code": "A",
+      "text": "\"작업 거는 거면, 받아주실 건가요? 팀장님.\" (눈을 똑바로 바라보며)",
+      "to_node_id": "node_3_aa",
+      "result_code": null
+    },
+    {
+      "from_node_id": "node_2_a",
+      "option_code": "B",
+      "text": "\"아... 아니요! 그, 그럴 리가요! 그냥 농담이었어요...\" (얼굴이 새빨개지며)",
+      "to_node_id": "node_3_ab",
+      "result_code": null
+    },
+    {
+      "from_node_id": "node_2_b",
+      "option_code": "A",
+      "text": "\"팀장님도 쉬엄쉬엄하세요. 저 걱정해주시는 거죠?\" (따뜻한 미소)",
+      "to_node_id": "node_3_ba",
+      "result_code": null
+    },
+    {
+      "from_node_id": "node_2_b",
+      "option_code": "B",
+      "text": "\"아... 감사합니다. 그럼 먼저 퇴근하겠습니다...\" (황급히 커피를 받아 들고)",
+      "to_node_id": "node_3_bb",
+      "result_code": null
+    },
+    {
+      "from_node_id": "node_3_aa",
+      "option_code": "A",
+      "text": "\"진심이 되어도 좋아요. 저도 팀장님께 진심이거든요.\" (부드럽게 손을 잡으며)",
+      "to_node_id": "node_4_aaa",
+      "result_code": null
+    },
+    {
+      "from_node_id": "node_3_aa",
+      "option_code": "B",
+      "text": "\"하... 하지만 저희는 직장 상사와 부하 직원인데요...\" (흔들리는 눈빛으로)",
+      "to_node_id": "node_4_aab",
+      "result_code": null
+    },
+    {
+      "from_node_id": "node_3_ab",
+      "option_code": "A",
+      "text": "\"잠깐만요, 팀장님! 저... 사실 진심이었어요.\" (뒤돌아선 팀장님을 붙잡으며)",
+      "to_node_id": "node_4_aba",
+      "result_code": null
+    },
+    {
+      "from_node_id": "node_3_ab",
+      "option_code": "B",
+      "text": "\"네... 알겠습니다.\" (고개를 숙이며)",
+      "to_node_id": "node_4_abb",
+      "result_code": null
+    },
+    {
+      "from_node_id": "node_3_ba",
+      "option_code": "A",
+      "text": "\"팀장님과 조금이라도 더 같이 있고 싶어서요.\" (애틋한 눈빛으로)",
+      "to_node_id": "node_4_baa",
+      "result_code": null
+    },
+    {
+      "from_node_id": "node_3_ba",
+      "option_code": "B",
+      "text": "\"아... 서류 정리가 아직 남아서요!\" (급히 서류를 정리하는 척)",
+      "to_node_id": "node_4_bab",
+      "result_code": null
+    },
+    {
+      "from_node_id": "node_3_bb",
+      "option_code": "A",
+      "text": "\"아니요! 팀장님이 불편한 게 아니라... 제가 팀장님을 의식해서 그래요.\" (솔직하게 고백하며)",
+      "to_node_id": "node_4_bba",
+      "result_code": null
+    },
+    {
+      "from_node_id": "node_3_bb",
+      "option_code": "B",
+      "text": "\"아... 아니요! 전혀요! 그냥... 너무 늦어서요!\" (눈을 피하며)",
+      "to_node_id": "node_4_bbb",
+      "result_code": null
+    },
+    {
+      "from_node_id": "node_4_aaa",
+      "option_code": "A",
+      "text": "\"네, 사랑해요 팀장님!\" (행복하게 안기며)",
+      "to_node_id": null,
+      "result_code": "AAAA"
+    },
+    {
+      "from_node_id": "node_4_aaa",
+      "option_code": "B",
+      "text": "\"너무 갑작스러워요...\" (얼굴을 붉히며)",
+      "to_node_id": null,
+      "result_code": "AAAB"
+    },
+    {
+      "from_node_id": "node_4_aab",
+      "option_code": "A",
+      "text": "\"아니요, 팀장님. 전... 진심이에요.\" (용기 내어 붙잡으며)",
+      "to_node_id": null,
+      "result_code": "AABA"
+    },
+    {
+      "from_node_id": "node_4_aab",
+      "option_code": "B",
+      "text": "\"네... 알겠습니다.\" (씁쓸하게 고개를 끄덕이며)",
+      "to_node_id": null,
+      "result_code": "AABB"
+    },
+    {
+      "from_node_id": "node_4_aba",
+      "option_code": "A",
+      "text": "\"네, 팀장님! 저도요!\" (환하게 웃으며)",
+      "to_node_id": null,
+      "result_code": "ABAA"
+    },
+    {
+      "from_node_id": "node_4_aba",
+      "option_code": "B",
+      "text": "\"저... 잠깐만요...\" (놀라 뒷걸음질 치며)",
+      "to_node_id": null,
+      "result_code": "ABAB"
+    },
+    {
+      "from_node_id": "node_4_abb",
+      "option_code": "A",
+      "text": "\"팀장님! 저 할 말 있어요!\" (용기 내어 외치며)",
+      "to_node_id": null,
+      "result_code": "ABBA"
+    },
+    {
+      "from_node_id": "node_4_abb",
+      "option_code": "B",
+      "text": "(그냥 조용히 앉아 업무를 마저 한다)",
+      "to_node_id": null,
+      "result_code": "ABBB"
+    },
+    {
+      "from_node_id": "node_4_baa",
+      "option_code": "A",
+      "text": "\"네! 좋아요! 팀장님과 함께라면!\" (기쁘게 제안을 받아들이며)",
+      "to_node_id": null,
+      "result_code": "BAAA"
+    },
+    {
+      "from_node_id": "node_4_baa",
+      "option_code": "B",
+      "text": "\"죄송해요... 오늘은 좀 피곤해서요.\" (조심스럽게 거절하며)",
+      "to_node_id": null,
+      "result_code": "BAAB"
+    },
+    {
+      "from_node_id": "node_4_bab",
+      "option_code": "A",
+      "text": "\"팀장님... 사실은...\" (주저하며 진심을 고백하려 한다)",
+      "to_node_id": null,
+      "result_code": "BABA"
+    },
+    {
+      "from_node_id": "node_4_bab",
+      "option_code": "B",
+      "text": "(팀장님의 뒷모습을 바라보며 아쉬워한다)",
+      "to_node_id": null,
+      "result_code": "BABB"
+    },
+    {
+      "from_node_id": "node_4_bba",
+      "option_code": "A",
+      "text": "\"팀장님을... 좋아해요.\" (수줍게 고백하며)",
+      "to_node_id": null,
+      "result_code": "BBAA"
+    },
+    {
+      "from_node_id": "node_4_bba",
+      "option_code": "B",
+      "text": "\"아... 아무것도 아니에요!\" (황급히 말을 돌리며)",
+      "to_node_id": null,
+      "result_code": "BBAB"
+    },
+    {
+      "from_node_id": "node_4_bbb",
+      "option_code": "A",
+      "text": "\"팀장님! 잠시만요!\" (뒤돌아선 팀장님을 붙잡으며)",
+      "to_node_id": null,
+      "result_code": "BBBA"
+    },
+    {
+      "from_node_id": "node_4_bbb",
+      "option_code": "B",
+      "text": "(그저 조용히 팀장님의 퇴근을 지켜본다)",
+      "to_node_id": null,
+      "result_code": "BBBB"
+    }
+  ],
+  "results": [
+    {
+      "result_code": "AAAA",
+      "display_title": "완벽한 해피엔딩! 사내 연애의 시작!",
+      "analysis_text": "드디어 이어진 두 사람! 역시 로맨스는 직진이 최고죠? 팀장님 눈에서 꿀 떨어지는 거 보세요, 미쳤다!",
+      "atmosphere_image_type": "FLOWER",
+      "relation_health_level": "GOOD",
+      "boundary_style": "HEALTHY_ASSERTIVE",
+      "relationship_trend": "IMPROVING",
+      "image_url": "/api/service/relation-training/images/office_romance/result_AAAA.png"
+    },
+    {
+      "result_code": "AAAB",
+      "display_title": "두근거리는 고백, 하지만 아직은...",
+      "analysis_text": "아... 고백은 좋았는데 여주가 너무 빼네! 이럴 때 확 잡아야지! 아쉽지만 다음 기회를 노려봅니다.",
+      "atmosphere_image_type": "CLOUDY",
+      "relation_health_level": "MIXED",
+      "boundary_style": "HEALTHY_PASSIVE",
+      "relationship_trend": "STAGNANT",
+      "image_url": "/api/service/relation-training/images/office_romance/result_AAAB.png"
+    },
+    {
+      "result_code": "AABA",
+      "display_title": "다시 붙잡은 인연, 새롭게 시작!",
+      "analysis_text": "포기하지 않는 용기! 역시 여주는 이런 맛에 보죠! 팀장님 표정 봐, 이미 넘어왔다니까요!",
+      "atmosphere_image_type": "FLOWER",
+      "relation_health_level": "GOOD",
+      "boundary_style": "HEALTHY_ASSERTIVE",
+      "relationship_trend": "IMPROVING",
+      "image_url": "/api/service/relation-training/images/office_romance/result_AABA.png"
+    },
+    {
+      "result_code": "AABB",
+      "display_title": "엇갈린 마음, 이대로 끝인가?",
+      "analysis_text": "아... 이러면 안 되는데. 팀장님은 마음 정리하는 것 같고, 여주는 후회만 남을 듯... ㅠㅠ",
+      "atmosphere_image_type": "STORM",
+      "relation_health_level": "BAD",
+      "boundary_style": "UNHEALTHY_PASSIVE",
+      "relationship_trend": "WORSENING",
+      "image_url": "/api/service/relation-training/images/office_romance/result_AABB.png"
+    },
+    {
+      "result_code": "ABAA",
+      "display_title": "쌍방 직진 로맨스, 드디어 통했다!",
+      "analysis_text": "솔직함이 최고! 결국 팀장님도 여주한테 마음 있었잖아! 앞으로 두 사람 꽃길만 걷자!",
+      "atmosphere_image_type": "FLOWER",
+      "relation_health_level": "GOOD",
+      "boundary_style": "HEALTHY_ASSERTIVE",
+      "relationship_trend": "IMPROVING",
+      "image_url": "/api/service/relation-training/images/office_romance/result_ABAA.png"
+    },
+    {
+      "result_code": "ABAB",
+      "display_title": "예측불가 로맨스, 다음 화가 기대돼!",
+      "analysis_text": "여주가 너무 놀란 것 같기도 하고... 팀장님은 진심 같고... 이 관계 어떻게 될까요? 궁금증 폭발!",
+      "atmosphere_image_type": "CLOUDY",
+      "relation_health_level": "MIXED",
+      "boundary_style": "HEALTHY_PASSIVE",
+      "relationship_trend": "STAGNANT",
+      "image_url": "/api/service/relation-training/images/office_romance/result_ABAB.png"
+    },
+    {
+      "result_code": "ABBA",
+      "display_title": "용기 있는 고백, 반전의 시작!",
+      "analysis_text": "이게 바로 K-드라마의 묘미! 포기하려던 순간 고백이라니! 다음 주에 사내 연애 시작하는 건가요?",
+      "atmosphere_image_type": "FLOWER",
+      "relation_health_level": "GOOD",
+      "boundary_style": "HEALTHY_ASSERTIVE",
+      "relationship_trend": "IMPROVING",
+      "image_url": "/api/service/relation-training/images/office_romance/result_ABBA.png"
+    },
+    {
+      "result_code": "ABBB",
+      "display_title": "타이밍을 놓친 사랑, 아쉬운 엔딩",
+      "analysis_text": "말 한마디가 이렇게 중요합니다, 여러분! 결국 팀장님은 떠나고 여주만 후회하겠네요. 슬프다...",
+      "atmosphere_image_type": "STORM",
+      "relation_health_level": "BAD",
+      "boundary_style": "UNHEALTHY_PASSIVE",
+      "relationship_trend": "WORSENING",
+      "image_url": "/api/service/relation-training/images/office_romance/result_ABBB.png"
+    },
+    {
+      "result_code": "BAAA",
+      "display_title": "달콤한 저녁 데이트, 로맨스 급진전!",
+      "analysis_text": "커피에 저녁까지! 이 정도면 그린라이트 아니냐구요? 두 사람 잘 어울려요! 선남선녀!",
+      "atmosphere_image_type": "FLOWER",
+      "relation_health_level": "GOOD",
+      "boundary_style": "HEALTHY_ASSERTIVE",
+      "relationship_trend": "IMPROVING",
+      "image_url": "/api/service/relation-training/images/office_romance/result_BAAA.png"
+    },
+    {
+      "result_code": "BAAB",
+      "display_title": "새로운 시작, 하지만 아직은 친구?",
+      "analysis_text": "아쉽다! 팀장님은 분명히 기회였는데! 여주가 너무 철벽 치는 거 아닌가요? 그래도 일단 관계는 좋아 보이네요.",
+      "atmosphere_image_type": "CLOUDY",
+      "relation_health_level": "MIXED",
+      "boundary_style": "HEALTHY_PASSIVE",
+      "relationship_trend": "STAGNANT",
+      "image_url": "/api/service/relation-training/images/office_romance/result_BAAB.png"
+    },
+    {
+      "result_code": "BABA",
+      "display_title": "솔직한 고백, 팀장님의 반응은?",
+      "analysis_text": "드디어 진심을 말하려 해! 팀장님도 기대하는 눈치인데, 과연 여주는 성공할까요? 다음 화 빨리!",
+      "atmosphere_image_type": "SUNNY",
+      "relation_health_level": "MIXED",
+      "boundary_style": "HEALTHY_ASSERTIVE",
+      "relationship_trend": "IMPROVING",
+      "image_url": "/api/service/relation-training/images/office_romance/result_BABA.png"
+    },
+    {
+      "result_code": "BABB",
+      "display_title": "말없이 떠난 팀장님, 후회만 가득",
+      "analysis_text": "하... 또 말 못했어! 이러다 타이밍 다 놓친다구요! 팀장님 뒷모습이 너무 쓸쓸해 보여 ㅠㅠ",
+      "atmosphere_image_type": "STORM",
+      "relation_health_level": "BAD",
+      "boundary_style": "UNHEALTHY_PASSIVE",
+      "relationship_trend": "WORSENING",
+      "image_url": "/api/service/relation-training/images/office_romance/result_BABB.png"
+    },
+    {
+      "result_code": "BBAA",
+      "display_title": "심쿵 고백! 새로운 관계의 시작!",
+      "analysis_text": "꺄아아아악! 드디어 고백했어! 팀장님도 드디어 철벽 해제! 오늘부터 1일인가요? 심장이 아프다!",
+      "atmosphere_image_type": "FLOWER",
+      "relation_health_level": "GOOD",
+      "boundary_style": "HEALTHY_ASSERTIVE",
+      "relationship_trend": "IMPROVING",
+      "image_url": "/api/service/relation-training/images/office_romance/result_BBAA.png"
+    },
+    {
+      "result_code": "BBAB",
+      "display_title": "고백 직전의 망설임, 아쉬운 후퇴",
+      "analysis_text": "아니, 왜 말을 끝까지 못 해! 용기 냈다가 다시 도망가기 있나요? 팀장님 표정 실망한 것 같아...",
+      "atmosphere_image_type": "CLOUDY",
+      "relation_health_level": "MIXED",
+      "boundary_style": "UNHEALTHY_PASSIVE",
+      "relationship_trend": "STAGNANT",
+      "image_url": "/api/service/relation-training/images/office_romance/result_BBAB.png"
+    },
+    {
+      "result_code": "BBBA",
+      "display_title": "마지막 기회, 용기 있는 선택!",
+      "analysis_text": "이게 마지막 기회다! 여주 용기 내서 잡았으니 꼭 성공해야 해! 팀장님도 분명 기다렸을 거야!",
+      "atmosphere_image_type": "FLOWER",
+      "relation_health_level": "GOOD",
+      "boundary_style": "HEALTHY_ASSERTIVE",
+      "relationship_trend": "IMPROVING",
+      "image_url": "/api/service/relation-training/images/office_romance/result_BBBA.png"
+    },
+    {
+      "result_code": "BBBB",
+      "display_title": "말 못할 사랑, 이별의 뒷모습",
+      "analysis_text": "결국 아무 말도 못 하고 놓쳐버린 사랑... 저렇게 쓸쓸하게 가는 팀장님을 보니 눈물이 ㅠㅠ",
+      "atmosphere_image_type": "STORM",
+      "relation_health_level": "BAD",
+      "boundary_style": "UNHEALTHY_PASSIVE",
+      "relationship_trend": "WORSENING",
+      "image_url": "/api/service/relation-training/images/office_romance/result_BBBB.png"
+    }
+  ]
+}

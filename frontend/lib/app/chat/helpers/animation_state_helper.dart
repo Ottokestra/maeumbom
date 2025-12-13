@@ -27,8 +27,10 @@ class AnimationStateHelper {
       return 'listening';
     }
 
-    // 4. 분석 중 (생각 중) - STT 결과 받은 후 AI가 생각하는 중
-    if (voiceState == VoiceInterfaceState.processing || isLoading) {
+    // 4. 분석 중 (생각 중) - 음성 처리 중 또는 AI가 생각하는 중
+    if (voiceState == VoiceInterfaceState.processingVoice ||
+        voiceState == VoiceInterfaceState.processing ||
+        isLoading) {
       return 'thinking';
     }
 

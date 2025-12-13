@@ -1315,6 +1315,191 @@ class MenopauseSurveyAnswer(Base):
 
 
 # ============================================================================
+# Routine Recommendations (from Emotion Analysis)
+# ============================================================================
+
+
+class RoutineRecommendation(Base):
+    """
+    루틴 추천 결과 저장
+    
+    Attributes:
+        ID: Primary key
+        USER_ID: 사용자 ID
+        RECOMMENDATION_DATE: 추천 날짜 (YYYY-MM-DD)
+        EMOTION_SUMMARY: 하루 감정 요약 (JSON)
+        ROUTINES: 추천된 루틴 목록 (JSON)
+        TOTAL_EMOTIONS: 해당 날짜 총 감정 분석 수
+        PRIMARY_EMOTION: 주요 감정
+        SENTIMENT_OVERALL: 전체 감정 (positive/negative/neutral)
+        IS_DELETED: Deletion flag
+        CREATED_AT: Creation timestamp
+        CREATED_BY: Creator user ID
+        UPDATED_AT: Last update timestamp
+        UPDATED_BY: Last updater user ID
+    """
+    
+    __tablename__ = "TB_ROUTINE_RECOMMENDATIONS"
+    
+    ID = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    USER_ID = Column(Integer, ForeignKey("TB_USERS.ID"), nullable=False, index=True)
+    RECOMMENDATION_DATE = Column(Date, nullable=False, index=True)
+    
+    # 감정 요약
+    EMOTION_SUMMARY = Column(JSON, nullable=True)  # 하루치 감정 분포
+    TOTAL_EMOTIONS = Column(Integer, nullable=False, default=0)
+    PRIMARY_EMOTION = Column(String(50), nullable=True)
+    SENTIMENT_OVERALL = Column(String(20), nullable=True)
+    
+    # 루틴 추천 결과
+    ROUTINES = Column(JSON, nullable=True)  # 추천된 루틴 목록
+    
+    # 표준 필드
+    IS_DELETED = Column(Boolean, default=False, nullable=False, index=True)
+    CREATED_AT = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    CREATED_BY = Column(Integer, ForeignKey("TB_USERS.ID"), nullable=True, index=True)
+    UPDATED_AT = Column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now(),
+        nullable=False,
+    )
+    UPDATED_BY = Column(Integer, ForeignKey("TB_USERS.ID"), nullable=True, index=True)
+    
+    # 인덱스
+    __table_args__ = (
+        Index("idx_user_date_routine", "USER_ID", "RECOMMENDATION_DATE"),
+        Index("idx_date_deleted_routine", "RECOMMENDATION_DATE", "IS_DELETED"),
+    )
+    
+    # Relationships
+    user = relationship("User", foreign_keys=[USER_ID], backref="routine_recommendations")
+    creator = relationship("User", foreign_keys=[CREATED_BY])
+    updater = relationship("User", foreign_keys=[UPDATED_BY])
+    
+    def __repr__(self):
+        return f"<RoutineRecommendation(ID={self.ID}, USER_ID={self.USER_ID}, DATE={self.RECOMMENDATION_DATE})>"
+
+
+# ============================================================================
+# Target Events (마음서랍 - 대상별 이벤트 기억)
+# ============================================================================
+
+
+class DailyTargetEvent(Base):
+    """
+    Daily target event model
+    Stores daily events extracted from conversations with specific targets
+    
+    Attributes:
+        ID: Primary key
+        USER_ID: Foreign key to users table
+        EVENT_DATE: Date of the event
+        EVENT_TYPE: Event type (alarm/event/memory)
+        TARGET_TYPE: Target relationship type (HUSBAND/CHILD/FRIEND/COLLEAGUE/SELF)
+        EVENT_SUMMARY: Event summary text
+        EVENT_TIME: Event time (nullable)
+        IMPORTANCE: Importance level (1-5)
+        IS_FUTURE_EVENT: Whether this is a future event
+        TAGS: Tags for filtering (JSON array)
+        RAW_CONVERSATION_IDS: Original conversation IDs (JSON array)
+        IS_DELETED: Deletion flag
+        CREATED_AT: Creation timestamp
+        CREATED_BY: Creator user ID
+        UPDATED_AT: Last update timestamp
+        UPDATED_BY: Last updater user ID
+    """
+    
+    __tablename__ = "TB_DAILY_TARGET_EVENTS"
+    
+    ID = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    USER_ID = Column(Integer, ForeignKey("TB_USERS.ID"), nullable=False, index=True)
+    EVENT_DATE = Column(Date, nullable=False, index=True)
+    EVENT_TYPE = Column(String(20), nullable=False, default="event", index=True)  # alarm/event/memory
+    TARGET_TYPE = Column(String(50), nullable=False)  # HUSBAND/CHILD/FRIEND/COLLEAGUE/SELF
+    EVENT_SUMMARY = Column(Text, nullable=False)
+    EVENT_TIME = Column(DateTime(timezone=True), nullable=True)
+    IMPORTANCE = Column(Integer, nullable=False, default=3)  # 1-5
+    IS_FUTURE_EVENT = Column(Boolean, nullable=False, default=False)
+    TAGS = Column(JSON, nullable=True)  # ["#아들", "#픽업", "#오늘", "#중요"]
+    RAW_CONVERSATION_IDS = Column(JSON, nullable=True)  # [123, 124, 125]
+    
+    # 표준 필드
+    IS_DELETED = Column(Boolean, default=False, nullable=False, index=True)
+    CREATED_AT = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    CREATED_BY = Column(Integer, ForeignKey("TB_USERS.ID"), nullable=True, index=True)
+    UPDATED_AT = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
+    UPDATED_BY = Column(Integer, ForeignKey("TB_USERS.ID"), nullable=True, index=True)
+    
+    # 인덱스
+    __table_args__ = (
+        Index("idx_user_date_target", "USER_ID", "EVENT_DATE", "TARGET_TYPE"),
+        Index("idx_date_deleted", "EVENT_DATE", "IS_DELETED"),
+    )
+    
+    # Relationships
+    user = relationship("User", foreign_keys=[USER_ID], backref="daily_target_events")
+    creator = relationship("User", foreign_keys=[CREATED_BY])
+    updater = relationship("User", foreign_keys=[UPDATED_BY])
+    
+    def __repr__(self):
+        return f"<DailyTargetEvent(ID={self.ID}, USER_ID={self.USER_ID}, EVENT_DATE={self.EVENT_DATE}, TARGET_TYPE={self.TARGET_TYPE})>"
+
+
+class WeeklyTargetEvent(Base):
+    """
+    Weekly target event model
+    Stores weekly summary of events by target type
+    
+    Attributes:
+        ID: Primary key
+        USER_ID: Foreign key to users table
+        WEEK_START: Week start date (Monday)
+        WEEK_END: Week end date (Sunday)
+        TARGET_TYPE: Target relationship type (HUSBAND/CHILD/FRIEND/COLLEAGUE/SELF)
+        EVENTS_SUMMARY: Weekly events summary (JSON array)
+        TOTAL_EVENTS: Total number of events
+        TAGS: Aggregated tags (JSON array)
+        IS_DELETED: Deletion flag
+        CREATED_AT: Creation timestamp
+        CREATED_BY: Creator user ID
+        UPDATED_AT: Last update timestamp
+        UPDATED_BY: Last updater user ID
+    """
+    
+    __tablename__ = "TB_WEEKLY_TARGET_EVENTS"
+    
+    ID = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    USER_ID = Column(Integer, ForeignKey("TB_USERS.ID"), nullable=False, index=True)
+    WEEK_START = Column(Date, nullable=False, index=True)
+    WEEK_END = Column(Date, nullable=False)
+    TARGET_TYPE = Column(String(50), nullable=False)
+    EVENTS_SUMMARY = Column(JSON, nullable=True)  # 주간 이벤트 요약 배열
+    TOTAL_EVENTS = Column(Integer, nullable=False, default=0)
+    TAGS = Column(JSON, nullable=True)  # 주간 통합 태그
+    
+    # 표준 필드
+    IS_DELETED = Column(Boolean, default=False, nullable=False, index=True)
+    CREATED_AT = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    CREATED_BY = Column(Integer, ForeignKey("TB_USERS.ID"), nullable=True, index=True)
+    UPDATED_AT = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
+    UPDATED_BY = Column(Integer, ForeignKey("TB_USERS.ID"), nullable=True, index=True)
+    
+    # 인덱스
+    __table_args__ = (
+        Index("idx_user_week_target", "USER_ID", "WEEK_START", "TARGET_TYPE"),
+    )
+    
+    # Relationships
+    user = relationship("User", foreign_keys=[USER_ID], backref="weekly_target_events")
+    creator = relationship("User", foreign_keys=[CREATED_BY])
+    updater = relationship("User", foreign_keys=[UPDATED_BY])
+    
+    def __repr__(self):
+        return f"<WeeklyTargetEvent(ID={self.ID}, USER_ID={self.USER_ID}, WEEK_START={self.WEEK_START}, TARGET_TYPE={self.TARGET_TYPE})>"
+
+
+# ============================================================================
 # Weekly Emotion Report (for My Page)
 # ============================================================================
 
