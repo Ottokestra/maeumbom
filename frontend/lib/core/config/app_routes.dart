@@ -14,6 +14,7 @@ import '../../app/onboarding/splash_screen.dart';
 import '../../app/chat/bomi_screen.dart';
 import '../../app/chat/chat_list_screen.dart';
 import '../../app/training/training_screen.dart';
+import '../../app/training/relation_training_list_screen.dart';
 import '../../app/slang_quiz/slang_quiz_start_screen.dart';
 import '../../app/settings/settings_screen.dart';
 import '../../app/home/home_new_screen.dart';
@@ -112,6 +113,13 @@ class AppRoutes {
   static const RouteMetadata chatList = RouteMetadata(
     routeName: '/chat_list',
     builder: ChatListScreen.new,
+    requiresAuth: true,
+  );
+
+  // Relation Training Routes
+  static const RouteMetadata relationTraining = RouteMetadata(
+    routeName: '/training/relation-training',
+    builder: RelationTrainingListScreen.new,
     requiresAuth: true,
   );
 

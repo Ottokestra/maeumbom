@@ -24,21 +24,21 @@ class RelationTrainingRepository {
     // Fix image URLs in the response
     if (response.currentNode != null) {
       return response.copyWith(
-          currentNode: response.currentNode!.copyWith(
-        imageUrl: _fixImageUrl(response.currentNode!.imageUrl),
-        // Fix options
-        options:
-            response.currentNode!.options.toList(), // options have no images
-      ));
+        currentNode: response.currentNode!.copyWith(
+          imageUrl: _fixImageUrl(response.currentNode!.imageUrl),
+          // Fix options
+          options: response.currentNode!.options.toList(), // options have no images
+        )
+      );
     }
     return response;
   }
 
-  Future<List<TrainingScenario>> getScenarios() async {
-    final scenarios = await _apiClient.getScenarios();
-    return scenarios
-        .map((s) => s.copyWith(imageUrl: _fixImageUrl(s.imageUrl)))
-        .toList();
+  Future<List<TrainingScenario>> getScenarios({String? category}) async {
+    final scenarios = await _apiClient.getScenarios(category: category);
+    return scenarios.map((s) => s.copyWith(
+      imageUrl: _fixImageUrl(s.imageUrl)
+    )).toList();
   }
 
   Future<ScenarioProgressResponse> progressScenario({
@@ -57,10 +57,13 @@ class RelationTrainingRepository {
 
     // Fix image URLs
     return response.copyWith(
-        nextNode: response.nextNode
-            ?.copyWith(imageUrl: _fixImageUrl(response.nextNode!.imageUrl)),
-        result: response.result?.copyWith(
-            resultImageUrl: _fixImageUrl(response.result!.resultImageUrl)));
+      nextNode: response.nextNode?.copyWith(
+        imageUrl: _fixImageUrl(response.nextNode!.imageUrl)
+      ),
+      result: response.result?.copyWith(
+        resultImageUrl: _fixImageUrl(response.result!.resultImageUrl)
+      )
+    );
   }
 
   Future<GenerateScenarioResponse> generateScenario({
@@ -93,10 +96,10 @@ class RelationTrainingRepository {
     if (url.contains('localhost') && ApiConfig.baseUrl.contains('10.0.2.2')) {
       return url.replaceFirst('localhost', '10.0.2.2');
     }
-
+    
     // Also handle 127.0.0.1 just in case
     if (url.contains('127.0.0.1') && ApiConfig.baseUrl.contains('10.0.2.2')) {
-      return url.replaceFirst('127.0.0.1', '10.0.2.2');
+       return url.replaceFirst('127.0.0.1', '10.0.2.2');
     }
 
     return url;
