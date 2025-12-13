@@ -36,16 +36,44 @@ class AlarmNotifier extends StateNotifier<AsyncValue<List<AlarmModel>>> {
     _initialize();
   }
 
-  /// 초기화: 알람 로드 및 과거 알람 정리
+  /// 초기화: 알람 로드 및 재동기화
   Future<void> _initialize() async {
     await loadAlarms();
-    // ❌ 재스케줄링 제거: android_alarm_manager_plus는 자동으로 유지됨
-    // await rescheduleAllAlarms();
 
-    // ✅ 과거 알람 자동 정리
+    // 🔧 Android AlarmManager 초기화: 오래된 알람 제거 후 DB 기반 재예약
+    print('[AlarmProvider] Cleaning up Android AlarmManager...');
+    await _alarmService.cancelAllAlarms();
+
+    // 미래 알람만 재예약
+    await _rescheduleValidAlarms();
+
+    // 과거 알람 DB 정리
     await cleanupPastAlarms();
 
     print('[AlarmProvider] Initialization complete');
+  }
+
+  /// DB의 유효한 미래 알람만 재예약
+  Future<void> _rescheduleValidAlarms() async {
+    try {
+      final alarms = await _repository.getEnabledAlarms();
+      final now = DateTime.now();
+
+      final futureAlarms = alarms
+          .where((alarm) => alarm.scheduledDatetime.isAfter(now))
+          .toList();
+
+      print(
+          '[AlarmProvider] Rescheduling ${futureAlarms.length} future alarms...');
+
+      for (final alarm in futureAlarms) {
+        await _alarmService.scheduleAlarm(alarm);
+      }
+
+      print('[AlarmProvider] ${futureAlarms.length} alarms rescheduled');
+    } catch (e) {
+      print('[AlarmProvider] Failed to reschedule valid alarms: $e');
+    }
   }
 
   /// 알람 목록 로드

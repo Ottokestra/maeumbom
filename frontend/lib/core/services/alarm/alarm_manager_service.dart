@@ -185,11 +185,33 @@ class AlarmManagerService {
   /// 알람 취소
   Future<void> cancelAlarm(int notificationId) async {
     try {
-      await AndroidAlarmManager.cancel(notificationId);
+      if (Platform.isAndroid) {
+        await AndroidAlarmManager.cancel(notificationId);
+      }
       print('[AlarmManagerService] Alarm cancelled: $notificationId');
     } catch (e) {
       print('[AlarmManagerService] Failed to cancel alarm: $e');
       rethrow;
+    }
+  }
+
+  /// 모든 알람 취소 (Android AlarmManager 초기화)
+  Future<void> cancelAllAlarms() async {
+    try {
+      // Android: 개별 ID로 취소해야 함 (Android AlarmManager에는 cancelAll이 없음)
+      // DB에 저장된 모든 알람을 가져와서 취소
+      final db = AppDatabase();
+      final allAlarms = await db.getAllAlarms();
+
+      if (Platform.isAndroid) {
+        for (final alarm in allAlarms) {
+          await AndroidAlarmManager.cancel(alarm.notificationId);
+        }
+      }
+
+      print('[AlarmManagerService] All alarms cancelled (${allAlarms.length})');
+    } catch (e) {
+      print('[AlarmManagerService] Failed to cancel all alarms: $e');
     }
   }
 
@@ -226,14 +248,38 @@ Future<void> _alarmCallback(int id, Map<String, dynamic> params) async {
   print('[AlarmCallback] ⏰ Alarm triggered! ID: $id');
 
   try {
+    // 🔍 DB에서 알람 확인 (orphaned alarm 방지)
+    final db = AppDatabase();
+    final alarm = await db.getAlarmById(id);
+
+    if (alarm == null) {
+      print(
+          '[AlarmCallback] ⚠️ Alarm not found in DB (orphaned), skipping. ID: $id');
+      return;
+    }
+
+    if (!alarm.isEnabled) {
+      print('[AlarmCallback] ⚠️ Alarm is disabled, skipping. ID: $id');
+      return;
+    }
+
+    // 🔍 시간 체크: 과거 알람은 무시
+    final now = DateTime.now();
+    if (alarm.scheduledDatetime
+        .isBefore(now.subtract(const Duration(minutes: 5)))) {
+      print(
+          '[AlarmCallback] ⚠️ Alarm is too old (${alarm.scheduledDatetime}), skipping. ID: $id');
+      return;
+    }
+
     // Notifications 플러그인 초기화
     final notifications = FlutterLocalNotificationsPlugin();
 
     // 알림 표시
     await notifications.show(
       id,
-      params['title'] as String? ?? '마음봄 알람',
-      params['body'] as String? ?? '알람 시간입니다.',
+      params['title'] as String? ?? alarm.title ?? '마음봄 알람',
+      params['body'] as String? ?? alarm.content ?? '알람 시간입니다.',
       const NotificationDetails(
         android: AndroidNotificationDetails(
           'alarm_channel',
