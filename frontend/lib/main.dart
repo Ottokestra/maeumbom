@@ -8,7 +8,7 @@ import 'app/common/login_screen.dart';
 import 'app/home/home_screen.dart';
 import 'core/config/oauth_config.dart';
 import 'package:kakao_flutter_sdk_common/kakao_flutter_sdk_common.dart';
-import 'core/services/alarm/alarm_notification_service.dart';
+import 'core/services/alarm/alarm_manager_service.dart'; // 🆕 AlarmManager
 import 'debug/db_path_helper.dart';
 import 'app/slang_quiz/slang_quiz_game_screen.dart';
 import 'app/slang_quiz/slang_quiz_result_screen.dart';
@@ -34,16 +34,33 @@ Future<void> main() async {
   await DbPathHelper.printDbPath();
 
   // 🆕 알람 서비스 초기화
-  final alarmService = AlarmNotificationService();
+  final alarmService = AlarmManagerService(); // 🆕 AlarmManager 사용
   await alarmService.initialize();
-  
-  // 알림 탭 시 알람 화면으로 이동
-  alarmService.onNotificationTapped = (notificationId) {
-    debugPrint('🔔 Notification tapped: $notificationId');
-    navigatorKey.currentState?.pushNamed('/alarm');
-  };
-  
-  debugPrint('✅ AlarmNotificationService initialized');
+
+  // 🔔 알림 권한 체크
+  debugPrint('🔔 Checking notification permissions...');
+  final hasPermission = await alarmService.checkPermissions();
+  debugPrint('🔔 Notification permission status: $hasPermission');
+
+  if (!hasPermission) {
+    debugPrint('⚠️ Notification permission not granted, requesting...');
+    final granted = await alarmService.requestPermissions();
+    debugPrint('🔔 Permission request result: $granted');
+
+    if (!granted) {
+      debugPrint('❌ User denied notification permission!');
+      debugPrint('⚠️ Alarms will not work without notification permission!');
+    } else {
+      debugPrint('✅ Notification permission granted!');
+    }
+  } else {
+    debugPrint('✅ Notification permission already granted');
+  }
+
+  // 🆕 AlarmManagerService는 백그라운드에서 자동으로 초기화 시 권한 처리
+  // onNotificationTapped 콜백은 AlarmManagerService에 없음
+
+  debugPrint('✅ AlarmManagerService initialized');
 
   runApp(
     const ProviderScope(
@@ -92,7 +109,7 @@ class MaeumBomApp extends ConsumerWidget {
             );
           }
         }
-        
+
         if (routeName == '/training/slang-quiz/result') {
           final result = settings.arguments as EndGameResponse?;
           if (result != null) {
@@ -102,7 +119,7 @@ class MaeumBomApp extends ConsumerWidget {
             );
           }
         }
-        
+
         if (routeName == '/training/slang-quiz/admin') {
           return MaterialPageRoute(
             builder: (context) => const SlangQuizAdminScreen(),
@@ -127,4 +144,4 @@ class MaeumBomApp extends ConsumerWidget {
       },
     );
   }
- }
+}

@@ -79,6 +79,7 @@ dependencies:
   # Local Notifications
   flutter_local_notifications: ^17.0.0
   timezone: ^0.9.0
+  android_alarm_manager_plus: ^4.0.3 # 🆕 신뢰할 수 있는 Android 알람
   audioplayers: ^6.5.1
 
 dev_dependencies:
