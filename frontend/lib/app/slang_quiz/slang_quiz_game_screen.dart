@@ -31,7 +31,7 @@ class _SlangQuizGameScreenState extends ConsumerState<SlangQuizGameScreen> {
   int _totalQuestions = 5;
   QuestionData? _questionData;
   int? _selectedIndex;
-  int _timeRemaining = 40;
+  int _timeRemaining = 20;
   // ignore: unused_field
   int _totalScore = 0;
   bool _isLoading = true;
@@ -110,8 +110,10 @@ class _SlangQuizGameScreenState extends ConsumerState<SlangQuizGameScreen> {
     try {
       final responseTime = _questionStartTime != null
           ? DateTime.now().difference(_questionStartTime!).inSeconds
-          : 40;
+          : 20;
 
+      final isTimeout = answerIndex == null;
+      
       final request = SubmitAnswerRequest(
         questionNumber: _currentQuestion,
         userAnswerIndex: answerIndex ?? -1, // -1은 시간 초과
@@ -128,6 +130,7 @@ class _SlangQuizGameScreenState extends ConsumerState<SlangQuizGameScreen> {
           earnedScore: response.earnedScore,
           explanation: response.explanation,
           rewardMessage: response.rewardCard.message,
+          isTimeout: isTimeout,
         );
 
         setState(() {
@@ -211,13 +214,23 @@ class _SlangQuizGameScreenState extends ConsumerState<SlangQuizGameScreen> {
     required int earnedScore,
     required String explanation,
     required String rewardMessage,
+    bool isTimeout = false,
   }) async {
+    String title;
+    if (isTimeout) {
+      title = '시간 초과! ⏰';
+    } else if (isCorrect) {
+      title = '정답입니다! 🎉';
+    } else {
+      title = '아쉬워요 😢';
+    }
+    
     return showDialog(
       context: context,
       barrierDismissible: false,
       builder: (context) => AlertDialog(
         title: Text(
-          isCorrect ? '정답입니다! 🎉' : '아쉬워요 😢',
+          title,
           style: AppTypography.h3,
           textAlign: TextAlign.center,
         ),

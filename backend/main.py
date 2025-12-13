@@ -517,6 +517,25 @@ except Exception as e:
     traceback.print_exc()
 
 # =========================
+# Target Events (마음서랍 - 대상별 이벤트 기억)
+# =========================
+
+try:
+    from app.target_events.routes import router as target_events_router
+
+    app.include_router(
+        target_events_router,
+        prefix="/api/target-events",
+        tags=["target-events"],
+    )
+    print("[INFO] Target events router loaded successfully.")
+except Exception as e:
+    import traceback
+
+    print(f"[WARN] Target events module load failed: {e}")
+    traceback.print_exc()
+
+# =========================
 # LangChain Agent V2 API
 # =========================
 
