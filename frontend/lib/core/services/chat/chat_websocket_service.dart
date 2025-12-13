@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
+import '../../config/api_config.dart';
 
 /// Chat WebSocket Service
 /// /agent/stream 엔드포인트용 WebSocket 클라이언트
@@ -18,11 +19,11 @@ class ChatWebSocketService {
   /// WebSocket 연결
   /// [userId]: 사용자 ID
   /// [sessionId]: 세션 ID (생성된 경우)
-  /// [wsUrl]: WebSocket URL (기본값: localhost)
+  /// [wsUrl]: WebSocket URL (기본값: ApiConfig에서 자동 설정)
   Future<void> connect({
     required String userId,
     String? sessionId,
-    String wsUrl = 'ws://localhost:8000/agent/stream', // Android 에뮬레이터용
+    String? wsUrl,
   }) async {
     if (_isConnected) {
       debugPrint('[ChatWebSocketService] 이미 연결되어 있습니다');
@@ -30,9 +31,10 @@ class ChatWebSocketService {
     }
 
     try {
-      debugPrint('[ChatWebSocketService] 연결 시작: $wsUrl');
+      final url = wsUrl ?? ApiConfig.chatWebSocketUrl;
+      debugPrint('[ChatWebSocketService] 연결 시작: $url');
 
-      _channel = WebSocketChannel.connect(Uri.parse(wsUrl));
+      _channel = WebSocketChannel.connect(Uri.parse(url));
       _isConnected = true;
 
       // session_id 생성 (제공되지 않은 경우)

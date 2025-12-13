@@ -45,7 +45,7 @@ class BomChatService {
       await _wsService.connect(
         userId: userId,
         sessionId: sessionId,
-        wsUrl: wsUrl ?? 'ws://localhost:8000/agent/stream',
+        wsUrl: wsUrl ?? 'ws://10.0.2.2:8000/agent/stream',
       );
 
       // 2. Backend 준비 완료 대기용 Completer
