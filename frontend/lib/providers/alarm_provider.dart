@@ -80,12 +80,152 @@ class AlarmNotifier extends StateNotifier<AsyncValue<List<AlarmModel>>> {
   Future<void> loadAlarms() async {
     state = const AsyncValue.loading();
     try {
-      final alarms = await _repository.getAllAlarms();
+      // TODO: 실제 DB 데이터 사용 시 아래 주석 해제
+      // final alarms = await _repository.getAllAlarms();
+
+      // Mock 데이터 사용 (UI 테스트용)
+      final alarms = _getMockAlarms();
+
       state = AsyncValue.data(alarms);
     } catch (e, stack) {
       print('[AlarmProvider] Failed to load alarms: $e');
       state = AsyncValue.error(e, stack);
     }
+  }
+
+  /// Mock 알람 데이터 (UI 테스트용)
+  List<AlarmModel> _getMockAlarms() {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+
+    return [
+      // 기억 타입
+      AlarmModel(
+        id: 1,
+        year: today.year,
+        month: today.month,
+        day: today.day,
+        week: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'],
+        time: 10,
+        minute: 24,
+        amPm: 'am',
+        isValid: true,
+        isEnabled: true,
+        notificationId: 1001,
+        scheduledDatetime: DateTime(today.year, today.month, today.day, 10, 24),
+        title: '남편과 대화',
+        content: '매우 중요한 발표가 있어서 긴장된다고 이야기 했음.',
+        isDeleted: false,
+        createdAt: now,
+        updatedAt: now,
+        itemType: ItemType.memory,
+      ),
+      // 알람 타입
+      AlarmModel(
+        id: 2,
+        year: today.year,
+        month: today.month,
+        day: today.day + 1,
+        week: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'],
+        time: 2,
+        minute: 30,
+        amPm: 'pm',
+        isValid: true,
+        isEnabled: true,
+        notificationId: 1002,
+        scheduledDatetime: DateTime(today.year, today.month, today.day + 1, 14, 30),
+        title: '약 복용 시간',
+        content: '혈압약 복용하기',
+        isDeleted: false,
+        createdAt: now,
+        updatedAt: now,
+        itemType: ItemType.alarm,
+      ),
+      // 이벤트 타입
+      AlarmModel(
+        id: 3,
+        year: today.year,
+        month: today.month,
+        day: today.day + 2,
+        week: ['Saturday'],
+        time: 3,
+        minute: 0,
+        amPm: 'pm',
+        isValid: true,
+        isEnabled: false,
+        notificationId: 1003,
+        scheduledDatetime: DateTime(today.year, today.month, today.day + 2, 15, 0),
+        title: '딸과 약속',
+        content: '카페에서 만나기로 함',
+        isDeleted: false,
+        createdAt: now,
+        updatedAt: now,
+        itemType: ItemType.event,
+      ),
+      // 알람 타입 2
+      AlarmModel(
+        id: 4,
+        year: today.year,
+        month: today.month,
+        day: today.day + 3,
+        week: ['Sunday'],
+        time: 9,
+        minute: 0,
+        amPm: 'am',
+        isValid: true,
+        isEnabled: true,
+        notificationId: 1004,
+        scheduledDatetime: DateTime(today.year, today.month, today.day + 3, 9, 0),
+        title: '운동 시간',
+        content: '아침 산책하기',
+        isDeleted: false,
+        createdAt: now,
+        updatedAt: now,
+        itemType: ItemType.alarm,
+      ),
+      // 기억 타입 2
+      AlarmModel(
+        id: 5,
+        year: today.year,
+        month: today.month,
+        day: today.day + 4,
+        week: ['Monday'],
+        time: 11,
+        minute: 30,
+        amPm: 'am',
+        isValid: true,
+        isEnabled: true,
+        notificationId: 1005,
+        scheduledDatetime: DateTime(today.year, today.month, today.day + 4, 11, 30),
+        title: '친구와 통화',
+        content: '오랜만에 안부 전화 드리기로 했음',
+        isDeleted: false,
+        createdAt: now,
+        updatedAt: now,
+        itemType: ItemType.memory,
+      ),
+      // 이벤트 타입 2
+      AlarmModel(
+        id: 6,
+        year: today.year,
+        month: today.month,
+        day: today.day + 5,
+        week: ['Tuesday'],
+        time: 4,
+        minute: 0,
+        amPm: 'pm',
+        isValid: true,
+        isEnabled: true,
+        notificationId: 1006,
+        scheduledDatetime: DateTime(today.year, today.month, today.day + 5, 16, 0),
+        title: '병원 예약',
+        content: '정기 검진 예약일',
+        isDeleted: false,
+        createdAt: now,
+        updatedAt: now,
+        itemType: ItemType.event,
+      ),
+    ];
   }
 
   /// 알람 추가 (백엔드 alarm_info에서)

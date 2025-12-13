@@ -4,8 +4,9 @@ import '../../../data/models/alarm/alarm_model.dart';
 
 /// 알람 리스트 아이템
 ///
-/// 개별 알람 정보를 표시하고 토글 및 삭제 기능을 제공하는 컴포넌트
-/// Dismissible을 사용하여 왼쪽 스와이프로 삭제할 수 있습니다.
+/// 기억/알림/이벤트 세 가지 타입을 지원하며
+/// 미래 일정(오늘 이후)만 표시합니다.
+/// 알림 타입만 토글 스위치를 제공합니다.
 class AlarmListItem extends StatelessWidget {
   const AlarmListItem({
     super.key,
@@ -23,27 +24,28 @@ class AlarmListItem extends StatelessWidget {
   /// 삭제 콜백
   final VoidCallback onDelete;
 
-  /// 요일 표시 문자열 (매일 또는 개별 요일)
-  String get _weekDisplayString {
-    if (alarm.week.isEmpty) return '';
-    
-    // 7개 요일이 모두 선택된 경우 "매일"로 표시
-    if (alarm.week.length == 7) {
-      return '매일';
+  /// 날짜 표시 문자열 (MM/DD 형식)
+  String get _dateString {
+    return '${alarm.month.toString().padLeft(2, '0')}/${alarm.day.toString().padLeft(2, '0')}';
+  }
+
+  /// 요일 표시 문자열 (한글 단일 문자)
+  String get _weekdayString {
+    final date = DateTime(alarm.year, alarm.month, alarm.day);
+    const weekdays = ['월', '화', '수', '목', '금', '토', '일'];
+    return weekdays[date.weekday - 1];
+  }
+
+  /// 아이콘 선택
+  IconData get _typeIcon {
+    switch (alarm.itemType) {
+      case ItemType.memory:
+        return Icons.favorite_outline;
+      case ItemType.alarm:
+        return Icons.notifications_outlined;
+      case ItemType.event:
+        return Icons.event_outlined;
     }
-    
-    // 개별 요일 표시
-    const weekMap = {
-      'Monday': '월',
-      'Tuesday': '화',
-      'Wednesday': '수',
-      'Thursday': '목',
-      'Friday': '금',
-      'Saturday': '토',
-      'Sunday': '일',
-    };
-    
-    return alarm.week.map((w) => weekMap[w] ?? w).join(', ');
   }
 
   @override
@@ -68,10 +70,7 @@ class AlarmListItem extends StatelessWidget {
       ),
       child: Container(
         margin: const EdgeInsets.only(bottom: AppSpacing.sm),
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.md,
-          vertical: AppSpacing.sm,
-        ),
+        padding: const EdgeInsets.all(AppSpacing.md),
         decoration: BoxDecoration(
           color: AppColors.basicColor,
           borderRadius: BorderRadius.circular(AppRadius.md),
@@ -81,66 +80,124 @@ class AlarmListItem extends StatelessWidget {
           ),
         ),
         child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          crossAxisAlignment: CrossAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // 알람 정보 영역
+            // 왼쪽: 날짜 + 요일
+            Column(
+              children: [
+                Text(
+                  _dateString,
+                  style: AppTypography.bodySmall.copyWith(
+                    color: AppColors.textSecondary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  _weekdayString,
+                  style: AppTypography.caption.copyWith(
+                    color: AppColors.textSecondary,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+
+            const SizedBox(width: AppSpacing.sm),
+
+            // 중앙: 아이콘 + 내용
             Expanded(
-              child: Column(
+              child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
                 children: [
-                  // 시간 (크게 표시)
-                  Text(
-                    alarm.timeString,
-                    style: AppTypography.h2.copyWith(
-                      color: alarm.isEnabled
-                          ? AppColors.textPrimary
-                          : AppColors.textSecondary,
-                      fontWeight: FontWeight.w600,
-                      height: 1.2,
+                  // 타입별 아이콘 배경
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: alarm.itemType.backgroundColor,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      _typeIcon,
+                      color: alarm.itemType.textColor,
+                      size: 20,
                     ),
                   ),
-                  const SizedBox(height: 4),
-                  // 제목 (추후 API에서 세팅 예정)
-                  if (alarm.title != null && alarm.title!.isNotEmpty) ...[
-                    Text(
-                      alarm.title!,
-                      style: AppTypography.body.copyWith(
-                        color: alarm.isEnabled
-                            ? AppColors.textPrimary
-                            : AppColors.textSecondary,
-                        fontWeight: FontWeight.w600,
-                      ),
+
+                  const SizedBox(width: AppSpacing.sm),
+
+                  // 내용 영역
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // 타입 배지
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: alarm.itemType.backgroundColor,
+                            borderRadius: BorderRadius.circular(AppRadius.sm),
+                          ),
+                          child: Text(
+                            alarm.itemType.label,
+                            style: AppTypography.caption.copyWith(
+                              color: alarm.itemType.textColor,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 11,
+                            ),
+                          ),
+                        ),
+
+                        const SizedBox(height: 6),
+
+                        // 시간 표시
+                        Text(
+                          alarm.timeString,
+                          style: AppTypography.body.copyWith(
+                            color: AppColors.textPrimary,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+
+                        const SizedBox(height: 4),
+
+                        // 내용 텍스트
+                        if (alarm.content != null && alarm.content!.isNotEmpty)
+                          Text(
+                            alarm.content!,
+                            style: AppTypography.bodySmall.copyWith(
+                              color: AppColors.textSecondary,
+                              height: 1.4,
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                      ],
                     ),
-                    const SizedBox(height: 4),
-                  ],
-                  // 요일 표시
-                  if (alarm.week.isNotEmpty)
-                    Text(
-                      _weekDisplayString,
-                      style: AppTypography.caption.copyWith(
-                        color: alarm.isEnabled
-                            ? AppColors.textSecondary
-                            : AppColors.disabledText,
-                      ),
-                    ),
+                  ),
                 ],
               ),
             ),
 
-            // 토글 스위치
-            Transform.scale(
-              scale: ToggleTokens.defaultScale,
-              child: Switch(
-                value: alarm.isEnabled,
-                onChanged: onToggle,
-                activeThumbColor: ToggleTokens.primaryActiveThumb,
-                activeTrackColor: ToggleTokens.primaryActiveTrack,
-                inactiveThumbColor: ToggleTokens.primaryInactiveThumb,
-                inactiveTrackColor: ToggleTokens.primaryInactiveTrack,
+            // 오른쪽: 토글 (알림 타입만)
+            if (alarm.itemType.needsToggle) ...[
+              const SizedBox(width: AppSpacing.xs),
+              Transform.scale(
+                scale: ToggleTokens.defaultScale,
+                child: Switch(
+                  value: alarm.isEnabled,
+                  onChanged: onToggle,
+                  activeThumbColor: ToggleTokens.primaryActiveThumb,
+                  activeTrackColor: ToggleTokens.primaryActiveTrack,
+                  inactiveThumbColor: ToggleTokens.primaryInactiveThumb,
+                  inactiveTrackColor: ToggleTokens.primaryInactiveTrack,
+                ),
               ),
-            ),
+            ],
           ],
         ),
       ),

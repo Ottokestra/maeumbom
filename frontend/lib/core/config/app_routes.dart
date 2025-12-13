@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../app/home/home_screen.dart';
 import '../../app/alarm/alarm_screen.dart';
+import '../../app/alarm/memory_list_screen.dart';
 import '../../app/chat/chat_screen.dart';
 import '../../app/report/report_screen.dart';
 import '../../app/settings/mypage_screen.dart';
@@ -10,7 +11,7 @@ import '../../app/common/login_screen.dart';
 import '../../app/sign/sign_up1.dart';
 import '../../app/survey/menopause_survey_screen.dart';
 import '../../app/survey/menopause_survey_intro_screen.dart';
-import '../../app/onboarding/splash_screen.dart';
+import '../../app/common/onboarding/splash_screen.dart';
 import '../../app/chat/bomi_screen.dart';
 import '../../app/chat/chat_list_screen.dart';
 import '../../app/training/training_screen.dart';
@@ -52,6 +53,12 @@ class AppRoutes {
     routeName: '/alarm',
     builder: AlarmScreen.new,
     tabIndex: 1, // BottomMenuBar: 마음서랍
+  );
+
+  static const RouteMetadata memoryList = RouteMetadata(
+    routeName: '/alarm/memory',
+    builder: MemoryListScreen.new,
+    requiresAuth: true,
   );
 
   static const RouteMetadata bomi = RouteMetadata(
@@ -159,6 +166,7 @@ class AppRoutes {
     splash,
     home,
     alarm,
+    memoryList,
     chat,
     chatList,
     report,

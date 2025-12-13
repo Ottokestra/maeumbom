@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lottie/lottie.dart';
-import '../../ui/app_ui.dart';
-import '../../providers/auth_provider.dart';
+import '../../../ui/app_ui.dart';
+import '../../../providers/auth_provider.dart';
 
 /// 스플래시 화면
 class SplashScreen extends ConsumerStatefulWidget {

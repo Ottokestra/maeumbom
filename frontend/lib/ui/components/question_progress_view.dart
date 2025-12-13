@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'dart:async';
 import '../tokens/app_tokens.dart';
 
 class QuestionProgressView extends StatefulWidget {
@@ -15,6 +14,8 @@ class QuestionProgressView extends StatefulWidget {
   final bool initiallyExpanded; // 초기 확장 상태
   final bool enableAnimation; // 텍스트 애니메이션 활성화 여부
   final String? toggleTitle; // 토글 버튼 텍스트 (null이면 아이콘 표시)
+  final Widget? topWidget; // 진행률 바 위의 커스텀 위젯 (ProgressCard 등)
+  final bool useModal; // 모달 스타일 사용 여부
 
   const QuestionProgressView({
     super.key,
@@ -30,7 +31,29 @@ class QuestionProgressView extends StatefulWidget {
     this.initiallyExpanded = true,
     this.enableAnimation = false,
     this.toggleTitle,
-  }) : assert(questionText != null || titleWidget != null,
+    this.topWidget,
+  })  : useModal = true,
+        assert(questionText != null || titleWidget != null,
+            'questionText 또는 titleWidget 중 하나는 반드시 제공되어야 합니다.');
+
+  /// 모달 없이 모든 콘텐츠를 스크롤 가능한 영역에 표시하는 생성자
+  const QuestionProgressView.withoutModal({
+    super.key,
+    required this.currentStep,
+    required this.totalSteps,
+    this.questionNumber,
+    this.questionText,
+    this.questionTextStyle,
+    this.titleWidget,
+    this.media,
+    required this.content,
+    this.topWidget,
+  })  : useModal = false,
+        enableToggle = false,
+        initiallyExpanded = true,
+        enableAnimation = false,
+        toggleTitle = null,
+        assert(questionText != null || titleWidget != null,
             'questionText 또는 titleWidget 중 하나는 반드시 제공되어야 합니다.');
 
   @override
@@ -61,6 +84,76 @@ class _QuestionProgressViewState extends State<QuestionProgressView> {
     final progress = (displayStep / widget.totalSteps).clamp(0.0, 1.0);
     final percentage = (progress * 100).toInt();
 
+    // 모달 없는 레이아웃 (withoutModal)
+    if (!widget.useModal) {
+      return Column(
+        children: [
+          // 커스텀 상단 위젯 (ProgressCard 등)
+          if (widget.topWidget != null) ...[
+            widget.topWidget!,
+            const SizedBox(height: 24),
+          ],
+
+          // 전체 스크롤 가능 영역
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  // 질문 번호
+                  if (widget.questionNumber != null) ...[
+                    Text(
+                      widget.questionNumber!,
+                      style: const TextStyle(
+                        color: Color(0xFFD7454D),
+                        fontSize: 16,
+                        fontFamily: 'Pretendard',
+                        fontWeight: FontWeight.w700,
+                        height: 1.50,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                  ],
+
+                  // 질문 텍스트
+                  if (widget.titleWidget != null)
+                    widget.titleWidget!
+                  else
+                    Text(
+                      widget.questionText!,
+                      style: widget.questionTextStyle ??
+                          const TextStyle(
+                            color: Color(0xFF243447),
+                            fontSize: 24,
+                            fontFamily: 'Pretendard',
+                            fontWeight: FontWeight.w700,
+                            height: 1.25,
+                          ),
+                      textAlign: TextAlign.center,
+                    ),
+
+                  // 미디어 영역
+                  if (widget.media != null) ...[
+                    const SizedBox(height: 24),
+                    widget.media!,
+                  ],
+
+                  const SizedBox(height: 32),
+
+                  // 콘텐츠 (답변 선택지 등)
+                  widget.content,
+
+                  const SizedBox(height: 24),
+                ],
+              ),
+            ),
+          ),
+        ],
+      );
+    }
+
+    // 기존 모달 레이아웃 (기본)
     return Column(
       children: [
         // 진행률 바 영역 (Progress Bar Section)
@@ -193,7 +286,7 @@ class _QuestionProgressViewState extends State<QuestionProgressView> {
             ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.05),
+                color: Colors.black.withValues(alpha: 0.05),
                 blurRadius: 10,
                 offset: const Offset(0, -5),
               ),

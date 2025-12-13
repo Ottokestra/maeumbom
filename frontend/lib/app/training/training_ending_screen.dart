@@ -67,7 +67,7 @@ class RelationTrainingEndingScreen extends ConsumerWidget {
         onPrimaryTap: () => NavigationService(context, ref).navigateToRoute("/training/relation-training"),
       ),
       body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md), 
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm), 
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -75,7 +75,7 @@ class RelationTrainingEndingScreen extends ConsumerWidget {
             if (result.resultImageUrl != null)
               Center(
                 child: SizedBox(
-                   height: 300, 
+                   height: 80, 
                    child: ClipRRect(
                     borderRadius: BorderRadius.circular(AppRadius.lg), 
                     child: Image.network(
@@ -83,7 +83,7 @@ class RelationTrainingEndingScreen extends ConsumerWidget {
                       fit: BoxFit.cover,
                       errorBuilder: (_, __, ___) => const Icon(
                         Icons.image_not_supported_rounded,
-                        size: 64,
+                        size: 54,
                         color: AppColors.borderLightGray,
                       ),
                     ),
@@ -95,7 +95,7 @@ class RelationTrainingEndingScreen extends ConsumerWidget {
               const Center(
                 child: Icon(
                   Icons.check_circle_outline_rounded,
-                  size: 100,
+                  size: 80,
                   color: highlightColor,
                 ),
               ),
@@ -106,7 +106,7 @@ class RelationTrainingEndingScreen extends ConsumerWidget {
             Expanded(
               child: SingleChildScrollView(
                 child: Container(
-                  padding: const EdgeInsets.all(AppSpacing.lg),
+                  padding: const EdgeInsets.all(AppSpacing.md),
                   decoration: BoxDecoration(
                     color: highlightColor.withOpacity(0.08),
                     borderRadius: BorderRadius.circular(AppRadius.xl), 

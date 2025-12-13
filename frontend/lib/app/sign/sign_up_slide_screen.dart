@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../ui/app_ui.dart';
 import '../../data/dtos/onboarding/onboarding_survey_request.dart';
-import '../onboarding/onboarding_survey_controller.dart';
+import '../common/onboarding/onboarding_survey_controller.dart';
 import '../../providers/onboarding_provider.dart';
 
 /// 회원가입 슬라이드 화면

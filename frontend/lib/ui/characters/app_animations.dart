@@ -93,6 +93,64 @@ const Map<String, AnimationMeta> animationMetaMap = {
     assetPath: 'assets/characters/animation/error/char_relief.json',
   ),
 
+  // love 캐릭터 - 4가지 감정
+  'love_happiness': AnimationMeta(
+    id: 'love_happiness',
+    nameKo: '사랑(기쁨)',
+    category: EmotionCategory.happiness,
+    assetPath: 'assets/characters/animation/happiness/char_love.json',
+  ),
+  'love_sadness': AnimationMeta(
+    id: 'love_sadness',
+    nameKo: '사랑(슬픔)',
+    category: EmotionCategory.sadness,
+    assetPath: 'assets/characters/animation/sadness/char_love.json',
+  ),
+  'love_anger': AnimationMeta(
+    id: 'love_anger',
+    nameKo: '사랑(분노)',
+    category: EmotionCategory.anger,
+    assetPath: 'assets/characters/animation/anger/char_love.json',
+  ),
+  'love_fear': AnimationMeta(
+    id: 'love_fear',
+    nameKo: '사랑(공포)',
+    category: EmotionCategory.fear,
+    assetPath: 'assets/characters/animation/fear/char_love.json',
+  ),
+
+  // love 캐릭터 - 5가지 상태
+  'love_basic': AnimationMeta(
+    id: 'love_basic',
+    nameKo: '사랑(기본)',
+    category: EmotionCategory.basic,
+    assetPath: 'assets/characters/animation/basic/char_love.json',
+  ),
+  'love_listening': AnimationMeta(
+    id: 'love_listening',
+    nameKo: '사랑(듣는중)',
+    category: EmotionCategory.listening,
+    assetPath: 'assets/characters/animation/listening/char_love.json',
+  ),
+  'love_thinking': AnimationMeta(
+    id: 'love_thinking',
+    nameKo: '사랑(생각중)',
+    category: EmotionCategory.thinking,
+    assetPath: 'assets/characters/animation/thinking/char_love.json',
+  ),
+  'love_realization': AnimationMeta(
+    id: 'love_realization',
+    nameKo: '사랑(깨달음)',
+    category: EmotionCategory.realization,
+    assetPath: 'assets/characters/animation/realization/char_love.json',
+  ),
+  'love_error': AnimationMeta(
+    id: 'love_error',
+    nameKo: '사랑(오류)',
+    category: EmotionCategory.error,
+    assetPath: 'assets/characters/animation/error/char_love.json',
+  ),
+
   // TODO: 향후 추가될 캐릭터들
   // 예시:
   // 'joy_happiness': AnimationMeta(
@@ -132,7 +190,7 @@ class AnimatedCharacter extends StatelessWidget {
 
   /// 기본 생성자: characterId와 emotion을 받아서 조합
   /// 예: AnimatedCharacter(characterId: 'relief', emotion: 'happiness')
-  AnimatedCharacter({
+  const AnimatedCharacter({
     super.key,
     required String characterId,
     String emotion = 'happiness',
