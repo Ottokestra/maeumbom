@@ -4,7 +4,6 @@ import '../../utils/route_utils.dart';
 import '../navigation/route_guard.dart';
 import '../../config/app_routes.dart';
 import '../../../app/common/login_screen.dart';
-import '../../../ui/components/more_menu_sheet.dart';
 
 /// 중앙화된 네비게이션 서비스
 class NavigationService {
@@ -15,12 +14,6 @@ class NavigationService {
 
   /// 탭 인덱스에 따라 화면으로 이동 (인증 체크 포함)
   void navigateToTab(int index) {
-    // 더보기 버튼 (index 2)은 MoreMenuSheet 표시
-    if (index == 2) {
-      MoreMenuSheet.show(context);
-      return;
-    }
-
     // AppRoutes에서 탭 인덱스로 라우트 찾기
     final routeMetadata = AppRoutes.findByTabIndex(index);
 

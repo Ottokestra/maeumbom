@@ -1,5 +1,7 @@
 # Maeumbom Frontend 개발 가이드
 
+***바이브 코딩시에는 PROMPT_GUIDE.md를 프롬프트에 전달 후 진행하세요***
+
 마음봄 Flutter 앱 개발을 위한 전체 가이드입니다.
 
 ---
@@ -139,6 +141,7 @@ frontend/
 │   │   │   ├── chat_bubble.dart        # 채팅 말풍선 (사용자/봇)
 │   │   │   ├── system_bubble.dart      # 시스템 말풍선
 │   │   │   ├── emotion_bubble.dart     # 감정 말풍선 (캐릭터 + 메시지)
+│   │   │   ├── choice_button.dart      # 선택지 버튼 (가로/세로 레이아웃)
 │   │   │   ├── circular_ripple.dart    # 원형 파동 효과
 │   │   │   ├── more_menu_sheet.dart    # 더보기 메뉴 시트
 │   │   │   ├── slide_to_action_button.dart  # 슬라이드 액션 버튼
@@ -221,7 +224,8 @@ frontend/
 - ✅ ChatBubble - 사용자/봇 채팅 말풍선
 - ✅ SystemBubble - 시스템 메시지 (info/success/warning)
 - ✅ EmotionBubble - 감정 말풍선 (TTS 토글 지원)
-- ✅ ListBubble - 선택형 답변 말풍선 (response_type: list)
+- ✅ ListBubble - 선택형 답변 말풍선 (response_type: list) [deprecated]
+- ✅ ChoiceButton - 사용자 선택지 버튼 (가로/세로 레이아웃, 감정 색상)
 - ✅ VoiceWaveform - 음성 녹음 파동 애니메이션
 - ✅ CircularRipple - 캐릭터 원형 파동 효과
 - ✅ MoreMenuSheet - 더보기 메뉴 시트
@@ -364,20 +368,109 @@ Switch(
 )
 ```
 
-#### 5. 선택형 답변 사용
+#### 5. 선택지 버튼 사용 (ChoiceButton)
 
 ```dart
-// response_type이 'list'일 때
+// 가로 배치 (2개 선택지) - 짧은 답변
+ChoiceButtonGroup(
+  choices: ['예', '아니오'],
+  layout: ChoiceLayout.horizontal,  // 가로 배치 명시
+  onChoiceSelected: (index, choice) {
+    print('Selected: $choice');
+  },
+)
+
+// 가로 배치 (3개 선택지도 가능)
+ChoiceButtonGroup(
+  choices: ['좋음', '보통', '나쁨'],
+  layout: ChoiceLayout.horizontal,
+  onChoiceSelected: (index, choice) {
+    _handleMoodSelection(choice);
+  },
+)
+
+// 세로 배치 (긴 텍스트)
+ChoiceButtonGroup(
+  choices: [
+    '네, 지금 바로 시작하고 싶어요',
+    '아니요, 나중에 할게요'
+  ],
+  layout: ChoiceLayout.vertical,  // 세로 배치 명시
+  onChoiceSelected: (index, choice) {
+    _handleChoice(choice);
+  },
+)
+
+// 세로 배치 (3개 이상 선택지)
+ChoiceButtonGroup(
+  choices: ['요가', '산책', '수영', '헬스', '필라테스'],
+  layout: ChoiceLayout.vertical,
+  emotionIds: [
+    EmotionId.relief, 
+    EmotionId.joy, 
+    EmotionId.love,
+    EmotionId.interest,
+    EmotionId.confidence
+  ],
+  onChoiceSelected: (index, choice) {
+    _handleExerciseSelection(choice);
+  },
+)
+
+// 선택지 개수에 따라 자동 레이아웃 결정
+ChoiceButtonGroup(
+  choices: choices,
+  layout: choices.length == 2 
+    ? ChoiceLayout.horizontal   // 2개면 가로
+    : ChoiceLayout.vertical,    // 3개 이상이면 세로
+  onChoiceSelected: (index, choice) {
+    _handleChoice(choice);
+  },
+)
+
+// 커스터마이징 (테두리 없이, 번호 표시 없이)
+ChoiceButtonGroup(
+  choices: ['선택 1', '선택 2', '선택 3'],
+  layout: ChoiceLayout.vertical,
+  showBorder: false,
+  showNumber: false,
+  onChoiceSelected: (index, choice) {
+    _handleChoice(choice);
+  },
+)
+```
+
+**레이아웃 선택 가이드:**
+- `ChoiceLayout.horizontal`: 가로 배치 (짧은 텍스트, 2-3개 선택지)
+- `ChoiceLayout.vertical`: 세로 배치 (긴 텍스트, 3개 이상 선택지)
+
+#### 6. 선택형 답변 사용 (ListBubble) [Deprecated]
+
+**Note**: `ListBubble`은 deprecated되었으며, `ChoiceButtonGroup`을 사용하세요.
+
+```dart
+// ❌ Deprecated: ListBubble
 if (responseType == 'list') {
   ListBubble(
     items: parseListItems(replyText),
     selectedIndex: selectedIndex,
     onItemSelected: (index, item) {
-      // 선택한 항목을 서버로 전송
       sendMessage(item);
     },
   )
 }
+
+// ✅ 권장: ChoiceButtonGroup
+ChoiceButtonGroup(
+  choices: parseListItems(replyText),
+  selectedIndex: selectedIndex,
+  layout: choices.length == 2 
+    ? ChoiceLayout.horizontal 
+    : ChoiceLayout.vertical,
+  onChoiceSelected: (index, choice) {
+    sendMessage(choice);
+  },
+)
 ```
 
 ---
@@ -3331,6 +3424,6 @@ Widget _buildCharacterLayer({
 
 ---
 
-**마지막 업데이트**: 2025-12-10
+**마지막 업데이트**: 2025-12-13
 
 **문의**: 개발팀 채널

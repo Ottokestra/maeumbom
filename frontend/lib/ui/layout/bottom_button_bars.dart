@@ -82,7 +82,7 @@ class BottomButtonBar extends StatelessWidget {
     final bottomPadding = MediaQuery.of(context).padding.bottom;
 
     return Container(
-      height: 100 + bottomPadding,
+      height: 70 + bottomPadding,
       width: double.infinity,
       decoration: BoxDecoration(
         color: backgroundColor,
@@ -98,7 +98,7 @@ class BottomButtonBar extends StatelessWidget {
                   onTap: onSecondaryTap,
                   child: Container(
                     height: double.infinity,
-                    padding: EdgeInsets.only(bottom: bottomPadding),
+                    padding: EdgeInsets.only(bottom: bottomPadding + 10),
                     child: Center(
                       child: SizedBox(
                         height: 64,
@@ -127,7 +127,7 @@ class BottomButtonBar extends StatelessWidget {
                 onTap: onPrimaryTap,
                 child: Container(
                   height: double.infinity,
-                  padding: EdgeInsets.only(bottom: bottomPadding),
+                  padding: EdgeInsets.only(bottom: bottomPadding + 10),
                   child: Center(
                     child: SizedBox(
                       height: 64,

@@ -3,9 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../ui/app_ui.dart';
 import '../../../providers/chat_provider.dart';
+import '../../../core/utils/text_formatter.dart';
 import '../chat_alarm_dialogs.dart';
 import '../helpers/animation_state_helper.dart';
 import '../helpers/process_state_helper.dart';
+import '../helpers/status_message_helper.dart';
 
 /// Bomi Content - 봄이 화면 본문
 ///
@@ -212,6 +214,12 @@ class _BomiContentState extends ConsumerState<BomiContent> {
 
     final displayText = getSummaryText(botMessageText);
 
+    // 🆕 상태 메시지 결정
+    final statusMessage = StatusMessageHelper.getStatusMessage(
+      voiceState: voiceState,
+      isLoading: isLoading,
+    );
+
     // 디버깅 로그
     if (latestBotMessage != null) {
       print('[BomiContent] 🔍 Latest message meta: ${latestBotMessage.meta}');
@@ -220,6 +228,9 @@ class _BomiContentState extends ConsumerState<BomiContent> {
       if (isListType) {
         print('[BomiContent] 📝 Summary text: $displayText');
       }
+    }
+    if (statusMessage != null) {
+      print('[BomiContent] 📢 Status message: $statusMessage');
     }
 
     // 키보드 높이 감지
@@ -270,8 +281,16 @@ class _BomiContentState extends ConsumerState<BomiContent> {
                       animationState: animationState,
                     ),
 
-                    // 2. AI 봄이 메시지 버블 (일반 답변)
-                    if (!isListType) ...[
+                    // 2. AI 봄이 메시지 버블 (상태 메시지 우선, 없으면 일반 답변)
+                    if (statusMessage != null) ...[
+                      // 🆕 상태 메시지 표시 (타이핑 애니메이션 적용, TTS 토글 없음)
+                      EmotionBubble(
+                        message: statusMessage,
+                        enableTypingAnimation: true,
+                        key: ValueKey('status_$statusMessage'),
+                        showTtsToggle: false,
+                      ),
+                    ] else if (!isListType) ...[
                       // TTS 토글
                       Row(
                         mainAxisAlignment: MainAxisAlignment.end,
@@ -295,9 +314,9 @@ class _BomiContentState extends ConsumerState<BomiContent> {
                           ),
                         ],
                       ),
-                      // 메시지 버블
+                      // 일반 답변 메시지 버블 (🆕 마크다운 정제 적용)
                       EmotionBubble(
-                        message: displayText,
+                        message: TextFormatter.formatBasicMarkdown(displayText),
                         enableTypingAnimation: latestBotMessage != null,
                         key: ValueKey(latestBotMessage?.id ?? 'default'),
                         showTtsToggle: false,
@@ -305,7 +324,7 @@ class _BomiContentState extends ConsumerState<BomiContent> {
                     ],
 
                     // 2-1. 선택형 답변 (response_type: list)
-                    if (isListType) ...[
+                    if (isListType && statusMessage == null) ...[
                       // TTS 토글
                       Row(
                         mainAxisAlignment: MainAxisAlignment.end,
@@ -329,9 +348,9 @@ class _BomiContentState extends ConsumerState<BomiContent> {
                           ),
                         ],
                       ),
-                      // 안내 메시지 버블 (요약만 표시)
+                      // 안내 메시지 버블 (요약만 표시, 🆕 마크다운 정제 적용)
                       EmotionBubble(
-                        message: displayText,
+                        message: TextFormatter.formatBasicMarkdown(displayText),
                         enableTypingAnimation: latestBotMessage != null,
                         key: ValueKey(
                             '${latestBotMessage?.id ?? 'default'}_intro'),

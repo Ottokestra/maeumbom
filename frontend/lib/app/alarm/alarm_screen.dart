@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../ui/app_ui.dart';
 import '../../core/services/navigation/navigation_service.dart';
 import '../../core/utils/emotion_classifier.dart';
+import '../../core/utils/mood_color_helper.dart';
 import '../../providers/alarm_provider.dart';
 import '../../providers/daily_mood_provider.dart';
 import '../../data/models/alarm/alarm_model.dart';
@@ -44,11 +45,8 @@ class _AlarmScreenState extends ConsumerState<AlarmScreen> {
     // 배경색을 위한 기분 카테고리 가져오기
     final moodCategory = EmotionClassifier.classify(currentEmotion);
 
-    // 배경색 결정
-    final backgroundColor = _getMoodColor(moodCategory);
-
-    // 상태바 스타일 설정 (밝은 배경에는 어두운 아이콘)
-    final statusBarStyle = SystemUiOverlayStyle.dark;
+    // MoodColorHelper를 사용하여 일관된 색상 적용
+    final backgroundColor = MoodColorHelper.getBackgroundColor(moodCategory);
 
     return AppFrame(
       statusBarStyle: SystemUiOverlayStyle.light,
@@ -62,7 +60,7 @@ class _AlarmScreenState extends ConsumerState<AlarmScreen> {
             children: [
               // A. 상단 바 (수동 추가)
               TopBar(
-                title: '똑똑 알람',
+                title: '마음서랍',
                 leftIcon: Icons.arrow_back_ios,
                 rightIcon: Icons.more_horiz,
                 onTapLeft: () => navigationService.navigateToTab(0),
@@ -84,7 +82,7 @@ class _AlarmScreenState extends ConsumerState<AlarmScreen> {
                     // 왼쪽: 텍스트 영역
                     Expanded(
                       child: GestureDetector(
-                        onTap: () => navigationService.navigateToTab(1),
+                        onTap: () => navigationService.navigateToRoute('/bomi'),
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -165,18 +163,6 @@ class _AlarmScreenState extends ConsumerState<AlarmScreen> {
         ),
       ),
     );
-  }
-
-  /// 기분 카테고리에 따른 배경색 반환
-  Color _getMoodColor(MoodCategory category) {
-    switch (category) {
-      case MoodCategory.good:
-        return AppColors.homeGoodYellow;
-      case MoodCategory.neutral:
-        return AppColors.homeNormalGreen;
-      case MoodCategory.bad:
-        return AppColors.homeBadBlue;
-    }
   }
 
   /// 알람 리스트 빌드

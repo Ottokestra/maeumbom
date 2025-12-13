@@ -81,6 +81,7 @@ dependencies:
   timezone: ^0.9.0
   android_alarm_manager_plus: ^4.0.3 # 🆕 신뢰할 수 있는 Android 알람
   audioplayers: ^6.5.1
+  shared_preferences: ^2.5.4
 
 dev_dependencies:
   flutter_test:
