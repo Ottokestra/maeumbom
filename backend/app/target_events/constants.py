@@ -3,15 +3,13 @@
 Constants for tag categories and event types
 """
 
-# 대상 태그 (Target Tags)
+# 대상 태그 (Target Tags) - TB_SCENARIOS와 동일한 형식
 TARGET_TAGS = {
-    "husband": "#남편",
-    "son": "#아들",
-    "daughter": "#딸",
-    "friend": "#친구",
-    "colleague": "#직장동료",
-    "family": "#가족",
-    "acquaintance": "#지인",
+    "HUSBAND": "#남편",
+    "CHILD": "#자녀",  # son, daughter 통합
+    "FRIEND": "#친구",
+    "COLLEAGUE": "#직장동료",
+    "SELF": "#나",  # 봄이와 대화, 알람 등
 }
 
 # 대상 타입 역매핑 (한글 -> 영문)
@@ -43,6 +41,17 @@ IMPORTANCE_TAGS = {
 
 # 감정 태그 (Emotion Tags) - 선택적
 EMOTION_TAGS = ["#긍정적", "#부정적", "#걱정", "#기대"]
+
+# 이벤트 타입 (Event Types)
+EVENT_TYPES = {
+    "alarm": "알람",
+    "event": "일정",
+    "memory": "기억"
+}
+
+EVENT_TYPE_ALARM = "alarm"  # 알람/알림 요청
+EVENT_TYPE_EVENT = "event"  # 약속/일정 (기본값)
+EVENT_TYPE_MEMORY = "memory"  # 일반 대화 기억
 
 # 모든 태그 목록
 ALL_TAGS = (

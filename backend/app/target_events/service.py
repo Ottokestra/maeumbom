@@ -38,7 +38,6 @@ def analyze_daily_events(
                 Conversation.USER_ID == user_id,
                 Conversation.CREATED_AT >= start_datetime,
                 Conversation.CREATED_AT <= end_datetime,
-                Conversation.IS_DELETED == "N",
             )
         )
         .order_by(Conversation.CREATED_AT)
@@ -81,10 +80,18 @@ def analyze_daily_events(
     # 5. DB 저장
     created_events = []
     for event_data in extracted_events:
+        event_type = event_data.get("event_type", "event")
+        target_type = event_data.get("target_type", "SELF")
+        
+        # 알람은 무조건 SELF로 설정
+        if event_type == "alarm":
+            target_type = "SELF"
+        
         event = DailyTargetEvent(
             USER_ID=user_id,
-            EVENT_DATE=event_data.get("event_date", target_date),
-            TARGET_TYPE=event_data.get("target_type", "family"),
+            EVENT_DATE=target_date,  # 무조건 분석 날짜로 저장
+            EVENT_TYPE=event_type,
+            TARGET_TYPE=target_type,
             EVENT_SUMMARY=event_data.get("event_summary", ""),
             EVENT_TIME=event_data.get("event_time"),
             IMPORTANCE=event_data.get("importance", 3),
@@ -219,6 +226,7 @@ def analyze_weekly_events(
 def get_daily_events(
     db: Session,
     user_id: int,
+    event_type: Optional[str] = None,
     tags: Optional[List[str]] = None,
     start_date: Optional[date] = None,
     end_date: Optional[date] = None,
@@ -230,6 +238,7 @@ def get_daily_events(
     Args:
         db: Database session
         user_id: User ID
+        event_type: Event type filter (alarm/event/memory) (optional)
         tags: Tag filters (optional)
         start_date: Start date (optional)
         end_date: End date (optional)
@@ -244,6 +253,10 @@ def get_daily_events(
             DailyTargetEvent.IS_DELETED == False,
         )
     )
+
+    # 이벤트 타입 필터
+    if event_type:
+        query = query.filter(DailyTargetEvent.EVENT_TYPE == event_type)
 
     # 날짜 필터
     if start_date:

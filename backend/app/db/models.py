@@ -1395,7 +1395,8 @@ class DailyTargetEvent(Base):
         ID: Primary key
         USER_ID: Foreign key to users table
         EVENT_DATE: Date of the event
-        TARGET_TYPE: Target relationship type (husband/son/friend/colleague)
+        EVENT_TYPE: Event type (alarm/event/memory)
+        TARGET_TYPE: Target relationship type (HUSBAND/CHILD/FRIEND/COLLEAGUE/SELF)
         EVENT_SUMMARY: Event summary text
         EVENT_TIME: Event time (nullable)
         IMPORTANCE: Importance level (1-5)
@@ -1414,7 +1415,8 @@ class DailyTargetEvent(Base):
     ID = Column(Integer, primary_key=True, index=True, autoincrement=True)
     USER_ID = Column(Integer, ForeignKey("TB_USERS.ID"), nullable=False, index=True)
     EVENT_DATE = Column(Date, nullable=False, index=True)
-    TARGET_TYPE = Column(String(50), nullable=False)  # husband/son/friend/colleague
+    EVENT_TYPE = Column(String(20), nullable=False, default="event", index=True)  # alarm/event/memory
+    TARGET_TYPE = Column(String(50), nullable=False)  # HUSBAND/CHILD/FRIEND/COLLEAGUE/SELF
     EVENT_SUMMARY = Column(Text, nullable=False)
     EVENT_TIME = Column(DateTime(timezone=True), nullable=True)
     IMPORTANCE = Column(Integer, nullable=False, default=3)  # 1-5
@@ -1454,7 +1456,7 @@ class WeeklyTargetEvent(Base):
         USER_ID: Foreign key to users table
         WEEK_START: Week start date (Monday)
         WEEK_END: Week end date (Sunday)
-        TARGET_TYPE: Target relationship type
+        TARGET_TYPE: Target relationship type (HUSBAND/CHILD/FRIEND/COLLEAGUE/SELF)
         EVENTS_SUMMARY: Weekly events summary (JSON array)
         TOTAL_EVENTS: Total number of events
         TAGS: Aggregated tags (JSON array)

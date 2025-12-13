@@ -108,6 +108,7 @@ async def trigger_weekly_analysis(
 
 @router.get("/daily", response_model=DailyEventsListResponse)
 async def list_daily_events(
+    event_type: Optional[str] = Query(None, description="이벤트 타입 (alarm/event/memory)"),
     tags: Optional[str] = Query(
         None, description="쉼표로 구분된 태그 (예: #아들,#픽업)"
     ),
@@ -121,6 +122,7 @@ async def list_daily_events(
     일간 이벤트 목록 조회 (태그 필터링 지원)
 
     Args:
+        event_type: 이벤트 타입 필터 (alarm/event/memory)
         tags: 쉼표로 구분된 태그 필터
         start_date: 시작 날짜
         end_date: 종료 날짜
@@ -141,6 +143,7 @@ async def list_daily_events(
         events = get_daily_events(
             db,
             current_user.ID,
+            event_type=event_type,
             tags=tag_list,
             start_date=start_date,
             end_date=end_date,

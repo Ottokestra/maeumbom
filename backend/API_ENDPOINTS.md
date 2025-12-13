@@ -2308,18 +2308,19 @@ HTTP 상태 코드:
 ```json
 {
   "analyzed_date": "2024-12-13",
-  "events_count": 3,
+  "events_count": 1,
   "events": [
     {
       "id": 1,
       "user_id": 1,
       "event_date": "2024-12-13",
-      "target_type": "son",
-      "event_summary": "아들 학교 픽업",
+      "event_type": "event",
+      "target_type": "CHILD",
+      "event_summary": "봄이와 건강 상담, 아들 학교 픽업 약속",
       "event_time": "2024-12-13T18:00:00",
       "importance": 4,
       "is_future_event": false,
-      "tags": ["#아들", "#픽업", "#오늘", "#중요"],
+      "tags": ["#자녀", "#픽업", "#오늘", "#중요"],
       "created_at": "2024-12-13T10:00:00",
       "updated_at": "2024-12-13T10:00:00"
     }
@@ -2351,7 +2352,7 @@ HTTP 상태 코드:
       "user_id": 1,
       "week_start": "2024-12-09",
       "week_end": "2024-12-15",
-      "target_type": "husband",
+      "target_type": "HUSBAND",
       "events_summary": [
         {
           "date": "2024-12-11",
@@ -2374,13 +2375,14 @@ HTTP 상태 코드:
 #### 3. 일간 이벤트 목록 조회
 **경로**: `GET /api/target-events/daily`  
 **인증**: 필요 (Bearer Token)  
-**설명**: 일간 이벤트 목록 조회 (태그 필터링 지원)  
+**설명**: 일간 이벤트 목록 조회 (이벤트 타입 및 태그 필터링 지원)  
 
 **Query Parameters**:
+- `event_type` (optional): 이벤트 타입 (alarm/event/memory)
 - `tags` (optional): 쉼표로 구분된 태그 (예: `#아들,#픽업`)
 - `start_date` (optional): 시작 날짜 (YYYY-MM-DD)
 - `end_date` (optional): 종료 날짜 (YYYY-MM-DD)
-- `target_type` (optional): 대상 유형 (husband/son/daughter/friend/colleague)
+- `target_type` (optional): 대상 유형 (HUSBAND/CHILD/FRIEND/COLLEAGUE/SELF)
 
 **응답**:
 ```json
@@ -2390,24 +2392,25 @@ HTTP 상태 코드:
       "id": 1,
       "user_id": 1,
       "event_date": "2024-12-13",
-      "target_type": "son",
-      "event_summary": "아들 학교 픽업",
+      "event_type": "event",
+      "target_type": "CHILD",
+      "event_summary": "봄이와 건강 상담, 아들 학교 픽업 약속",
       "event_time": "2024-12-13T18:00:00",
       "importance": 4,
       "is_future_event": false,
-      "tags": ["#아들", "#픽업", "#오늘", "#중요"],
+      "tags": ["#자녀", "#픽업", "#오늘", "#중요"],
       "created_at": "2024-12-13T10:00:00",
       "updated_at": "2024-12-13T10:00:00"
     }
   ],
   "total_count": 1,
   "available_tags": {
-    "target": ["#남편", "#아들", "#친구"],
+    "target": ["#남편", "#자녀", "#친구"],
     "event_type": ["#약속", "#픽업", "#만남"],
     "time": ["#오늘", "#이번주"],
     "importance": ["#중요", "#보통"],
     "other": [],
-    "all": ["#아들", "#픽업", "#약속", "#남편"]
+    "all": ["#자녀", "#픽업", "#약속", "#남편"]
   }
 }
 ```
@@ -2419,9 +2422,9 @@ HTTP 상태 코드:
 
 **Query Parameters**:
 - `tags` (optional): 쉼표로 구분된 태그
-- `start_date` (optional): 시작 날짜
-- `end_date` (optional): 종료 날짜
-- `target_type` (optional): 대상 유형
+- `start_date` (optional): 시작 날짜 (YYYY-MM-DD)
+- `end_date` (optional): 종료 날짜 (YYYY-MM-DD)
+- `target_type` (optional): 대상 유형 (HUSBAND/CHILD/FRIEND/COLLEAGUE/SELF)
 
 **응답**:
 ```json
@@ -2432,7 +2435,7 @@ HTTP 상태 코드:
       "user_id": 1,
       "week_start": "2024-12-09",
       "week_end": "2024-12-15",
-      "target_type": "husband",
+      "target_type": "HUSBAND",
       "events_summary": [...],
       "total_events": 2,
       "tags": ["#남편", "#약속"],
@@ -2455,13 +2458,55 @@ HTTP 상태 코드:
 **응답**:
 ```json
 {
-  "target": ["#남편", "#아들", "#친구"],
+  "target": ["#남편", "#자녀", "#친구"],
   "event_type": ["#약속", "#픽업", "#만남"],
   "time": ["#오늘", "#이번주"],
   "importance": ["#중요", "#보통"],
   "other": [],
-  "all": ["#남편", "#약속", "#아들", "#픽업"]
+  "all": ["#남편", "#약속", "#자녀", "#픽업"]
 }
+```
+
+### 이벤트 타입 (Event Type)
+
+이벤트는 다음 3가지 타입으로 분류됩니다:
+
+- **alarm**: 알람/알림 요청 (사용자가 "알려줘", "리마인드해줘" 등 명시적 요청)
+  - **주의**: 알람 타입은 무조건 `TARGET_TYPE=SELF`로 저장됩니다
+- **event**: 약속/일정 (구체적인 날짜/시간이 있는 약속, 만남 등) - 기본값
+- **memory**: 일반 대화 기억 (위 두 가지가 아닌 일반적인 대화 내용)
+
+### 대상 타입 (Target Type)
+
+대상은 다음 5가지 타입으로 분류됩니다 (TB_SCENARIOS와 동일):
+
+- **HUSBAND**: 남편 관련
+- **CHILD**: 자녀 관련 (아들/딸 통합)
+- **FRIEND**: 친구 관련
+- **COLLEAGUE**: 직장동료 관련
+- **SELF**: 봄이와 대화, 알람 등 (자기 자신)
+
+**특징**:
+- 하루에 사용자당 **1개의 이벤트만** 저장됨 (여러 대상과 대화해도 통합 요약)
+- 알람 타입은 무조건 `SELF`로 설정됨
+- `EVENT_DATE`는 분석한 날짜로 저장됨 (LLM이 계산한 날짜가 아님)
+
+**사용 예시**:
+```bash
+# 알람만 조회
+GET /api/target-events/daily?event_type=alarm
+
+# 일정만 조회
+GET /api/target-events/daily?event_type=event
+
+# 일반 기억만 조회
+GET /api/target-events/daily?event_type=memory
+
+# 알람 + SELF (알람은 항상 SELF)
+GET /api/target-events/daily?event_type=alarm&target_type=SELF
+
+# 자녀 관련 이벤트만 조회
+GET /api/target-events/daily?target_type=CHILD
 ```
 
 ---

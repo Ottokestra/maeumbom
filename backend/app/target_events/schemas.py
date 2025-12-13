@@ -25,6 +25,7 @@ class DailyEventResponse(BaseModel):
     id: int
     user_id: int
     event_date: date
+    event_type: str
     target_type: str
     event_summary: str
     event_time: Optional[datetime] = None
