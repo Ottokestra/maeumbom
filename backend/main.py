@@ -970,7 +970,7 @@ def get_stt_engine():
             backend_path
             / "engine"
             / "speech-to-text"
-            / "faster_whisper"
+            / "faster_whisper_engine"
             / "stt_engine.py"
         )
         spec = importlib.util.spec_from_file_location("stt_engine", stt_engine_path)
@@ -981,7 +981,7 @@ def get_stt_engine():
             backend_path
             / "engine"
             / "speech-to-text"
-            / "faster_whisper"
+            / "faster_whisper_engine"
             / "config.yaml"
         )
         stt_engine = stt_module.MaumBomSTT(str(config_path))
@@ -1066,7 +1066,7 @@ async def stt_websocket(websocket: WebSocket):
                                 backend_path
                                 / "engine"
                                 / "speech-to-text"
-                                / "faster_whisper"
+                                / "faster_whisper_engine"
                                 / "config.yaml"
                             )
                             sys.path.insert(
@@ -1075,7 +1075,7 @@ async def stt_websocket(websocket: WebSocket):
                                     backend_path
                                     / "engine"
                                     / "speech-to-text"
-                                    / "faster_whisper"
+                                    / "faster_whisper_engine"
                                 ),
                             )
                             from speaker_verifier import SpeakerVerifier
@@ -1467,7 +1467,7 @@ async def agent_websocket(websocket: WebSocket, user_id: int = 1):
                                 backend_path
                                 / "engine"
                                 / "speech-to-text"
-                                / "faster_whisper"
+                                / "faster_whisper_engine"
                                 / "config.yaml"
                             )
                             sys.path.insert(
@@ -1476,7 +1476,7 @@ async def agent_websocket(websocket: WebSocket, user_id: int = 1):
                                     backend_path
                                     / "engine"
                                     / "speech-to-text"
-                                    / "faster_whisper"
+                                    / "faster_whisper_engine"
                                 ),
                             )
                             from speaker_verifier import SpeakerVerifier
