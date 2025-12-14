@@ -42,7 +42,7 @@ class BottomButtonBar extends StatelessWidget {
     final bottomPadding = MediaQuery.of(context).padding.bottom;
 
     return Container(
-      height: 150 + bottomPadding,
+      height: 96 + bottomPadding,
       padding: EdgeInsets.fromLTRB(
         AppSpacing.sm,
         AppSpacing.sm,

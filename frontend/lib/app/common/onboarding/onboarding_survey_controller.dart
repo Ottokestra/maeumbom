@@ -1,10 +1,10 @@
 import 'package:flutter/foundation.dart';
 
-import '../../core/services/api_client.dart';
-import '../../data/dtos/onboarding/onboarding_survey_request.dart';
-import '../../data/dtos/onboarding/onboarding_survey_response.dart';
-import '../../data/dtos/onboarding/onboarding_survey_status_response.dart';
-import '../../data/repository/onboarding/onboarding_survey_repository.dart';
+import '../../../core/services/api_client.dart';
+import '../../../data/dtos/onboarding/onboarding_survey_request.dart';
+import '../../../data/dtos/onboarding/onboarding_survey_response.dart';
+import '../../../data/dtos/onboarding/onboarding_survey_status_response.dart';
+import '../../../data/repository/onboarding/onboarding_survey_repository.dart';
 
 class OnboardingSurveyController with ChangeNotifier {
   OnboardingSurveyController(this._repository);

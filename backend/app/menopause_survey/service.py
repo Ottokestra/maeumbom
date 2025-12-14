@@ -17,11 +17,11 @@ from .repository import (
     # TODO: 설문조사 응답 저장/조회용 repository 함수 추가 필요
 )
 from .schemas import (
-    MenopauseQuestionCreate, 
-    MenopauseQuestionUpdate, 
+    MenopauseQuestionCreate,
+    MenopauseQuestionUpdate,
     # 설문조사 제출/결과 스키마 임포트 추가
-    MenopauseSurveySubmitRequest, 
-    MenopauseSurveyResultResponse
+    MenopauseSurveySubmitRequest,
+    MenopauseSurveyResultResponse,
 )
 
 logger = logging.getLogger(__name__)
@@ -31,13 +31,29 @@ DEFAULT_SEED_CREATED_BY = "seed-defaults"
 # ... (FEMALE_CHARACTER_KEYS, MALE_CHARACTER_KEYS, DEFAULT_QUESTIONS 정의는 생략) ...
 
 FEMALE_CHARACTER_KEYS = [
-    "PEACH_WORRY", "PEACH_CALM", "PEACH_TIRED", "PEACH_HEAT", "PEACH_ANXIOUS", 
-    "PEACH_PAIN", "PEACH_SHY", "PEACH_BALANCE", "PEACH_BLUE", "PEACH_EXHAUSTED",
+    "PEACH_WORRY",
+    "PEACH_CALM",
+    "PEACH_TIRED",
+    "PEACH_HEAT",
+    "PEACH_ANXIOUS",
+    "PEACH_PAIN",
+    "PEACH_SHY",
+    "PEACH_BALANCE",
+    "PEACH_BLUE",
+    "PEACH_EXHAUSTED",
 ]
 
 MALE_CHARACTER_KEYS = [
-    "FIRE_FOCUS", "FIRE_ENERGY", "FIRE_DRIVE", "FIRE_ANGRY", "FIRE_EMPTY", 
-    "FIRE_FORGET", "FIRE_SLEEP", "FIRE_STRESS", "FIRE_WEIGHT", "FIRE_CONFIDENCE",
+    "FIRE_FOCUS",
+    "FIRE_ENERGY",
+    "FIRE_DRIVE",
+    "FIRE_ANGRY",
+    "FIRE_EMPTY",
+    "FIRE_FORGET",
+    "FIRE_SLEEP",
+    "FIRE_STRESS",
+    "FIRE_WEIGHT",
+    "FIRE_CONFIDENCE",
 ]
 
 
@@ -104,7 +120,7 @@ DEFAULT_SEED_DATA = FEMALE_DEFAULT_QUESTIONS + MALE_DEFAULT_QUESTIONS
 def _normalize_gender(gender: Optional[str]) -> Optional[str]:
     if not gender:
         return None
-    
+
     g = gender.upper().strip()
     if g in ("M", "MALE"):
         return "MALE"
@@ -116,6 +132,7 @@ def _normalize_gender(gender: Optional[str]) -> Optional[str]:
 # ====================================================================
 # 설문조사 제출 핵심 서비스 함수 (ImportError 해결)
 # ====================================================================
+
 
 async def submit_menopause_survey_service(
     db: Session,
@@ -130,7 +147,7 @@ async def submit_menopause_survey_service(
 
     # 2. 위험 점수 계산
     risk_score = sum(1 for answer in request_data.answers if answer.is_risk)
-    
+
     # 3. 위험 레벨 및 텍스트 결정 로직 (간단한 예시)
     if risk_score >= 8:
         risk_level = "HIGH"
@@ -144,7 +161,7 @@ async def submit_menopause_survey_service(
 
     # 4. 결과 응답 객체 생성 및 반환
     from datetime import datetime
-    
+
     return MenopauseSurveyResultResponse(
         user_id=current_user_id,
         survey_id=1,  # 저장된 레코드 ID로 대체 필요
@@ -152,13 +169,14 @@ async def submit_menopause_survey_service(
         risk_score=risk_score,
         result_text=result_text,
         risk_level=risk_level,
-        submitted_at=datetime.now()
+        submitted_at=datetime.now(),
     )
 
 
 # ====================================================================
 # 기존 질문 관리 서비스 함수들
 # ====================================================================
+
 
 def list_question_items(
     db: Session, *, gender: Optional[str] = None, is_active: Optional[bool] = True
@@ -258,7 +276,6 @@ def submit_menopause_survey(
         total_score += ans.answer_value
 
     # 2. Risk Level (Simple logic: <10 LOW, 10-20 MID, >20 HIGH)
-    # 🚨🚨 이 if/elif/else 블록 전체가 이제 함수 내부에 있습니다. 🚨🚨
     if total_score < 10:
         risk_level = "LOW"
         comment = (
@@ -279,7 +296,6 @@ def submit_menopause_survey(
             "혼자 참고 넘기기보다는 전문의와 상담을 통해 원인을 확인하고, "
             "본인에게 맞는 관리나 치료 방법을 찾는 것을 적극 권장드려요."
         )
-
 
     # 3. Save
     result = MenopauseSurveyResult(

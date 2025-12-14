@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../app/onboarding/onboarding_survey_controller.dart';
+import '../app/common/onboarding/onboarding_survey_controller.dart';
 import '../core/services/api_client.dart';
 import '../data/api/onboarding/onboarding_survey_api_client.dart';
 import '../data/repository/onboarding/onboarding_survey_repository.dart';

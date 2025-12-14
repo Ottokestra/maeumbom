@@ -58,6 +58,9 @@ class ProgressCard extends StatelessWidget {
   /// 선택적 왼쪽 위젯 (캐릭터 등)
   final Widget? leadingWidget;
 
+  /// 선택적 오른쪽 위젯 (타이머 배지 등)
+  final Widget? trailingWidget;
+
   /// 카드 패딩
   final EdgeInsets? padding;
 
@@ -71,6 +74,7 @@ class ProgressCard extends StatelessWidget {
     required this.totalValue,
     this.bottomMessage,
     this.leadingWidget,
+    this.trailingWidget,
     this.padding,
     this.theme = ProgressCardTheme.pink,
   });
@@ -104,7 +108,9 @@ class ProgressCard extends StatelessWidget {
       ),
       child: leadingWidget != null
           ? _buildWithLeadingWidget(percentage, message, colors)
-          : _buildDefault(percentage, message, colors),
+          : trailingWidget != null
+              ? _buildWithTrailingWidget(percentage, message, colors)
+              : _buildDefault(percentage, message, colors),
     );
   }
 
@@ -164,6 +170,77 @@ class ProgressCard extends StatelessWidget {
         // 오른쪽: 진행도 정보
         Expanded(
           child: _buildProgressInfo(percentage, message, colors),
+        ),
+      ],
+    );
+  }
+
+  /// 타이머 배지가 있는 레이아웃
+  Widget _buildWithTrailingWidget(
+      int percentage, String message, _ThemeColors colors) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // 상단: 라벨 + 퍼센트 + 타이머 배지
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Expanded(
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    topLabel,
+                    style: AppTypography.body.copyWith(
+                      color: colors.labelText,
+                      fontSize: 14,
+                    ),
+                  ),
+                  Text(
+                    '$percentage%',
+                    style: AppTypography.bodyBold.copyWith(
+                      color: colors.labelText,
+                      fontSize: 14,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            trailingWidget!,
+          ],
+        ),
+        const SizedBox(height: 8),
+        // 중간: 진행 바
+        ClipRRect(
+          borderRadius: BorderRadius.circular(AppRadius.pill),
+          child: Container(
+            height: 8,
+            color: AppColors.basicColor,
+            child: FractionallySizedBox(
+              widthFactor: percentage / 100,
+              alignment: Alignment.centerLeft,
+              child: Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.centerLeft,
+                    end: Alignment.centerRight,
+                    colors: colors.progressGradient,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 8),
+        // 하단: 메시지
+        Text(
+          message,
+          style: AppTypography.caption.copyWith(
+            color: colors.messageText,
+            fontSize: 12,
+          ),
         ),
       ],
     );

@@ -49,7 +49,11 @@ class _AlarmScreenState extends ConsumerState<AlarmScreen> {
     final backgroundColor = MoodColorHelper.getBackgroundColor(moodCategory);
 
     return AppFrame(
-      statusBarStyle: SystemUiOverlayStyle.light,
+      statusBarStyle: SystemUiOverlayStyle(
+        statusBarColor: backgroundColor,
+        statusBarIconBrightness: Brightness.light,
+        statusBarBrightness: Brightness.dark,
+      ),
       topBar: null,
       useSafeArea: false,
       body: Container(
@@ -60,104 +64,107 @@ class _AlarmScreenState extends ConsumerState<AlarmScreen> {
             children: [
               // A. 상단 바 (수동 추가)
               TopBar(
-                title: '마음서랍',
+                title: '',
                 leftIcon: Icons.arrow_back_ios,
-                rightIcon: Icons.more_horiz,
+                rightIcon: Icons.history,
                 onTapLeft: () => navigationService.navigateToTab(0),
-                onTapRight: () => MoreMenuSheet.show(context),
+                onTapRight: () =>
+                    navigationService.navigateToRoute('/alarm/memory'),
                 backgroundColor: Colors.transparent,
                 foregroundColor: AppColors.basicColor,
               ),
 
               // B. 상단 영역 (텍스트 + 캐릭터)
-            Expanded(
-              flex: 3,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.md,
-                  vertical: 0,
+              Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.xxl,
+                  0,
+                  AppSpacing.xxxl,
+                  AppSpacing.sm,
                 ),
-                child: Row(
-                  children: [
-                    // 왼쪽: 텍스트 영역
-                    Expanded(
-                      child: GestureDetector(
-                        onTap: () => navigationService.navigateToRoute('/bomi'),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              '제가 알람을\n등록해드릴까요?',
-                              style: AppTypography.h3.copyWith(
-                                color: AppColors.basicColor,
-                                height: 1.4,
-                                fontWeight: FontWeight.bold,
+                child: SizedBox(
+                  height: 90,
+                  child: Row(
+                    children: [
+                      // 왼쪽: 텍스트 영역
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: () =>
+                              navigationService.navigateToRoute('/bomi'),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                '봄이가 기억해줄게.\n나랑 대화하러 와줘!',
+                                style: AppTypography.body.copyWith(
+                                  color: AppColors.basicColor,
+                                  height: 1.2,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 20,
+                                ),
                               ),
-                            ),
-                            const SizedBox(height: AppSpacing.xs),
-                            Container(
-                              width: 56,
-                              height: 56,
-                              decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.2),
-                                shape: BoxShape.circle,
+                              const SizedBox(height: 6),
+                              Container(
+                                width: 36,
+                                height: 36,
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withOpacity(0.2),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(
+                                  Icons.arrow_forward,
+                                  color: AppColors.basicColor,
+                                  size: 18,
+                                ),
                               ),
-                              child: const Icon(
-                                Icons.arrow_forward,
-                                color: AppColors.basicColor,
-                                size: 28,
-                              ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                       ),
-                    ),
-                    const SizedBox(width: AppSpacing.md),
-                    // 오른쪽: 캐릭터
-                    EmotionCharacter(
-                      id: currentEmotion,
-                      size: 160,
-                    ),
-                  ],
-                ),
-              ),
-            ),
-
-            // C. 알람 리스트 영역
-            Expanded(
-              flex: 6,
-              child: ClipRRect(
-                borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(AppRadius.xxl),
-                  topRight: Radius.circular(AppRadius.xxl),
-                ),
-                child: Container(
-                  decoration: const BoxDecoration(
-                    color: AppColors.basicColor,
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black12,
-                        blurRadius: 20,
-                        offset: Offset(0, -5),
+                      // 오른쪽: 캐릭터
+                      EmotionCharacter(
+                        id: currentEmotion,
+                        size: 90,
                       ),
                     ],
                   ),
-                  child: alarmState.when(
-                    data: (alarms) => _buildAlarmList(alarms),
-                    loading: () =>
-                        const Center(child: CircularProgressIndicator()),
-                    error: (error, stack) => Center(
-                      child: Text(
-                        '오류가 발생했습니다: $error',
-                        style: AppTypography.body
-                            .copyWith(color: AppColors.errorRed),
+                ),
+              ),
+
+              // C. 알람 리스트 영역
+              Expanded(
+                child: ClipRRect(
+                  borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(AppRadius.xxl),
+                    topRight: Radius.circular(AppRadius.xxl),
+                  ),
+                  child: Container(
+                    decoration: const BoxDecoration(
+                      color: AppColors.basicColor,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black12,
+                          blurRadius: 20,
+                          offset: Offset(0, -5),
+                        ),
+                      ],
+                    ),
+                    child: alarmState.when(
+                      data: (alarms) => _buildAlarmList(alarms),
+                      loading: () =>
+                          const Center(child: CircularProgressIndicator()),
+                      error: (error, stack) => Center(
+                        child: Text(
+                          '오류가 발생했습니다: $error',
+                          style: AppTypography.body
+                              .copyWith(color: AppColors.errorRed),
+                        ),
                       ),
                     ),
                   ),
                 ),
               ),
-            ),
             ],
           ),
         ),
@@ -167,10 +174,19 @@ class _AlarmScreenState extends ConsumerState<AlarmScreen> {
 
   /// 알람 리스트 빌드
   Widget _buildAlarmList(List<AlarmModel> alarms) {
-    if (alarms.isEmpty) {
+    // 미래 일정만 필터링 (오늘 이후)
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+
+    final futureAlarms = alarms.where((alarm) {
+      final alarmDate = DateTime(alarm.year, alarm.month, alarm.day);
+      return alarmDate.isAfter(today) || alarmDate.isAtSameMomentAs(today);
+    }).toList();
+
+    if (futureAlarms.isEmpty) {
       return Center(
         child: Text(
-          '등록된 알람이 없습니다.\n마이크 버튼을 눌러 알람을 등록해보세요!',
+          '봄이가 체크해줄게.',
           style: AppTypography.body.copyWith(color: AppColors.textSecondary),
           textAlign: TextAlign.center,
         ),
@@ -184,9 +200,9 @@ class _AlarmScreenState extends ConsumerState<AlarmScreen> {
         AppSpacing.md,
         AppSpacing.md + MediaQuery.of(context).padding.bottom,
       ),
-      itemCount: alarms.length,
+      itemCount: futureAlarms.length,
       itemBuilder: (context, index) {
-        final alarm = alarms[index];
+        final alarm = futureAlarms[index];
         return AlarmListItem(
           alarm: alarm,
           onToggle: (value) {

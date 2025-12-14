@@ -1324,25 +1324,13 @@ async def agent_websocket(websocket: WebSocket, user_id: int = 1):
                     if isinstance(message, dict) and message.get("type") in ["config", "session_init"]:
                         if "tts_enabled" in message:
                             tts_enabled = bool(message.get("tts_enabled"))
-                            print(f"[Agent WebSocket] ✅ TTS 설정 업데이트: {tts_enabled} (type={message.get('type')}, raw={message.get('tts_enabled')})")
-                        
-                        # 🆕 user_id 업데이트 (session_init 메시지에 포함됨)
-                        if "user_id" in message:
-                            print(f"[Agent WebSocket] 🔍 user_id found in message: {message.get('user_id')} (type: {type(message.get('user_id'))})")
-                            try:
-                                user_id = int(message["user_id"])
-                                print(f"[Agent WebSocket] ✅ User ID 업데이트 성공: {user_id} (from {message.get('type')})")
-                            except (ValueError, TypeError) as e:
-                                print(f"[Agent WebSocket] ⚠️ Invalid user_id in message, keeping default: {user_id}, error: {e}")
-                        else:
-                            print(f"[Agent WebSocket] ⚠️ user_id NOT found in {message.get('type')} message! Keys: {message.keys()}")
-                        
-                        # config 메시지에만 응답 (session_init은 아래에서 처리)
-                        if message.get("type") == "config":
-                            await websocket.send_json(
-                                {"type": "config_ack", "tts_enabled": tts_enabled}
-                            )
-                            continue
+                            print(f"[Agent WebSocket] TTS 설정: {tts_enabled}")
+                            # config 메시지에만 응답 (session_init은 아래에서 처리)
+                            if message.get("type") == "config":
+                                await websocket.send_json(
+                                    {"type": "config_ack", "tts_enabled": tts_enabled}
+                                )
+                                continue
 
                     # 🆕 Phase 3: interrupt 신호 처리
                     if isinstance(message, dict) and message.get("type") == "interrupt":
@@ -1379,10 +1367,17 @@ async def agent_websocket(websocket: WebSocket, user_id: int = 1):
                         )
                         continue
 
-                    # 🆕 session_id 처리 로직
+                    # 🆕 session_id 처리 로직 (TTS 설정 이후에 처리)
                     if isinstance(message, dict) and "session_id" in message:
                         session_id = message["session_id"]
-                        # (user_id는 이미 위의 session_init/config 처리에서 업데이트됨)
+                        
+                        # 🔥 CRITICAL: user_id 추출 (프론트엔드가 보낸 실제 값 사용)
+                        if "user_id" in message:
+                            try:
+                                user_id = int(message["user_id"])
+                                print(f"[Agent WebSocket] ✅ User ID 업데이트: {user_id}")
+                            except (ValueError, TypeError):
+                                print(f"[Agent WebSocket] ⚠️ Invalid user_id in message, keeping default: {user_id}")
                         
                         print(f"[Agent WebSocket] 세션 ID 설정: {session_id}")
                         print(f"[Agent WebSocket] 현재 User ID: {user_id}")  # 🆕 디버깅
@@ -1446,7 +1441,7 @@ async def agent_websocket(websocket: WebSocket, user_id: int = 1):
                 # Phase 2: Speech end 처리 (최종 발화만 처리)
                 if is_speech_end and speech_audio is not None:
                     print("[Agent WebSocket] 발화 종료 감지, STT + Agent 처리 시작")
-                    
+
                     # 🆕 CRITICAL: STT 처리 전 즉시 speech_end 전송
                     try:
                         await websocket.send_json({
@@ -1612,7 +1607,6 @@ async def agent_websocket(websocket: WebSocket, user_id: int = 1):
                             from engine.langchain_agent import get_conversation_store
 
                             store = get_conversation_store()
-                            print(f"[Agent WebSocket] 🔍🔍🔍 DB 저장 직전 user_id: {user_id}, session_id: {session_id}")
                             user_msg_id = store.add_message(
                                 user_id,
                                 session_id,
@@ -1636,7 +1630,6 @@ async def agent_websocket(websocket: WebSocket, user_id: int = 1):
                             )
 
                             # 🆕 Phase 3: AI 응답 저장 및 ID 추적
-                            print(f"[Agent WebSocket] 🔍🔍🔍 AI 메시지 저장 직전 user_id: {user_id}")
                             ai_msg_id = store.add_message(
                                 user_id, session_id, "assistant", result["reply_text"]
                             )
@@ -1718,7 +1711,7 @@ async def agent_websocket(websocket: WebSocket, user_id: int = 1):
                                 "[Agent WebSocket] 대화 성공 - 임시 메시지 추적 초기화"
                             )
                             print("[Agent WebSocket] Agent 응답 완료")
-                        
+
                         # 🆕 low_quality STT 처리 else 블록 추가
                         except Exception as e:
                             import traceback
