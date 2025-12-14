@@ -163,7 +163,7 @@ def generate_response_type(llm_response: str) -> str:
     """
     try:
         # 🆕 Method 1: LLM이 명시한 TYPE 태그 체크 (우선순위 1)
-        type_match = re.search(r'\[TYPE:(list|normal)\]', llm_response, re.IGNORECASE)
+        type_match = re.search(r'\[TYPE:(list|normal|alarm)\]', llm_response, re.IGNORECASE)
         if type_match:
             detected_type = type_match.group(1).lower()
             logger.info(f"📋 [Response Type] Detected from [TYPE] tag: {detected_type}")
@@ -390,6 +390,17 @@ AI 응답: "{llm_response}"
 6. am_pm 추론: 5시/6시/7시 → 문맥상 오후로 판단
 7. **name 필드:** 사용자가 알람 용도를 명시했으면 10글자 이내로 요약, 없으면 null
 
+**🆕 상대적 시간 표현 처리:**
+- "N분 후" → 현재 시간 + N분 (예: 현재 21:44 + 5분 = 21:49)
+- "N시간 후" → 현재 시간 + N시간
+- "N시간 N분 후" → 현재 시간 + N시간 N분
+- **반드시 현재 시간({current_str})을 기준으로 계산!**
+
+예시:
+- 현재 21:44, "5분 후" → 21:49 (9시 49분 pm)
+- 현재 14:30, "1시간 후" → 15:30 (3시 30분 pm)
+- 현재 23:50, "20분 후" → 00:10 (다음날 12시 10분 am)
+
 **반환 형식:**
 {{
   "is_alarm": true,
@@ -413,6 +424,8 @@ AI 응답: "{llm_response}"
 - "오전 9시 알림 설정" → name: null
 - "오후 3시에 약 먹을 시간 알려줘" → name: "약 먹기"
 - "내일 아침 7시 운동 알람" → name: "운동"
+- "5분 후에 알람" → 현재 시간 + 5분 계산, name: null
+- "1시간 후에 알람 울려줘" → 현재 시간 + 1시간 계산, name: null
 
 **일반 대화 예시 (is_alarm: false):**
 - "안녕" → {{"is_alarm": false}}

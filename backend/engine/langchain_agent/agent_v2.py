@@ -373,6 +373,7 @@ def generate_llm_response(
    - 긍정적으로 수락하되, 반드시 **확인 요청 톤** 사용 (예: "이렇게 맞춰줄까? 확인 눌러줘!").
    - "설정 완료했어" 같은 **확정 표현 금지**.
    - 절대 거절하지 말 것.
+   - **반드시 `[TYPE:alarm]` 태그 사용**
 
 ---
 
@@ -410,6 +411,14 @@ def generate_llm_response(
 [pauses]2. 가벼운 명상하기\n
 
 [EMOTION:happiness] [TYPE:list]
+
+
+**(C) 알람 설정 요청인 경우 (`[TYPE:alarm]`)**
+- **조건:** 사용자가 "~시에 알람", "~분 후에 알람", "~요일 알람" 등 알람 설정을 요청한 경우
+- 형식: `[Audio Tag] 알람 확인 요청 내용... \n [EMOTION:xxx] \n [TYPE:alarm]`
+- **중요:** 반드시 확인 요청 톤으로 응답 (예: "이렇게 맞춰줄까? 확인 눌러줘!")
+- 예시:
+[excited] 좋아! 5분 후에 알람 맞춰줄게. [pauses] 이렇게 맞춰줄까? 확인 눌러줘! [EMOTION:happiness] [TYPE:alarm]
 
 
 ---
@@ -498,7 +507,7 @@ def generate_llm_response(
     # 🆕 Remove TYPE tag from text (이미 파싱했으므로 표시용 텍스트에서만 제거)
     # ⚠️ response_type 감지를 위해 TYPE 태그 제거 전 텍스트 저장
     text_with_type_tag = reply_text_with_tags  # TYPE 태그 포함
-    reply_text_with_tags = re.sub(r'\s*\[TYPE:(list|normal)\]\s*', '', reply_text_with_tags, flags=re.IGNORECASE).strip()
+    reply_text_with_tags = re.sub(r'\s*\[TYPE:(list|normal|alarm)\]\s*', '', reply_text_with_tags, flags=re.IGNORECASE).strip()
 
     
     # 🆕 Phase 4: Audio tag 제거하여 프론트엔드용 원본 텍스트 생성

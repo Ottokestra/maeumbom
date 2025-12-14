@@ -11,29 +11,6 @@ TOOLS = [
     {
         "type": "function",
         "function": {
-            "name": "recommend_routine",
-            "description": """사용자에게 건강 루틴을 추천합니다.
-            사용자가 어려움을 호소하거나 명시적으로 루틴을 요청할 때 사용하세요.
-            
-            예시:
-            - "요즘 스트레스 받아" → 스트레스 완화 루틴 추천
-            - "아침 루틴 추천해줘" → 아침 루틴 추천
-            - "운동 뭐하면 좋을까?" → 운동 루틴 추천""",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "context": {
-                        "type": "string",
-                        "description": "사용자 상황/요청 컨텍스트 (예: 'stressed', 'morning_routine', 'exercise')"
-                    }
-                },
-                "required": ["context"]
-            }
-        }
-    },
-    {
-        "type": "function",
-        "function": {
             "name": "search_memory",
             "description": """사용자의 장기 기억(Global Memory)을 검색합니다.
             과거 대화 내용이나 사용자 정보가 필요할 때 사용하세요.
