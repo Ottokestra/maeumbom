@@ -27,7 +27,7 @@ def run_speech_to_text(audio_bytes: bytes) -> str:
     """
     try:
         # 기존 STT 엔진 import 시도
-        from speech_to_text.faster_whisper.stt_engine import MaumBomSTT
+        from speech_to_text.faster_whisper_engine.stt_engine import MaumBomSTT
         import numpy as np
         import io
         import wave
@@ -48,7 +48,7 @@ def run_speech_to_text(audio_bytes: bytes) -> str:
                     audio_array = audio_array.astype(np.float32) / 32768.0
                     
             # STT 엔진 초기화 (config.yaml 경로 지정)
-            config_path = engine_root / "speech-to-text" / "faster_whisper" / "config.yaml"
+            config_path = engine_root / "speech-to-text" / "faster_whisper_engine" / "config.yaml"
             if not config_path.exists():
                 raise FileNotFoundError(f"Config file not found: {config_path}")
                 
