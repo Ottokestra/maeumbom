@@ -1066,7 +1066,7 @@ async def stt_websocket(websocket: WebSocket):
                                 backend_path
                                 / "engine"
                                 / "speech-to-text"
-                                / "faster_whisper"
+                                / "faster_whisper_engine"
                                 / "config.yaml"
                             )
                             sys.path.insert(
@@ -1075,7 +1075,7 @@ async def stt_websocket(websocket: WebSocket):
                                     backend_path
                                     / "engine"
                                     / "speech-to-text"
-                                    / "faster_whisper"
+                                    / "faster_whisper_engine"
                                 ),
                             )
                             from speaker_verifier import SpeakerVerifier
@@ -1413,14 +1413,10 @@ async def agent_websocket(websocket: WebSocket, user_id: int = 1):
                 async def on_vad_speech_end():
                     """VAD에서 긴 침묵 감지 시 프론트엔드에 처리 중 알림"""
                     try:
-                        await websocket.send_json(
-                            {
-                                "type": "status",
-                                "status": "processing_voice",
-                                "message": "음성을 처리하고 있어요...",
-                            }
-                        )
-                        print("[Agent WebSocket] 🎤 음성 처리 시작 알림 전송")
+                        await websocket.send_json({
+                            "type": "speech_end"
+                        })
+                        print("[Agent WebSocket] 🎤 발화 종료 알림 전송")
                     except Exception as e:
                         print(f"[Agent WebSocket] 콜백 전송 오류: {e}")
 
@@ -1428,10 +1424,11 @@ async def agent_websocket(websocket: WebSocket, user_id: int = 1):
                 # Note: on_vad_speech_end는 async이지만 VAD는 sync 함수이므로
                 # asyncio.create_task로 비동기 실행
                 speech_end_callback = lambda: asyncio.create_task(on_vad_speech_end())
-
+                
                 is_speech_end, speech_audio, is_short_pause = (
                     stt_engine_instance.vad.process_chunk(
-                        audio_chunk, on_speech_end_callback=speech_end_callback
+                        audio_chunk,
+                        on_speech_end_callback=speech_end_callback
                     )
                 )
 
@@ -1445,6 +1442,15 @@ async def agent_websocket(websocket: WebSocket, user_id: int = 1):
                 if is_speech_end and speech_audio is not None:
                     print("[Agent WebSocket] 발화 종료 감지, STT + Agent 처리 시작")
 
+                    # 🆕 CRITICAL: STT 처리 전 즉시 speech_end 전송
+                    try:
+                        await websocket.send_json({
+                            "type": "speech_end"
+                        })
+                        print("[Agent WebSocket] ⚡ speech_end 전송 완료 (STT 처리 전)")
+                    except Exception as e:
+                        print(f"[Agent WebSocket] speech_end 전송 오류: {e}")
+
                     # STT 실행
                     transcript, quality = stt_engine_instance.whisper.transcribe(
                         speech_audio, callback=None
@@ -1454,7 +1460,6 @@ async def agent_websocket(websocket: WebSocket, user_id: int = 1):
                         f"[Agent WebSocket] STT 결과: text='{transcript}', quality={quality}"
                     )
                     speaker_id = None
-                    user_id = 1  # Default user ID for now
 
                     if quality in ["success", "medium"]:
                         try:
@@ -1462,7 +1467,7 @@ async def agent_websocket(websocket: WebSocket, user_id: int = 1):
                                 backend_path
                                 / "engine"
                                 / "speech-to-text"
-                                / "faster_whisper"
+                                / "faster_whisper_engine"
                                 / "config.yaml"
                             )
                             sys.path.insert(
@@ -1471,7 +1476,7 @@ async def agent_websocket(websocket: WebSocket, user_id: int = 1):
                                     backend_path
                                     / "engine"
                                     / "speech-to-text"
-                                    / "faster_whisper"
+                                    / "faster_whisper_engine"
                                 ),
                             )
                             from speaker_verifier import SpeakerVerifier
@@ -1654,17 +1659,18 @@ async def agent_websocket(websocket: WebSocket, user_id: int = 1):
                                 }
                             )
 
-                            # 🆕 TTS 처리
+                            # 🆕 TTS 처리 (tts_enabled가 True일 때만)
+                            print(f"[Agent WebSocket] 🔊 TTS 토글 상태: {tts_enabled}")
                             if tts_enabled:
                                 try:
                                     # 🆕 TTS는 reply_text_with_tags 사용 (마크다운 제거 + audio tags 유지)
                                     tts_text = result.get("reply_text_with_tags") or result["reply_text"]
                                     print(f"[Agent WebSocket] TTS 생성 시작: {tts_text[:50]}...")
                                     
-                                    # TTS 생성 (최대 7초 대기)
+                                    # TTS 생성 (최대 15초 대기)
                                     audio_path = await asyncio.wait_for(
                                         generate_tts_async(tts_text),
-                                        timeout=7.0,
+                                        timeout=15.0,  # 🆕 7초 → 15초로 연장
                                     )
                                     await websocket.send_json(
                                         {
@@ -1695,12 +1701,18 @@ async def agent_websocket(websocket: WebSocket, user_id: int = 1):
                                     )
                                     print(f"[Agent WebSocket] TTS 생성 오류: {e}")
 
+                            else:
+                                # TTS가 비활성화되어 있음
+                                print("[Agent WebSocket] ⏭️  TTS 스킵됨 (토글 OFF)")
+
                             # 🆕 Phase 3: 성공 시 임시 추적 초기화
                             temporary_message_ids.clear()
                             print(
                                 "[Agent WebSocket] 대화 성공 - 임시 메시지 추적 초기화"
                             )
                             print("[Agent WebSocket] Agent 응답 완료")
+
+                        # 🆕 low_quality STT 처리 else 블록 추가
                         except Exception as e:
                             import traceback
 
@@ -1712,6 +1724,13 @@ async def agent_websocket(websocket: WebSocket, user_id: int = 1):
                                     "message": f"Agent 처리 오류: {str(e)}",
                                 }
                             )
+                    else:
+                        # 🆕 low_quality STT 처리
+                        print(f"[Agent WebSocket] ⚠️ STT 품질 낮음 (quality={quality}) - 재시도 요청")
+                        await websocket.send_json({
+                            "type": "low_quality",
+                            "message": "잘 못 들었어요. 다시 한번 말씀해 주세요!"
+                        })
 
                     # VAD 리셋 후 다음 발화 대기
                     stt_engine_instance.vad.reset()

@@ -45,12 +45,17 @@ class BottomVoiceBar extends StatefulWidget {
 class _BottomVoiceBarState extends State<BottomVoiceBar>
     with TickerProviderStateMixin {
   late AnimationController _rippleController;
+  late AnimationController _pulseController; // 🆕 펄스 애니메이션
 
   @override
   void initState() {
     super.initState();
     _rippleController = AnimationController(
       duration: const Duration(milliseconds: 2000),
+      vsync: this,
+    );
+    _pulseController = AnimationController(
+      duration: const Duration(milliseconds: 800),
       vsync: this,
     );
     _updateRippleAnimation();
@@ -67,6 +72,7 @@ class _BottomVoiceBarState extends State<BottomVoiceBar>
   @override
   void dispose() {
     _rippleController.dispose();
+    _pulseController.dispose();
     super.dispose();
   }
 
@@ -75,30 +81,39 @@ class _BottomVoiceBarState extends State<BottomVoiceBar>
       case VoiceInterfaceState.loading:
         _rippleController.duration = const Duration(milliseconds: 2500);
         if (!_rippleController.isAnimating) _rippleController.repeat();
+        _pulseController.stop(); // 펄스 중지
         break;
       case VoiceInterfaceState.listening:
         _rippleController.duration = const Duration(milliseconds: 1500);
         if (!_rippleController.isAnimating) _rippleController.repeat();
+        // 🆕 listening 상태에서만 펄스 애니메이션 시작
+        if (!_pulseController.isAnimating)
+          _pulseController.repeat(reverse: true);
         break;
       case VoiceInterfaceState.processingVoice:
         _rippleController.duration = const Duration(milliseconds: 3000);
         if (!_rippleController.isAnimating) {
           _rippleController.repeat(reverse: true);
         }
+        _pulseController.stop(); // 펄스 중지
         break;
       case VoiceInterfaceState.processing:
         _rippleController.duration = const Duration(milliseconds: 3000);
         if (!_rippleController.isAnimating) {
           _rippleController.repeat(reverse: true);
         }
+        _pulseController.stop(); // 펄스 중지
         break;
       case VoiceInterfaceState.replying:
         _rippleController.duration = const Duration(milliseconds: 2000);
         if (!_rippleController.isAnimating) _rippleController.repeat();
+        _pulseController.stop(); // 펄스 중지
         break;
       case VoiceInterfaceState.idle:
         _rippleController.stop();
         _rippleController.reset();
+        _pulseController.stop(); // 펄스 중지
+        _pulseController.reset();
         break;
     }
   }
@@ -107,7 +122,7 @@ class _BottomVoiceBarState extends State<BottomVoiceBar>
   Color get _micButtonColor {
     switch (widget.voiceState) {
       case VoiceInterfaceState.loading:
-        return AppColors.primaryColor;
+        return Colors.orangeAccent; // 🆕 노란색으로 변경
       case VoiceInterfaceState.listening:
         return AppColors.primaryColor;
       case VoiceInterfaceState.processingVoice:
@@ -224,31 +239,48 @@ class _BottomVoiceBarState extends State<BottomVoiceBar>
                               );
                             },
                           ),
-                        // 버튼
-                        AnimatedContainer(
-                          duration: const Duration(milliseconds: 300),
-                          width: 80,
-                          height: 80,
-                          decoration: BoxDecoration(
-                            color: _micButtonColor,
-                            shape: BoxShape.circle,
-                            boxShadow: isVoiceActive
-                                ? [
-                                    BoxShadow(
-                                      color: _micButtonColor.withOpacity(0.5),
-                                      blurRadius: 20,
-                                      offset: const Offset(0, 6),
-                                    ),
-                                  ]
-                                : [
-                                    BoxShadow(
-                                      color: AppColors.primaryColorShadow,
-                                      blurRadius: 12,
-                                      offset: const Offset(0, 4),
-                                    ),
-                                  ],
+                        // 버튼 (🆕 listening 시 펄스 효과)
+                        AnimatedBuilder(
+                          animation: _pulseController,
+                          builder: (context, child) {
+                            // listening 상태일 때만 scale 변화
+                            final scale = widget.voiceState ==
+                                    VoiceInterfaceState.listening
+                                ? 1.0 +
+                                    (_pulseController.value *
+                                        0.08) // 1.0 ~ 1.08
+                                : 1.0;
+
+                            return Transform.scale(
+                              scale: scale,
+                              child: child,
+                            );
+                          },
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 300),
+                            width: 80,
+                            height: 80,
+                            decoration: BoxDecoration(
+                              color: _micButtonColor,
+                              shape: BoxShape.circle,
+                              boxShadow: isVoiceActive
+                                  ? [
+                                      BoxShadow(
+                                        color: _micButtonColor.withOpacity(0.5),
+                                        blurRadius: 20,
+                                        offset: const Offset(0, 6),
+                                      ),
+                                    ]
+                                  : [
+                                      BoxShadow(
+                                        color: AppColors.primaryColorShadow,
+                                        blurRadius: 12,
+                                        offset: const Offset(0, 4),
+                                      ),
+                                    ],
+                            ),
+                            child: _buildMicButtonContent(),
                           ),
-                          child: _buildMicButtonContent(),
                         ),
                       ],
                     ),
@@ -453,7 +485,8 @@ class _MicTypingIndicatorState extends State<_MicTypingIndicator>
                 width: 8,
                 height: 8,
                 decoration: BoxDecoration(
-                  color: AppColors.basicColor.withOpacity(opacity.clamp(0.3, 1.0)),
+                  color:
+                      AppColors.basicColor.withOpacity(opacity.clamp(0.3, 1.0)),
                   shape: BoxShape.circle,
                 ),
               );

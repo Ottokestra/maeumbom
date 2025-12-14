@@ -8,6 +8,7 @@ import '../chat_alarm_dialogs.dart';
 import '../helpers/animation_state_helper.dart';
 import '../helpers/process_state_helper.dart';
 import '../helpers/status_message_helper.dart';
+import '../../../ui/components/speech_bubble.dart';
 
 /// Bomi Content - 봄이 화면 본문
 ///
@@ -218,9 +219,7 @@ class _BomiContentState extends ConsumerState<BomiContent> {
         print('[BomiContent] 📝 Summary text: $displayText');
       }
     }
-    if (statusMessage != null) {
-      print('[BomiContent] 📢 Status message: $statusMessage');
-    }
+    // 상태 메시지 로그 제거 (말풍선으로만 표시됨)
 
     // 키보드 높이 감지
     final keyboardHeight = MediaQuery.of(context).viewInsets.bottom;
@@ -270,16 +269,23 @@ class _BomiContentState extends ConsumerState<BomiContent> {
                       animationState: animationState,
                     ),
 
-                    // 2. AI 봄이 메시지 버블 (상태 메시지 우선, 없으면 일반 답변)
-                    if (statusMessage != null) ...[
-                      // 🆕 상태 메시지 표시 (타이핑 애니메이션 적용, TTS 토글 없음)
+                    // 2. AI 봄이 메시지 버블 (상태 메시지는 말풍선으로만 표시)
+                    // 음성 모드가 아닐 때만 상태 메시지를 답변 박스에 표시
+                    if (statusMessage != null && mode == ProcessMode.text) ...[
+                      // 🆕 텍스트 모드에서만 상태 메시지 표시
                       EmotionBubble(
                         message: statusMessage,
                         enableTypingAnimation: true,
                         key: ValueKey('status_$statusMessage'),
                         showTtsToggle: false,
                       ),
-                    ] else if (!isListType) ...[
+                    ],
+
+                    // 🆕 음성 모드: 말풍선과 독립적으로 항상 답변 표시
+                    // 텍스트 모드: statusMessage 없을 때만 답변 표시
+                    if (!isListType &&
+                        (mode == ProcessMode.voice ||
+                            statusMessage == null)) ...[
                       // TTS 토글
                       Row(
                         mainAxisAlignment: MainAxisAlignment.end,
@@ -313,7 +319,10 @@ class _BomiContentState extends ConsumerState<BomiContent> {
                     ],
 
                     // 2-1. 선택형 답변 (response_type: list)
-                    if (isListType && statusMessage == null) ...[
+                    // 음성 모드: statusMessage와 독립적으로 표시
+                    if (isListType &&
+                        (mode == ProcessMode.voice ||
+                            statusMessage == null)) ...[
                       // TTS 토글
                       Row(
                         mainAxisAlignment: MainAxisAlignment.end,
@@ -439,6 +448,38 @@ class _BomiContentState extends ConsumerState<BomiContent> {
                 currentStep: currentStep,
               ),
             ),
+
+          // 🆕 Speech Bubble (listening/processing 상태일 때 캐릭터 위에 표시)
+          Consumer(
+            builder: (context, ref, child) {
+              final voiceState =
+                  ref.watch(chatProvider.select((s) => s.voiceState));
+
+              if (voiceState == VoiceInterfaceState.listening) {
+                return const Positioned(
+                  top: -10, // 캐릭터 위에 배치
+                  child: SpeechBubble(
+                    message: '편하게 말해봐~ 나 다 듣고 있어!',
+                    displayDuration: Duration(seconds: 5), // 🆕 5초로 연장
+                  ),
+                );
+              }
+
+              // 🆕 processingVoice/processing 상태: "음.. 생각해볼게!"
+              if (voiceState == VoiceInterfaceState.processingVoice ||
+                  voiceState == VoiceInterfaceState.processing) {
+                return const Positioned(
+                  top: -10,
+                  child: SpeechBubble(
+                    message: '음.. 생각해볼게! 잠시만 기다려줘!',
+                    displayDuration: Duration(seconds: 5),
+                  ),
+                );
+              }
+
+              return const SizedBox.shrink();
+            },
+          ),
         ],
       ),
     );
