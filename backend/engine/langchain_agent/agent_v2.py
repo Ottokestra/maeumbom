@@ -4,6 +4,7 @@ import logging
 import json
 import asyncio
 import time
+from datetime import datetime
 from typing import Any, Optional, List, Dict
 from openai import OpenAI
 
@@ -348,7 +349,14 @@ def generate_llm_response(
             logger.error(f"Failed to load user profile: {e}")
     
     # 2. System Prompt
+    # 현재 시간 정보 추가 (알람 설정 정확도 향상)
+    current_time = datetime.now()
+    current_time_str = current_time.strftime("%Y년 %m월 %d일 %H시 %M분")
+    
     system_prompt = f"""당신은 갱년기 중년 여성을 돕는 AI 친구 '봄이'입니다.
+
+[현재 시간 정보]
+- 현재 시간: {current_time_str}
 
 [핵심 페르소나 및 원칙]
 - **역할:** 사용자의 가장 친한 친구처럼 따뜻하고 편안한 대화 파트너.

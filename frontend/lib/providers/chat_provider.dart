@@ -161,10 +161,10 @@ class ChatNotifier extends StateNotifier<ChatState> {
     print('[ChatProvider] ⚠️⚠️⚠️ low_quality STT 감지! ⚠️⚠️⚠️');
     print('[ChatProvider] 메시지: $message');
     print('[ChatProvider] 이전 상태: ${state.voiceState}');
-    // listening 상태로 전환하여 다시 녹음 계속
-    state = state.copyWith(voiceState: VoiceInterfaceState.listening);
-    _bomChatService.resumeAudioTransmission(); // 🆕 오디오 전송 재개
-    print('[ChatProvider] ✅ 상태 변경 완료 → listening (빨간색 버튼, 다시 녹음, 오디오 재개)');
+
+    // 🆕 품질이 낮으면 대화 중지
+    print('[ChatProvider] 품질 낮음으로 인한 대화 중지');
+    stopAudioRecording();
   }
 
   // ✅ STT 결과 처리 - 사용자 메시지 UI에 표시 및 processing 상태로 전환
@@ -287,18 +287,33 @@ class ChatNotifier extends StateNotifier<ChatState> {
 
         print('[ChatProvider] 🎵 TTS 재생 시작: $ttsUrl');
 
-        // TTS 재생
+        // 🆕 TTS 재생 (이제 play()가 완료를 기다림)
         _ttsPlayerService.play(ttsUrl).then((_) {
           print('[ChatProvider] ✅ TTS 재생 완료');
           if (state.voiceState == VoiceInterfaceState.replying &&
               _bomChatService.isActive) {
             state = state.copyWith(voiceState: VoiceInterfaceState.listening);
-            _bomChatService.resumeAudioTransmission(); // 🆕 오디오 전송 재개
+            _bomChatService.resumeAudioTransmission();
             print('[ChatProvider] TTS 재생 완료 - listening으로 전환 (오디오 재개)');
           }
         }).catchError((error) {
           print('[ChatProvider] ❌ TTS 재생 실패: $error');
+          // 실패해도 listening으로 전환 + 오디오 재개
+          if (state.voiceState == VoiceInterfaceState.replying &&
+              _bomChatService.isActive) {
+            state = state.copyWith(voiceState: VoiceInterfaceState.listening);
+            _bomChatService.resumeAudioTransmission();
+            print('[ChatProvider] TTS 실패 - listening으로 전환 (오디오 재개)');
+          }
         });
+      } else {
+        // TTS가 비활성화되었거나 URL이 없는 경우
+        if (state.voiceState == VoiceInterfaceState.replying &&
+            _bomChatService.isActive) {
+          state = state.copyWith(voiceState: VoiceInterfaceState.listening);
+          _bomChatService.resumeAudioTransmission();
+          print('[ChatProvider] TTS 비활성화 - listening으로 전환 (오디오 재개)');
+        }
       }
       return;
     }
@@ -307,7 +322,6 @@ class ChatNotifier extends StateNotifier<ChatState> {
     final replyText = response['reply_text'] as String?;
     final emotion = response['emotion'] as String?;
     final responseType = response['response_type'] as String?;
-    final ttsAudio = response['tts_audio'] as String?; // ✅ TTS URL/Path
     final alarmInfo =
         response['alarm_info'] as Map<String, dynamic>?; // 🆕 alarm_info
 
@@ -367,20 +381,11 @@ class ChatNotifier extends StateNotifier<ChatState> {
         }
       }
 
-      // ✅ TTS 재생
-      if (state.ttsEnabled && ttsAudio != null && ttsAudio.isNotEmpty) {
-        _playTtsAudio(ttsAudio);
-        // TTS 재생 중이므로 listening 전환은 _playTtsAudio에서 처리
-      } else {
-        // TTS 없음 - 3초 후 listening으로 전환 (WebSocket 연결 유지)
-        Future.delayed(const Duration(seconds: 3), () {
-          if (state.voiceState == VoiceInterfaceState.replying &&
-              _bomChatService.isActive) {
-            state = state.copyWith(voiceState: VoiceInterfaceState.listening);
-            _bomChatService.resumeAudioTransmission(); // 🆕 오디오 전송 재개
-            print('[ChatProvider] TTS 없음 - listening으로 전환 (오디오 재개)');
-          }
-        });
+      // 🆕 TTS 비활성화 시 즉시 listening으로 전환
+      if (_bomChatService.isActive && !state.ttsEnabled) {
+        print('[ChatProvider] 🔇 TTS OFF - 즉시 listening으로 전환');
+        state = state.copyWith(voiceState: VoiceInterfaceState.listening);
+        _bomChatService.resumeAudioTransmission();
       }
     }
   }
@@ -781,10 +786,18 @@ class ChatNotifier extends StateNotifier<ChatState> {
     }
 
     await _ttsPlayerService.play(source);
+    print('[ChatProvider] ✅ TTS 재생 완료');
 
-    // 🆕 텍스트 모드일 때는 TTS 재생 후 idle로 복귀
-    if (!isVoiceChatActive) {
-      // 약간의 딜레이 후 idle로 복귀 (TTS 재생 완료 시간 고려)
+    // 🆕 음성 모드 vs 텍스트 모드 처리 분리
+    if (isVoiceChatActive) {
+      // 음성 모드: listening 전환 + 오디오 재개
+      if (state.voiceState == VoiceInterfaceState.replying) {
+        state = state.copyWith(voiceState: VoiceInterfaceState.listening);
+        _bomChatService.resumeAudioTransmission(); // 🆕 오디오 전송 재개
+        print('[ChatProvider] [VOICE] TTS 완료 - listening 전환 (오디오 재개)');
+      }
+    } else {
+      // 텍스트 모드: idle로 복귀
       Future.delayed(const Duration(milliseconds: 500), () {
         if (mounted && !_bomChatService.isActive) {
           state = state.copyWith(voiceState: VoiceInterfaceState.idle);
