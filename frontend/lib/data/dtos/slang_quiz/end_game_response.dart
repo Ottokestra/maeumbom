@@ -12,6 +12,7 @@ class EndGameResponse with _$EndGameResponse {
     @JsonKey(name: 'total_score') required int totalScore,
     @JsonKey(name: 'total_time_seconds') required int? totalTimeSeconds,
     @JsonKey(name: 'questions_summary') required List<QuestionSummary> questionsSummary,
+    RankingInfo? ranking,
   }) = _EndGameResponse;
 
   factory EndGameResponse.fromJson(Map<String, dynamic> json) =>
@@ -29,5 +30,18 @@ class QuestionSummary with _$QuestionSummary {
 
   factory QuestionSummary.fromJson(Map<String, dynamic> json) =>
       _$QuestionSummaryFromJson(json);
+}
+
+@freezed
+class RankingInfo with _$RankingInfo {
+  const factory RankingInfo({
+    required double percentile,
+    @JsonKey(name: 'total_games') required int totalGames,
+    @JsonKey(name: 'better_than') required int betterThan,
+    @JsonKey(name: 'rank_message') required String rankMessage,
+  }) = _RankingInfo;
+
+  factory RankingInfo.fromJson(Map<String, dynamic> json) =>
+      _$RankingInfoFromJson(json);
 }
 

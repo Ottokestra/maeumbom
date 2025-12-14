@@ -57,7 +57,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle.dark,
       child: Scaffold(
-        backgroundColor: AppColors.basicGray,
+        backgroundColor: AppColors.bgBasic,
         body: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,

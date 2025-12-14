@@ -291,7 +291,7 @@ class BomChatService {
   }) async {
     try {
       final Uri url = Uri.parse(
-        apiUrl ?? 'http://localhost:8000/api/agent/v2/text',
+        apiUrl ?? 'http://10.0.2.2:8000/api/agent/v2/text',
       );
 
       final body = {

@@ -11,7 +11,7 @@ import '../characters/app_characters.dart';
 ///
 /// 네비게이션 단순화를 위해 부가 기능들을 모아둔 더보기 메뉴입니다.
 /// - 홈
-/// - 마음서랍
+/// - 기억서랍
 /// - 마음연습실
 /// - 설정
 /// - 도움말
@@ -82,7 +82,7 @@ class MoreMenuSheet extends ConsumerWidget {
       ),
       _MenuItemData(
         iconAsset: 'assets/images/icons/icon-report.svg',
-        title: '마음서랍',
+        title: '기억서랍',
         onTap: () => _navigateToAlarm(context),
       ),
       _MenuItemData(

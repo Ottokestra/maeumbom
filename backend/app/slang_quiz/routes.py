@@ -24,7 +24,7 @@ from .models import (
     RewardCard,
     QuestionSummary,
 )
-from .service import select_questions_for_user, calculate_score
+from .service import select_questions_for_user, calculate_score, calculate_ranking
 
 
 router = APIRouter()
@@ -352,13 +352,23 @@ async def end_game(
                 earned_score=answer.EARNED_SCORE
             ))
         
+        # Calculate ranking
+        ranking_info = calculate_ranking(
+            db=db,
+            game_id=game.ID,
+            level=game.LEVEL,
+            quiz_type=game.QUIZ_TYPE,
+            total_score=game.TOTAL_SCORE
+        )
+        
         return EndGameResponse(
             game_id=game.ID,
             total_questions=game.TOTAL_QUESTIONS,
             correct_count=game.CORRECT_COUNT,
             total_score=game.TOTAL_SCORE,
             total_time_seconds=game.TOTAL_TIME_SECONDS,
-            questions_summary=questions_summary
+            questions_summary=questions_summary,
+            ranking=ranking_info
         )
         
     except HTTPException:

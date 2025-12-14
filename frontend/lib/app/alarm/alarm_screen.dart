@@ -3,12 +3,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../ui/app_ui.dart';
+import '../../ui/components/date_range_selector.dart';
 import '../../core/services/navigation/navigation_service.dart';
 import '../../core/utils/emotion_classifier.dart';
 import '../../core/utils/mood_color_helper.dart';
-import '../../providers/alarm_provider.dart';
+import '../../providers/target_events_provider.dart';
 import '../../providers/daily_mood_provider.dart';
 import '../../data/models/alarm/alarm_model.dart';
+import '../../data/models/target_events/daily_event_model.dart';
 import 'components/alarm_list_item.dart';
 
 class AlarmScreen extends ConsumerStatefulWidget {
@@ -19,11 +21,26 @@ class AlarmScreen extends ConsumerStatefulWidget {
 }
 
 class _AlarmScreenState extends ConsumerState<AlarmScreen> {
+  // 날짜 범위 상태
+  late DateTime _startDate;
+  late DateTime _endDate;
+
   @override
   void initState() {
     super.initState();
-    // 알람 목록 로드
-    Future.microtask(() => ref.read(alarmProvider.notifier).loadAlarms());
+    
+    // 오늘부터 오늘+7일까지
+    final now = DateTime.now();
+    _startDate = DateTime(now.year, now.month, now.day);
+    _endDate = _startDate.add(const Duration(days: 7));
+    
+    // 이벤트 로드
+    Future.microtask(() {
+      ref.read(targetEventsProvider.notifier).loadDailyEvents(
+            startDate: _startDate,
+            endDate: _endDate,
+          );
+    });
   }
 
   @override
@@ -33,10 +50,34 @@ class _AlarmScreenState extends ConsumerState<AlarmScreen> {
     super.dispose();
   }
 
+  /// 날짜 범위 선택 다이얼로그
+  Future<void> _showDateRangePicker() async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _startDate,
+      firstDate: DateTime(2020),
+      lastDate: DateTime(2030),
+      helpText: '시작 날짜 선택',
+    );
+
+    if (picked != null && mounted) {
+      setState(() {
+        _startDate = picked;
+        _endDate = picked.add(const Duration(days: 7));
+      });
+
+      // 새로운 날짜 범위로 이벤트 다시 로드
+      ref.read(targetEventsProvider.notifier).loadDailyEvents(
+            startDate: _startDate,
+            endDate: _endDate,
+          );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final navigationService = NavigationService(context, ref);
-    final alarmState = ref.watch(alarmProvider);
+    final eventsState = ref.watch(targetEventsProvider);
     final dailyState = ref.watch(dailyMoodProvider);
 
     // 현재 감정 가져오기 (기본값: 기쁨)
@@ -132,13 +173,16 @@ class _AlarmScreenState extends ConsumerState<AlarmScreen> {
                 ),
               ),
 
-              // C. 알람 리스트 영역
+              // C. 날짜 범위 선택기
+              DateRangeSelector(
+                startDate: _startDate,
+                endDate: _endDate,
+                onTap: _showDateRangePicker,
+              ),
+
+              // D. 이벤트 리스트 영역
               Expanded(
                 child: ClipRRect(
-                  borderRadius: const BorderRadius.only(
-                    topLeft: Radius.circular(AppRadius.xxl),
-                    topRight: Radius.circular(AppRadius.xxl),
-                  ),
                   child: Container(
                     decoration: const BoxDecoration(
                       color: AppColors.basicColor,
@@ -150,8 +194,8 @@ class _AlarmScreenState extends ConsumerState<AlarmScreen> {
                         ),
                       ],
                     ),
-                    child: alarmState.when(
-                      data: (alarms) => _buildAlarmList(alarms),
+                    child: eventsState.when(
+                      data: (events) => _buildEventsList(events),
                       loading: () =>
                           const Center(child: CircularProgressIndicator()),
                       error: (error, stack) => Center(
@@ -172,18 +216,9 @@ class _AlarmScreenState extends ConsumerState<AlarmScreen> {
     );
   }
 
-  /// 알람 리스트 빌드
-  Widget _buildAlarmList(List<AlarmModel> alarms) {
-    // 미래 일정만 필터링 (오늘 이후)
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-
-    final futureAlarms = alarms.where((alarm) {
-      final alarmDate = DateTime(alarm.year, alarm.month, alarm.day);
-      return alarmDate.isAfter(today) || alarmDate.isAtSameMomentAs(today);
-    }).toList();
-
-    if (futureAlarms.isEmpty) {
+  /// 이벤트 리스트 빌드
+  Widget _buildEventsList(List<DailyEventModel> events) {
+    if (events.isEmpty) {
       return Center(
         child: Text(
           '봄이가 체크해줄게.',
@@ -200,23 +235,28 @@ class _AlarmScreenState extends ConsumerState<AlarmScreen> {
         AppSpacing.md,
         AppSpacing.md + MediaQuery.of(context).padding.bottom,
       ),
-      itemCount: futureAlarms.length,
+      itemCount: events.length,
       itemBuilder: (context, index) {
-        final alarm = futureAlarms[index];
+        final event = events[index];
+        
+        // DailyEventModel을 AlarmModel 형식으로 변환하여 표시
+        // (기존 AlarmListItem 재사용)
+        final alarm = _convertEventToAlarm(event);
+        
         return AlarmListItem(
           alarm: alarm,
           onToggle: (value) {
-            ref.read(alarmProvider.notifier).toggleAlarm(alarm.id, value);
+            // 이벤트는 토글 기능 없음 (알람 타입만 토글 가능)
           },
           onDelete: () {
-            ref.read(alarmProvider.notifier).deleteAlarm(alarm.id);
+            // TODO: 이벤트 삭제 API 연동
             TopNotificationManager.show(
               context,
-              message: '알람이 삭제되었습니다.',
+              message: '이벤트가 삭제되었습니다.',
               actionLabel: '실행취소',
               type: TopNotificationType.red,
               onActionTap: () {
-                // TODO: 실행취소 구현 (삭제된 알람 복구)
+                // TODO: 실행취소 구현
               },
             );
           },
@@ -224,4 +264,47 @@ class _AlarmScreenState extends ConsumerState<AlarmScreen> {
       },
     );
   }
+
+  /// DailyEventModel을 AlarmModel로 변환
+  AlarmModel _convertEventToAlarm(DailyEventModel event) {
+    final eventDate = event.eventDate;
+    final eventTime = event.eventTime ?? eventDate;
+    
+    // ItemType 매핑
+    ItemType itemType;
+    switch (event.eventType.toLowerCase()) {
+      case 'alarm':
+        itemType = ItemType.alarm;
+        break;
+      case 'event':
+        itemType = ItemType.event;
+        break;
+      case 'memory':
+      default:
+        itemType = ItemType.memory;
+        break;
+    }
+
+    return AlarmModel(
+      id: event.id,
+      year: eventDate.year,
+      month: eventDate.month,
+      day: eventDate.day,
+      week: [], // 주간 반복 없음
+      time: eventTime.hour > 12 ? eventTime.hour - 12 : eventTime.hour,
+      minute: eventTime.minute,
+      amPm: eventTime.hour >= 12 ? 'pm' : 'am',
+      isValid: true,
+      isEnabled: event.isFutureEvent,
+      notificationId: event.id,
+      scheduledDatetime: eventTime,
+      title: event.eventSummary,
+      content: event.tags.isNotEmpty ? event.tags.join(', ') : null,
+      isDeleted: false,
+      createdAt: event.createdAt,
+      updatedAt: event.updatedAt,
+      itemType: itemType,
+    );
+  }
 }
+

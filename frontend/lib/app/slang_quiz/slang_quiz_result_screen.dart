@@ -47,17 +47,6 @@ class SlangQuizResultScreen extends ConsumerWidget {
               fit: BoxFit.contain,
             ),
 
-            // 총점
-            Text(
-              '${result.totalScore}점',
-              style: AppTypography.h1.copyWith(
-                color: AppColors.primaryColor,
-              ),
-            ),
-            const SizedBox(height: AppSpacing.xs),
-
-            
-            
             // 정답 개수
             Text(
               '${result.totalQuestions}문제 중 ${result.correctCount}문제 성공',
@@ -73,6 +62,43 @@ class SlangQuizResultScreen extends ConsumerWidget {
               ),
             ),
             const SizedBox(height: AppSpacing.lg),
+            
+            // 랭킹 정보 (있는 경우에만 표시)
+            if (result.ranking != null) ...[
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.sm,
+                  vertical: AppSpacing.xs,
+                ),
+                decoration: BoxDecoration(
+                  color: AppColors.bgSoftMint,
+                  borderRadius: BorderRadius.circular(AppRadius.pill),
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      result.ranking!.rankMessage
+                          .replaceAll('단어→뜻', '무슨 뜻인지 알아봄')
+                          .replaceAll('뜻→단어', '어떤 말인지 맞춰봄'),
+                      style: AppTypography.caption.copyWith(
+                        color: AppColors.textPrimary,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      '${result.ranking!.totalGames}명 중 ${result.ranking!.betterThan + 1}위',
+                      style: AppTypography.caption.copyWith(
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: AppSpacing.sm),
+            ],
             
             // 문제별 요약
             Expanded(

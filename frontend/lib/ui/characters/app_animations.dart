@@ -151,6 +151,64 @@ const Map<String, AnimationMeta> animationMetaMap = {
     assetPath: 'assets/characters/animation/error/char_love.json',
   ),
 
+  // sadness 캐릭터 - 4가지 감정
+  'sadness_happiness': AnimationMeta(
+    id: 'sadness_happiness',
+    nameKo: '슬픔(기쁨)',
+    category: EmotionCategory.happiness,
+    assetPath: 'assets/characters/animation/happiness/char_sadness.json',
+  ),
+  'sadness_sadness': AnimationMeta(
+    id: 'sadness_sadness',
+    nameKo: '슬픔(슬픔)',
+    category: EmotionCategory.sadness,
+    assetPath: 'assets/characters/animation/sadness/char_sadness.json',
+  ),
+  'sadness_anger': AnimationMeta(
+    id: 'sadness_anger',
+    nameKo: '슬픔(분노)',
+    category: EmotionCategory.anger,
+    assetPath: 'assets/characters/animation/anger/char_sadness.json',
+  ),
+  'sadness_fear': AnimationMeta(
+    id: 'sadness_fear',
+    nameKo: '슬픔(공포)',
+    category: EmotionCategory.fear,
+    assetPath: 'assets/characters/animation/fear/char_sadness.json',
+  ),
+
+  // sadness 캐릭터 - 5가지 상태
+  'sadness_basic': AnimationMeta(
+    id: 'sadness_basic',
+    nameKo: '슬픔(기본)',
+    category: EmotionCategory.basic,
+    assetPath: 'assets/characters/animation/basic/char_sadness.json',
+  ),
+  'sadness_listening': AnimationMeta(
+    id: 'sadness_listening',
+    nameKo: '슬픔(듣는중)',
+    category: EmotionCategory.listening,
+    assetPath: 'assets/characters/animation/listening/char_sadness.json',
+  ),
+  'sadness_thinking': AnimationMeta(
+    id: 'sadness_thinking',
+    nameKo: '슬픔(생각중)',
+    category: EmotionCategory.thinking,
+    assetPath: 'assets/characters/animation/thinking/char_sadness.json',
+  ),
+  'sadness_realization': AnimationMeta(
+    id: 'sadness_realization',
+    nameKo: '슬픔(깨달음)',
+    category: EmotionCategory.realization,
+    assetPath: 'assets/characters/animation/realization/char_sadness.json',
+  ),
+  'sadness_error': AnimationMeta(
+    id: 'sadness_error',
+    nameKo: '슬픔(오류)',
+    category: EmotionCategory.error,
+    assetPath: 'assets/characters/animation/error/char_sadness.json',
+  ),
+
   // TODO: 향후 추가될 캐릭터들
   // 예시:
   // 'joy_happiness': AnimationMeta(
