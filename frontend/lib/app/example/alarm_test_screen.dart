@@ -34,7 +34,7 @@ class _AlarmTestScreenState extends State<AlarmTestScreen> {
 
     try {
       final response = await http.post(
-        Uri.parse('http://localhost:8000/api/agent/v2/text'),
+        Uri.parse('http://10.0.2.2:8000/api/agent/v2/text'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'user_text': _textController.text,
