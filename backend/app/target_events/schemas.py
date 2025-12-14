@@ -2,7 +2,7 @@
 요청/응답 스키마
 Pydantic models for request/response validation
 """
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from datetime import date, datetime
 from typing import List, Optional, Dict, Any
 
@@ -22,39 +22,45 @@ class AnalyzeWeeklyRequest(BaseModel):
 class DailyEventResponse(BaseModel):
     """일간 이벤트 응답"""
 
-    id: int
-    user_id: int
-    event_date: date
-    event_type: str
-    target_type: str
-    event_summary: str
-    event_time: Optional[datetime] = None
-    importance: int
-    is_future_event: bool
-    tags: List[str] = []
-    created_at: datetime
-    updated_at: datetime
+    model_config = ConfigDict(
+        from_attributes=True,
+        populate_by_name=True,
+        extra='ignore',  # 추가 필드 무시
+    )
 
-    class Config:
-        from_attributes = True
+    id: int = Field(alias="ID")
+    user_id: int = Field(alias="USER_ID")
+    event_date: date = Field(alias="EVENT_DATE")
+    event_type: str = Field(alias="EVENT_TYPE")
+    target_type: str = Field(alias="TARGET_TYPE")
+    event_summary: str = Field(alias="EVENT_SUMMARY")
+    event_time: Optional[datetime] = Field(None, alias="EVENT_TIME")
+    importance: Optional[int] = Field(default=3, alias="IMPORTANCE")
+    is_future_event: bool = Field(alias="IS_FUTURE_EVENT")
+    tags: List[str] = Field(default=[], alias="TAGS")
+    created_at: datetime = Field(alias="CREATED_AT")
+    updated_at: datetime = Field(alias="UPDATED_AT")
 
 
 class WeeklyEventResponse(BaseModel):
     """주간 이벤트 응답"""
 
-    id: int
-    user_id: int
-    week_start: date
-    week_end: date
-    target_type: str
-    events_summary: List[Dict[str, Any]] = []
-    total_events: int
-    tags: List[str] = []
-    created_at: datetime
-    updated_at: datetime
+    model_config = ConfigDict(
+        from_attributes=True,
+        populate_by_name=True,
+        extra='ignore'  # 추가 필드 무시
+    )
 
-    class Config:
-        from_attributes = True
+    id: int = Field(alias="ID")
+    user_id: int = Field(alias="USER_ID")
+    week_start: date = Field(alias="WEEK_START")
+    week_end: date = Field(alias="WEEK_END")
+    target_type: str = Field(alias="TARGET_TYPE")
+    events_summary: List[Dict[str, Any]] = Field(default=[], alias="EVENTS_SUMMARY")
+    total_events: int = Field(alias="TOTAL_EVENTS")
+    tags: List[str] = Field(default=[], alias="TAGS")
+    created_at: datetime = Field(alias="CREATED_AT")
+    updated_at: datetime = Field(alias="UPDATED_AT")
 
 
 class AnalyzeDailyResponse(BaseModel):

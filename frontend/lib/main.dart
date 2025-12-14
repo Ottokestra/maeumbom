@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:kakao_flutter_sdk_user/kakao_flutter_sdk_user.dart';
 import 'ui/app_ui.dart';
 import 'core/config/app_routes.dart';
@@ -78,6 +79,15 @@ class MaeumBomApp extends ConsumerWidget {
       title: 'Maeumbom',
       theme: AppTheme.light,
       darkTheme: AppTheme.dark,
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: const [
+        Locale('ko', 'KR'),
+        Locale('en', 'US'),
+      ],
       initialRoute: '/splash',
       onGenerateRoute: (settings) {
         final routeGuard = ref.read(routeGuardProvider);

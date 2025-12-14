@@ -57,6 +57,7 @@ class _AlarmScreenState extends ConsumerState<AlarmScreen> {
       initialDate: _startDate,
       firstDate: DateTime(2020),
       lastDate: DateTime(2030),
+      locale: const Locale('ko', 'KR'),
       helpText: '시작 날짜 선택',
     );
 
@@ -268,8 +269,16 @@ class _AlarmScreenState extends ConsumerState<AlarmScreen> {
   /// DailyEventModel을 AlarmModel로 변환
   AlarmModel _convertEventToAlarm(DailyEventModel event) {
     final eventDate = event.eventDate;
-    final eventTime = event.eventTime ?? eventDate;
-    
+
+    // eventTime이 null이면 eventDate를 DateTime으로 변환
+    final DateTime eventTime = event.eventTime ?? DateTime(
+      eventDate.year,
+      eventDate.month,
+      eventDate.day,
+      12, // 기본 시간: 12시
+      0,  // 기본 분: 0분
+    );
+
     // ItemType 매핑
     ItemType itemType;
     switch (event.eventType.toLowerCase()) {
@@ -299,7 +308,7 @@ class _AlarmScreenState extends ConsumerState<AlarmScreen> {
       notificationId: event.id,
       scheduledDatetime: eventTime,
       title: event.eventSummary,
-      content: event.tags.isNotEmpty ? event.tags.join(', ') : null,
+      content: null, // 태그 대신 summary를 title에 표시
       isDeleted: false,
       createdAt: event.createdAt,
       updatedAt: event.updatedAt,
@@ -307,4 +316,3 @@ class _AlarmScreenState extends ConsumerState<AlarmScreen> {
     );
   }
 }
-

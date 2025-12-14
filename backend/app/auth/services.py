@@ -632,16 +632,34 @@ async def get_naver_access_token(auth_code: str, state: str) -> str:
     
     async with httpx.AsyncClient() as client:
         try:
+            logger.info(f"[Auth] Requesting Naver access token - state: {state[:10]}...")
             response = await client.post(NAVER_TOKEN_URL, data=payload)
+            logger.debug(f"[Auth] Naver token response status: {response.status_code}")
             response.raise_for_status()
             data = response.json()
-            return data["access_token"]
+            logger.debug(f"[Auth] Naver token response data: {data}")
+            
+            access_token = data.get("access_token")
+            if not access_token:
+                logger.error(f"[Auth] No access_token in Naver response: {data}")
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Naver API did not return access_token. Response: {data}"
+                )
+            
+            logger.info("[Auth] Successfully obtained Naver access token")
+            return access_token
         except httpx.HTTPStatusError as e:
+            logger.error(f"[Auth] Naver token exchange failed - Status: {e.response.status_code}, Response: {e.response.text}")
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=f"Failed to get Naver access token: {e.response.text}"
             )
+        except HTTPException:
+            # Re-raise HTTPException as-is
+            raise
         except Exception as e:
+            logger.exception(f"[Auth] Unexpected error during Naver token exchange: {str(e)}")
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f"Error communicating with Naver: {str(e)}"
