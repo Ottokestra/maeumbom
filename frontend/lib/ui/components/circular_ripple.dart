@@ -25,7 +25,7 @@ class CircularRipple extends StatefulWidget {
   /// 중앙에 표시할 자식 위젯 (캐릭터 등)
   final Widget child;
 
-  /// 파동 개수 (기본 3개)
+  /// 파동 개수 (기본 4개)
   final int rippleCount;
 
   const CircularRipple({
@@ -34,7 +34,7 @@ class CircularRipple extends StatefulWidget {
     this.voiceState = VoiceInterfaceState.idle,
     this.color = AppColors.primaryColor,
     this.size = 200,
-    this.rippleCount = 3,
+    this.rippleCount = 4,
   });
 
   @override
@@ -67,15 +67,15 @@ class _CircularRippleState extends State<CircularRipple>
   void _updateAnimationState() {
     switch (widget.voiceState) {
       case VoiceInterfaceState.listening:
-        _controller.duration = const Duration(milliseconds: 1500);
+        _controller.duration = const Duration(milliseconds: 2500); // 더 천천히
         if (!_controller.isAnimating) _controller.repeat();
         break;
       case VoiceInterfaceState.processing:
-        _controller.duration = const Duration(milliseconds: 3000);
+        _controller.duration = const Duration(milliseconds: 3500); // 더 천천히
         if (!_controller.isAnimating) _controller.repeat(reverse: true);
         break;
       case VoiceInterfaceState.replying:
-        _controller.duration = const Duration(milliseconds: 2000);
+        _controller.duration = const Duration(milliseconds: 2500); // 더 천천히
         if (!_controller.isAnimating) _controller.repeat();
         break;
       case VoiceInterfaceState.idle:
@@ -151,8 +151,8 @@ class RipplePainter extends CustomPainter {
     final maxRadius = size.width / 2;
 
     if (state == VoiceInterfaceState.processing) {
-      // Breathing effect for processing
-      final currentRadius = maxRadius * 0.8 + (maxRadius * 0.2 * progress);
+      // Breathing effect for processing - 더 크고 선명하게
+      final currentRadius = maxRadius * 0.7 + (maxRadius * 0.5 * progress);
       final opacity = 0.3 + (0.3 * progress);
 
       final paint = Paint()
@@ -164,7 +164,7 @@ class RipplePainter extends CustomPainter {
 
       canvas.drawCircle(center, currentRadius, paint);
     } else {
-      // Ripple effect for listening and replying
+      // Ripple effect for listening and replying - 명확한 원 두께
       for (int i = 0; i < rippleCount; i++) {
         final rippleDelay = i / rippleCount;
         final rippleProgress = (progress - rippleDelay) % 1.0;
@@ -172,14 +172,15 @@ class RipplePainter extends CustomPainter {
         // Skip if not started yet
         if (progress < rippleDelay) continue;
 
-        final radius = maxRadius * rippleProgress;
+        // 파동이 더 넓게 퍼지도록
+        final radius = maxRadius * rippleProgress * 1.5;
         
-        // 투명도: 시작할 때 0.5, 끝날 때 0으로 감소
-        final opacity = (1.0 - rippleProgress) * 0.5;
+        // 투명도: 시작할 때 더 선명하게, 끝날 때 0으로 감소
+        final opacity = (1.0 - rippleProgress) * 0.3;
 
         final paint = Paint()
           ..color = color.withOpacity(opacity)
-          ..strokeWidth = state == VoiceInterfaceState.listening ? 3 : 2
+          ..strokeWidth = state == VoiceInterfaceState.listening ? 20 : 15  // 더 두꺼운 원
           ..style = PaintingStyle.stroke;
 
         canvas.drawCircle(center, radius, paint);
