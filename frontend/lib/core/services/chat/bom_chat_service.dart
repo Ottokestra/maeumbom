@@ -15,6 +15,7 @@ class BomChatService {
   StreamSubscription<Map<String, dynamic>>? _responseSubscription;
 
   bool _isActive = false;
+  bool _isPaused = false; // 🆕 오디오 전송 일시 중지
 
   // 응답 콜백
   Function(Map<String, dynamic>)? onResponse;
@@ -23,15 +24,19 @@ class BomChatService {
   Function(String)? onPartialText; // Phase 3 (비활성화)
   Function(String)? onSttResult; // ✅ STT 결과 → 사용자 메시지 표시
   Function(String status, String message)? onStatusChange; // 🆕 WebSocket 상태 변경
+  Function()? onSpeechEnd; // 🆕 발화 종료 감지
+  Function(String message)? onLowQuality; // 🆕 low_quality STT 처리
 
   /// 음성 채팅 시작
   /// [userId]: 사용자 ID
   /// [sessionId]: 세션 ID (선택적)
   /// [wsUrl]: WebSocket URL (선택적, 기본값: localhost)
+  /// [ttsEnabled]: TTS 생성 여부 (기본값: true)
   Future<void> startVoiceChat({
     required String userId,
     String? sessionId,
     String? wsUrl,
+    bool ttsEnabled = true, // 🆕 TTS 토글
   }) async {
     if (_isActive) {
       debugPrint('[BomChatService] 이미 음성 채팅이 진행 중입니다');
@@ -45,7 +50,8 @@ class BomChatService {
       await _wsService.connect(
         userId: userId,
         sessionId: sessionId,
-        wsUrl: wsUrl ?? 'ws://10.0.2.2:8000/agent/stream',
+        wsUrl: wsUrl ?? 'ws://localhost:8000/agent/stream',
+        ttsEnabled: ttsEnabled, // 🆕 TTS 설정 전달
       );
 
       // 2. Backend 준비 완료 대기용 Completer
@@ -92,6 +98,11 @@ class BomChatService {
       int chunkCount = 0; // 디버그용 카운터
       _audioSubscription = audioStream.listen(
         (chunk) {
+          // 🆕 일시 중지 상태(processing)일 때는 전송하지 않음
+          if (_isPaused) {
+            return;
+          }
+
           _wsService.sendAudioChunk(chunk);
           chunkCount++;
           // 10초마다 로그 (16kHz, 512 samples = 32ms per chunk, ~31 chunks/sec)
@@ -166,6 +177,14 @@ class BomChatService {
           onError?.call(errorMsg);
           break;
 
+        case 'speech_end':
+          // 🆕 발화 종료 감지
+          debugPrint('[BomChatService] ⚡⚡⚡ speech_end 메시지 수신! ⚡⚡⚡');
+          debugPrint('[BomChatService] onSpeechEnd 콜백 호출 중...');
+          onSpeechEnd?.call();
+          debugPrint('[BomChatService] ✅ onSpeechEnd 콜백 호출 완료');
+          break;
+
         case 'tts_ready':
           // 🆕 TTS 오디오 준비 완료 - URL 전달
           final audioUrl = response['audio_url'] as String?;
@@ -177,6 +196,13 @@ class BomChatService {
               'type': 'tts_ready',
             });
           }
+          break;
+
+        case 'low_quality':
+          // 🆕 low_quality STT 처리
+          final message = response['message'] as String? ?? '다시 한번 말씀해 주세요!';
+          debugPrint('[BomChatService] ⚠️ low_quality STT: $message');
+          onLowQuality?.call(message);
           break;
 
         default:
@@ -287,6 +313,18 @@ class BomChatService {
       debugPrint('[BomChatService] 텍스트 메시지 전송 실패: $e');
       rethrow;
     }
+  }
+
+  /// 🆕 오디오 전송 일시 중지
+  void pauseAudioTransmission() {
+    _isPaused = true;
+    debugPrint('[BomChatService] ⏸️  오디오 전송 일시 중지');
+  }
+
+  /// 🆕 오디오 전송 재개
+  void resumeAudioTransmission() {
+    _isPaused = false;
+    debugPrint('[BomChatService] ▶️  오디오 전송 재개');
   }
 
   /// 정리

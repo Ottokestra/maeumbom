@@ -794,13 +794,13 @@ async def run_ai_bomi_from_text_v2(
     
     # ⚠️ 백그라운드 감정분석 비활성화 (별도 엔드포인트로 분리)
     # Frontend가 need_emotion_analysis=1일 때 POST /emotion/api/analyze 호출
-    # 💾 Memory Manager는 계속 실행 (감정분석 분리와 무관)
-    asyncio.create_task(run_slow_track(
+    # 💾 Memory Manager는 TTS 전에 완료되도록 await 실행 (TTS 타임아웃 방지)
+    await run_slow_track(
         user_text=user_text,
         emotion_result=emotion,
         user_id=user_id,
         session_id=session_id
-    ))
+    )
     logger.info("🚀 [Memory Manager] Background task created (run_slow_track)")
     logger.info("🚀 [Endpoint Separation] Emotion analysis moved to /emotion/api/analyze")
 
