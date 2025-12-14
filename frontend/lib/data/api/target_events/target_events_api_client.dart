@@ -68,8 +68,21 @@ class TargetEventsApiClient {
           headers: {'Authorization': 'Bearer $accessToken'},
         ),
       );
-      
-      return DailyEventsListResponse.fromJson(response.data);
+
+      appLogger.d('Response type: ${response.data.runtimeType}');
+      if (response.data is Map && response.data['daily_events'] is List) {
+        final dailyEvents = response.data['daily_events'] as List;
+        if (dailyEvents.isNotEmpty) {
+          appLogger.d('First event: ${dailyEvents[0]}');
+        }
+      }
+
+      try {
+        return DailyEventsListResponse.fromJson(response.data);
+      } catch (e, stack) {
+        appLogger.e('Parse error', error: e, stackTrace: stack);
+        rethrow;
+      }
     } on DioException catch (e) {
       appLogger.e('Get daily events failed', error: e);
       throw _handleError(e);
