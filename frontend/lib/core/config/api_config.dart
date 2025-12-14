@@ -111,6 +111,12 @@ class ApiConfig {
   static const String slangQuizAdminGenerate =
       '$slangQuizBase/admin/questions/generate';
 
+  // Target Events Endpoints
+  static const String targetEventsBase = '/api/target-events';
+  static const String targetEventsAnalyzeDaily = '$targetEventsBase/analyze-daily';
+  static const String targetEventsDaily = '$targetEventsBase/daily';
+  static const String targetEventsTags = '$targetEventsBase/tags/popular';
+
   // Timeout Configuration
   static const Duration connectTimeout = Duration(seconds: 30);
   static const Duration receiveTimeout =
