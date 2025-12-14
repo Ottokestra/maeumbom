@@ -35,6 +35,10 @@ class EmotionBubble extends StatefulWidget {
   /// true일 경우 Mint 배경 + LightGray 테두리 사용
   final bool bgGreen;
 
+  /// 배경색 White 모드 여부 (기본값: false)
+  /// true일 경우 White 배경 + LightGray 테두리 사용
+  final bool bgWhite;
+
   /// TTS 토글 표시 여부 (기본값: false)
   final bool showTtsToggle;
 
@@ -51,6 +55,7 @@ class EmotionBubble extends StatefulWidget {
     this.enableTypingAnimation = false,
     this.typingSpeed = 50,
     this.bgGreen = false,
+    this.bgWhite = false,
     this.showTtsToggle = false,
     this.ttsEnabled = false,
     this.onTtsToggle,
@@ -170,10 +175,14 @@ class _EmotionBubbleState extends State<EmotionBubble> {
     final bubbleWidth = screenWidth - (AppSpacing.md * 2); // 좌우 여백 제외
 
     // 색상 결정 로직
-    final Color bgColor =
-        widget.bgGreen ? AppColors.bgSoftMint : BubbleTokens.emotionBg;
-    final Color borderColor =
-        widget.bgGreen ? AppColors.borderLightGray : BubbleTokens.emotionBorder;
+    final Color bgColor = widget.bgWhite
+        ? AppColors.bgBasic
+        : (widget.bgGreen ? AppColors.bgSoftMint : BubbleTokens.emotionBg);
+    final Color borderColor = widget.bgWhite
+        ? AppColors.borderLightGray
+        : (widget.bgGreen
+            ? AppColors.borderLightGray
+            : BubbleTokens.emotionBorder);
 
     // 삼각형 색상: bgGreen이면 secondaryColor, 아니면 기본(userBg)
     final Color triangleColor =
@@ -237,16 +246,16 @@ class _EmotionBubbleState extends State<EmotionBubble> {
                 child: LayoutBuilder(
                   builder: (context, constraints) {
                     return SingleChildScrollView(
-                  controller: _scrollController,
-                  child: Text(
-                    _displayedText,
-                    textAlign: TextAlign.left, // 왼쪽 정렬
+                      controller: _scrollController,
+                      child: Text(
+                        _displayedText,
+                        textAlign: TextAlign.left, // 왼쪽 정렬
                         maxLines: 4, // 최대 4줄
                         overflow: TextOverflow.visible,
-                    style: AppTypography.bodyBold.copyWith(
-                      color: BubbleTokens.emotionText, // #233446
-                    ),
-                  ),
+                        style: AppTypography.bodyBold.copyWith(
+                          color: BubbleTokens.emotionText, // #233446
+                        ),
+                      ),
                     );
                   },
                 ),

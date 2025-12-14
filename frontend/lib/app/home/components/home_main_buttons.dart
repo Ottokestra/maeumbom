@@ -29,7 +29,7 @@ class HomeMainButtons extends StatelessWidget {
         Expanded(
           child: _buildButton(
             context: context,
-            title: '마음서랍',
+            title: '기억서랍',
             subtitle: '봄이가 기억했다가\n알려줄게',
             icon: Icons.notifications_none,
             iconColor: const Color(0xFFFF7A5C), // Soft Red/Orange

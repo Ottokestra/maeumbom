@@ -52,7 +52,7 @@ class AppRoutes {
   static const RouteMetadata alarm = RouteMetadata(
     routeName: '/alarm',
     builder: AlarmScreen.new,
-    tabIndex: 1, // BottomMenuBar: 마음서랍
+    tabIndex: 1, // BottomMenuBar: 기억서랍
   );
 
   static const RouteMetadata memoryList = RouteMetadata(
