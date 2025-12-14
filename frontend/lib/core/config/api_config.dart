@@ -12,16 +12,20 @@ class ApiConfig {
 
   static String get baseUrl {
     // 환경 변수로 설정된 경우 우선 사용 (실제 디바이스용)
+    // flutter run --dart-define=API_BASE_URL=http://192.168.x.x:8000
     const apiBaseUrl = String.fromEnvironment('API_BASE_URL');
     if (apiBaseUrl.isNotEmpty) {
       return apiBaseUrl;
     }
 
-    // 테스트용
+    // 테스트용 (에뮬레이터/시뮬레이터)
     if (!kReleaseMode) {
       if (Platform.isAndroid) {
+        // Android 에뮬레이터: 10.0.2.2는 호스트 머신의 localhost를 가리킴
+        // 실제 디바이스 테스트 시에는 --dart-define=API_BASE_URL=http://YOUR_IP:8000 사용
         return _androidEmulator;
       }
+      // iOS 시뮬레이터: localhost 사용
       return _localDev;
     }
 
