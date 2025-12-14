@@ -278,11 +278,11 @@ class _SlangQuizStartScreenState extends ConsumerState<SlangQuizStartScreen> {
   String _getQuizTypeLabel(String type) {
     switch (type) {
       case 'word_to_meaning':
-        return '단어 → 뜻';
+        return '무슨 뜻인지 알아봄';
       case 'meaning_to_word':
-        return '뜻 → 단어';
+        return '어떤 말인지 맞춰봄';
       default:
-        return '단어 → 뜻';
+        return '무슨 뜻인지 알아봄';
     }
   }
 
@@ -358,12 +358,12 @@ class _SlangQuizStartScreenState extends ConsumerState<SlangQuizStartScreen> {
             ),
             const SizedBox(height: 24),
             _buildBottomSheetItem(
-                '단어 → 뜻', 'word_to_meaning', _selectedQuizType, (val) {
+                '무슨 뜻인지 알아봄', 'word_to_meaning', _selectedQuizType, (val) {
               setState(() => _selectedQuizType = val);
               Navigator.pop(context);
             }),
             _buildBottomSheetItem(
-                '뜻 → 단어', 'meaning_to_word', _selectedQuizType, (val) {
+                '어떤 말인지 맞춰봄', 'meaning_to_word', _selectedQuizType, (val) {
               setState(() => _selectedQuizType = val);
               Navigator.pop(context);
             }),

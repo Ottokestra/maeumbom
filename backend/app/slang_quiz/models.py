@@ -168,6 +168,24 @@ class QuestionSummary(BaseModel):
     earned_score: Optional[int] = Field(None, description="Score earned")
 
 
+class RankingInfo(BaseModel):
+    """Ranking information model"""
+    percentile: float = Field(..., ge=0, le=100, description="Percentile (0-100, higher is better)")
+    total_games: int = Field(..., ge=0, description="Total games in this category")
+    better_than: int = Field(..., ge=0, description="Number of games you scored better than")
+    rank_message: str = Field(..., description="Ranking message")
+    
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "percentile": 80.0,
+                "total_games": 100,
+                "better_than": 80,
+                "rank_message": "🎉 초급 단어→뜻 퀴즈에서 상위 20%입니다!"
+            }
+        }
+
+
 class EndGameResponse(BaseModel):
     """Response model for ending a game"""
     game_id: int = Field(..., description="Game session ID")
@@ -176,6 +194,7 @@ class EndGameResponse(BaseModel):
     total_score: int = Field(..., description="Total score earned")
     total_time_seconds: Optional[int] = Field(None, description="Total time spent")
     questions_summary: List[QuestionSummary] = Field(..., description="Summary of all questions")
+    ranking: Optional[RankingInfo] = Field(None, description="Ranking information")
     
     class Config:
         json_schema_extra = {
@@ -183,16 +202,22 @@ class EndGameResponse(BaseModel):
                 "game_id": 123,
                 "total_questions": 5,
                 "correct_count": 4,
-                "total_score": 550,
-                "total_time_seconds": 180,
+                "total_score": 85,
+                "total_time_seconds": 90,
                 "questions_summary": [
                     {
                         "question_number": 1,
                         "word": "킹받네",
                         "is_correct": True,
-                        "earned_score": 150
+                        "earned_score": 20
                     }
-                ]
+                ],
+                "ranking": {
+                    "percentile": 80.0,
+                    "total_games": 100,
+                    "better_than": 80,
+                    "rank_message": "🎉 초급 단어→뜻 퀴즈에서 상위 20%입니다!"
+                }
             }
         }
 

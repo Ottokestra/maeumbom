@@ -1,0 +1,16 @@
+{
+  "word": "TMI",
+  "question": "자녀가 '너무 많은 정보'라고 말하면 어떤 단어일까요?",
+  "options": [
+    "TMI",
+    "TMN",
+    "TMI정보",
+    "TMI지식"
+  ],
+  "answer_index": 0,
+  "explanation": "'TMI'는 'Too Much Information'의 약자로, '너무 많은 정보'라는 뜻이에요. 일반적으로 대화에서 필요 이상의 정보나 사적인 이야기를 할 때 사용되며, 가볍게 웃기거나 불필요한 정보를 전할 때 자주 쓰입니다. 예를 들어 '그 이야기 TMI였어', '그건 TMI니까 나중에 말해줘'라고 표현할 수 있어요.",
+  "reward_card": {
+    "message": "너의 모든 이야기가 엄마에겐 없어서는 안 될 TMI야!",
+    "background_mood": "warm"
+  }
+}
