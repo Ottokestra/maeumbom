@@ -50,7 +50,7 @@ class BomChatService {
       await _wsService.connect(
         userId: userId,
         sessionId: sessionId,
-        wsUrl: wsUrl ?? 'ws://localhost:8000/agent/stream',
+        wsUrl: wsUrl ?? 'ws://10.0.2.2:8000/agent/stream',
         ttsEnabled: ttsEnabled, // 🆕 TTS 설정 전달
       );
 
@@ -98,8 +98,15 @@ class BomChatService {
       int chunkCount = 0; // 디버그용 카운터
       _audioSubscription = audioStream.listen(
         (chunk) {
+          // 🆕 디버그: 청크 수신 확인
+          if (chunkCount == 0 || chunkCount % 100 == 0) {
+            debugPrint(
+                '[BomChatService] 청크 수신됨: count=$chunkCount, _isPaused=$_isPaused');
+          }
+
           // 🆕 일시 중지 상태(processing)일 때는 전송하지 않음
           if (_isPaused) {
+            chunkCount++;
             return;
           }
 
