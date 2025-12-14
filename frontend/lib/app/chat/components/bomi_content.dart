@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../ui/app_ui.dart';
 import '../../../providers/chat_provider.dart';
+import '../../../providers/alarm_provider.dart';
 import '../../../providers/daily_mood_provider.dart';
 import '../../../core/utils/text_formatter.dart';
 import '../chat_alarm_dialogs.dart';
@@ -48,7 +49,8 @@ class _BomiContentState extends ConsumerState<BomiContent> {
   }
 
   /// Alarm 다이얼로그 표시 → TopNotification으로 변경
-  void _showAlarmDialog(Map<String, dynamic> alarmInfo, String replyText) {
+  void _showAlarmDialog(
+      Map<String, dynamic> alarmInfo, String replyText) async {
     if (!mounted) return;
 
     // 알람 정보 파싱
@@ -77,9 +79,43 @@ class _BomiContentState extends ConsumerState<BomiContent> {
       actionLabel: '확인',
       type: TopNotificationType.green,
       duration: const Duration(hours: 1), // 매우 긴 시간 (사실상 수동으로만 제거)
-      onActionTap: () {
-        // 확인 버튼 클릭 시 알림 제거
-        TopNotificationManager.remove();
+      onActionTap: () async {
+        // 🆕 알람 등록
+        try {
+          print('[BomiContent] 🔔 Registering ${data.length} alarm(s)...');
+
+          await ref.read(alarmProvider.notifier).addAlarms(
+                data.cast<Map<String, dynamic>>(),
+              );
+
+          print('[BomiContent] ✅ Alarms registered successfully');
+
+          // 🆕 성공 시에만 notification 제거
+          TopNotificationManager.remove();
+
+          // 🆕 성공 알림 표시
+          if (mounted) {
+            TopNotificationManager.show(
+              context,
+              message: '알람이 등록되었습니다',
+              type: TopNotificationType.green,
+              duration: const Duration(seconds: 2),
+            );
+          }
+        } catch (e) {
+          print('[BomiContent] ❌ Failed to register alarms: $e');
+
+          // 🆕 에러 시 사용자에게 알림
+          if (mounted) {
+            TopNotificationManager.show(
+              context,
+              message: '알람 등록 실패: ${e.toString()}',
+              type: TopNotificationType.red,
+              duration: const Duration(seconds: 3),
+            );
+          }
+          // 에러 시 기존 notification은 유지 (제거하지 않음)
+        }
       },
     );
   }
@@ -153,7 +189,8 @@ class _BomiContentState extends ConsumerState<BomiContent> {
     final isLoading = chatState.isLoading;
 
     // 선택된 감정에 따른 캐릭터 ID 결정
-    final characterId = _getCharacterIdFromEmotion(dailyMoodState.selectedEmotion);
+    final characterId =
+        _getCharacterIdFromEmotion(dailyMoodState.selectedEmotion);
 
     // Alarm dialog callbacks 등록 (한 번만)
     if (!_callbacksRegistered) {
@@ -520,7 +557,7 @@ class _BomiContentState extends ConsumerState<BomiContent> {
               // 🆕 Speech Bubble (listening/processing 상태일 때 캐릭터 위에 표시)
               if (chatState.voiceState == VoiceInterfaceState.listening)
                 const Positioned(
-                  top: -10, // 캐릭터 위에 배치
+                  top: -20, // 캐릭터 위에 배치
                   child: SpeechBubble(
                     message: '편하게 말해봐~ 나 다 듣고 있어!',
                     displayDuration: Duration(seconds: 5), // 🆕 5초로 연장
@@ -531,7 +568,7 @@ class _BomiContentState extends ConsumerState<BomiContent> {
               if (chatState.voiceState == VoiceInterfaceState.processingVoice ||
                   chatState.voiceState == VoiceInterfaceState.processing)
                 const Positioned(
-                  top: -10,
+                  top: -20,
                   child: SpeechBubble(
                     message: '음.. 생각해볼게! 잠시만 기다려줘!',
                     displayDuration: Duration(seconds: 5),
