@@ -6,13 +6,14 @@ import '../tokens/app_tokens.dart';
 /// 선택지 레이아웃 타입
 enum ChoiceLayout {
   horizontal, // 가로 배치 (2개)
-  vertical, // 세로 배치 (2-5개)
+  vertical, // 세로 배치
 }
 
 /// 선택지 버튼 모드
 enum ChoiceButtonMode {
   basic, // 기본: 흰 배경 + 테두리/체크 강조
   color, // 컬러: 감정 색상 배경 (연함 -> 진함)
+  custom, // 커스텀: 배경색, 선택색, 번호색 직접 지정
 }
 
 /// 개별 선택지 버튼
@@ -63,6 +64,15 @@ class ChoiceButton extends StatefulWidget {
   /// 선택지 이미지 URL (선택적, 세로형에서만 표시)
   final String? imageUrl;
 
+  /// [Custom 모드 전용] 배경색 (미선택 시)
+  final Color? customBackgroundColor;
+
+  /// [Custom 모드 전용] 선택 시 강조 색상 (테두리, 번호 배경, 체크)
+  final Color? customChoiceColor;
+
+  /// [Custom 모드 전용] 번호 텍스트 색상
+  final Color? customNumberColor;
+
   const ChoiceButton({
     super.key,
     required this.text,
@@ -75,6 +85,9 @@ class ChoiceButton extends StatefulWidget {
     this.showBorder = true,
     this.showNumber = true,
     this.imageUrl,
+    this.customBackgroundColor,
+    this.customChoiceColor,
+    this.customNumberColor,
   });
 
   @override
@@ -155,16 +168,36 @@ class _ChoiceButtonState extends State<ChoiceButton> {
 
     // 모드별 배경색 설정
     Color backgroundColor;
+    Color numberBackgroundColor; // 번호 배경색
+    Color numberTextColor; // 번호 텍스트 색상
+    Color accentColor; // 선택 시 강조 색상
+
     // 선택 상태이거나 호버/프레스 상태일 때 강조
     final isActive = widget.isSelected || _isHovering || _isPressed;
 
-    if (widget.mode == ChoiceButtonMode.basic) {
+    if (widget.mode == ChoiceButtonMode.custom) {
+      // Custom: 사용자 지정 색상 사용
+      backgroundColor = widget.customBackgroundColor ?? AppColors.basicGray;
+      accentColor = widget.customChoiceColor ?? AppColors.primaryColor;
+      numberBackgroundColor = accentColor;
+      numberTextColor = widget.customNumberColor ?? AppColors.pureWhite;
+
+      // 선택 시 배경색 변경 (선택 색상의 연한 틴트)
+      if (isActive) {
+        backgroundColor = accentColor.withOpacity(0.1);
+      }
+    } else if (widget.mode == ChoiceButtonMode.basic) {
       // Basic: 기본 basicGray, 활성 시 아주 연한 틴트
-      backgroundColor = isActive
-          ? colors.primary.withOpacity(0.08)
-          : AppColors.basicGray;
+      accentColor = colors.primary;
+      numberBackgroundColor = colors.primary;
+      numberTextColor = AppColors.pureWhite;
+      backgroundColor =
+          isActive ? colors.primary.withOpacity(0.08) : AppColors.basicGray;
     } else {
       // Color: 기본 연한색, 활성 시 진한색
+      accentColor = colors.primary;
+      numberBackgroundColor = colors.primary;
+      numberTextColor = AppColors.pureWhite;
       backgroundColor = isActive
           ? colors.secondary.withOpacity(0.5) // 활성 시 진하게
           : colors.secondary.withOpacity(0.2); // 평소 연하게
@@ -173,11 +206,15 @@ class _ChoiceButtonState extends State<ChoiceButton> {
     // 테두리 색상 설정
     Color borderColor = Colors.transparent;
     if (widget.showBorder) {
-      borderColor = isActive
-          ? colors.primary
-          : (widget.mode == ChoiceButtonMode.basic
-              ? AppColors.borderLightGray // Basic 미활성 시 회색 테두리
-              : colors.primary.withOpacity(0.0)); // Color 미활성 시 테두리 없음
+      if (widget.mode == ChoiceButtonMode.custom) {
+        borderColor = isActive ? accentColor : AppColors.borderLightGray;
+      } else {
+        borderColor = isActive
+            ? colors.primary
+            : (widget.mode == ChoiceButtonMode.basic
+                ? AppColors.borderLightGray // Basic 미활성 시 회색 테두리
+                : colors.primary.withOpacity(0.0)); // Color 미활성 시 테두리 없음
+      }
     }
 
     return MouseRegion(
@@ -267,9 +304,8 @@ class _ChoiceButtonState extends State<ChoiceButton> {
                       width: 32,
                       height: 32,
                       decoration: BoxDecoration(
-                        color: colors.primary, // 항상 Primary 색상 (선택 색상과 동일)
+                        color: numberBackgroundColor, // 커스텀 색상 지원
                         borderRadius: BorderRadius.circular(AppRadius.pill),
-                        // 테두리 없음
                       ),
                       child: Center(
                         child: AnimatedSwitcher(
@@ -280,17 +316,17 @@ class _ChoiceButtonState extends State<ChoiceButton> {
                                 scale: animation, child: child);
                           },
                           child: isActive
-                              ? const Icon(
+                              ? Icon(
                                   Icons.check_rounded,
                                   key: ValueKey('check'),
                                   size: 20,
-                                  color: AppColors.pureWhite,
+                                  color: numberTextColor, // 커스텀 색상 지원
                                 )
                               : Text(
                                   '${widget.index + 1}',
                                   key: ValueKey('number'),
                                   style: AppTypography.bodyBold.copyWith(
-                                    color: AppColors.pureWhite, // 흰색 글씨
+                                    color: numberTextColor, // 커스텀 색상 지원
                                   ),
                                 ),
                         ),
@@ -304,12 +340,14 @@ class _ChoiceButtonState extends State<ChoiceButton> {
                   ),
                   // 번호가 없는 경우 우측에 체크 표시 (활성 시에만)
                   if (!widget.showNumber && isActive) ...[
-                     const SizedBox(width: AppSpacing.sm),
-                     Icon(
-                       Icons.check_circle_rounded,
-                       color: colors.primary,
-                       size: 24,
-                     ),
+                    const SizedBox(width: AppSpacing.sm),
+                    Icon(
+                      Icons.check_circle_rounded,
+                      color: widget.mode == ChoiceButtonMode.custom
+                          ? accentColor
+                          : colors.primary,
+                      size: 24,
+                    ),
                   ],
                 ],
               ),
@@ -320,7 +358,6 @@ class _ChoiceButtonState extends State<ChoiceButton> {
     );
   }
 }
-
 
 /// 선택지 버튼 그룹
 ///
@@ -363,6 +400,9 @@ class ChoiceButtonGroup extends StatelessWidget {
   /// 각 선택지별 커스텀 색상 (emotionIds보다 우선순위 높음)
   final List<Color?>? customColors;
 
+  /// 모든 선택지에 적용할 단일 커스텀 색상 (customColors보다 우선순위 높음)
+  final Color? customColor;
+
   /// 각 선택지별 이미지 URL (선택적, 세로형에서만 표시)
   final List<String?>? imageUrls;
 
@@ -381,6 +421,7 @@ class ChoiceButtonGroup extends StatelessWidget {
     this.mode = ChoiceButtonMode.basic,
     this.emotionIds,
     this.customColors,
+    this.customColor,
     this.imageUrls,
     this.showBorder = true,
     this.showNumber = true,
@@ -409,17 +450,18 @@ class ChoiceButtonGroup extends StatelessWidget {
           ? imageUrls![index]
           : null;
 
-      // 커스텀 색상 가져오기 (우선순위 최상)
-      final customColor = customColors != null && index < customColors!.length
-          ? customColors![index]
-          : null;
+      // 커스텀 색상 가져오기 (우선순위: customColor > customColors[index])
+      final effectiveCustomColor = customColor ??
+          (customColors != null && index < customColors!.length
+              ? customColors![index]
+              : null);
 
       return ChoiceButton(
         text: choice,
         index: index,
         isSelected: isSelected,
         emotionId: emotionId,
-        customColor: customColor,
+        customColor: effectiveCustomColor,
         mode: mode,
         imageUrl: imageUrl,
         showBorder: showBorder,
@@ -440,7 +482,7 @@ class ChoiceButtonGroup extends StatelessWidget {
         ],
       );
     } else {
-      // 세로 배치 (2-5개)
+      // 세로 배치
       return Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,

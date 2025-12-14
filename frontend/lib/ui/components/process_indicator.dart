@@ -74,7 +74,7 @@ class ProcessIndicator extends StatelessWidget {
         height: 64,
         alignment: Alignment.center,
         child: Text(
-          '봄이와 대화해보세요',
+          '',
           style: AppTypography.bodySmall.copyWith(
             color: AppColors.textSecondary,
             fontWeight: FontWeight.w500,

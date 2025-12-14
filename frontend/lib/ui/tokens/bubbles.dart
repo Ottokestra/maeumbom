@@ -83,7 +83,7 @@ class BubbleTokens {
   static const double emotionRadius = AppRadius.md;
 
   /// 감정 말풍선 배경색
-  static const Color emotionBg = AppColors.bgLightPink;
+  static const Color emotionBg = AppColors.accentCoral;
 
   /// 감정 말풍선 테두리 색상
   static const Color emotionBorder = AppColors.borderLight;

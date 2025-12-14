@@ -70,7 +70,7 @@ class BottomMenuBar extends StatelessWidget {
                   ),
                   _MenuItem(
                     index: 1,
-                    label: '마음서랍',
+                    label: '기억서랍',
                     isSelected: currentIndex == 1,
                     iconAsset: 'assets/images/icons/icon-report.svg',
                     onTap: onTap,
@@ -130,8 +130,7 @@ class _MenuItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final Color color =
-        isSelected ? primaryColor : foregroundColor;
+    final Color color = isSelected ? primaryColor : foregroundColor;
 
     return GestureDetector(
       onTap: () => onTap?.call(index),
