@@ -282,7 +282,7 @@ class ChatNotifier extends StateNotifier<ChatState> {
         // TTS URL을 완전한 HTTP URL로 변환
         String ttsUrl = ttsAudio;
         if (ttsAudio.startsWith('/')) {
-          ttsUrl = 'http://localhost:8000$ttsAudio';
+          ttsUrl = 'http://10.0.2.2:8000$ttsAudio';
         }
 
         print('[ChatProvider] 🎵 TTS 재생 시작: $ttsUrl');

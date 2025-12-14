@@ -24,7 +24,7 @@ class ChatWebSocketService {
   Future<void> connect({
     required String userId,
     String? sessionId,
-    String wsUrl = 'ws://localhost:8000/agent/stream', // Android 에뮬레이터용
+    String wsUrl = 'ws://10.0.2.2:8000/agent/stream', // Android 에뮬레이터용
     bool ttsEnabled = true, // 🆕 TTS 토글 설정
   }) async {
     if (_isConnected) {
