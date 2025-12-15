@@ -4,8 +4,8 @@ import 'package:flutter/foundation.dart';
 /// API Configuration - Base URLs and endpoints
 class ApiConfig {
   /// 테스트용 (로컬 FastAPI / Docker)
-  static const String _localDev = 'http://10.0.2.2:8000';
-  static const String _androidEmulator = 'http://10.0.2.2:8000';
+  static const String _localDev = 'http://localhost:8000';
+  static const String _androidEmulator = 'http://localhost:8000';
 
   /// 운영용 (Real)
   static const String _production = 'https://api.apricity.com';
