@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/models/training/relation_training.dart';
 import '../../ui/app_ui.dart';
-import '../../core/services/navigation/navigation_service.dart';
 import '../../core/utils/text_formatter.dart';
 
 class RelationTrainingEndingScreen extends ConsumerWidget {
@@ -60,11 +59,16 @@ class RelationTrainingEndingScreen extends ConsumerWidget {
       backgroundColor: Colors.white,
       topBar: TopBar(
         title: '',
+        leftAction: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.pop(context),
+          color: AppColors.textPrimary,
+        ),
         backgroundColor: Colors.white,
       ),
       bottomBar: BottomButtonBar(
         primaryText: '돌아가기',
-        onPrimaryTap: () => NavigationService(context, ref).navigateToRoute("/training/relation-training"),
+        onPrimaryTap: () => Navigator.pop(context),
       ),
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm), 
@@ -75,7 +79,7 @@ class RelationTrainingEndingScreen extends ConsumerWidget {
             if (result.resultImageUrl != null)
               Center(
                 child: SizedBox(
-                   height: 80, 
+                   height: 350, 
                    child: ClipRRect(
                     borderRadius: BorderRadius.circular(AppRadius.lg), 
                     child: Image.network(
