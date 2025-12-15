@@ -16,58 +16,73 @@ class SemicircleProgressPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final center = Offset(size.width / 2, size.height);
     final radius = size.width / 2 - 20;
+    final rect = Rect.fromCircle(center: center, radius: radius);
 
-    // 배경 반원
+    // 배경 반원 (연한 회색)
     final bgPaint = Paint()
-      ..color = AppColors.borderLight
+      ..color = const Color(0xFFE8E8E8)
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 20
+      ..strokeWidth = 16
       ..strokeCap = StrokeCap.round;
 
     canvas.drawArc(
-      Rect.fromCircle(center: center, radius: radius),
+      rect,
       math.pi, // 시작 각도 (9시 방향)
       math.pi, // 반원 (180도)
       false,
       bgPaint,
     );
 
-    // 진행 반원
+    // 그라데이션 진행 반원
+    final sweepAngle = math.pi * progress;
+
+    // 그라데이션 색상 정의 (빨강 -> 주황 -> 노랑 -> 초록)
+    final gradientColors = [
+      const Color(0xFFFF6B6B), // 빨강 (저온)
+      const Color(0xFFFF9F66), // 주황
+      const Color(0xFFFFD666), // 노랑
+      const Color(0xFF66D9B8), // 초록 (고온)
+    ];
+
     final progressPaint = Paint()
-      ..color = color
+      ..shader = SweepGradient(
+        colors: gradientColors,
+        startAngle: math.pi,
+        endAngle: 2 * math.pi,
+        transform: const GradientRotation(0),
+      ).createShader(rect)
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 20
+      ..strokeWidth = 16
       ..strokeCap = StrokeCap.round;
 
-    final sweepAngle = math.pi * progress;
     canvas.drawArc(
-      Rect.fromCircle(center: center, radius: radius),
+      rect,
       math.pi, // 시작 각도 (9시 방향)
       sweepAngle,
       false,
       progressPaint,
     );
 
-    // 엔드포인트 원형 표시
+    // 엔드포인트 포인터 (현재 위치 표시)
     if (progress > 0) {
       final endAngle = math.pi + sweepAngle;
       final endPointX = center.dx + radius * math.cos(endAngle);
       final endPointY = center.dy + radius * math.sin(endAngle);
       final endPoint = Offset(endPointX, endPointY);
 
-      // 외곽 원 (색상)
+      // 외곽 원 (현재 감정 색상)
       final outerCirclePaint = Paint()
         ..color = color
         ..style = PaintingStyle.fill;
 
-      canvas.drawCircle(endPoint, 14, outerCirclePaint);
+      canvas.drawCircle(endPoint, 12, outerCirclePaint);
 
       // 내부 원 (흰색)
       final innerCirclePaint = Paint()
         ..color = AppColors.basicColor
         ..style = PaintingStyle.fill;
 
-      canvas.drawCircle(endPoint, 10, innerCirclePaint);
+      canvas.drawCircle(endPoint, 8, innerCirclePaint);
     }
   }
 

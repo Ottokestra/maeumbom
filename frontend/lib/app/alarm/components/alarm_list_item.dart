@@ -13,10 +13,14 @@ class AlarmListItem extends StatelessWidget {
     required this.alarm,
     required this.onToggle,
     required this.onDelete,
+    this.isHighlighted = false,
   });
 
-  /// 알람 데이터
+  /// 알림 데이터
   final AlarmModel alarm;
+
+  /// 강조 표시 여부 (테두리 primaryColor 적용)
+  final bool isHighlighted;
 
   /// 토글 스위치 변경 콜백
   final ValueChanged<bool> onToggle;
@@ -48,6 +52,67 @@ class AlarmListItem extends StatelessWidget {
     }
   }
 
+  /// content에서 태그와 본문을 분리
+  Map<String, dynamic> get _parsedContent {
+    if (alarm.content == null || alarm.content!.isEmpty) {
+      return {'text': '', 'tags': <String>[]};
+    }
+
+    final lines = alarm.content!.split('\n');
+    final text = <String>[];
+    final tags = <String>[];
+
+    for (final line in lines) {
+      if (line.trim().startsWith('#')) {
+        // 태그 라인
+        tags.addAll(
+          line.split(' ').where((word) => word.startsWith('#')),
+        );
+      } else {
+        // 일반 텍스트
+        text.add(line);
+      }
+    }
+
+    return {
+      'text': text.join('\n').trim(),
+      'tags': tags,
+    };
+  }
+
+  /// 태그 색상 생성 (키워드 기반 + 해시 기반)
+  Color _getTagColor(String tag) {
+    // 태그에서 # 제거하고 소문자로 변환
+    final keyword = tag.replaceAll('#', '').toLowerCase();
+
+    // 키워드별 색상 매핑
+    if (keyword.contains('알람') || keyword.contains('알림')) {
+      return const Color(0xFFFFB84C); // 알람 아이콘과 동일한 노랑/오렌지
+    } else if (keyword.contains('중요') || keyword.contains('긴급')) {
+      return const Color(0xFFD7454D); // 붉은색 계열
+    } else if (keyword.contains('약속') ||
+        keyword.contains('미팅') ||
+        keyword.contains('회의')) {
+      return const Color(0xFF7BC67E); // 초록색 계열
+    } else if (keyword.contains('기억') || keyword.contains('추억')) {
+      return const Color(0xFFFF8A80); // 핑크/산호색
+    } else if (keyword.contains('이벤트') || keyword.contains('행사')) {
+      return const Color(0xFF6C8CD5); // 파랑색
+    }
+
+    // 기타 태그는 해시 기반 색상
+    final hash = tag.hashCode;
+    final colors = [
+      const Color(0xFF64B5F6), // 하늘
+      const Color(0xFFB47AEA), // 보라
+      const Color(0xFFFFD54F), // 금색
+      const Color(0xFF81C784), // 연두
+      const Color(0xFFFF8A65), // 주황
+      const Color(0xFF9575CD), // 연보라
+    ];
+    return colors[hash.abs() % colors.length];
+  }
+
   @override
   Widget build(BuildContext context) {
     return Dismissible(
@@ -75,133 +140,196 @@ class AlarmListItem extends StatelessWidget {
           color: AppColors.basicColor,
           borderRadius: BorderRadius.circular(AppRadius.md),
           border: Border.all(
-            color: AppColors.borderLight,
+            color: isHighlighted ? AppColors.primaryColor : AppColors.borderLightGray,
             width: 1,
           ),
         ),
-        child: Row(
+        child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // 왼쪽: 날짜 + 요일
-            Column(
+            // 1줄: 날짜/요일 + 타입 배지 + 시간 + 토글
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
+                // 날짜 + 요일
+                SizedBox(
+                  width: 50,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        _dateString,
+                        style: AppTypography.bodyBold.copyWith(
+                          color: AppColors.textPrimary,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 15,
+                        ),
+                      ),
+                      Center(
+                        child: Text(
+                          _weekdayString,
+                          style: AppTypography.caption.copyWith(
+                            color: AppColors.textSecondary,
+                            fontWeight: FontWeight.w500,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(width: AppSpacing.sm),
+
+                // 타입 배지
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: alarm.itemType.backgroundColor,
+                    borderRadius: BorderRadius.circular(AppRadius.sm),
+                  ),
+                  child: Text(
+                    alarm.itemType.label,
+                    style: AppTypography.caption.copyWith(
+                      color: alarm.itemType.textColor,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 11,
+                    ),
+                  ),
+                ),
+
+                const SizedBox(width: AppSpacing.xs),
+
+                // 시간
                 Text(
-                  _dateString,
-                  style: AppTypography.bodyBold.copyWith(
+                  alarm.timeString,
+                  style: AppTypography.body.copyWith(
                     color: AppColors.textPrimary,
                     fontWeight: FontWeight.w600,
+                    fontSize: 14,
                   ),
                 ),
-                const SizedBox(height: 2),
-                Text(
-                  _weekdayString,
-                  style: AppTypography.caption.copyWith(
-                    color: AppColors.textSecondary,
-                    fontWeight: FontWeight.w500,
+
+                const Spacer(),
+
+                // 토글 (알림 타입만)
+                if (alarm.itemType.needsToggle)
+                  Transform.scale(
+                    scale: ToggleTokens.defaultScale,
+                    child: Switch(
+                      value: alarm.isEnabled,
+                      onChanged: onToggle,
+                      activeThumbColor: ToggleTokens.primaryActiveThumb,
+                      activeTrackColor: ToggleTokens.primaryActiveTrack,
+                      inactiveThumbColor: ToggleTokens.primaryInactiveThumb,
+                      inactiveTrackColor: ToggleTokens.primaryInactiveTrack,
+                    ),
                   ),
-                ),
               ],
             ),
 
-            const SizedBox(width: AppSpacing.sm),
+            const SizedBox(height: AppSpacing.sm),
 
-            // 중앙: 아이콘 + 내용
-            Expanded(
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  // 타입별 아이콘 배경
-                  Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: alarm.itemType.backgroundColor,
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: alarm.itemType.textColor,
-                        width: 1.5,
-                      ),
-                    ),
-                    child: Icon(
-                      _typeIcon,
+            // 2줄: 아이콘 + 내용 텍스트
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // 타입별 아이콘
+                Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    color: alarm.itemType.backgroundColor,
+                    shape: BoxShape.circle,
+                    border: Border.all(
                       color: alarm.itemType.textColor,
-                      size: 20,
+                      width: 1.5,
                     ),
                   ),
+                  child: Icon(
+                    _typeIcon,
+                    color: alarm.itemType.textColor,
+                    size: 18,
+                  ),
+                ),
 
-                  const SizedBox(width: AppSpacing.sm),
+                const SizedBox(width: AppSpacing.sm),
 
-                  // 내용 영역
-                  Expanded(
-                    child: Column(
+                // 내용 텍스트 + 태그 (더 넓은 영역)
+                Expanded(
+                  child: () {
+                    final parsed = _parsedContent;
+                    final text = parsed['text'] as String;
+                    final tags = parsed['tags'] as List<String>;
+
+                    if (text.isEmpty && tags.isEmpty) {
+                      return Text(
+                        '내용 없음',
+                        style: AppTypography.bodySmall.copyWith(
+                          color: AppColors.textSecondary,
+                          fontStyle: FontStyle.italic,
+                        ),
+                      );
+                    }
+
+                    return Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // 타입 배지
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 2,
-                          ),
-                          decoration: BoxDecoration(
-                            color: alarm.itemType.backgroundColor,
-                            borderRadius: BorderRadius.circular(AppRadius.sm),
-                          ),
-                          child: Text(
-                            alarm.itemType.label,
-                            style: AppTypography.caption.copyWith(
-                              color: alarm.itemType.textColor,
-                              fontWeight: FontWeight.w600,
-                              fontSize: 11,
-                            ),
-                          ),
-                        ),
-
-                        const SizedBox(height: 6),
-
-                        // 시간 표시
-                        Text(
-                          alarm.timeString,
-                          style: AppTypography.body.copyWith(
-                            color: AppColors.textPrimary,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-
-                        const SizedBox(height: 4),
-
-                        // 내용 텍스트
-                        if (alarm.content != null && alarm.content!.isNotEmpty)
+                        // 본문 텍스트
+                        if (text.isNotEmpty)
                           Text(
-                            alarm.content!,
+                            text,
                             style: AppTypography.bodySmall.copyWith(
                               color: AppColors.textSecondary,
                               height: 1.4,
+                              fontSize: 13,
                             ),
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                           ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
 
-            // 오른쪽: 토글 (알림 타입만)
-            if (alarm.itemType.needsToggle) ...[
-              const SizedBox(width: AppSpacing.xs),
-              Transform.scale(
-                scale: ToggleTokens.defaultScale,
-                child: Switch(
-                  value: alarm.isEnabled,
-                  onChanged: onToggle,
-                  activeThumbColor: ToggleTokens.primaryActiveThumb,
-                  activeTrackColor: ToggleTokens.primaryActiveTrack,
-                  inactiveThumbColor: ToggleTokens.primaryInactiveThumb,
-                  inactiveTrackColor: ToggleTokens.primaryInactiveTrack,
+                        // 태그들
+                        if (tags.isNotEmpty) ...[
+                          const SizedBox(height: 6),
+                          Wrap(
+                            spacing: 4,
+                            runSpacing: 4,
+                            children: tags.map((tag) {
+                              final color = _getTagColor(tag);
+                              return Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 3,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: color.withOpacity(0.15),
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color: color.withOpacity(0.3),
+                                    width: 1,
+                                  ),
+                                ),
+                                child: Text(
+                                  tag,
+                                  style: AppTypography.caption.copyWith(
+                                    color: color,
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 11,
+                                  ),
+                                ),
+                              );
+                            }).toList(),
+                          ),
+                        ],
+                      ],
+                    );
+                  }(),
                 ),
-              ),
-            ],
+              ],
+            ),
           ],
         ),
       ),

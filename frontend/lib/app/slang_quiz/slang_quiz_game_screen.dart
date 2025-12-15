@@ -323,11 +323,6 @@ class _SlangQuizGameScreenState extends ConsumerState<SlangQuizGameScreen> {
           fontWeight: FontWeight.w700,
           color: AppColors.textPrimary,
         ),
-        media: EmotionCharacter(
-          id: currentEmotion,
-          use2d: true,
-          size: 100,
-        ),
         content: ChoiceButtonGroup(
           choices: _questionData!.options,
           selectedIndex: _selectedIndex,

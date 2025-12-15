@@ -60,6 +60,7 @@ dependencies:
   freezed_annotation: ^2.4.1
   json_annotation: ^4.8.1
   logger: ^2.0.2
+  intl: ^0.20.2
 
   # Audio & Permissions
   record: ^6.1.2
