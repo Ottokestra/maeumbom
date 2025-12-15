@@ -8,7 +8,7 @@ class ApiConfig {
   static const String _androidEmulator = 'http://10.0.2.2:8000';
 
   /// 운영용 (Real)
-  static const String _production = 'https://api.apricity.com';
+  static const String _production = 'http://apricity.kr:8000';
 
   static String get baseUrl {
     // 환경 변수로 설정된 경우 우선 사용 (실제 디바이스용)

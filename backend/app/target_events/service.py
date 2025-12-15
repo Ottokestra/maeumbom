@@ -6,8 +6,9 @@ from sqlalchemy.orm import Session
 from sqlalchemy import and_, or_, func
 from datetime import date, timedelta, datetime
 from typing import List, Optional, Dict, Any
+from collections import Counter
 
-from app.db.models import DailyTargetEvent, WeeklyTargetEvent, Conversation
+from app.db.models import DailyTargetEvent, WeeklyTargetEvent, Conversation, RoutineRecommendation
 from .analyzer import TargetEventAnalyzer
 from .constants import TARGET_TAGS
 
@@ -115,6 +116,148 @@ def analyze_daily_events(
     return created_events
 
 
+def aggregate_weekly_emotions(
+    db: Session, user_id: int, week_start: date, week_end: date
+) -> Dict[str, Any]:
+    """
+    주간 감정 데이터 집계
+    
+    TB_ROUTINE_RECOMMENDATIONS 테이블에서 해당 주간의 감정 데이터를 가져와 집계합니다.
+    
+    Args:
+        db: Database session
+        user_id: User ID
+        week_start: Week start date (Monday)
+        week_end: Week end date (Sunday)
+    
+    Returns:
+        Dict containing:
+        - emotion_distribution: Dict[str, float] - 감정 비율 (예: {"안정": 35, "기쁨": 25, ...})
+        - primary_emotion: str - 주요 감정
+        - sentiment_overall: str - 전체 감정 (positive/negative/neutral)
+    """
+    # 1. 해당 주간의 루틴 추천 데이터 조회
+    routine_recommendations = (
+        db.query(RoutineRecommendation)
+        .filter(
+            and_(
+                RoutineRecommendation.USER_ID == user_id,
+                RoutineRecommendation.RECOMMENDATION_DATE >= week_start,
+                RoutineRecommendation.RECOMMENDATION_DATE <= week_end,
+                RoutineRecommendation.IS_DELETED == False,
+            )
+        )
+        .all()
+    )
+    
+    if not routine_recommendations:
+        print(f"[WARNING] No routine recommendations found for user {user_id} from {week_start} to {week_end}")
+        return {
+            "emotion_distribution": None,
+            "primary_emotion": None,
+            "sentiment_overall": None,
+        }
+    
+    print(f"[INFO] Found {len(routine_recommendations)} routine recommendations for emotion aggregation")
+    
+    # 2. 감정 데이터 집계
+    emotion_counter = Counter()
+    sentiment_counter = Counter()
+    
+    for rec in routine_recommendations:
+        if rec.EMOTION_SUMMARY:
+            emotion_data = rec.EMOTION_SUMMARY if isinstance(rec.EMOTION_SUMMARY, dict) else {}
+            
+            # 1. primary_emotion 집계
+            primary_emotion = emotion_data.get("primary_emotion", {})
+            if isinstance(primary_emotion, dict):
+                code = primary_emotion.get("code")
+                intensity = primary_emotion.get("intensity", 1)
+                if code:
+                    emotion_counter[code] += intensity
+            
+            # 2. secondary_emotions 집계
+            secondary_emotions = emotion_data.get("secondary_emotions", [])
+            if isinstance(secondary_emotions, list):
+                for emotion in secondary_emotions:
+                    if isinstance(emotion, dict):
+                        code = emotion.get("code")
+                        intensity = emotion.get("intensity", 1)
+                        if code:
+                            emotion_counter[code] += intensity
+            
+            # 3. sentiment_overall 집계
+            sentiment = emotion_data.get("sentiment_overall")
+            if sentiment:
+                sentiment_counter[sentiment] += 1
+    
+    # 3. 비율 계산
+    total_emotion_score = sum(emotion_counter.values())
+    
+    print(f"[INFO] Emotion counter: {dict(emotion_counter)}")
+    print(f"[INFO] Total emotion score: {total_emotion_score}")
+    
+    if total_emotion_score == 0:
+        print(f"[WARNING] Total emotion score is 0, no emotion data to aggregate")
+        return {
+            "emotion_distribution": None,
+            "primary_emotion": None,
+            "sentiment_overall": None,
+        }
+    
+    # 감정 코드를 한글 이름으로 매핑
+    emotion_name_map = {
+        "joy": "기쁨",
+        "calm": "안정",
+        "love": "사랑",
+        "anger": "분노",
+        "sadness": "슬픔",
+        "fear": "두려움",
+        "anxiety": "불안",
+        "worry": "걱정",
+        "depression": "우울",
+        "boredom": "무기력",
+        "confusion": "혼란",
+        "surprise": "놀람",
+        "disgust": "혐오",
+        "contempt": "경멸",
+        "discontent": "불만",
+        "excitement": "흥분",
+        "confidence": "자신감",
+        "relief": "안심",
+        "interest": "흥미",
+    }
+    
+    # 비율 계산 (백분율)
+    emotion_distribution = {}
+    for emotion_code, score in emotion_counter.most_common():
+        emotion_name = emotion_name_map.get(emotion_code, emotion_code)
+        percentage = round((score / total_emotion_score) * 100)
+        if percentage > 0:  # 0%는 제외
+            emotion_distribution[emotion_name] = percentage
+    
+    # 상위 5개만 유지하고 나머지는 "기타"로 묶기
+    if len(emotion_distribution) > 5:
+        top_5 = dict(list(emotion_distribution.items())[:5])
+        others_sum = sum(list(emotion_distribution.values())[5:])
+        if others_sum > 0:
+            top_5["기타"] = others_sum
+        emotion_distribution = top_5
+    
+    # 4. 주요 감정 추출
+    primary_emotion_code = emotion_counter.most_common(1)[0][0] if emotion_counter else None
+    primary_emotion = emotion_name_map.get(primary_emotion_code, primary_emotion_code) if primary_emotion_code else None
+    
+    # 5. 전체 감정 (가장 많이 나온 sentiment)
+    sentiment_overall = sentiment_counter.most_common(1)[0][0] if sentiment_counter else "neutral"
+    
+    return {
+        "emotion_distribution": emotion_distribution,
+        "primary_emotion": primary_emotion,
+        "sentiment_overall": sentiment_overall,
+    }
+
+
 def analyze_weekly_events(
     db: Session,
     user_id: int,
@@ -165,7 +308,10 @@ def analyze_weekly_events(
             events_by_target[target_type] = []
         events_by_target[target_type].append(event)
 
-    # 4. 기존 주간 이벤트 삭제
+    # 4. 주간 감정 데이터 집계
+    emotion_data = aggregate_weekly_emotions(db, user_id, week_start, week_end)
+    
+    # 5. 기존 주간 이벤트 삭제
     db.query(WeeklyTargetEvent).filter(
         and_(
             WeeklyTargetEvent.USER_ID == user_id,
@@ -173,7 +319,7 @@ def analyze_weekly_events(
         )
     ).delete()
 
-    # 5. 대상별로 LLM 요약 및 저장
+    # 6. 대상별로 LLM 요약 및 저장
     analyzer = TargetEventAnalyzer()
     created_summaries = []
 
@@ -197,7 +343,7 @@ def analyze_weekly_events(
             event_dicts, target_type, week_start
         )
 
-        # DB 저장
+        # DB 저장 (감정 데이터 포함)
         weekly_event = WeeklyTargetEvent(
             USER_ID=user_id,
             WEEK_START=week_start,
@@ -206,6 +352,9 @@ def analyze_weekly_events(
             EVENTS_SUMMARY=summary_data.get("events_summary", []),
             TOTAL_EVENTS=summary_data.get("total_events", 0),
             TAGS=summary_data.get("tags", []),
+            EMOTION_DISTRIBUTION=emotion_data.get("emotion_distribution"),
+            PRIMARY_EMOTION=emotion_data.get("primary_emotion"),
+            SENTIMENT_OVERALL=emotion_data.get("sentiment_overall"),
             CREATED_BY=created_by or user_id,
         )
         db.add(weekly_event)

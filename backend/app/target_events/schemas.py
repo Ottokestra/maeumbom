@@ -59,6 +59,9 @@ class WeeklyEventResponse(BaseModel):
     events_summary: List[Dict[str, Any]] = Field(default=[], alias="EVENTS_SUMMARY")
     total_events: int = Field(alias="TOTAL_EVENTS")
     tags: List[str] = Field(default=[], alias="TAGS")
+    emotion_distribution: Optional[Dict[str, float]] = Field(None, alias="EMOTION_DISTRIBUTION")
+    primary_emotion: Optional[str] = Field(None, alias="PRIMARY_EMOTION")
+    sentiment_overall: Optional[str] = Field(None, alias="SENTIMENT_OVERALL")
     created_at: datetime = Field(alias="CREATED_AT")
     updated_at: datetime = Field(alias="UPDATED_AT")
 
