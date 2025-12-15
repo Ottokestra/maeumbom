@@ -109,16 +109,25 @@ frontend/
 │   │
 │   ├── app/                            # 기능별 화면 (Feature-first)
 │   │   ├── home/                       # 홈 화면
-│   │   │   ├── home_screen.dart
+│   │   │   ├── home_screen.dart        # 기존 홈 화면
+│   │   │   ├── home_new_screen.dart    # 새 홈 화면 (2x3 그리드)
 │   │   │   ├── daily_mood_check_screen.dart
 │   │   │   └── components/             # 홈 화면 컴포넌트
 │   │   │       ├── home_header_section.dart
+│   │   │       ├── home_main_buttons.dart      # 2x3 그리드 (캐릭터 + 5개 버튼)
+│   │   │       ├── home_gauge_section.dart     # Fear & Greed 스타일 게이지
+│   │   │       ├── home_banner_slider.dart     # 배너 슬라이더
 │   │   │       ├── conversation_temperature_bar.dart
-│   │   │       ├── home_bottom_menu.dart
-│   │   │       └── home_menu_grid.dart
+│   │   │       ├── semicircle_progress_painter.dart
+│   │   │       └── daily_mood_check_widget.dart
 │   │   ├── chat/                       # AI 봄이와 대화
 │   │   │   └── bomi_screen.dart        # 봄이 채팅 (✅ 애니메이션 적용)
-│   │   ├── alarm/                      # 똑똑 알람
+│   │   ├── alarm/                      # 똑똑 알람 (기억 서랍)
+│   │   │   ├── alarm_screen.dart       # 알람 화면 (일일 이벤트 분석)
+│   │   │   ├── memory_list_screen.dart # 기억 목록 화면
+│   │   │   └── components/
+│   │   │       ├── alarm_list_item.dart    # 알람 아이템 (2줄 레이아웃, 태그)
+│   │   │       └── alarm_list_panel.dart   # 알람 목록 패널
 │   │   ├── report/                     # 마음리포트
 │   │   ├── training/                   # 마음연습실
 │   │   ├── onboarding/                 # 온보딩
@@ -131,27 +140,41 @@ frontend/
 │   ├── ui/                             # UI 시스템
 │   │   ├── app_ui.dart                 # UI 시스템 통합 export
 │   │   │
-│   │   ├── layout/                     # 레이아웃 컴포넌트
+│   │   ├── layout/                     # 레이아웃 컴포넌트 (9개)
 │   │   │   ├── app_frame.dart          # 화면 기본 프레임
 │   │   │   ├── top_bars.dart           # Top Bar (5가지 변형)
-│   │   │   ├── bottom_menu_bars.dart   # Bottom Menu Bar
+│   │   │   ├── bottom_menu_bars.dart   # Bottom Menu Bar (5탭 네비게이션)
 │   │   │   ├── bottom_button_bars.dart # Bottom Button Bar
 │   │   │   ├── bottom_input_bars.dart  # Bottom Input Bar (텍스트 입력)
 │   │   │   ├── bottom_voice_bar.dart   # Bottom Voice Bar (음성 입력)
-│   │   │   └── bottom_home_bar.dart    # Bottom Home Bar (홈 화면 전용)
+│   │   │   ├── bottom_home_bar.dart    # Bottom Home Bar (홈 화면 전용)
+│   │   │   └── bottom_add_modal_bar.dart  # Bottom Add Modal Bar (재사용 모달)
 │   │   │
-│   │   ├── components/                 # 재사용 컴포넌트
+│   │   ├── components/                 # 재사용 컴포넌트 (24개)
 │   │   │   ├── app_component.dart      # 컴포넌트 통합 export
 │   │   │   ├── app_button.dart         # 버튼 (4가지 variant)
 │   │   │   ├── app_input.dart          # 입력 필드 (3가지 state)
+│   │   │   ├── buttons.dart            # 기타 버튼
+│   │   │   ├── inputs.dart             # 기타 입력
 │   │   │   ├── chat_bubble.dart        # 채팅 말풍선 (사용자/봇)
 │   │   │   ├── system_bubble.dart      # 시스템 말풍선
 │   │   │   ├── emotion_bubble.dart     # 감정 말풍선 (캐릭터 + 메시지)
+│   │   │   ├── speech_bubble.dart      # 말풍선 기본 컴포넌트
+│   │   │   ├── list_bubble.dart        # 선택형 답변 말풍선 [deprecated]
 │   │   │   ├── choice_button.dart      # 선택지 버튼 (가로/세로 레이아웃)
 │   │   │   ├── circular_ripple.dart    # 원형 파동 효과
-│   │   │   ├── more_menu_sheet.dart    # 더보기 메뉴 시트
+│   │   │   ├── orbital_dots.dart       # 궤도 점 애니메이션
+│   │   │   ├── voice_waveform.dart     # 음성 파동 애니메이션
 │   │   │   ├── slide_to_action_button.dart  # 슬라이드 액션 버튼
-│   │   │   └── buttons.dart
+│   │   │   ├── more_menu_sheet.dart    # 더보기 메뉴 시트
+│   │   │   ├── message_dialog.dart     # 메시지 다이얼로그
+│   │   │   ├── top_notification.dart   # 상단 알림 배너
+│   │   │   ├── date_range_selector.dart    # 날짜 범위 선택기
+│   │   │   ├── memory_timeline_item.dart    # 기억 타임라인 아이템
+│   │   │   ├── tag_badge.dart          # 태그 배지
+│   │   │   ├── process_indicator.dart  # 프로세스 인디케이터
+│   │   │   ├── progress_card.dart      # 진행률 카드
+│   │   │   └── question_progress_view.dart  # 질문/진행률 통합 컴포넌트
 │   │   │
 │   │   ├── tokens/                     # 디자인 토큰
 │   │   │   ├── app_tokens.dart         # 토큰 통합 export
@@ -221,27 +244,50 @@ frontend/
 
 디자인 가이드에는 다음 내용이 포함되어 있습니다:
 - ✅ 디자인 토큰 (Colors, Typography, Spacing, Radius, Icons, Bubbles, Toggles)
-- ✅ Layout 시스템 (AppFrame, Top Bar, 3가지 Bottom Bar)
+- ✅ Layout 시스템 (AppFrame, Top Bar, 9가지 Bottom Bar)
 - ✅ 컴포넌트 사용법 (AppButton, AppInput, Bubbles, Voice, Ripple, Toggle)
 - ✅ 실제 사용 예시 (홈, 폼, 채팅 화면)
 - ✅ Best Practices
 
-** 컴포넌트 **:
+**컴포넌트 (24개)**:
+
+**기본 UI**:
+- ✅ AppButton - 기본 버튼 (4가지 variant)
+- ✅ AppInput - 입력 필드 (3가지 state)
+- ✅ MessageDialog - 확인/알림 다이얼로그
+- ✅ TopNotification - 상단 알림 배너 (Red/Green 테마)
+
+**말풍선 (Bubbles)**:
 - ✅ ChatBubble - 사용자/봇 채팅 말풍선
 - ✅ SystemBubble - 시스템 메시지 (info/success/warning)
 - ✅ EmotionBubble - 감정 말풍선 (TTS 토글 지원)
-- ✅ ListBubble - 선택형 답변 말풍선 (response_type: list) [deprecated]
-- ✅ ChoiceButton - 사용자 선택지 버튼 (가로/세로 레이아웃, 감정 색상)
-- ✅ VoiceWaveform - 음성 녹음 파동 애니메이션
-- ✅ CircularRipple - 캐릭터 원형 파동 효과
-- ✅ MoreMenuSheet - 더보기 메뉴 시트
-- ✅ SlideToActionButton - 슬라이드 액션 버튼
-- ✅ TopNotification - 상단 알림 배너 (Red/Green 테마)
-- ✅ MessageDialog - 확인/알림 다이얼로그
+- ✅ SpeechBubble - 말풍선 기본 컴포넌트
+- ✅ ListBubble - 선택형 답변 말풍선 [deprecated]
 
-** 캐릭터 **:
+**선택 및 입력**:
+- ✅ ChoiceButton - 사용자 선택지 버튼 (가로/세로 레이아웃, 감정 색상)
+- ✅ SlideToActionButton - 슬라이드 액션 버튼 (음성/텍스트)
+- ✅ DateRangeSelector - 날짜 범위 선택기
+
+**애니메이션 및 시각 효과**:
+- ✅ CircularRipple - 캐릭터 원형 파동 효과
+- ✅ OrbitalDots - 궤도 점 애니메이션
+- ✅ VoiceWaveform - 음성 녹음 파동 애니메이션
+- ✅ ProcessIndicator - 프로세스 인디케이터
+
+**리스트 및 카드**:
+- ✅ MemoryTimelineItem - 기억 타임라인 아이템
+- ✅ ProgressCard - 진행률 카드
+- ✅ TagBadge - 태그 배지
+
+**복합 컴포넌트**:
+- ✅ MoreMenuSheet - 더보기 메뉴 시트
+- ✅ QuestionProgressView - 질문/진행률 통합 컴포넌트
+
+**캐릭터**:
 - ✅ EmotionCharacter - 정적 감정 캐릭터 (PNG, 17개)
 - ✅ AnimatedCharacter - 애니메이션 감정 캐릭터 (Lottie, relief 4가지 감정)
+
 
 ### 빠른 시작
 

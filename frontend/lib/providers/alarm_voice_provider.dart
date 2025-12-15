@@ -8,7 +8,7 @@ import 'chat_provider.dart';
 import 'auth_provider.dart';
 import 'alarm_provider.dart';
 
-/// 알람 음성 상태
+/// 알림 음성 상태
 class AlarmVoiceState {
   final List<ChatMessage> conversationMessages;
   final VoiceInterfaceState voiceState;
@@ -41,14 +41,14 @@ class AlarmVoiceState {
   }
 }
 
-/// 알람 음성 Notifier
+/// 알림 음성 Notifier
 class AlarmVoiceNotifier extends StateNotifier<AlarmVoiceState> {
   final BomChatService _bomChatService;
   final PermissionService _permissionService;
   final int _userId;
   final Ref _ref;
 
-  // 알람 다이얼로그 콜백
+  // 알림 다이얼로그 콜백
   void Function(Map<String, dynamic> alarmInfo, String replyText)?
       onShowAlarmDialog;
 
@@ -112,12 +112,12 @@ class AlarmVoiceNotifier extends StateNotifier<AlarmVoiceState> {
 
       print('[AlarmVoiceProvider] ✅ Message added, total: ${state.conversationMessages.length}');
 
-      // 알람 다이얼로그 표시 콜백 호출
+      // 알림 다이얼로그 표시 콜백 호출
       if (responseType == 'alarm' && alarmInfo != null) {
         print('[AlarmVoiceProvider] 🔔 Triggering alarm dialog callback');
         onShowAlarmDialog?.call(alarmInfo, replyText);
 
-        // AlarmProvider에 알람 데이터 전달
+        // AlarmProvider에 알림 데이터 전달
         final alarmDataList = alarmInfo['data'] as List<dynamic>?;
         if (alarmDataList != null && alarmDataList.isNotEmpty) {
           final validAlarms = alarmDataList
@@ -245,7 +245,7 @@ class AlarmVoiceNotifier extends StateNotifier<AlarmVoiceState> {
         text: text,
         userId: _userId,
         sessionId: state.sessionId,
-        ttsEnabled: false, // 알람 화면에서는 TTS 비활성화
+        ttsEnabled: false, // 알림 화면에서는 TTS 비활성화
       );
 
       print('[AlarmVoiceProvider] 📥 Received response: $response');
@@ -271,14 +271,14 @@ class AlarmVoiceNotifier extends StateNotifier<AlarmVoiceState> {
     );
   }
 
-  /// 알람 응답 처리 (외부에서 호출 가능)
+  /// 알림 응답 처리 (외부에서 호출 가능)
   void handleAlarmResponse(Map<String, dynamic> alarmInfo) {
     // 이미 _handleAgentResponse에서 처리되므로 필요 시 추가 로직만
     print('[AlarmVoiceProvider] 📥 handleAlarmResponse called');
   }
 }
 
-/// 알람 음성 Provider
+/// 알림 음성 Provider
 final alarmVoiceProvider =
     StateNotifierProvider<AlarmVoiceNotifier, AlarmVoiceState>((ref) {
   final bomChatService = ref.watch(bomChatServiceProvider);

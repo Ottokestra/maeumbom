@@ -364,10 +364,10 @@ class ChatNotifier extends StateNotifier<ChatState> {
         // 🆕 음성/텍스트 모두 다이얼로그 표시
         onShowAlarmDialog?.call(alarmInfo, replyText);
 
-        // 🆕 AlarmProvider에 알람 데이터 전달 (음성/텍스트 모두)
+        // 🆕 AlarmProvider에 알림 데이터 전달 (음성/텍스트 모두)
         final alarmDataList = alarmInfo['data'] as List<dynamic>?;
         if (alarmDataList != null && alarmDataList.isNotEmpty) {
-          // 유효한 알람만 필터링
+          // 유효한 알림만 필터링
           final validAlarms = alarmDataList
               .cast<Map<String, dynamic>>()
               .where((alarm) => alarm['is_valid_alarm'] == true)
@@ -500,10 +500,10 @@ class ChatNotifier extends StateNotifier<ChatState> {
         // 🆕 다이얼로그 표시
         onShowAlarmDialog?.call(alarmInfo, replyText);
 
-        // 🆕 AlarmProvider에 알람 데이터 전달
+        // 🆕 AlarmProvider에 알림 데이터 전달
         final alarmDataList = alarmInfo['data'] as List<dynamic>?;
         if (alarmDataList != null && alarmDataList.isNotEmpty) {
-          // 유효한 알람만 필터링
+          // 유효한 알림만 필터링
           final validAlarms = alarmDataList
               .cast<Map<String, dynamic>>()
               .where((alarm) => alarm['is_valid_alarm'] == true)

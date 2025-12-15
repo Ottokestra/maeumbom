@@ -89,4 +89,26 @@ class MoodColorHelper {
     final category = EmotionClassifier.classify(emotion);
     return getContentColor(category);
   }
+
+  /// 기분 카테고리에 따른 보조 배경색 반환 (버튼용)
+  ///
+  /// - 좋음: moodGoodbgColor
+  /// - 보통: moodNormalbgColor
+  /// - 나쁨: moodBadbgColor
+  static Color getSecondaryColor(MoodCategory category) {
+    switch (category) {
+      case MoodCategory.good:
+        return AppColors.moodGoodbgColor;
+      case MoodCategory.neutral:
+        return AppColors.moodNormalbgColor;
+      case MoodCategory.bad:
+        return AppColors.moodBadbgColor;
+    }
+  }
+
+  /// 감정 ID에서 직접 보조 배경색을 가져오는 편의 메서드
+  static Color getSecondaryColorFromEmotion(EmotionId emotion) {
+    final category = EmotionClassifier.classify(emotion);
+    return getSecondaryColor(category);
+  }
 }

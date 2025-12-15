@@ -18,7 +18,7 @@ enum ItemType {
       case ItemType.memory:
         return '기억';
       case ItemType.alarm:
-        return '알람';
+        return '알림';
       case ItemType.event:
         return '이벤트';
     }
@@ -54,7 +54,7 @@ enum ItemType {
   }
 }
 
-/// 알람 도메인 모델
+/// 알림 도메인 모델
 /// Drift의 AlarmData를 래핑하여 비즈니스 로직에서 사용
 @freezed
 class AlarmModel with _$AlarmModel {
@@ -80,7 +80,7 @@ class AlarmModel with _$AlarmModel {
     int? createdBy,
     required DateTime updatedAt,
     int? updatedBy,
-    @Default(ItemType.alarm) ItemType itemType, // 기본값: 알람
+    @Default(ItemType.alarm) ItemType itemType, // 기본값: 알림
   }) = _AlarmModel;
 
   /// Drift AlarmData에서 변환
@@ -146,8 +146,8 @@ class AlarmModel with _$AlarmModel {
       isEnabled: true,
       notificationId: DateTime.now().millisecondsSinceEpoch % 2147483647,
       scheduledDatetime: scheduledTime,
-      title: alarmData['name'] as String? ?? '마음봄 알람', // 🆕 백엔드에서 name 사용
-      content: '알람 시간입니다.',
+      title: alarmData['name'] as String? ?? '마음봄 알림', // 🆕 백엔드에서 name 사용
+      content: '알림 시간입니다.',
       isDeleted: false,
       createdAt: DateTime.now(),
       createdBy: userId,
@@ -183,7 +183,7 @@ class AlarmModel with _$AlarmModel {
     );
   }
 
-  /// 알람 시간 문자열 (UI 표시용)
+  /// 알림 시간 문자열 (UI 표시용)
   String get timeString {
     final amPmKr = amPm == 'am' ? '오전' : '오후';
     final minuteStr = minute.toString().padLeft(2, '0');

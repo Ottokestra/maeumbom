@@ -92,16 +92,65 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     }
   }
 
+  /// 로그인 에러 핸들링 (사용자 취소는 무시)
+  void _handleLoginError(BuildContext context, Object error) {
+    final errorMsg = error.toString();
+
+    // 사용자 취소는 무시 (정상 동작)
+    if (errorMsg.contains('CANCELED') || errorMsg.contains('User canceled')) {
+      return;
+    }
+
+    // 실제 에러만 다이얼로그 표시
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('로그인 실패'),
+        content: Text(errorMsg),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('확인'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return AppFrame(
-      topBar: TopBar(
-        title: '',
-      ),
-      body: Column(
+      body: Stack(
         children: [
-          // 상단 슬라이드 영역
-          Expanded(
+          // 상단 페이지 인디케이터 (고정)
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: Container(
+              padding: const EdgeInsets.only(top: AppSpacing.sm, bottom: AppSpacing.sm),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: List.generate(5, (index) {
+                  return AnimatedContainer(
+                    duration: const Duration(milliseconds: 300),
+                    margin: const EdgeInsets.symmetric(horizontal: 4),
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(2),
+                      color: _currentPage == index
+                          ? AppColors.primaryColor
+                          : AppColors.borderLightGray,
+                    ),
+                  );
+                }),
+              ),
+            ),
+          ),
+
+          // 이미지 영역 (상단부터 전체 화면)
+          Positioned.fill(
             child: PageView(
               controller: _pageController,
               onPageChanged: (index) {
@@ -110,139 +159,217 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 });
               },
               children: const [
-                _Slide1(),
-                _Slide2(),
-                _Slide3(),
+                _FeatureSlide(imagePath: 'assets/images/button/ai_chating.png'),
+                _FeatureSlide(imagePath: 'assets/images/button/memory_list.png'),
+                _FeatureSlide(imagePath: 'assets/images/button/heart_report.png'),
+                _FeatureSlide(imagePath: 'assets/images/button/relation_training.png'),
+                _FeatureSlide(imagePath: 'assets/images/button/slang_quiz.png'),
               ],
             ),
           ),
 
-          // 페이지 인디케이터
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: List.generate(3, (index) {
-              return AnimatedContainer(
-                duration: const Duration(milliseconds: 300),
-                margin: const EdgeInsets.symmetric(horizontal: 4),
-                width: _currentPage == index ? 24 : 8,
-                height: 8,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(4),
-                  color: _currentPage == index
-                      ? AppColors.secondaryColor
-                      : AppColors.borderLightGray,
-                ),
-              );
-            }),
+          // 하단 로그인 버튼 (이미지 위에 오버레이)
+          Positioned(
+            bottom: 0,
+            left: 0,
+            right: 0,
+            child: Container(
+              padding: EdgeInsets.only(
+                left: AppSpacing.md,
+                right: AppSpacing.md,
+                bottom: MediaQuery.of(context).padding.bottom,
+              ),
+              decoration: const BoxDecoration(
+                color: AppColors.basicColor,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // 카카오
+                  SizedBox(
+                    width: double.infinity,
+                    height: 48,
+                    child: ElevatedButton(
+                      onPressed: () async {
+                        await ref.read(authProvider.notifier).loginWithKakao();
+                        final result = ref.read(authProvider);
+                        if (!context.mounted) return;
+                        result.when(
+                          data: (user) {
+                            if (user != null) {
+                              _navigateAfterLogin();
+                            }
+                          },
+                          error: (error, stack) => _handleLoginError(context, error),
+                          loading: () {},
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFFEE500),
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(AppRadius.md),
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Container(
+                            width: 20,
+                            height: 20,
+                            decoration: const BoxDecoration(
+                              color: Color(0xFF3C1E1E),
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            '카카오톡으로 시작하기',
+                            style: AppTypography.bodyLarge.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.textPrimary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.xs),
+                  // 네이버
+                  SizedBox(
+                    width: double.infinity,
+                    height: 48,
+                    child: ElevatedButton(
+                      onPressed: () async {
+                        await ref.read(authProvider.notifier).loginWithNaver();
+                        final result = ref.read(authProvider);
+                        if (!context.mounted) return;
+                        result.when(
+                          data: (user) {
+                            if (user != null) {
+                              _navigateAfterLogin();
+                            }
+                          },
+                          error: (error, stack) => _handleLoginError(context, error),
+                          loading: () {},
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF03C75A),
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(AppRadius.md),
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Container(
+                            width: 20,
+                            height: 20,
+                            decoration: const BoxDecoration(
+                              color: Colors.white,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            '네이버로 시작하기',
+                            style: AppTypography.bodyLarge.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.textPrimary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.xs),
+                  // 구글
+                  SizedBox(
+                    width: double.infinity,
+                    height: 48,
+                    child: ElevatedButton(
+                      onPressed: () async {
+                        await ref.read(authProvider.notifier).loginWithGoogle();
+                        final result = ref.read(authProvider);
+                        if (!context.mounted) return;
+                        result.when(
+                          data: (user) {
+                            if (user != null) {
+                              _navigateAfterLogin();
+                            }
+                          },
+                          error: (error, stack) => _handleLoginError(context, error),
+                          loading: () {},
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.white,
+                        elevation: 0,
+                        side: const BorderSide(color: AppColors.borderLight),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(AppRadius.md),
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Container(
+                            width: 20,
+                            height: 20,
+                            decoration: BoxDecoration(
+                              color: Colors.blue[700],
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            '구글로 시작하기',
+                            style: AppTypography.bodyLarge.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.textPrimary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
-
-          const SizedBox(height: 40),
-
-          // 소셜 로그인 버튼 (고정)
-          const _SocialLoginButtons(),
-
-          const SizedBox(height: 80), // 하단 여백
         ],
       ),
     );
   }
 }
 
-/// 첫 번째 슬라이드 (기본 캐릭터)
-class _Slide1 extends StatelessWidget {
-  const _Slide1();
+/// 기능 소개 슬라이드
+class _FeatureSlide extends StatelessWidget {
+  final String imagePath;
+
+  const _FeatureSlide({
+    required this.imagePath,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Container(
-            width: 248,
-            height: 248,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(AppRadius.lg),
-              image: const DecorationImage(
-                image: AssetImage('assets/characters/normal/char_relief.png'),
-                fit: BoxFit.contain,
-              ),
+    return Align(
+      alignment: Alignment.topCenter,
+      child: FractionalTranslation(
+        translation: const Offset(0, -0.10),
+        child: Transform.scale(
+          scale: 0.8,
+          child: SizedBox(
+            width: double.infinity,
+            height: double.infinity,
+            child: Image.asset(
+              imagePath,
+              fit: BoxFit.contain,
             ),
           ),
-          const SizedBox(height: AppSpacing.lg),
-          Text(
-            '마음봄 시작하기',
-            style: AppTypography.h2,
-            textAlign: TextAlign.center,
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// 두 번째 슬라이드 (다양한 요소)
-class _Slide2 extends StatelessWidget {
-  const _Slide2();
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Container(
-            width: 248,
-            height: 248,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(AppRadius.lg),
-              image: const DecorationImage(
-                image:
-                    AssetImage('assets/characters/normal/char_excitement.png'),
-                fit: BoxFit.contain,
-              ),
-            ),
-          ),
-          const SizedBox(height: AppSpacing.lg),
-          Text(
-            '매일의 감정을 기록해보세요',
-            style: AppTypography.h2,
-            textAlign: TextAlign.center,
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// 세 번째 슬라이드 (이미지)
-class _Slide3 extends StatelessWidget {
-  const _Slide3();
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Container(
-            width: 256,
-            height: 256,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(AppRadius.lg),
-              image: const DecorationImage(
-                image: AssetImage('assets/characters/normal/char_interest.png'),
-                fit: BoxFit.cover,
-              ),
-            ),
-          ),
-          const SizedBox(height: AppSpacing.lg),
-          Text(
-            '마음봄과 함께 시작해보세요',
-            style: AppTypography.h2,
-            textAlign: TextAlign.center,
-          ),
-        ],
+        ),
       ),
     );
   }

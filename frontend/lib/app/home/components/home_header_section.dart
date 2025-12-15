@@ -61,47 +61,47 @@ class HomeHeaderSection extends ConsumerWidget {
           ),
         ),
 
-        const SizedBox(height: AppSpacing.md),
+        // const SizedBox(height: AppSpacing.md),
 
         // 기분 체크 버튼
-        GestureDetector(
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => const DailyMoodCheckScreen(),
-              ),
-            );
-          },
-          child: Container(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 12,
-              vertical: 10,
-            ),
-            decoration: BoxDecoration(
-              color: contentColor.withValues(alpha: 0.2),
-              borderRadius: BorderRadius.circular(AppRadius.pill),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  Icons.favorite_rounded,
-                  size: 14,
-                  color: contentColor,
-                ),
-                const SizedBox(width: 6),
-                Text(
-                  '기분 기록하기',
-                  style: AppTypography.bodySmall.copyWith(
-                    color: contentColor,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
+        // GestureDetector(
+        //   onTap: () {
+        //     Navigator.push(
+        //       context,
+        //       MaterialPageRoute(
+        //         builder: (context) => const DailyMoodCheckScreen(),
+        //       ),
+        //     );
+        //   },
+        //   child: Container(
+        //     padding: const EdgeInsets.symmetric(
+        //       horizontal: 12,
+        //       vertical: 10,
+        //     ),
+        //     decoration: BoxDecoration(
+        //       color: contentColor.withValues(alpha: 0.2),
+        //       borderRadius: BorderRadius.circular(AppRadius.pill),
+        //     ),
+        //     child: Row(
+        //       mainAxisSize: MainAxisSize.min,
+        //       children: [
+        //         Icon(
+        //           Icons.favorite_rounded,
+        //           size: 14,
+        //           color: contentColor,
+        //         ),
+        //         const SizedBox(width: 6),
+        //         Text(
+        //           '기분 기록하기',
+        //           style: AppTypography.bodySmall.copyWith(
+        //             color: contentColor,
+        //             fontWeight: FontWeight.w600,
+        //           ),
+        //         ),
+        //       ],
+        //     ),
+        //   ),
+        // ),
       ],
     );
   }

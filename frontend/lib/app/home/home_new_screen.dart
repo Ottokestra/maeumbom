@@ -10,6 +10,7 @@ import 'components/home_header_section.dart';
 import 'components/home_gauge_section.dart';
 import 'components/home_main_buttons.dart';
 import 'components/home_banner_slider.dart';
+import 'components/home_alarm_preview.dart';
 import 'daily_mood_check_screen.dart';
 
 /// Home Screen - 메인 홈 화면
@@ -66,9 +67,9 @@ class _HomeContentState extends ConsumerState<HomeNewContent> {
     MessageDialogHelper.showRedConfirm(
       context,
       icon: Icons.sentiment_satisfied_rounded,
-      title: '오늘의 기분은 어떠신가요?',
-      message: '아직 오늘의 감정 캐릭터를 \n선택하지 않으셨어요.\n지금 기록하러 가볼까요?',
-      primaryButtonText: '기록하기',
+      title: '오늘의 기분은 어때?',
+      message: '아직 오늘의 감정 캐릭터를 \n선택하지 않았어.\n지금 가볼까?',
+      primaryButtonText: '선택하기',
       secondaryButtonText: '나중에 할게',
       onPrimaryPressed: () {
         Navigator.pop(context);
@@ -104,6 +105,7 @@ class _HomeContentState extends ConsumerState<HomeNewContent> {
     return Container(
       color: backgroundColor,
       child: SafeArea(
+        bottom: false, // 하단까지 배경색 채우기
         child: SingleChildScrollView(
           child: Padding(
             padding: const EdgeInsets.symmetric(
@@ -120,7 +122,7 @@ class _HomeContentState extends ConsumerState<HomeNewContent> {
 
                 const SizedBox(height: AppSpacing.md),
 
-                // 2. 반원 게이지 영역
+                // 2. 감정 기록 막대 차트
                 HomeGaugeSection(
                   temperaturePercentage: 0.75, // 임시 데이터
                   emotionColor: emotionColor,
@@ -128,24 +130,26 @@ class _HomeContentState extends ConsumerState<HomeNewContent> {
 
                 const SizedBox(height: AppSpacing.sm),
 
-                // 3. 메인 버튼 (봄이 대화, 똑똑 알림)
-                HomeMainButtons(
-                  onChatTap: () => navigationService.navigateToRoute('/bomi'),
-                  onAlarmTap: () => navigationService.navigateToRoute('/alarm'),
-                ),
+                // 3. 알람 미리보기
+                const HomeAlarmPreview(),
 
                 const SizedBox(height: AppSpacing.sm),
 
-                // 4. 배너 슬라이더
-                HomeBannerSlider(
-                  onTraining1Tap: () =>
-                      navigationService.navigateToRoute('/training'),
-                  onTraining2Tap: () => navigationService
-                      .navigateToRoute('/training'), // TODO: 퀴즈 라우트로 변경
-                ),
+                // 4. 메인 버튼 그리드 (2x3: 캐릭터 + 5개 기능 버튼)
+                const HomeMainButtons(),
 
-                // 하단 여백 추가
                 const SizedBox(height: AppSpacing.sm),
+
+                // // 4. 배너 슬라이더
+                // HomeBannerSlider(
+                //   onTraining1Tap: () =>
+                //       navigationService.navigateToRoute('/training'),
+                //   onTraining2Tap: () => navigationService
+                //       .navigateToRoute('/training'), // TODO: 퀴즈 라우트로 변경
+                // ),
+
+                // 하단 여백 추가 (bottom navigation bar 고려)
+                SizedBox(height: MediaQuery.of(context).padding.bottom + AppSpacing.sm),
               ],
             ),
           ),

@@ -36,24 +36,24 @@ class AlarmNotifier extends StateNotifier<AsyncValue<List<AlarmModel>>> {
     _initialize();
   }
 
-  /// 초기화: 알람 로드 및 재동기화
+  /// 초기화: 알림 로드 및 재동기화
   Future<void> _initialize() async {
     await loadAlarms();
 
-    // 🔧 Android AlarmManager 초기화: 오래된 알람 제거 후 DB 기반 재예약
+    // 🔧 Android AlarmManager 초기화: 오래된 알림 제거 후 DB 기반 재예약
     print('[AlarmProvider] Cleaning up Android AlarmManager...');
     await _alarmService.cancelAllAlarms();
 
-    // 미래 알람만 재예약
+    // 미래 알림만 재예약
     await _rescheduleValidAlarms();
 
-    // 과거 알람 DB 정리
+    // 과거 알림 DB 정리
     await cleanupPastAlarms();
 
     print('[AlarmProvider] Initialization complete');
   }
 
-  /// DB의 유효한 미래 알람만 재예약
+  /// DB의 유효한 미래 알림만 재예약
   Future<void> _rescheduleValidAlarms() async {
     try {
       final alarms = await _repository.getEnabledAlarms();
@@ -76,7 +76,7 @@ class AlarmNotifier extends StateNotifier<AsyncValue<List<AlarmModel>>> {
     }
   }
 
-  /// 알람 목록 로드
+  /// 알림 목록 로드
   Future<void> loadAlarms() async {
     state = const AsyncValue.loading();
     try {
@@ -93,7 +93,7 @@ class AlarmNotifier extends StateNotifier<AsyncValue<List<AlarmModel>>> {
     }
   }
 
-  /// Mock 알람 데이터 (UI 테스트용)
+  /// Mock 알림 데이터 (UI 테스트용)
   List<AlarmModel> _getMockAlarms() {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
@@ -120,7 +120,7 @@ class AlarmNotifier extends StateNotifier<AsyncValue<List<AlarmModel>>> {
         updatedAt: now,
         itemType: ItemType.memory,
       ),
-      // 알람 타입
+      // 알림 타입
       AlarmModel(
         id: 2,
         year: today.year,
@@ -162,7 +162,7 @@ class AlarmNotifier extends StateNotifier<AsyncValue<List<AlarmModel>>> {
         updatedAt: now,
         itemType: ItemType.event,
       ),
-      // 알람 타입 2
+      // 알림 타입 2
       AlarmModel(
         id: 4,
         year: today.year,
@@ -228,7 +228,7 @@ class AlarmNotifier extends StateNotifier<AsyncValue<List<AlarmModel>>> {
     ];
   }
 
-  /// 알람 추가 (백엔드 alarm_info에서)
+  /// 알림 추가 (백엔드 alarm_info에서)
   Future<void> addAlarms(List<Map<String, dynamic>> alarmDataList) async {
     try {
       // 권한 체크
@@ -250,7 +250,7 @@ class AlarmNotifier extends StateNotifier<AsyncValue<List<AlarmModel>>> {
       }
 
       for (final alarmData in alarmDataList) {
-        // 유효한 알람만 저장
+        // 유효한 알림만 저장
         final isValid = alarmData['is_valid_alarm'] as bool? ?? false;
         if (!isValid) {
           print('[AlarmProvider] Skipping invalid alarm: $alarmData');
@@ -279,7 +279,7 @@ class AlarmNotifier extends StateNotifier<AsyncValue<List<AlarmModel>>> {
     }
   }
 
-  /// 알람 ON/OFF 토글
+  /// 알림 ON/OFF 토글
   Future<void> toggleAlarm(int id, bool isEnabled) async {
     try {
       await _repository.updateAlarmEnabled(
@@ -306,7 +306,7 @@ class AlarmNotifier extends StateNotifier<AsyncValue<List<AlarmModel>>> {
     }
   }
 
-  /// 알람 삭제 (소프트 삭제)
+  /// 알림 삭제 (소프트 삭제)
   Future<void> deleteAlarm(int id) async {
     try {
       final alarm = await _repository.getAlarmById(id);
@@ -325,7 +325,7 @@ class AlarmNotifier extends StateNotifier<AsyncValue<List<AlarmModel>>> {
     }
   }
 
-  /// 모든 알람 삭제
+  /// 모든 알림 삭제
   Future<void> deleteAllAlarms() async {
     try {
       // 🆕 AlarmManager는 모두 취소가 없으므로 개별 취소
@@ -340,7 +340,7 @@ class AlarmNotifier extends StateNotifier<AsyncValue<List<AlarmModel>>> {
     }
   }
 
-  /// 과거 알람 정리
+  /// 과거 알림 정리
   Future<void> cleanupPastAlarms() async {
     try {
       await _repository.cleanupPastAlarms(userId: _userId);
@@ -353,14 +353,14 @@ class AlarmNotifier extends StateNotifier<AsyncValue<List<AlarmModel>>> {
     }
   }
 
-  /// 앱 재시작 시 알람 재스케줄링 (수동 호출 전용)
-  /// ⚠️ 일반적으로 필요 없음: android_alarm_manager_plus는 자동으로 알람 유지
+  /// 앱 재시작 시 알림 재스케줄링 (수동 호출 전용)
+  /// ⚠️ 일반적으로 필요 없음: android_alarm_manager_plus는 자동으로 알림 유지
   Future<void> rescheduleAllAlarms() async {
     try {
       final alarms = await _repository.getEnabledAlarms();
       final now = DateTime.now();
 
-      // 과거 알람과 미래 알람 분리
+      // 과거 알림과 미래 알림 분리
       final futureAlarms = alarms
           .where((alarm) => alarm.scheduledDatetime.isAfter(now))
           .toList();
@@ -373,7 +373,7 @@ class AlarmNotifier extends StateNotifier<AsyncValue<List<AlarmModel>>> {
       print('[AlarmProvider] Future alarms: ${futureAlarms.length}');
       print('[AlarmProvider] Past alarms: ${pastAlarms.length}');
 
-      // 미래 알람만 재스케줄링
+      // 미래 알림만 재스케줄링
       for (final alarm in futureAlarms) {
         await _alarmService.scheduleAlarm(alarm);
       }
@@ -397,7 +397,7 @@ final alarmProvider =
 
 /// Convenience Providers
 
-/// 활성화된 알람만 조회
+/// 활성화된 알림만 조회
 final enabledAlarmsProvider = Provider<List<AlarmModel>>((ref) {
   final alarmState = ref.watch(alarmProvider);
   return alarmState.maybeWhen(
@@ -406,7 +406,7 @@ final enabledAlarmsProvider = Provider<List<AlarmModel>>((ref) {
   );
 });
 
-/// 알람 개수
+/// 알림 개수
 final alarmCountProvider = Provider<int>((ref) {
   final alarmState = ref.watch(alarmProvider);
   return alarmState.maybeWhen(
@@ -415,7 +415,7 @@ final alarmCountProvider = Provider<int>((ref) {
   );
 });
 
-/// 활성화된 알람 개수
+/// 활성화된 알림 개수
 final enabledAlarmCountProvider = Provider<int>((ref) {
   final enabledAlarms = ref.watch(enabledAlarmsProvider);
   return enabledAlarms.length;
