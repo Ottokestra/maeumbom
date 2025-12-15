@@ -50,7 +50,7 @@ class BomChatService {
       await _wsService.connect(
         userId: userId,
         sessionId: sessionId,
-        wsUrl: wsUrl ?? 'ws://localhost:8000/agent/stream',
+        wsUrl: wsUrl, // ApiConfig.chatWebSocketUrl이 기본값으로 사용됨
         ttsEnabled: ttsEnabled, // 🆕 TTS 설정 전달
       );
 
@@ -291,7 +291,7 @@ class BomChatService {
   }) async {
     try {
       final Uri url = Uri.parse(
-        apiUrl ?? 'http://localhost:8000/api/agent/v2/text',
+        apiUrl ?? 'http://10.0.2.2:8000/api/agent/v2/text',
       );
 
       final body = {

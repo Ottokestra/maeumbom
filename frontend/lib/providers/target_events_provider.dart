@@ -59,7 +59,6 @@ class TargetEventsNotifier
 
       state = AsyncValue.data(response.dailyEvents);
     } catch (e, stack) {
-      // 에러 로깅
       state = AsyncValue.error(e, stack);
     }
   }

@@ -87,8 +87,8 @@ class AlarmListItem extends StatelessWidget {
               children: [
                 Text(
                   _dateString,
-                  style: AppTypography.bodySmall.copyWith(
-                    color: AppColors.textSecondary,
+                  style: AppTypography.bodyBold.copyWith(
+                    color: AppColors.textPrimary,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -108,7 +108,7 @@ class AlarmListItem extends StatelessWidget {
             // 중앙: 아이콘 + 내용
             Expanded(
               child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   // 타입별 아이콘 배경
                   Container(
@@ -117,6 +117,10 @@ class AlarmListItem extends StatelessWidget {
                     decoration: BoxDecoration(
                       color: alarm.itemType.backgroundColor,
                       shape: BoxShape.circle,
+                      border: Border.all(
+                        color: alarm.itemType.textColor,
+                        width: 1.5,
+                      ),
                     ),
                     child: Icon(
                       _typeIcon,

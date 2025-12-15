@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
+import '../../config/api_config.dart';
 
 /// Chat WebSocket Service
 /// /agent/stream 엔드포인트용 WebSocket 클라이언트
@@ -19,12 +20,12 @@ class ChatWebSocketService {
   /// Web Socket 연결
   /// [userId]: 사용자 ID
   /// [sessionId]: 세션 ID (생성된 경우)
-  /// [wsUrl]: WebSocket URL (기본값: localhost)
+  /// [wsUrl]: WebSocket URL (기본값: ApiConfig에서 자동 선택)
   /// [ttsEnabled]: TTS 생성 여부 (기본값: true)
   Future<void> connect({
     required String userId,
     String? sessionId,
-    String wsUrl = 'ws://localhost:8000/agent/stream', // Android 에뮬레이터용
+    String? wsUrl, // nullable로 변경하여 기본값을 ApiConfig에서 가져오도록
     bool ttsEnabled = true, // 🆕 TTS 토글 설정
   }) async {
     if (_isConnected) {
@@ -35,10 +36,13 @@ class ChatWebSocketService {
     // 🆕 TTS 설정 저장
     _ttsEnabled = ttsEnabled;
 
-    try {
-      debugPrint('[ChatWebSocketService] 연결 시작: $wsUrl');
+    // WebSocket URL 결정 (제공되지 않은 경우 ApiConfig 사용)
+    final effectiveWsUrl = wsUrl ?? ApiConfig.chatWebSocketUrl;
 
-      _channel = WebSocketChannel.connect(Uri.parse(wsUrl));
+    try {
+      debugPrint('[ChatWebSocketService] 연결 시작: $effectiveWsUrl');
+
+      _channel = WebSocketChannel.connect(Uri.parse(effectiveWsUrl));
       _isConnected = true;
 
       // session_id 생성 (제공되지 않은 경우)
