@@ -168,6 +168,37 @@ class EmotionAnalysis(Base):
         return f"<EmotionAnalysis(ID={self.ID}, CHECK_ROOT={self.CHECK_ROOT}, SENTIMENT_OVERALL={self.SENTIMENT_OVERALL})>"
 
 
+class AnalyzedSession(Base):
+    """
+    Analyzed session tracking model
+    Tracks which sessions have been analyzed to prevent duplicate emotion analysis
+
+    Attributes:
+        ID: Primary key
+        SESSION_ID: Session identifier (must be unique)
+        USER_ID: Foreign key to users table
+        ANALYZED_AT: Timestamp when analysis was completed
+    """
+
+    __tablename__ = "TB_ANALYZED_SESSIONS"
+
+    ID = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    SESSION_ID = Column(String(255), unique=True, nullable=False, index=True)
+    USER_ID = Column(Integer, ForeignKey("TB_USERS.ID"), nullable=False, index=True)
+    ANALYZED_AT = Column(DateTime(timezone=True), server_default=func.now())
+
+    # Create composite index for faster lookups
+    __table_args__ = (
+        Index("idx_session_user", "SESSION_ID", "USER_ID"),
+    )
+
+    # Relationship to User
+    user = relationship("User", backref="analyzed_sessions")
+
+    def __repr__(self):
+        return f"<AnalyzedSession(ID={self.ID}, SESSION_ID={self.SESSION_ID}, USER_ID={self.USER_ID})>"
+
+
 class EmotionLog(Base):
     """
     감정 분석 결과 로그

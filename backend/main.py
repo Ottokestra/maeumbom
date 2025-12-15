@@ -118,18 +118,43 @@ app.add_middleware(
 )
 
 # =========================
-# Static Files (TTS Outputs)
+# Scheduler Setup
 # =========================
 
-from fastapi.staticfiles import StaticFiles
+try:
+    from app.scheduler.emotion_scheduler import start_scheduler, shutdown_scheduler
 
-# TTS outputs 폴더를 정적 파일로 제공
-tts_outputs_dir = backend_path / "engine" / "text-to-speech" / "outputs"
-tts_outputs_dir.mkdir(parents=True, exist_ok=True)  # 폴더가 없으면 생성
-app.mount(
-    "/tts-outputs", StaticFiles(directory=str(tts_outputs_dir)), name="tts_outputs"
-)
-print(f"[INFO] TTS outputs static files mounted at /tts-outputs -> {tts_outputs_dir}")
+    @app.on_event("startup")
+    async def startup_event():
+        """Start background scheduler on app startup"""
+        start_scheduler()
+
+    @app.on_event("shutdown")
+    async def shutdown_event():
+        """Stop background scheduler on app shutdown"""
+        shutdown_scheduler()
+
+    print("[INFO] Emotion analysis scheduler registered successfully.")
+except Exception as e:
+    import traceback
+    print(f"[WARN] Emotion analysis scheduler registration failed: {e}")
+    traceback.print_exc()
+
+
+# =========================
+# Static Files (TTS Outputs) - DISABLED: Now using base64 instead
+# =========================
+
+# from fastapi.staticfiles import StaticFiles
+
+# TTS outputs 폴더를 정적 파일로 제공 (Phase 5: base64 전환으로 비활성화)
+# tts_outputs_dir = backend_path / "engine" / "text-to-speech" / "outputs"
+# tts_outputs_dir.mkdir(parents=True, exist_ok=True)
+# app.mount(
+#     "/tts-outputs", StaticFiles(directory=str(tts_outputs_dir)), name="tts_outputs"
+# )
+# print(f"[INFO] TTS outputs static files mounted at /tts-outputs -> {tts_outputs_dir}")
+print("[INFO] TTS using base64 encoding (no static files needed)")
 
 # =========================
 # Emotion Analysis 라우터 (옵션)
@@ -559,13 +584,13 @@ class AgentAudioRequest(BaseModel):
 # =====================================================================
 
 
-async def generate_tts_async(text: str) -> Path:
-    """비동기로 TTS 생성"""
-    # synthesize_to_wav는 이제 async 함수이므로 직접 await
-    audio_path = await synthesize_to_wav(
+async def generate_tts_async(text: str) -> str:
+    """비동기로 TTS 생성 (base64 반환)"""
+    # synthesize_to_wav는 이제 base64 string을 반환
+    audio_base64 = await synthesize_to_wav(
         text=text, speed=None, tone="neutral", engine=None
     )
-    return audio_path
+    return audio_base64
 
 
 @app.post("/api/agent/v2/text")
@@ -648,8 +673,8 @@ async def agent_text_v2_endpoint(
             result["meta"]["alarm_info"] = result["alarm_info"]
 
         # 🆕 TTS 처리 (동기 방식 - 응답에 포함 필수)
-        # 🎙️ Phase 4: audio tag가 포함된 텍스트를 TTS에 전달
-        # ⚠️ TTS URL은 응답에 포함되어야 하므로 await로 완료 대기!
+        # 🎤 Phase 5: 파일 저장 없이 base64로 전달
+        print(f"[TTS] 🔍 DEBUG: tts_enabled = {request.tts_enabled}")
         if request.tts_enabled:
             try:
                 # TTS 생성 - audio tag 포함 텍스트 사용
@@ -658,36 +683,32 @@ async def agent_text_v2_endpoint(
                     f"[TTS] 🎤 Starting TTS generation with text: {tts_text[:100]}..."
                 )
 
-                # ⚠️ 응답에 URL 포함되어야 하므로 await 필수!
-                audio_path = await asyncio.wait_for(
+                # 🆕 base64 오디오 생성 (await 필수!)
+                audio_base64 = await asyncio.wait_for(
                     generate_tts_async(tts_text),
                     timeout=30.0,  # 30초로 증가 (긴 텍스트 대응)
                 )
 
-                # 서버 URL 포함 (프론트엔드가 접근 가능하도록)
-                server_url = os.getenv("SERVER_URL", "http://localhost:8000")
-                audio_url = f"{server_url}/tts-outputs/{audio_path.name}"
-
-                # Root에 설정 (하위 호환성)
-                result["tts_audio_url"] = audio_url
+                # 🆕 base64 오디오를 response에 포함 (파일 URL 대신)
+                result["tts_audio_base64"] = audio_base64
+                result["tts_audio_format"] = "mp3"  # Eleven Labs는 MP3 반환
                 result["tts_status"] = "ready"
 
-                # Meta에 설정 (Frontend 요구사항)
+                # Meta에도 설정 (Frontend 요구사항)
                 if "meta" not in result:
                     result["meta"] = {}
 
-                result["meta"]["tts_audio_url"] = audio_url
+                result["meta"]["tts_audio_base64"] = audio_base64
+                result["meta"]["tts_audio_format"] = "mp3"
                 result["meta"]["tts_status"] = "ready"
 
-                print(f"[TTS] 음성 파일 생성 완료: {audio_path.name}")
+                print(f"[TTS] 오디오 생성 완료 (base64, {len(audio_base64)} chars)")
             except asyncio.TimeoutError:
-                result["tts_audio_url"] = None
                 result["tts_status"] = "timeout"
                 if "meta" in result:
                     result["meta"]["tts_status"] = "timeout"
                 print("[TTS] ⏱️ 타임아웃: 30초 내에 음성 생성 실패")
             except Exception as e:
-                result["tts_audio_url"] = None
                 result["tts_status"] = "error"
                 if "meta" in result:
                     result["meta"]["tts_status"] = "error"
@@ -1667,27 +1688,28 @@ async def agent_websocket(websocket: WebSocket, user_id: int = 1):
                                     tts_text = result.get("reply_text_with_tags") or result["reply_text"]
                                     print(f"[Agent WebSocket] TTS 생성 시작: {tts_text[:50]}...")
                                     
-                                    # TTS 생성 (최대 15초 대기)
-                                    audio_path = await asyncio.wait_for(
+                                    # 🆕 TTS 생성 (base64 문자열 반환, 최대 15초 대기)
+                                    audio_base64 = await asyncio.wait_for(
                                         generate_tts_async(tts_text),
-                                        timeout=15.0,  # 🆕 7초 → 15초로 연장
+                                        timeout=15.0,
                                     )
                                     await websocket.send_json(
                                         {
                                             "type": "tts_ready",
-                                            "audio_url": f"/tts-outputs/{audio_path.name}",
+                                            "audio_base64": audio_base64,  # 🆕 base64 직접 전송
+                                            "audio_format": "mp3",
                                             "session_id": session_id,
                                         }
                                     )
                                     print(
-                                        f"[Agent WebSocket] TTS 음성 파일 생성 완료: {audio_path.name}"
+                                        f"[Agent WebSocket] TTS 음성 생성 완료 (base64, {len(audio_base64)} chars)"
                                     )
                                 except asyncio.TimeoutError:
                                     await websocket.send_json(
                                         {
                                             "type": "tts_error",
                                             "error": "timeout",
-                                            "message": "TTS 생성 시간 초과 (7초)",
+                                            "message": "TTS 생성 시간 초과 (15초)",
                                         }
                                     )
                                     print("[Agent WebSocket] TTS 타임아웃")

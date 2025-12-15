@@ -85,6 +85,25 @@ class AudioRecorderService {
     _isRecording = false;
   }
 
+  /// 녹음 일시 중지
+  Future<void> pauseRecording() async {
+    if (!_isRecording) return;
+
+    debugPrint('[AudioRecorderService] 녹음 일시 중지');
+    await _recorder.pause();
+  }
+
+  /// 녹음 재개
+  Future<void> resumeRecording() async {
+    if (!_isRecording) {
+      debugPrint('[AudioRecorderService] ⚠️ 녹음이 시작되지 않았습니다');
+      return;
+    }
+
+    debugPrint('[AudioRecorderService] 녹음 재개');
+    await _recorder.resume();
+  }
+
   /// 정리
   Future<void> dispose() async {
     await stopRecording();
