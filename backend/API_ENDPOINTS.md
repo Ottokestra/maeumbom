@@ -5,6 +5,7 @@
 - [온보딩 설문 (Onboarding Survey)](#온보딩-설문-onboarding-survey)
 - [AI 에이전트 (Agent)](#ai-에이전트-agent)
 - [감정 분석 (Emotion Analysis)](#감정-분석-emotion-analysis)
+- [추천 (Recommendations)](#추천-recommendations)
 - [루틴 추천 (Routine Recommendation)](#루틴-추천-routine-recommendation)
 - [날씨 (Weather)](#날씨-weather)
 - [일일 감정 체크 (Daily Mood Check)](#일일-감정-체크-daily-mood-check)
@@ -512,7 +513,38 @@
 }
 ```
 
-### 2. Vector DB 초기화
+### 2. 세션 기반 감정 분석
+**경로**: `POST /emotion/api/analyze-session`  
+**인증**: 필요 (Bearer Token)  
+**설명**: 세션의 모든 사용자 메시지를 결합하여 감정 분석 (17개 감정 군집)  
+
+**요청 Body**:
+```json
+{
+  "session_id": "string"
+}
+```
+
+**응답**:
+```json
+{
+  "text": "string",
+  "language": "ko",
+  "raw_distribution": [...],
+  "primary_emotion": {...},
+  "secondary_emotions": [...],
+  "sentiment_overall": "positive|neutral|negative",
+  "mixed_emotion": {...},
+  "service_signals": {...},
+  "recommended_response_style": ["string"],
+  "recommended_routine_tags": ["string"],
+  "report_tags": ["string"],
+  "analysis_id": "integer",
+  "message_count": "integer"
+}
+```
+
+### 3. Vector DB 초기화
 **경로**: `POST /emotion/api/init` 또는 `POST /api/init`  
 **인증**: 불필요  
 **설명**: 감정 분석용 Vector DB 초기화  
@@ -522,6 +554,70 @@
 {
   "status": "success",
   "message": "Vector DB initialized"
+}
+```
+
+---
+
+## 추천 (Recommendations)
+
+### 1. 감정 기반 명언 추천
+**경로**: `POST /api/v1/recommendations/quote`  
+**인증**: 불필요  
+**설명**: 현재 감정 상태에 맞는 명언 추천  
+
+**요청 Body**:
+```json
+{
+  "emotion_label": "string",
+  "language": "ko"  // 선택, 기본값: ko
+}
+```
+
+**응답**:
+```json
+{
+  "quotes": ["string"]
+}
+```
+
+### 2. 감정 기반 음악 추천
+**경로**: `POST /api/v1/recommendations/music`  
+**인증**: 불필요  
+**설명**: 감정에 맞춘 음악 클립 추천  
+
+**요청 Body**:
+```json
+{
+  "emotion_label": "string",
+  "duration": "integer"  // 선택, 음악 길이(초)
+}
+```
+
+**응답**:
+```json
+{
+  "audio_url": "string"
+}
+```
+
+### 3. 감정 기반 이미지 생성
+**경로**: `POST /api/v1/recommendations/image`  
+**인증**: 불필요  
+**설명**: 감정 또는 프롬프트 기반 위로 이미지 생성  
+
+**요청 Body**:
+```json
+{
+  "prompt": "string",
+  "emotion_label": "string"  // 선택
+}
+```
+
+**응답**:
+```json
+{
+  "image_url": "string"
 }
 ```
 
@@ -1488,210 +1584,132 @@ GET /api/menopause-survey/questions?gender=FEMALE
 
 ## 주간 감정 리포트 (Weekly Emotion Report)
 
-### 1. 공통 모델
+### 1. 주간 리포트 생성/재생성
+**경로**: `POST /api/v1/reports/emotion/weekly/generate`  
+**인증**: 필요 (Bearer Token)  
+**설명**: 특정 주간에 대한 주간 감정 리포트를 새로 생성하거나 갱신  
 
-**WeeklyEmotionReport (주간 감정 리포트 요약)**
+**Query Parameters**:
+- `weekStart` (required, string): 주 시작일 (YYYY-MM-DD)
+- `weekEnd` (optional, string): 주 종료일 (YYYY-MM-DD), 기본값: weekStart + 6일
 
+**응답**:
 ```json
 {
-  "reportId": 123,
-  "userId": 1,
-  "weekStart": "2025-12-08",
-  "weekEnd": "2025-12-14",
-  "emotionTemperature": 73,
-  "positiveScore": 42,
-  "negativeScore": 18,
-  "neutralScore": 10,
-  "mainEmotion": "불안",
-  "mainEmotionConfidence": 0.82,
-  "mainEmotionCharacterCode": "ANXIOUS_RABBIT",
-  "badges": [
-    "불안多",
-    "지침",
-    "회복시도"
-  ],
-  "summaryText": "이번 주에는 걱정과 피로가 자주 등장했어요. 스스로를 돌보려는 시도도 보였습니다.",
-  "createdAt": "2025-12-14T23:50:00Z"
+  "id": 123,
+  "user_id": 1,
+  "week_start": "2025-12-08",
+  "week_end": "2025-12-14",
+  "emotion_temperature": 73,
+  "positive_score": 42,
+  "negative_score": 18,
+  "neutral_score": 10,
+  "main_emotion": "불안",
+  "main_emotion_confidence": 0.82,
+  "main_emotion_character_code": "ANXIOUS_RABBIT",
+  "badges": ["불안多", "지침", "회복시도"],
+  "summary_text": "이번 주에는 걱정과 피로가 자주 등장했어요. 스스로를 돌보려는 시도도 보였습니다.",
+  "created_at": "2025-12-14T23:50:00Z",
+  "updated_at": "2025-12-14T23:50:00Z"
 }
+```
 
+### 2. 주간 리포트 상세 조회 (reportId 기준)
+**경로**: `GET /api/v1/reports/emotion/weekly/{reportId}`  
+**인증**: 필요 (Bearer Token)  
+**설명**: 리포트 ID를 기준으로 상세 조회  
 
-WeeklyEmotionDialogSnippet (리포트용 대화 하이라이트)
+**Path Parameters**:
+- `reportId` (integer): 주간 감정 리포트 ID
 
+**응답**:
+```json
 {
-  "role": "user",             // "user" 또는 "assistant"
-  "content": "요즘은 자꾸 불안해서 잠이 잘 안 와요.",
-  "emotion": "불안",
-  "createdAt": "2025-12-11T05:10:00Z"
+  "id": 123,
+  "user_id": 1,
+  "week_start": "2025-12-08",
+  "week_end": "2025-12-14",
+  "emotion_temperature": 73,
+  "positive_score": 42,
+  "negative_score": 18,
+  "neutral_score": 10,
+  "main_emotion": "불안",
+  "main_emotion_confidence": 0.82,
+  "main_emotion_character_code": "ANXIOUS_RABBIT",
+  "badges": ["불안多", "지침", "회복시도"],
+  "summary_text": "이번 주에는 걱정과 피로가 자주 등장했어요. 스스로를 돌보려는 시도도 보였습니다.",
+  "created_at": "2025-12-14T23:50:00Z",
+  "updated_at": "2025-12-14T23:50:00Z"
 }
+```
 
+### 3. 주간 리포트 조회 (주간 기준)
+**경로**: `GET /api/v1/reports/emotion/weekly`  
+**인증**: 필요 (Bearer Token)  
+**설명**: 특정 주간(weekStart~weekEnd)의 리포트 1건 조회  
 
-2. 주간 리포트 생성 / 재생성
+**Query Parameters**:
+- `weekStart` (required, string): 주 시작일 (YYYY-MM-DD)
+- `weekEnd` (optional, string): 주 종료일 (YYYY-MM-DD), 기본값: weekStart + 6일
 
-경로: POST /api/v1/reports/emotion/weekly/generate
-인증: 필요 (Bearer Token)
-설명: 특정 사용자 + 특정 주간에 대한 주간 감정 리포트를 새로 생성하거나 갱신한다.
+**예시**:
+```
+GET /api/v1/reports/emotion/weekly?weekStart=2025-12-08
+```
 
-요청 Body
+**응답**:
+```json
 {
-  "userId": 1,
-  "weekStart": "2025-12-08",
-  "weekEnd": "2025-12-14",
-  "regenerate": true
+  "id": 123,
+  "user_id": 1,
+  "week_start": "2025-12-08",
+  "week_end": "2025-12-14",
+  "emotion_temperature": 73,
+  "positive_score": 42,
+  "negative_score": 18,
+  "neutral_score": 10,
+  "main_emotion": "불안",
+  "main_emotion_confidence": 0.82,
+  "main_emotion_character_code": "ANXIOUS_RABBIT",
+  "badges": ["불안多", "지침", "회복시도"],
+  "summary_text": "이번 주에는 걱정과 피로가 자주 등장했어요. 스스로를 돌보려는 시도도 보였습니다.",
+  "created_at": "2025-12-14T23:50:00Z",
+  "updated_at": "2025-12-14T23:50:00Z"
 }
+```
 
-응답 200
-{
-  "report": {
-    "reportId": 123,
-    "userId": 1,
-    "weekStart": "2025-12-08",
-    "weekEnd": "2025-12-14",
-    "emotionTemperature": 73,
-    "positiveScore": 42,
-    "negativeScore": 18,
-    "neutralScore": 10,
-    "mainEmotion": "불안",
-    "mainEmotionConfidence": 0.82,
-    "mainEmotionCharacterCode": "ANXIOUS_RABBIT",
-    "badges": [
-      "불안多",
-      "지침",
-      "회복시도"
-    ],
-    "summaryText": "이번 주에는 걱정과 피로가 자주 등장했어요. 스스로를 돌보려는 시도도 보였습니다.",
-    "createdAt": "2025-12-14T23:50:00Z"
-  }
-}
+### 4. 주간 리포트 목록 조회 (최근 N주)
+**경로**: `GET /api/v1/reports/emotion/weekly/list`  
+**인증**: 필요 (Bearer Token)  
+**설명**: 최근 N주 주간 감정 리포트 요약 목록 조회 (FE 타임라인용)  
 
-3. 주간 리포트 상세 조회 (reportId 기준)
+**Query Parameters**:
+- `limit` (optional, integer): 조회할 주간 개수 (기본값: 8, 최대: 100)
 
-경로: GET /api/v1/reports/emotion/weekly/{reportId}
-인증: 필요 (Bearer Token)
-설명: 리포트 ID를 기준으로 상세 요약 + 대화 하이라이트를 조회한다.
+**예시**:
+```
+GET /api/v1/reports/emotion/weekly/list?limit=8
+```
 
-경로 변수
-
-reportId: 주간 감정 리포트 ID
-
-응답 200
-{
-  "report": {
-    "reportId": 123,
-    "userId": 1,
-    "weekStart": "2025-12-08",
-    "weekEnd": "2025-12-14",
-    "emotionTemperature": 73,
-    "positiveScore": 42,
-    "negativeScore": 18,
-    "neutralScore": 10,
-    "mainEmotion": "불안",
-    "mainEmotionConfidence": 0.82,
-    "mainEmotionCharacterCode": "ANXIOUS_RABBIT",
-    "badges": [
-      "불안多",
-      "지침",
-      "회복시도"
-    ],
-    "summaryText": "이번 주에는 걱정과 피로가 자주 등장했어요. 스스로를 돌보려는 시도도 보였습니다.",
-    "createdAt": "2025-12-14T23:50:00Z"
-  },
-  "dialogSnippets": [
-    {
-      "role": "user",
-      "content": "요즘은 자꾸 불안해서 잠이 잘 안 와요.",
-      "emotion": "불안",
-      "createdAt": "2025-12-11T05:10:00Z"
-    },
-    {
-      "role": "assistant",
-      "content": "그럴수록 스스로를 돌보는 시간이 더 필요해요.",
-      "emotion": "공감",
-      "createdAt": "2025-12-11T05:10:10Z"
-    }
-  ]
-}
-
-4. 주간 리포트 조회 (userId + week 기준)
-
-경로: GET /api/v1/reports/emotion/weekly
-인증: 필요 (Bearer Token)
-설명: 특정 사용자 + 특정 주간(weekStart~weekEnd)의 리포트 1건을 조회한다.
-
-Query Parameters
-
-userId (필수): 사용자 ID
-
-weekStart (필수): 주 시작일 (YYYY-MM-DD)
-
-weekEnd (선택): 주 종료일 (YYYY-MM-DD), 없으면 weekStart + 6일로 계산
-
-예시
-GET /api/v1/reports/emotion/weekly?userId=1&weekStart=2025-12-08
-
-응답 200
-{
-  "report": {
-    "reportId": 123,
-    "userId": 1,
-    "weekStart": "2025-12-08",
-    "weekEnd": "2025-12-14",
-    "emotionTemperature": 73,
-    "positiveScore": 42,
-    "negativeScore": 18,
-    "neutralScore": 10,
-    "mainEmotion": "불안",
-    "mainEmotionConfidence": 0.82,
-    "mainEmotionCharacterCode": "ANXIOUS_RABBIT",
-    "badges": [
-      "불안多",
-      "지침",
-      "회복시도"
-    ],
-    "summaryText": "이번 주에는 걱정과 피로가 자주 등장했어요. 스스로를 돌보려는 시도도 보였습니다.",
-    "createdAt": "2025-12-14T23:50:00Z"
-  }
-}
-
-5. 주간 리포트 목록 조회 (최근 N주)
-
-경로: GET /api/v1/reports/emotion/weekly/list
-인증: 필요 (Bearer Token)
-설명: 특정 사용자의 최근 N주 주간 감정 리포트 요약 목록을 조회한다.
-FE에서 주간 선택 드롭다운/타임라인에 사용한다.
-
-Query Parameters
-
-userId (필수): 사용자 ID
-
-limit (선택, 기본값 8): 조회할 주간 개수
-
-예시
-GET /api/v1/reports/emotion/weekly/list?userId=1&limit=8
-
-응답 200
+**응답**:
+```json
 {
   "items": [
     {
-      "reportId": 123,
-      "weekStart": "2025-12-08",
-      "weekEnd": "2025-12-14",
-      "emotionTemperature": 73,
-      "mainEmotion": "불안",
-      "badges": [
-        "불안多",
-        "지침"
-      ]
+      "id": 123,
+      "week_start": "2025-12-08",
+      "week_end": "2025-12-14",
+      "emotion_temperature": 73,
+      "main_emotion": "불안",
+      "badges": ["불안多", "지침"]
     },
     {
-      "reportId": 122,
-      "weekStart": "2025-12-01",
-      "weekEnd": "2025-12-07",
-      "emotionTemperature": 61,
-      "mainEmotion": "피로",
-      "badges": [
-        "지침",
-        "회복시도"
-      ]
+      "id": 122,
+      "week_start": "2025-12-01",
+      "week_end": "2025-12-07",
+      "emotion_temperature": 61,
+      "main_emotion": "피로",
+      "badges": ["지침", "회복시도"]
     }
   ]
 }
@@ -1724,7 +1742,7 @@ GET /api/v1/reports/emotion/weekly/list?userId=1&limit=8
     "word": "킹받네",
     "question": "자녀가 '킹받네'라고 했다면 무슨 뜻일까요?",
     "options": ["기분이 좋다", "화가 난다", "배가 고프다", "졸리다"],
-    "time_limit": 40
+    "time_limit": 20
   }
 }
 ```
@@ -1741,7 +1759,7 @@ GET /api/v1/reports/emotion/weekly/list?userId=1&limit=8
   "word": "갓생",
   "question": "자녀가 '갓생'이라고 했다면 무슨 뜻일까요?",
   "options": ["신처럼 사는 삶", "게으른 삶", "바쁜 삶", "평범한 삶"],
-  "time_limit": 40
+  "time_limit": 20
 }
 ```
 
@@ -1775,7 +1793,7 @@ GET /api/v1/reports/emotion/weekly/list?userId=1&limit=8
 
 **점수 계산**:
 - 기본 점수: 100점
-- 보너스: 10초 이내 50점, 이후 1초당 -1점 (최대 40초)
+- 보너스: 10초 이내 50점, 이후 1초당 -1점 (최대 20초)
 - 오답: 0점
 
 ### 4. 게임 종료
@@ -2148,9 +2166,18 @@ HTTP 상태 코드:
 | HTTP 메서드 | 경로 | 인증 필요 | 설명 |
 |------------|------|----------|------|
 | POST | `/emotion/api/analyze` | ❌ | 감정 분석 수행 |
+| POST | `/emotion/api/analyze-session` | ✅ | 세션 기반 감정 분석 |
 | POST | `/api/analyze` | ❌ | 감정 분석 수행 (alias) |
 | POST | `/emotion/api/init` | ❌ | Vector DB 초기화 |
 | POST | `/api/init` | ❌ | Vector DB 초기화 (alias) |
+
+### 추천 (Recommendations)
+
+| HTTP 메서드 | 경로 | 인증 필요 | 설명 |
+|------------|------|----------|------|
+| POST | `/api/v1/recommendations/quote` | ❌ | 감정 기반 명언 추천 |
+| POST | `/api/v1/recommendations/music` | ❌ | 감정 기반 음악 추천 |
+| POST | `/api/v1/recommendations/image` | ❌ | 감정 기반 이미지 생성 |
 
 ### 루틴 추천 (Routine Recommendation)
 
@@ -2439,6 +2466,15 @@ HTTP 상태 코드:
       "events_summary": [...],
       "total_events": 2,
       "tags": ["#남편", "#약속"],
+      "emotion_distribution": {
+        "기쁨": 35,
+        "안정": 25,
+        "사랑": 20,
+        "분노": 12,
+        "걱정": 8
+      },
+      "primary_emotion": "기쁨",
+      "sentiment_overall": "positive",
       "created_at": "2024-12-15T20:00:00",
       "updated_at": "2024-12-15T20:00:00"
     }
@@ -2511,5 +2547,5 @@ GET /api/target-events/daily?target_type=CHILD
 
 ---
 
-**총 엔드포인트 수**: 87개  
-**인증 필요**: 50개 | **인증 불필요**: 37개
+**총 엔드포인트 수**: 91개  
+**인증 필요**: 51개 | **인증 불필요**: 40개
