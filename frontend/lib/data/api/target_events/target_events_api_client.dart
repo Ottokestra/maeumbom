@@ -3,6 +3,7 @@ import '../../../core/config/api_config.dart';
 import '../../../core/utils/logger.dart';
 import '../../dtos/target_events/analyze_daily_response.dart';
 import '../../dtos/target_events/daily_events_list_response.dart';
+import '../../models/target_events/weekly_event_model.dart';
 import '../../../core/errors/exceptions.dart';
 
 /// Target Events API Client - 대상별 이벤트 API 호출 처리
@@ -19,7 +20,6 @@ class TargetEventsApiClient {
   /// 특정 날짜의 대화 분석 실행
   Future<AnalyzeDailyResponse> analyzeDailyEvents({
     required DateTime targetDate,
-    required String accessToken,
   }) async {
     try {
       final response = await _dio.post(
@@ -27,9 +27,6 @@ class TargetEventsApiClient {
         data: {
           'target_date': _formatDate(targetDate),
         },
-        options: Options(
-          headers: {'Authorization': 'Bearer $accessToken'},
-        ),
       );
       
       return AnalyzeDailyResponse.fromJson(response.data);
@@ -41,7 +38,6 @@ class TargetEventsApiClient {
 
   /// 일간 이벤트 목록 조회
   Future<DailyEventsListResponse> getDailyEvents({
-    required String accessToken,
     String? eventType,
     List<String>? tags,
     DateTime? startDate,
@@ -64,9 +60,6 @@ class TargetEventsApiClient {
       final response = await _dio.get(
         ApiConfig.targetEventsDaily,
         queryParameters: queryParams,
-        options: Options(
-          headers: {'Authorization': 'Bearer $accessToken'},
-        ),
       );
 
       appLogger.d('Response type: ${response.data.runtimeType}');
@@ -91,16 +84,12 @@ class TargetEventsApiClient {
 
   /// 인기 태그 조회
   Future<Map<String, List<String>>> getPopularTags({
-    required String accessToken,
     int limit = 20,
   }) async {
     try {
       final response = await _dio.get(
         ApiConfig.targetEventsTags,
         queryParameters: {'limit': limit},
-        options: Options(
-          headers: {'Authorization': 'Bearer $accessToken'},
-        ),
       );
       
       return Map<String, List<String>>.from(
@@ -111,6 +100,42 @@ class TargetEventsApiClient {
       );
     } on DioException catch (e) {
       appLogger.e('Get popular tags failed', error: e);
+      throw _handleError(e);
+    }
+  }
+
+  /// 주간 이벤트 목록 조회
+  Future<List<WeeklyEventModel>> getWeeklyEvents({
+    List<String>? tags,
+    DateTime? startDate,
+    DateTime? endDate,
+    String? targetType,
+  }) async {
+    try {
+      final queryParams = <String, dynamic>{};
+      
+      if (tags != null && tags.isNotEmpty) queryParams['tags'] = tags.join(',');
+      if (startDate != null) {
+        queryParams['start_date'] = _formatDate(startDate);
+      }
+      if (endDate != null) {
+        queryParams['end_date'] = _formatDate(endDate);
+      }
+      if (targetType != null) queryParams['target_type'] = targetType;
+
+      final response = await _dio.get(
+        ApiConfig.targetEventsWeekly,
+        queryParameters: queryParams,
+      );
+
+      if (response.data is Map && response.data['weekly_events'] is List) {
+        final list = response.data['weekly_events'] as List;
+        return list.map((json) => WeeklyEventModel.fromJson(json)).toList();
+      }
+      
+      return [];
+    } on DioException catch (e) {
+      appLogger.e('Get weekly events failed', error: e);
       throw _handleError(e);
     }
   }

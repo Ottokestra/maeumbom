@@ -34,7 +34,7 @@ Future<void> main() async {
   // 🔍 DB 파일 경로 출력 (디버그용)
   await DbPathHelper.printDbPath();
 
-  // 🆕 알람 서비스 초기화
+  // 🆕 알림 서비스 초기화
   final alarmService = AlarmManagerService(); // 🆕 AlarmManager 사용
   await alarmService.initialize();
 

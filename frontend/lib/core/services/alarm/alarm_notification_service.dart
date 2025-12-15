@@ -3,7 +3,7 @@ import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest_all.dart' as tz;
 import '../../../data/models/alarm/alarm_model.dart';
 
-/// 알람 푸시 알림 서비스
+/// 알림 푸시 알림 서비스
 /// flutter_local_notifications를 사용하여 로컬 푸시 알림 관리
 class AlarmNotificationService {
   final FlutterLocalNotificationsPlugin _notifications =
@@ -59,11 +59,11 @@ class AlarmNotificationService {
   void _onNotificationTapped(NotificationResponse response) {
     print('[AlarmNotificationService] Notification tapped: ${response.id}');
 
-    // 외부 콜백 호출 (알람 화면으로 이동 등)
+    // 외부 콜백 호출 (알림 화면으로 이동 등)
     onNotificationTapped?.call(response.id ?? 0);
   }
 
-  /// 알람 예약
+  /// 알림 예약
   Future<void> scheduleAlarm(AlarmModel alarm) async {
     if (!alarm.isValid || !alarm.isEnabled) {
       print(
@@ -91,14 +91,14 @@ class AlarmNotificationService {
 
       await _notifications.zonedSchedule(
         alarm.notificationId,
-        alarm.title ?? '마음봄 알람',
-        alarm.content ?? '알람 시간입니다.',
+        alarm.title ?? '마음봄 알림',
+        alarm.content ?? '알림 시간입니다.',
         scheduledDate,
         const NotificationDetails(
           android: AndroidNotificationDetails(
             'alarm_channel',
-            '알람',
-            channelDescription: '마음봄 알람 채널',
+            '알림',
+            channelDescription: '마음봄 알림 채널',
             importance: Importance.max,
             priority: Priority.high,
             enableVibration: true,
@@ -130,7 +130,7 @@ class AlarmNotificationService {
     }
   }
 
-  /// 알람 취소
+  /// 알림 취소
   Future<void> cancelAlarm(int notificationId) async {
     try {
       await _notifications.cancel(notificationId);
@@ -141,7 +141,7 @@ class AlarmNotificationService {
     }
   }
 
-  /// 모든 알람 취소
+  /// 모든 알림 취소
   Future<void> cancelAllAlarms() async {
     try {
       await _notifications.cancelAll();
@@ -152,7 +152,7 @@ class AlarmNotificationService {
     }
   }
 
-  /// 예약된 알람 목록 조회
+  /// 예약된 알림 목록 조회
   Future<List<PendingNotificationRequest>> getPendingAlarms() async {
     try {
       return await _notifications.pendingNotificationRequests();
@@ -162,7 +162,7 @@ class AlarmNotificationService {
     }
   }
 
-  /// 특정 알람이 예약되어 있는지 확인
+  /// 특정 알림이 예약되어 있는지 확인
   Future<bool> isAlarmScheduled(int notificationId) async {
     final pending = await getPendingAlarms();
     return pending.any((alarm) => alarm.id == notificationId);
@@ -263,8 +263,8 @@ class AlarmNotificationService {
   Future<void> createNotificationChannel() async {
     const androidChannel = AndroidNotificationChannel(
       'alarm_channel',
-      '알람',
-      description: '마음봄 알람 채널',
+      '알림',
+      description: '마음봄 알림 채널',
       importance: Importance.max,
       playSound: true,
       enableVibration: true,
@@ -289,8 +289,8 @@ class AlarmNotificationService {
       const NotificationDetails(
         android: AndroidNotificationDetails(
           'alarm_channel',
-          '알람',
-          channelDescription: '마음봄 알람 채널',
+          '알림',
+          channelDescription: '마음봄 알림 채널',
           importance: Importance.max,
           priority: Priority.high,
           icon: '@mipmap/ic_launcher',

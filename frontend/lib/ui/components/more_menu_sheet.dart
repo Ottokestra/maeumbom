@@ -91,6 +91,11 @@ class MoreMenuSheet extends ConsumerWidget {
         onTap: () => _navigateToTraining(context),
       ),
       _MenuItemData(
+        icon: Icons.quiz_outlined,
+        title: '신조어퀴즈',
+        onTap: () => _navigateToSlangQuiz(context),
+      ),
+      _MenuItemData(
         iconAsset: 'assets/images/icons/icon-settings.svg',
         title: '설정',
         onTap: () => _navigateToSettings(context),
@@ -260,7 +265,7 @@ class MoreMenuSheet extends ConsumerWidget {
               Icon(
                 icon,
                 color: AppColors.primaryColor,
-                size: 22,
+                size: 21,
               ),
             const SizedBox(width: AppSpacing.md),
             Expanded(
@@ -314,6 +319,11 @@ class MoreMenuSheet extends ConsumerWidget {
   static void _navigateToTraining(BuildContext context) {
     Navigator.pop(context);
     Navigator.pushNamed(context, '/training');
+  }
+
+  static void _navigateToSlangQuiz(BuildContext context) {
+    Navigator.pop(context);
+    Navigator.pushNamed(context, '/training/slang-quiz/start');
   }
 
   static void _navigateToHelp(BuildContext context) {
