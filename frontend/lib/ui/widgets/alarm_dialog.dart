@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-/// 알람 정보 팝업
+/// 알림 정보 팝업
 /// response_type이 "alarm"일 때 표시되는 다이얼로그
 class AlarmDialog extends StatelessWidget {
   final Map<String, dynamic> alarmInfo;
@@ -28,7 +28,7 @@ class AlarmDialog extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // 알람 카드들
+            // 알림 카드들
             if (data.isNotEmpty) ...[
               ...data.map((alarm) => _buildAlarmCard(alarm)).toList(),
               const SizedBox(height: 16),
@@ -164,7 +164,7 @@ class AlarmDialog extends StatelessWidget {
   }
 }
 
-/// Warning 다이얼로그 (알람 3개 초과)
+/// Warning 다이얼로그 (알림 3개 초과)
 class AlarmWarningDialog extends StatelessWidget {
   final Map<String, dynamic> alarmInfo;
 
@@ -176,7 +176,7 @@ class AlarmWarningDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final message =
-        alarmInfo['message'] as String? ?? '알람은 한번의 요청에서 세개까지만 등록이 가능합니다.';
+        alarmInfo['message'] as String? ?? '알림은 한번의 요청에서 세개까지만 등록이 가능합니다.';
     final count = alarmInfo['count'] ?? 0;
 
     return AlertDialog(
@@ -199,7 +199,7 @@ class AlarmWarningDialog extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            '요청하신 알람: ${count}개',
+            '요청하신 알림: ${count}개',
             style: TextStyle(
               fontSize: 14,
               color: Colors.grey.shade600,

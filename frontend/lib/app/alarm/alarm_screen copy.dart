@@ -8,10 +8,9 @@ import '../../core/services/navigation/navigation_service.dart';
 import '../../core/utils/logger.dart';
 import '../../providers/target_events_provider.dart';
 import '../../providers/daily_mood_provider.dart';
-import '../../providers/alarm_date_provider.dart';
 import '../../data/models/alarm/alarm_model.dart';
 import '../../data/models/target_events/daily_event_model.dart';
-import 'components/alarm_list_item_simple.dart';
+import 'components/alarm_list_item.dart';
 
 class AlarmScreen extends ConsumerStatefulWidget {
   const AlarmScreen({super.key});
@@ -21,14 +20,21 @@ class AlarmScreen extends ConsumerStatefulWidget {
 }
 
 class _AlarmScreenState extends ConsumerState<AlarmScreen> {
+  // 기준 날짜 (이 날짜부터 +7일 조회)
+  late DateTime _baseDate;
+
   @override
   void initState() {
     super.initState();
 
-    // Provider에서 기준 날짜 가져오기
+    // 오늘을 기준 날짜로 설정
+    final now = DateTime.now();
+    _baseDate = DateTime(now.year, now.month, now.day);
+
+    appLogger.d('🟡 AlarmScreen initState - Base Date: $_baseDate');
+
+    // 화면 진입 시 항상 이벤트 로드
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final baseDate = ref.read(alarmBaseDateProvider);
-      appLogger.d('🟡 AlarmScreen initState - Base Date: $baseDate');
       _loadEvents();
     });
   }
@@ -42,29 +48,28 @@ class _AlarmScreenState extends ConsumerState<AlarmScreen> {
 
   /// 이벤트 로드
   void _loadEvents() {
-    final baseDate = ref.read(alarmBaseDateProvider);
-    final endDate = baseDate.add(const Duration(days: 1));
-    appLogger.d('🟡 AlarmScreen - Loading events from $baseDate to $endDate');
+    final endDate = _baseDate.add(const Duration(days: 7));
+    appLogger.d('🟡 AlarmScreen - Loading events from $_baseDate to $endDate');
 
     ref.read(targetEventsProvider.notifier).loadDailyEvents(
-          startDate: baseDate,
+          startDate: _baseDate,
           endDate: endDate,
         );
   }
 
   /// 이전 날짜로 이동
   void _goToPreviousDay() {
-    final currentDate = ref.read(alarmBaseDateProvider);
-    ref.read(alarmBaseDateProvider.notifier).state = 
-        currentDate.subtract(const Duration(days: 1));
+    setState(() {
+      _baseDate = _baseDate.subtract(const Duration(days: 1));
+    });
     _loadEvents();
   }
 
   /// 다음 날짜로 이동
   void _goToNextDay() {
-    final currentDate = ref.read(alarmBaseDateProvider);
-    ref.read(alarmBaseDateProvider.notifier).state = 
-        currentDate.add(const Duration(days: 1));
+    setState(() {
+      _baseDate = _baseDate.add(const Duration(days: 1));
+    });
     _loadEvents();
   }
 
@@ -152,7 +157,7 @@ class _AlarmScreenState extends ConsumerState<AlarmScreen> {
 
               // C. 날짜 선택기 (화살표 네비게이션)
               DateRangeSelector(
-                selectedDate: ref.watch(alarmBaseDateProvider),
+                selectedDate: _baseDate,
                 onPreviousDay: _goToPreviousDay,
                 onNextDay: _goToNextDay,
               ),
@@ -236,18 +241,32 @@ class _AlarmScreenState extends ConsumerState<AlarmScreen> {
         final event = sortedEvents[index];
 
         // 기준 날짜와 이벤트 날짜가 같으면 강조 표시
-        final baseDate = ref.read(alarmBaseDateProvider);
-        final isHighlighted = event.eventDate.year == baseDate.year &&
-            event.eventDate.month == baseDate.month &&
-            event.eventDate.day == baseDate.day;
+        final isHighlighted = event.eventDate.year == _baseDate.year &&
+            event.eventDate.month == _baseDate.month &&
+            event.eventDate.day == _baseDate.day;
 
         // DailyEventModel을 AlarmModel 형식으로 변환하여 표시
         // (기존 AlarmListItem 재사용)
         final alarm = _convertEventToAlarm(event);
 
-        return AlarmListItemSimple(
+        return AlarmListItem(
           alarm: alarm,
           isHighlighted: isHighlighted,
+          onToggle: (value) {
+            // 이벤트는 토글 기능 없음 (알람 타입만 토글 가능)
+          },
+          onDelete: () {
+            // TODO: 이벤트 삭제 API 연동
+            TopNotificationManager.show(
+              context,
+              message: '이벤트가 삭제되었습니다.',
+              actionLabel: '실행취소',
+              type: TopNotificationType.red,
+              onActionTap: () {
+                // TODO: 실행취소 구현
+              },
+            );
+          },
         );
       },
     );

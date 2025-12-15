@@ -119,7 +119,7 @@ class _SlangQuizStartScreenState extends ConsumerState<SlangQuizStartScreen> {
                           onTap: _onCharacterTap,
                           child: EmotionCharacter(
                             id: currentEmotion,
-                            use2d: true,
+                            use2d: false,
                             size: 180,
                           ),
                         ),
@@ -278,11 +278,11 @@ class _SlangQuizStartScreenState extends ConsumerState<SlangQuizStartScreen> {
   String _getQuizTypeLabel(String type) {
     switch (type) {
       case 'word_to_meaning':
-        return '무슨 뜻인지 알아봄';
+        return '뜻 맞추기';
       case 'meaning_to_word':
-        return '어떤 말인지 맞춰봄';
+        return '의미 맞추기';
       default:
-        return '무슨 뜻인지 알아봄';
+        return '뜻 맞추기';
     }
   }
 

@@ -4,10 +4,25 @@
 
 ---
 
-## 🆕 최근 업데이트 (2025-12-13)
+## 🆕 최근 업데이트 (2025-12-15)
 
 ### 새로운 컴포넌트
 
+- **HomeMainButtons**: 2x3 그리드 레이아웃 (캐릭터 + 5개 기능 버튼)
+  - 첫 번째 셀: 사용자 감정 캐릭터 (투명 배경)
+  - 나머지 5개: 봄이와 대화, 기억서랍, 마음리포트, 마음연습실, 신조어퀴즈
+  - 기분 기반 색상 시스템
+  - 아이콘 우측 정렬
+- **AlarmListItem**: 알람/기억/이벤트 리스트 아이템
+  - 2줄 레이아웃 (날짜/타입/시간 + 아이콘/내용)
+  - 키워드 기반 동적 태그 색상 시스템
+  - Dismissible 삭제 지원
+  - 타입별 배지 및 아이콘
+- **DateRangeSelector**: 날짜 범위 선택 컴포넌트
+  - 이전/다음 날짜 네비게이션
+  - 현재 날짜 표시
+  - 알람 화면 통합
+- **MemoryTimelineItem**: 기억 타임라인 아이템
 - **ChoiceButton**: 사용자 선택지를 표시하는 버튼 컴포넌트
   - `ChoiceButton`: 개별 선택지 버튼
   - `ChoiceButtonGroup`: 가로/세로 레이아웃 지원 (2-5개 선택지)
@@ -21,25 +36,6 @@
 - **SplashScreen**: Lottie 애니메이션 기반 스플래시 화면
 - **QuestionProgressView**: 설문 및 연습용 질문/진행률 통합 컴포넌트
 
-### 주요 변경사항
-
-- **ChoiceButton 추가**: ListBubble을 대체하는 새로운 선택지 버튼 시스템
-  - 깔끔한 단일 배경색 (그라데이션 제거)
-  - 선택적 테두리 및 번호 표시
-  - 그림자 효과 제거로 미니멀한 디자인
-  - 2개 선택지는 가로 배치, 3개 이상은 세로 배치
-- **BottomInputBar 리팩토링**: SlideToActionButton 제거, 직접 입력 방식으로 변경
-  - 텍스트 입력 필드 항상 표시
-  - 마이크 ↔ 전송 버튼 자동 토글
-  - 간소화된 API (controller, onSend, onMicTap)
-- **BottomVoiceBar 신규 추가**: 음성 입력 전용 인터페이스
-  - 3버튼 레이아웃 (TTS, 마이크, 텍스트)
-  - 음성 상태별 애니메이션
-  - Input bar ↔ Voice bar 토글 지원
-- **알람 UI 개선**: Bottom sheet 모달 제거, TopNotification만 사용
-- **네비게이션 구조 개편**: 5탭 시스템 (홈, 기억서랍, 봄이, 마음연습실, 마이페이지)
-- **홈 화면 리뉴얼**: 감정 게이지, 배너 슬라이더 추가
-- **스플래시 화면**: 기존 정적 이미지에서 Lottie 애니메이션으로 전환
 
 ---
 
@@ -897,7 +893,59 @@ HomeBannerSlider(
 
 ---
 
-#### 5.4.6 DailyMoodCheckWidget
+#### 5.4.6 HomeMainButtons
+
+**파일:** `lib/app/home/components/home_main_buttons.dart`
+
+2x3 그리드 레이아웃으로 사용자 감정 캐릭터와 5개의 기능 버튼을 표시합니다.
+
+**구성 요소:**
+- **첫 번째 셀**: 사용자 감정 캐릭터 (투명 배경)
+- **나머지 5개 셀**: 기능 버튼
+  1. 봄이와 대화 (마이크 아이콘, 기분 기반 배경색)
+  2. 기억 서랍 (알람 아이콘)
+  3. 마음리포트 (차트 아이콘)
+  4. 마음연습실 (앱 아이콘)
+  5. 신조어퀴즈 (퀴즈 아이콘)
+
+**디자인 스펙:**
+- **그리드**: 2행 × 3열
+- **셀 간격**: 8px
+- **셀 높이**: 160px
+- **캐릭터 셀**:
+  - 배경: 투명 (기분 색상 배경 위에 배치)
+  - 캐릭터 크기: 120px
+  - 중앙 정렬
+- **기능 버튼 셀**:
+  - 배경: `basicColor` (흰색)
+  - 모서리: 16px 둥근 모서리
+  - 패딩: 16px
+  - 아이콘: 우측 상단 정렬, 24×24px
+  - 텍스트: 좌측 하단, `bodyBold`
+  - **봄이와 대화 버튼만**: 기분 기반 배경색, 흰색 텍스트
+
+**기분 기반 색상:**
+```dart
+// MoodColorHelper를 사용하여 일관된 색상 적용
+final moodCategory = EmotionClassifier.classify(currentEmotion);
+final moodMainColor = MoodColorHelper.getEmotionColor(currentEmotion);
+final moodBgColor = MoodColorHelper.getBackgroundColor(moodCategory);
+```
+
+**사용 예시:**
+```dart
+// HomeNewScreen에서 사용
+HomeMainButtons()
+```
+
+**특징:**
+- 기분에 따라 "봄이와 대화" 버튼 색상 자동 변경
+- 각 버튼 탭 시 해당 화면으로 네비게이션
+- 캐릭터는 현재 선택된 감정 표시
+
+---
+
+#### 5.4.7 DailyMoodCheckWidget
 
 **파일:** `lib/app/home/components/daily_mood_check_widget.dart`
 
@@ -997,9 +1045,144 @@ class HomeScreen extends ConsumerWidget {
 #### 디자인 철학
 - **몰입형 헤더**: 배경색이 상태바 영역까지 확장되어 개방감을 줍니다 (투명 TopBar)
 - **화이트 아이콘/텍스트**: 컬러풀한 배경 위 화이트 텍스트로 가독성을 확보합니다
-- **직관적 등록 유도**: 중앙의 큰 텍스트와 화살표 아이콘으로 알람 등록을 유도합니다
+- **일일 이벤트 분석**: `/analyze-daily` API를 통해 날짜별 이벤트 요약 표시
+- **키워드 기반 태그**: 동적 색상 시스템으로 태그 시각화
+
+---
+
+#### 5.9.1 DateRangeSelector
+
+**파일:** `lib/ui/components/date_range_selector.dart`
+
+날짜 범위를 선택하고 네비게이션할 수 있는 컴포넌트입니다.
+
+**구성 요소:**
+- 이전 날짜 버튼 (왼쪽 화살표)
+- 현재 날짜 표시 (YYYY년 MM월 DD일 형식)
+- 다음 날짜 버튼 (오른쪽 화살표)
+
+**디자인 스펙:**
+- **높이**: 48px
+- **배경**: 투명
+- **텍스트**: `bodyBold`, 흰색
+- **버튼**: 아이콘 버튼, 흰색 아이콘
+- **간격**: 버튼 간 16px
+
+**사용 예시:**
+```dart
+DateRangeSelector(
+  currentDate: selectedDate,
+  onPreviousDay: () {
+    setState(() {
+      selectedDate = selectedDate.subtract(Duration(days: 1));
+    });
+    _loadEvents();
+  },
+  onNextDay: () {
+    setState(() {
+      selectedDate = selectedDate.add(Duration(days: 1));
+    });
+    _loadEvents();
+  },
+)
+```
+
+**특징:**
+- 알람 화면 상단에 배치
+- 날짜 변경 시 이벤트 자동 로드
+- 투명 배경으로 배경색과 조화
+
+---
+
+#### 5.9.2 AlarmListItem
+
+**파일:** `lib/app/alarm/components/alarm_list_item.dart`
+
+알람/기억/이벤트를 표시하는 리스트 아이템으로 2줄 레이아웃을 사용합니다.
+
+**구성 요소:**
+
+**1줄 (상단)**:
+- 날짜 (MM/DD) + 요일
+- 타입 배지 (기억/알림/이벤트)
+- 시간 (HH:MM)
+- 토글 스위치 (알림 타입만)
+
+**2줄 (하단)**:
+- 타입별 아이콘 (원형, 36×36px)
+- 내용 텍스트 (최대 2줄)
+- 태그 (키워드 기반 색상)
+
+**디자인 스펙:**
+- **컨테이너**:
+  - 배경: `basicColor` (흰색)
+  - 모서리: 12px 둥근 모서리
+  - 테두리: 1px `borderLight`
+  - 패딩: 16px
+  - 하단 마진: 12px
+- **날짜/요일**:
+  - 날짜: `bodyBold`, 15px, `textPrimary`
+  - 요일: `caption`, 12px, `textSecondary`
+  - 너비: 50px
+- **타입 배지**:
+  - 패딩: 가로 8px, 세로 4px
+  - 모서리: 8px 둥근 모서리
+  - 타입별 배경/텍스트 색상
+- **아이콘**:
+  - 크기: 36×36px
+  - 원형 배경 (타입별 색상)
+  - 테두리: 1.5px
+- **태그**:
+  - 패딩: 가로 8px, 세로 3px
+  - 모서리: 12px 둥근 모서리
+  - 배경: 색상 15% 투명도
+  - 테두리: 색상 30% 투명도
+
+**키워드 기반 태그 색상:**
+```dart
+// 키워드별 색상 매핑
+'알람/알림' → #FFB84C (노랑/오렌지)
+'중요/긴급' → #D7454D (붉은색)
+'약속/미팅/회의' → #7BC67E (초록색)
+'기억/추억' → #FF8A80 (핑크/산호색)
+'이벤트/행사' → #6C8CD5 (파랑색)
+기타 → 해시 기반 6가지 색상 중 하나
+```
+
+**사용 예시:**
+```dart
+AlarmListItem(
+  alarm: AlarmModel(
+    id: 1,
+    year: 2025,
+    month: 12,
+    day: 15,
+    hour: 14,
+    minute: 30,
+    content: '병원 예약\n#중요 #알림',
+    itemType: ItemType.alarm,
+    isEnabled: true,
+  ),
+  onToggle: (value) {
+    // 알림 활성화/비활성화
+  },
+  onDelete: () {
+    // 알림 삭제
+  },
+)
+```
+
+**특징:**
+- Dismissible로 스와이프 삭제 지원
+- 태그는 `#`으로 시작하는 단어 자동 파싱
+- 키워드 기반 동적 색상으로 시각적 구분
+- 타입별 아이콘 및 배지로 직관적 구분
+- 알림 타입만 토글 스위치 표시
+
+---
 
 #### 화면 구조
+
 
 ```
 ┌─────────────────────────────┐

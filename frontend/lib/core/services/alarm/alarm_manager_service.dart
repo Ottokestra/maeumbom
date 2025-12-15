@@ -6,7 +6,7 @@ import 'package:timezone/data/latest_all.dart' as tz_data;
 import '../../../data/models/alarm/alarm_model.dart';
 import '../../../data/local/database/app_database.dart';
 
-/// Android AlarmManager를 사용한 신뢰할 수 있는 알람 서비스
+/// Android AlarmManager를 사용한 신뢰할 수 있는 알림 서비스
 ///
 /// Hybrid 접근법:
 /// - android_alarm_manager_plus: 정확한 시간에 callback 실행
@@ -53,8 +53,8 @@ class AlarmManagerService {
     // Android 알림 채널 생성
     const channel = AndroidNotificationChannel(
       'alarm_channel',
-      '알람',
-      description: '마음봄 알람 채널',
+      '알림',
+      description: '마음봄 알림 채널',
       importance: Importance.max,
       playSound: true,
       enableVibration: true,
@@ -108,7 +108,7 @@ class AlarmManagerService {
     return false;
   }
 
-  /// 알람 예약
+  /// 알림 예약
   Future<void> scheduleAlarm(AlarmModel alarm) async {
     if (!alarm.isValid || !alarm.isEnabled) {
       print(
@@ -141,8 +141,8 @@ class AlarmManagerService {
           rescheduleOnReboot: true,
           params: {
             'id': alarm.notificationId,
-            'title': alarm.title ?? '마음봄 알람',
-            'body': alarm.content ?? '알람 시간입니다.',
+            'title': alarm.title ?? '마음봄 알림',
+            'body': alarm.content ?? '알림 시간입니다.',
           },
         );
       } else {
@@ -154,8 +154,8 @@ class AlarmManagerService {
 
         await _notifications.zonedSchedule(
           alarm.notificationId,
-          alarm.title ?? '마음봄 알람',
-          alarm.content ?? '알람 시간입니다.',
+          alarm.title ?? '마음봄 알림',
+          alarm.content ?? '알림 시간입니다.',
           scheduledDate,
           const NotificationDetails(
             iOS: DarwinNotificationDetails(
@@ -182,7 +182,7 @@ class AlarmManagerService {
     }
   }
 
-  /// 알람 취소
+  /// 알림 취소
   Future<void> cancelAlarm(int notificationId) async {
     try {
       if (Platform.isAndroid) {
@@ -195,11 +195,11 @@ class AlarmManagerService {
     }
   }
 
-  /// 모든 알람 취소 (Android AlarmManager 초기화)
+  /// 모든 알림 취소 (Android AlarmManager 초기화)
   Future<void> cancelAllAlarms() async {
     try {
       // Android: 개별 ID로 취소해야 함 (Android AlarmManager에는 cancelAll이 없음)
-      // DB에 저장된 모든 알람을 가져와서 취소
+      // DB에 저장된 모든 알림을 가져와서 취소
       final db = AppDatabase();
       final allAlarms = await db.getAllAlarms();
 
@@ -215,7 +215,7 @@ class AlarmManagerService {
     }
   }
 
-  /// 모든 알람 복구 (재부팅 후)
+  /// 모든 알림 복구 (재부팅 후)
   static Future<void> rescheduleAllAlarms() async {
     try {
       print('[AlarmManagerService] Rescheduling all alarms after reboot...');
@@ -248,7 +248,7 @@ Future<void> _alarmCallback(int id, Map<String, dynamic> params) async {
   print('[AlarmCallback] ⏰ Alarm triggered! ID: $id');
 
   try {
-    // 🔍 DB에서 알람 확인 (orphaned alarm 방지)
+    // 🔍 DB에서 알림 확인 (orphaned alarm 방지)
     final db = AppDatabase();
     final alarm = await db.getAlarmById(id);
 
@@ -263,7 +263,7 @@ Future<void> _alarmCallback(int id, Map<String, dynamic> params) async {
       return;
     }
 
-    // 🔍 시간 체크: 과거 알람은 무시
+    // 🔍 시간 체크: 과거 알림은 무시
     final now = DateTime.now();
     if (alarm.scheduledDatetime
         .isBefore(now.subtract(const Duration(minutes: 5)))) {
@@ -278,13 +278,13 @@ Future<void> _alarmCallback(int id, Map<String, dynamic> params) async {
     // 알림 표시
     await notifications.show(
       id,
-      params['title'] as String? ?? alarm.title ?? '마음봄 알람',
-      params['body'] as String? ?? alarm.content ?? '알람 시간입니다.',
+      params['title'] as String? ?? alarm.title ?? '마음봄 알림',
+      params['body'] as String? ?? alarm.content ?? '알림 시간입니다.',
       const NotificationDetails(
         android: AndroidNotificationDetails(
           'alarm_channel',
-          '알람',
-          channelDescription: '마음봄 알람 채널',
+          '알림',
+          channelDescription: '마음봄 알림 채널',
           importance: Importance.max,
           priority: Priority.high,
           enableVibration: true,

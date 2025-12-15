@@ -120,6 +120,7 @@ class ApiConfig {
   static const String targetEventsAnalyzeDaily =
       '$targetEventsBase/analyze-daily';
   static const String targetEventsDaily = '$targetEventsBase/daily';
+  static const String targetEventsWeekly = '$targetEventsBase/weekly';
   static const String targetEventsTags = '$targetEventsBase/tags/popular';
 
   // Timeout Configuration

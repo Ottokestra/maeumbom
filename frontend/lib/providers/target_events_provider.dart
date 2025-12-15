@@ -1,13 +1,15 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../data/api/target_events/target_events_api_client.dart';
 import '../data/models/target_events/daily_event_model.dart';
+import '../data/models/target_events/weekly_event_model.dart';
+import '../core/utils/logger.dart';
 import 'auth_provider.dart';
 
 // ----- Infrastructure Providers -----
 
 /// Target Events API Client Provider
 final targetEventsApiClientProvider = Provider<TargetEventsApiClient>((ref) {
-  final dio = ref.watch(baseDioProvider);
+  final dio = ref.watch(dioWithAuthProvider);
   return TargetEventsApiClient(dio);
 });
 
@@ -17,16 +19,9 @@ final targetEventsApiClientProvider = Provider<TargetEventsApiClient>((ref) {
 class TargetEventsNotifier
     extends StateNotifier<AsyncValue<List<DailyEventModel>>> {
   final TargetEventsApiClient _apiClient;
-  final Ref _ref;
 
-  TargetEventsNotifier(this._apiClient, this._ref)
-      : super(const AsyncValue.loading());
-
-  /// Access token 가져오기
-  Future<String?> _getAccessToken() async {
-    final tokenStorage = _ref.read(tokenStorageServiceProvider);
-    return await tokenStorage.getAccessToken();
-  }
+  TargetEventsNotifier(this._apiClient)
+      : super(const AsyncValue.data([]));
 
   /// 날짜 범위로 일일 이벤트 조회
   Future<void> loadDailyEvents({
@@ -36,20 +31,11 @@ class TargetEventsNotifier
     List<String>? tags,
     String? targetType,
   }) async {
-    final accessToken = await _getAccessToken();
-    
-    if (accessToken == null) {
-      state = AsyncValue.error(
-        Exception('인증이 필요합니다.'),
-        StackTrace.current,
-      );
-      return;
-    }
-
+    appLogger.d('🔵 loadDailyEvents called - Start: $startDate, End: $endDate');
     state = const AsyncValue.loading();
     try {
+      appLogger.d('🔵 Calling API getDailyEvents...');
       final response = await _apiClient.getDailyEvents(
-        accessToken: accessToken,
         startDate: startDate,
         endDate: endDate,
         eventType: eventType,
@@ -57,28 +43,19 @@ class TargetEventsNotifier
         targetType: targetType,
       );
 
+      appLogger.d('🟢 API Success - Events count: ${response.dailyEvents.length}');
       state = AsyncValue.data(response.dailyEvents);
     } catch (e, stack) {
+      appLogger.e('🔴 API Error', error: e, stackTrace: stack);
       state = AsyncValue.error(e, stack);
     }
   }
 
   /// 특정 날짜 분석 실행
   Future<void> analyzeDailyEvents(DateTime targetDate) async {
-    final accessToken = await _getAccessToken();
-    
-    if (accessToken == null) {
-      state = AsyncValue.error(
-        Exception('인증이 필요합니다.'),
-        StackTrace.current,
-      );
-      return;
-    }
-
     try {
       final response = await _apiClient.analyzeDailyEvents(
         targetDate: targetDate,
-        accessToken: accessToken,
       );
 
       // 분석 후 현재 날짜 범위로 다시 로드
@@ -104,7 +81,7 @@ class TargetEventsNotifier
 final targetEventsProvider = StateNotifierProvider<TargetEventsNotifier,
     AsyncValue<List<DailyEventModel>>>((ref) {
   final apiClient = ref.watch(targetEventsApiClientProvider);
-  return TargetEventsNotifier(apiClient, ref);
+  return TargetEventsNotifier(apiClient);
 });
 
 /// 이벤트 개수 Provider
@@ -114,4 +91,40 @@ final dailyEventsCountProvider = Provider<int>((ref) {
     data: (events) => events.length,
     orElse: () => 0,
   );
+});
+/// Weekly Events State Notifier
+class WeeklyEventsNotifier
+    extends StateNotifier<AsyncValue<List<WeeklyEventModel>>> {
+  final TargetEventsApiClient _apiClient;
+
+  WeeklyEventsNotifier(this._apiClient)
+      : super(const AsyncValue.data([]));
+
+  /// 날짜 범위로 주간 이벤트 조회
+  Future<void> loadWeeklyEvents({
+    DateTime? startDate,
+    DateTime? endDate,
+    List<String>? tags,
+    String? targetType,
+  }) async {
+    state = const AsyncValue.loading();
+    try {
+      final events = await _apiClient.getWeeklyEvents(
+        startDate: startDate,
+        endDate: endDate,
+        tags: tags,
+        targetType: targetType,
+      );
+      state = AsyncValue.data(events);
+    } catch (e, stack) {
+      state = AsyncValue.error(e, stack);
+    }
+  }
+}
+
+/// Weekly Events Provider
+final weeklyEventsProvider = StateNotifierProvider<WeeklyEventsNotifier,
+    AsyncValue<List<WeeklyEventModel>>>((ref) {
+  final apiClient = ref.watch(targetEventsApiClientProvider);
+  return WeeklyEventsNotifier(apiClient);
 });

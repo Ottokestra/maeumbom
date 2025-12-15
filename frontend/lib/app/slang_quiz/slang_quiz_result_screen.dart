@@ -79,8 +79,8 @@ class SlangQuizResultScreen extends ConsumerWidget {
                   children: [
                     Text(
                       result.ranking!.rankMessage
-                          .replaceAll('단어→뜻', '무슨 뜻인지 알아봄')
-                          .replaceAll('뜻→단어', '어떤 말인지 맞춰봄'),
+                          .replaceAll('단어→뜻', '')
+                          .replaceAll('뜻→단어', ''),
                       style: AppTypography.caption.copyWith(
                         color: AppColors.textPrimary,
                         fontWeight: FontWeight.w600,
@@ -103,7 +103,7 @@ class SlangQuizResultScreen extends ConsumerWidget {
             // 문제별 요약
             Expanded(
               child: Container(
-                padding: const EdgeInsets.all(AppSpacing.md),
+                padding: const EdgeInsets.all(AppSpacing.xs),
                 decoration: BoxDecoration(
                   color: AppColors.bgWarm,
                   borderRadius: BorderRadius.circular(AppRadius.md),
