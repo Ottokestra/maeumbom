@@ -6,6 +6,7 @@ import '../../../providers/chat_provider.dart';
 import '../../../providers/alarm_provider.dart';
 import '../../../providers/daily_mood_provider.dart';
 import '../../../core/utils/text_formatter.dart';
+import '../../../core/utils/emotion_classifier.dart';
 import '../chat_alarm_dialogs.dart';
 import '../helpers/animation_state_helper.dart';
 import '../helpers/process_state_helper.dart';
@@ -13,6 +14,7 @@ import '../helpers/status_message_helper.dart';
 import '../../../ui/components/speech_bubble.dart';
 import '../../../ui/components/choice_button.dart';
 import '../../../ui/components/list_bubble.dart'; // parseListItems 함수를 위해 유지
+import '../../../ui/components/circular_ripple.dart';
 
 /// Bomi Content - 봄이 화면 본문
 ///
@@ -152,31 +154,14 @@ class _BomiContentState extends ConsumerState<BomiContent> {
   String _getCharacterIdFromEmotion(EmotionId? emotion) {
     if (emotion == null) return 'love'; // 기본값
 
-    switch (emotion) {
-      // 긍정적 감정 → love 캐릭터
-      case EmotionId.joy:
-      case EmotionId.excitement:
-      case EmotionId.confidence:
-      case EmotionId.love:
+    final category = EmotionClassifier.classify(emotion);
+
+    switch (category) {
+      case MoodCategory.good:
         return 'love';
-
-      // 중립적 감정 → relief 캐릭터
-      case EmotionId.relief:
-      case EmotionId.enlightenment:
-      case EmotionId.interest:
+      case MoodCategory.neutral:
         return 'relief';
-
-      // 부정적 감정 → sadness 캐릭터
-      case EmotionId.discontent:
-      case EmotionId.shame:
-      case EmotionId.sadness:
-      case EmotionId.guilt:
-      case EmotionId.depression:
-      case EmotionId.boredom:
-      case EmotionId.contempt:
-      case EmotionId.anger:
-      case EmotionId.fear:
-      case EmotionId.confusion:
+      case MoodCategory.bad:
         return 'sadness';
     }
   }
@@ -253,8 +238,9 @@ class _BomiContentState extends ConsumerState<BomiContent> {
     final latestBotMessage =
         chatState.messages.where((msg) => !msg.isUser).lastOrNull;
 
-    final botMessageText = latestBotMessage?.text ??
-        '오늘 하루 어떠셨나요? 대화를 진행해볼까요? 아래 마이크나 텍스트 버튼을 눌러 시작해보세요.';
+    final botMessageText = latestBotMessage?.text ?? '오늘 하루 어땟어? 대화를 진행해볼래?';
+    final shouldAnimateBotText =
+        latestBotMessage != null || chatState.messages.isEmpty;
 
     // response_type 확인
     final responseType = latestBotMessage?.responseType;
@@ -342,6 +328,8 @@ class _BomiContentState extends ConsumerState<BomiContent> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
+                    const SizedBox(height: AppSpacing.lg),
+
                     // 1. 캐릭터 + Process Indicator 레이어
                     _buildCharacterLayer(
                       mode: mode,
@@ -350,7 +338,62 @@ class _BomiContentState extends ConsumerState<BomiContent> {
                       characterId: characterId,
                     ),
 
-                    // 2. AI 봄이 메시지 버블 (상태 메시지는 말풍선으로만 표시)
+                    // 2. TTS on/off 버튼
+                    Align(
+                      alignment: Alignment.topRight,
+                      child: Padding(
+                        padding: const EdgeInsets.only(
+                          right: AppSpacing.xxs,
+                        ),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AppSpacing.sm,
+                            vertical: AppSpacing.xs,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.bgLightPink,
+                            borderRadius: BorderRadius.circular(AppRadius.pill),
+                          ),
+                          child: GestureDetector(
+                            onTap: () {
+                              ref.read(chatProvider.notifier).toggleTtsEnabled();
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: AppSpacing.sm,
+                                vertical: AppSpacing.xxs,
+                              ),
+                              decoration: BoxDecoration(
+                                color: AppColors.primaryColor,
+                                borderRadius: BorderRadius.circular(AppRadius.pill),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    chatState.ttsEnabled
+                                        ? Icons.volume_off_rounded
+                                        : Icons.volume_up_rounded,
+                                    size: 16,
+                                    color: AppColors.bgBasic,
+                                  ),
+                                  const SizedBox(width: AppSpacing.xxs),
+                                  Text(
+                                    chatState.ttsEnabled ? '끄기' : '듣기',
+                                    style: AppTypography.caption.copyWith(
+                                      color: AppColors.bgBasic,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    // 3. AI 봄이 메시지 버블 (상태 메시지는 말풍선으로만 표시)
                     // 음성 모드가 아닐 때만 상태 메시지를 답변 박스에 표시
                     if (statusMessage != null && mode == ProcessMode.text) ...[
                       // 🆕 텍스트 모드에서만 상태 메시지 표시
@@ -371,7 +414,7 @@ class _BomiContentState extends ConsumerState<BomiContent> {
                       // 일반 답변 메시지 버블 (🆕 마크다운 정제 적용)
                       EmotionBubble(
                         message: TextFormatter.formatBasicMarkdown(displayText),
-                        enableTypingAnimation: latestBotMessage != null,
+                        enableTypingAnimation: shouldAnimateBotText,
                         key: ValueKey(latestBotMessage?.id ?? 'default'),
                         bgWhite: true,
                         showTtsToggle: false,
@@ -386,7 +429,7 @@ class _BomiContentState extends ConsumerState<BomiContent> {
                       // 안내 메시지 버블 (요약만 표시, 🆕 마크다운 정제 적용)
                       EmotionBubble(
                         message: TextFormatter.formatBasicMarkdown(displayText),
-                        enableTypingAnimation: latestBotMessage != null,
+                        enableTypingAnimation: shouldAnimateBotText,
                         key: ValueKey(
                             '${latestBotMessage?.id ?? 'default'}_intro'),
                         bgWhite: true,
@@ -422,7 +465,7 @@ class _BomiContentState extends ConsumerState<BomiContent> {
                       ),
                     ],
 
-                    // 3. STT Partial 결과 표시
+                    // 4. STT Partial 결과 표시
                     if (chatState.sttPartialText != null &&
                         chatState.sttPartialText!.isNotEmpty)
                       _buildSttPartialText(chatState.sttPartialText!),
@@ -448,98 +491,52 @@ class _BomiContentState extends ConsumerState<BomiContent> {
         final chatState = ref.watch(chatProvider);
 
         return SizedBox(
-          height: 400, // Stack 전체 높이 (원형 400)
+          height: 250, // Stack 전체 높이 (원형 300)
           child: Stack(
             alignment: Alignment.center,
             clipBehavior: Clip.none,
             children: [
-              // 1. 흰색 원형 배경 + 캐릭터 애니메이션
+              // 1. 흰색 원형 배경 + 캐릭터 애니메이션 + 원형 파동
               Center(
-                child: Container(
-                  width: 300,
-                  height: 300,
-                  decoration: const BoxDecoration(
-                    color: AppColors.basicColor,
-                    shape: BoxShape.circle,
-                  ),
-                  child: ClipOval(
-                    child: Center(
-                      child: AnimatedSwitcher(
-                        duration: const Duration(milliseconds: 300),
-                        switchInCurve: Curves.easeInOut,
-                        switchOutCurve: Curves.easeInOut,
-                        transitionBuilder:
-                            (Widget child, Animation<double> animation) {
-                          return FadeTransition(
-                            opacity: animation,
-                            child: ScaleTransition(
-                              scale: Tween<double>(begin: 0.95, end: 1.0)
-                                  .animate(animation),
-                              child: child,
-                            ),
-                          );
-                        },
-                        child: AnimatedCharacter(
-                          key: ValueKey('${characterId}_$animationState'),
-                          characterId: characterId,
-                          emotion: animationState,
-                          size: 350,
-                          repeat: true,
-                          animate: true,
+                child: CircularRipple(
+                  voiceState: chatState.voiceState,
+                  size: 250,
+                  color: AppColors.primaryColor,
+                  child: Container(
+                    width: 200,
+                    height: 200,
+                    decoration: const BoxDecoration(
+                      color: AppColors.basicColor,
+                      shape: BoxShape.circle,
+                    ),
+                    child: ClipOval(
+                      child: Center(
+                        child: AnimatedSwitcher(
+                          duration: const Duration(milliseconds: 300),
+                          switchInCurve: Curves.easeInOut,
+                          switchOutCurve: Curves.easeInOut,
+                          transitionBuilder:
+                              (Widget child, Animation<double> animation) {
+                            return FadeTransition(
+                              opacity: animation,
+                              child: ScaleTransition(
+                                scale: Tween<double>(begin: 0.95, end: 1.0)
+                                    .animate(animation),
+                                child: child,
+                              ),
+                            );
+                          },
+                          child: AnimatedCharacter(
+                            key: ValueKey('${characterId}_$animationState'),
+                            characterId: characterId,
+                            emotion: animationState,
+                            size: 250,
+                            repeat: true,
+                            animate: true,
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                ),
-              ),
-
-              // 2. TTS 토글 (캐릭터 원형 하단 오른쪽에 표시)
-              Positioned(
-                bottom: 0,
-                right: MediaQuery.of(context).size.width / 2 - 200,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.xs,
-                    vertical: AppSpacing.xs,
-                  ),
-                  decoration: BoxDecoration(
-                    color: AppColors.bgLightPink,
-                    borderRadius: BorderRadius.circular(AppRadius.pill),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        '봄이 목소리',
-                        style: AppTypography.caption.copyWith(
-                          color: AppColors.primaryColor,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                      const SizedBox(width: AppSpacing.xs),
-                      GestureDetector(
-                        onTap: () {
-                          ref.read(chatProvider.notifier).toggleTtsEnabled();
-                        },
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: AppSpacing.sm,
-                            vertical: AppSpacing.xxs,
-                          ),
-                          decoration: BoxDecoration(
-                            color: AppColors.primaryColor,
-                            borderRadius: BorderRadius.circular(AppRadius.pill),
-                          ),
-                          child: Text(
-                            chatState.ttsEnabled ? '켜기' : '끄기',
-                            style: AppTypography.caption.copyWith(
-                              color: AppColors.bgBasic,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
                   ),
                 ),
               ),
@@ -557,7 +554,7 @@ class _BomiContentState extends ConsumerState<BomiContent> {
               // 🆕 Speech Bubble (listening/processing 상태일 때 캐릭터 위에 표시)
               if (chatState.voiceState == VoiceInterfaceState.listening)
                 const Positioned(
-                  top: -20, // 캐릭터 위에 배치
+                  top: -32, // 캐릭터 위에 배치
                   child: SpeechBubble(
                     message: '편하게 말해봐~ 나 다 듣고 있어!',
                     displayDuration: Duration(seconds: 5), // 🆕 5초로 연장
@@ -568,7 +565,7 @@ class _BomiContentState extends ConsumerState<BomiContent> {
               if (chatState.voiceState == VoiceInterfaceState.processingVoice ||
                   chatState.voiceState == VoiceInterfaceState.processing)
                 const Positioned(
-                  top: -20,
+                  top: -32,
                   child: SpeechBubble(
                     message: '음.. 생각해볼게! 잠시만 기다려줘!',
                     displayDuration: Duration(seconds: 5),

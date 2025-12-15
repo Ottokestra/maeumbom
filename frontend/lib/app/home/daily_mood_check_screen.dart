@@ -28,6 +28,15 @@ class _DailyMoodCheckScreenState extends ConsumerState<DailyMoodCheckScreen> {
       viewportFraction: 0.85, // 양옆 카드가 살짝 보이도록
     );
 
+    // ========== 임시 수정: 고정된 감정 사용 ==========
+    // TODO: 나중에 원래 로직으로 복구
+    _options = [
+      EmotionId.love,      // 좋음
+      EmotionId.relief,    // 보통
+      EmotionId.sadness,   // 나쁨
+    ];
+    
+    /* ========== 원래 로직 (랜덤 선택) ==========
     // 각 카테고리에서 랜덤 선택
     final random = Random();
     EmotionId pickRandom(MoodCategory category) {
@@ -40,6 +49,7 @@ class _DailyMoodCheckScreenState extends ConsumerState<DailyMoodCheckScreen> {
       pickRandom(MoodCategory.neutral),
       pickRandom(MoodCategory.bad),
     ];
+    ========== 원래 로직 끝 ========== */
   }
 
   @override

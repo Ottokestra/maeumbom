@@ -8,18 +8,18 @@ part 'daily_event_model.g.dart';
 @freezed
 class DailyEventModel with _$DailyEventModel {
   const factory DailyEventModel({
-    required int id,
-    @JsonKey(name: 'user_id') required int userId,
-    @JsonKey(name: 'event_date') required DateTime eventDate,
-    @JsonKey(name: 'event_type') required String eventType, // alarm/event/memory
-    @JsonKey(name: 'target_type') required String targetType, // husband/son/daughter 등
-    @JsonKey(name: 'event_summary') required String eventSummary,
-    @JsonKey(name: 'event_time') DateTime? eventTime,
-    required int importance,
-    @JsonKey(name: 'is_future_event') required bool isFutureEvent,
-    @Default([]) List<String> tags,
-    @JsonKey(name: 'created_at') required DateTime createdAt,
-    @JsonKey(name: 'updated_at') required DateTime updatedAt,
+    @JsonKey(name: 'ID') required int id,
+    @JsonKey(name: 'USER_ID') required int userId,
+    @JsonKey(name: 'EVENT_DATE') required DateTime eventDate,
+    @JsonKey(name: 'EVENT_TYPE') required String eventType, // alarm/event/memory
+    @JsonKey(name: 'TARGET_TYPE') required String targetType, // husband/son/daughter 등
+    @JsonKey(name: 'EVENT_SUMMARY') required String eventSummary,
+    @JsonKey(name: 'EVENT_TIME') DateTime? eventTime,
+    @JsonKey(name: 'IMPORTANCE', defaultValue: 3) int? importance,
+    @JsonKey(name: 'IS_FUTURE_EVENT') required bool isFutureEvent,
+    @JsonKey(name: 'TAGS', defaultValue: []) List<String>? tags,
+    @JsonKey(name: 'CREATED_AT') required DateTime createdAt,
+    @JsonKey(name: 'UPDATED_AT') required DateTime updatedAt,
   }) = _DailyEventModel;
 
   factory DailyEventModel.fromJson(Map<String, dynamic> json) =>

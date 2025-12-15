@@ -153,11 +153,18 @@ async def list_daily_events(
         # 사용 가능한 태그 조회
         popular_tags = get_popular_tags(db, current_user.ID)
 
-        return DailyEventsListResponse(
+        response = DailyEventsListResponse(
             daily_events=[DailyEventResponse.from_orm(event) for event in events],
             total_count=len(events),
             available_tags=popular_tags,
         )
+
+        # 디버깅: 첫 번째 이벤트의 JSON 출력
+        if events:
+            first_event_json = DailyEventResponse.from_orm(events[0]).model_dump(by_alias=True, mode='json')
+            print(f"[DEBUG] First event JSON (as JSON): {first_event_json}")
+
+        return response
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"조회 실패: {str(e)}")
 

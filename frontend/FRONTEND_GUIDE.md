@@ -63,6 +63,12 @@ open -a Simulator  # iOS 시뮬레이터 실행
 flutter run -d android
 ```
 
+#### Android 실제 디바이스
+# localhost 부분 ip 변경 가능 (backend ip로 변경)
+```bash
+flutter run --dart-define=API_BASE_URL=http://localhost:8000
+```
+
 #### 개발 도구
 
 ```bash

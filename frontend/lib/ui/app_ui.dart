@@ -13,6 +13,7 @@ export 'tokens/app_tokens.dart';
 
 // components
 export 'components/app_component.dart';
+export 'components/orbital_dots.dart';
 
 // charatcters
 export 'characters/app_characters.dart';
