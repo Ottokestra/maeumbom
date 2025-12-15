@@ -211,6 +211,15 @@ class _QuestionProgressViewState extends State<QuestionProgressView> {
 
         const SizedBox(height: 18),
 
+        // 미디어 영역 (Media Area) - 진행률 바 다음, 질문 텍스트 이전에 배치
+        if (widget.media != null) ...[
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: widget.media!,
+          ),
+          const SizedBox(height: 18),
+        ],
+
         // 질문 콘텐츠 (Question Content)
         Expanded(
           child: SingleChildScrollView(
@@ -260,12 +269,6 @@ class _QuestionProgressViewState extends State<QuestionProgressView> {
                             height: 1.25,
                           ),
                     ),
-                  
-                  // 미디어 영역 (Media Area) - 질문 텍스트 아래로 이동
-                  if (widget.media != null) ...[
-                    const SizedBox(height: 24),
-                    widget.media!,
-                  ],
 
                   const SizedBox(height: 40),
                 ],

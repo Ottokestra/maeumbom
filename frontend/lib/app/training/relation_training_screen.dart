@@ -154,6 +154,8 @@ class _RelationTrainingScreenState
         useSafeArea: false,
         topBar: TopBar(
           title: '',
+          leftIcon: Icons.arrow_back,
+          onTapLeft: _handleBack,
           rightIcon: Icons.close,
           onTapRight: _handleExit,
           backgroundColor: AppColors.bgLightPink,
