@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:typed_data'; // 🆕 For Uint8List
 import 'package:audioplayers/audioplayers.dart';
 import '../../utils/logger.dart';
 
@@ -18,7 +19,7 @@ class TtsPlayerService {
 
   /// Initialize AudioPlayer with listeners
   void _initAudioPlayer() async {
-    // 🆕 오디오 포커스 설정: 다른 오디오와 믹스 (녹음 중단 방지)
+    // 🆕 오디오 포커스 설정: TTS 재생 시 다른 오디오 중단
     await _audioPlayer.setAudioContext(
       AudioContext(
         iOS: AudioContextIOS(
@@ -29,11 +30,11 @@ class TtsPlayerService {
           },
         ),
         android: AudioContextAndroid(
-          isSpeakerphoneOn: false,
+          isSpeakerphoneOn: true, // 🆕 스피커폰 강제 사용
           stayAwake: false,
           contentType: AndroidContentType.speech,
           usageType: AndroidUsageType.assistanceSonification,
-          audioFocus: AndroidAudioFocus.gainTransientMayDuck, // 🔑 핵심!
+          audioFocus: AndroidAudioFocus.gain, // 🔑 GAIN으로 변경 (가장 강력한 포커스)
         ),
       ),
     );
@@ -86,6 +87,32 @@ class TtsPlayerService {
     } catch (e) {
       appLogger.e('[TtsPlayerService] Playback failed: $e');
       // 🆕 에러 발생 시에도 Completer 완료
+      _playbackCompleter?.complete();
+      _playbackCompleter = null;
+      rethrow;
+    }
+  }
+
+  /// 🆕 Play audio from Uint8List bytes (for base64 audio)
+  Future<void> playBytes(Uint8List bytes, String mimeType) async {
+    try {
+      if (_isPlaying) {
+        await stop();
+      }
+
+      appLogger.i(
+          '[TtsPlayerService] Playing TTS from bytes (${bytes.length} bytes, $mimeType)');
+
+      // 재생 완료 추적을 위한 Completer 생성
+      _playbackCompleter = Completer<void>();
+
+      // BytesSource로 재생
+      await _audioPlayer.play(BytesSource(bytes));
+
+      // 재생 완료를 기다림
+      await _playbackCompleter?.future;
+    } catch (e) {
+      appLogger.e('[TtsPlayerService] Bytes playback failed: $e');
       _playbackCompleter?.complete();
       _playbackCompleter = null;
       rethrow;

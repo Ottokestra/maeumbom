@@ -27,6 +27,11 @@ class ChatRepository {
 
     appLogger
         .i('Sending text message via repository (ttsEnabled: $ttsEnabled)');
+
+    // 🔍 DEBUG: Check what's being sent
+    print(
+        '[ChatRepository] 🔍 Request payload: ttsEnabled=$ttsEnabled, session=$sessionId');
+
     final response = await _apiClient.sendTextMessage(request);
 
     // Convert response to ChatMessage
@@ -67,7 +72,9 @@ class ChatRepository {
       'emotion': response.meta?['emotion'],
       'response_type': response.meta?['response_type'],
       'alarm_info': response.meta?['alarm_info'],
-      'tts_audio_url': response.meta?['tts_audio_url'], // ✅ TTS 오디오 URL
+      'tts_audio_base64':
+          response.meta?['tts_audio_base64'], // 🆕 TTS base64 오디오
+      'tts_audio_format': response.meta?['tts_audio_format'], // 🆕 TTS 포맷 (mp3)
       'tts_status': response.meta?['tts_status'], // ✅ TTS 상태
     };
 
