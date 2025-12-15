@@ -147,35 +147,26 @@ class AlarmListItem extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // 1줄: 날짜/요일 + 타입 배지 + 시간 + 토글
+            // 1줄: 아이콘 + 타입 배지 + 시간 + 토글
             Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                // 날짜 + 요일
-                SizedBox(
-                  width: 50,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        _dateString,
-                        style: AppTypography.bodyBold.copyWith(
-                          color: AppColors.textPrimary,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 15,
-                        ),
-                      ),
-                      Center(
-                        child: Text(
-                          _weekdayString,
-                          style: AppTypography.caption.copyWith(
-                            color: AppColors.textSecondary,
-                            fontWeight: FontWeight.w500,
-                            fontSize: 12,
-                          ),
-                        ),
-                      ),
-                    ],
+                // 타입별 아이콘 (왼쪽으로 이동)
+                Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    color: alarm.itemType.backgroundColor,
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: alarm.itemType.textColor,
+                      width: 1.5,
+                    ),
+                  ),
+                  child: Icon(
+                    _typeIcon,
+                    color: alarm.itemType.textColor,
+                    size: 18,
                   ),
                 ),
 
@@ -233,103 +224,74 @@ class AlarmListItem extends StatelessWidget {
 
             const SizedBox(height: AppSpacing.sm),
 
-            // 2줄: 아이콘 + 내용 텍스트
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // 타입별 아이콘
-                Container(
-                  width: 36,
-                  height: 36,
-                  decoration: BoxDecoration(
-                    color: alarm.itemType.backgroundColor,
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: alarm.itemType.textColor,
-                      width: 1.5,
+            // 2줄: 내용 텍스트 + 태그 (전체 너비 사용)
+            () {
+              final parsed = _parsedContent;
+              final text = parsed['text'] as String;
+              final tags = parsed['tags'] as List<String>;
+
+              if (text.isEmpty && tags.isEmpty) {
+                return Text(
+                  '내용 없음',
+                  style: AppTypography.bodySmall.copyWith(
+                    color: AppColors.textSecondary,
+                    fontStyle: FontStyle.italic,
+                  ),
+                );
+              }
+
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // 본문 텍스트
+                  if (text.isNotEmpty)
+                    Text(
+                      text,
+                      style: AppTypography.bodySmall.copyWith(
+                        color: AppColors.textSecondary,
+                        height: 1.4,
+                        fontSize: 13,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                  ),
-                  child: Icon(
-                    _typeIcon,
-                    color: alarm.itemType.textColor,
-                    size: 18,
-                  ),
-                ),
 
-                const SizedBox(width: AppSpacing.sm),
-
-                // 내용 텍스트 + 태그 (더 넓은 영역)
-                Expanded(
-                  child: () {
-                    final parsed = _parsedContent;
-                    final text = parsed['text'] as String;
-                    final tags = parsed['tags'] as List<String>;
-
-                    if (text.isEmpty && tags.isEmpty) {
-                      return Text(
-                        '내용 없음',
-                        style: AppTypography.bodySmall.copyWith(
-                          color: AppColors.textSecondary,
-                          fontStyle: FontStyle.italic,
-                        ),
-                      );
-                    }
-
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // 본문 텍스트
-                        if (text.isNotEmpty)
-                          Text(
-                            text,
-                            style: AppTypography.bodySmall.copyWith(
-                              color: AppColors.textSecondary,
-                              height: 1.4,
-                              fontSize: 13,
+                  // 태그들
+                  if (tags.isNotEmpty) ...[
+                    const SizedBox(height: 6),
+                    Wrap(
+                      spacing: 4,
+                      runSpacing: 4,
+                      children: tags.map((tag) {
+                        final color = _getTagColor(tag);
+                        return Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 3,
+                          ),
+                          decoration: BoxDecoration(
+                            color: color.withOpacity(0.15),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: color.withOpacity(0.3),
+                              width: 1,
                             ),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
                           ),
-
-                        // 태그들
-                        if (tags.isNotEmpty) ...[
-                          const SizedBox(height: 6),
-                          Wrap(
-                            spacing: 4,
-                            runSpacing: 4,
-                            children: tags.map((tag) {
-                              final color = _getTagColor(tag);
-                              return Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 8,
-                                  vertical: 3,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: color.withOpacity(0.15),
-                                  borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(
-                                    color: color.withOpacity(0.3),
-                                    width: 1,
-                                  ),
-                                ),
-                                child: Text(
-                                  tag,
-                                  style: AppTypography.caption.copyWith(
-                                    color: color,
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: 11,
-                                  ),
-                                ),
-                              );
-                            }).toList(),
+                          child: Text(
+                            tag,
+                            style: AppTypography.caption.copyWith(
+                              color: color,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 11,
+                            ),
                           ),
-                        ],
-                      ],
-                    );
-                  }(),
-                ),
-              ],
-            ),
+                        );
+                      }).toList(),
+                    ),
+                  ],
+                ],
+              );
+            }(),
           ],
         ),
       ),

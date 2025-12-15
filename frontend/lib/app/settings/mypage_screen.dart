@@ -277,22 +277,22 @@ class _MypageScreenState extends ConsumerState<MypageScreen> {
                               label: '회원정보',
                               onTap: _showProfileInfo,
                             ),
-                            MenuListItem(
-                              icon: Icons.chat_bubble_outline,
-                              label: '대화 기록',
-                              badgeCount: totalChatCount,
-                              onTap: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => const ChatListScreen(),
-                                  ),
-                                );
-                              },
-                            ),
+                            // MenuListItem(
+                            //   icon: Icons.chat_bubble_outline,
+                            //   label: '대화 기록',
+                            //   badgeCount: totalChatCount,
+                            //   onTap: () {
+                            //     Navigator.push(
+                            //       context,
+                            //       MaterialPageRoute(
+                            //         builder: (context) => const ChatListScreen(),
+                            //       ),
+                            //     );
+                            //   },
+                            // ),
                             MenuListItem(
                               icon: Icons.favorite_border,
-                              label: '갱년기 테스트',
+                              label: '나는 어떤 상태일까?',
                               onTap: () {
                                 Navigator.pushNamed(
                                   context,
