@@ -1460,6 +1460,9 @@ class WeeklyTargetEvent(Base):
         EVENTS_SUMMARY: Weekly events summary (JSON array)
         TOTAL_EVENTS: Total number of events
         TAGS: Aggregated tags (JSON array)
+        EMOTION_DISTRIBUTION: Weekly emotion distribution (JSON dict)
+        PRIMARY_EMOTION: Primary emotion of the week
+        SENTIMENT_OVERALL: Overall sentiment (positive/negative/neutral)
         IS_DELETED: Deletion flag
         CREATED_AT: Creation timestamp
         CREATED_BY: Creator user ID
@@ -1477,6 +1480,11 @@ class WeeklyTargetEvent(Base):
     EVENTS_SUMMARY = Column(JSON, nullable=True)  # 주간 이벤트 요약 배열
     TOTAL_EVENTS = Column(Integer, nullable=False, default=0)
     TAGS = Column(JSON, nullable=True)  # 주간 통합 태그
+    
+    # 주간 감정 데이터
+    EMOTION_DISTRIBUTION = Column(JSON, nullable=True)  # 감정 비율 분포 {"안정": 35, "기쁨": 25, ...}
+    PRIMARY_EMOTION = Column(String(50), nullable=True)  # 주요 감정
+    SENTIMENT_OVERALL = Column(String(20), nullable=True)  # 전체 감정 (positive/negative/neutral)
     
     # 표준 필드
     IS_DELETED = Column(Boolean, default=False, nullable=False, index=True)

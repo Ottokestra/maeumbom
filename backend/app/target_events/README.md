@@ -98,6 +98,15 @@ backend/scripts/
 | EVENTS_SUMMARY | JSON | 주간 이벤트 요약 배열 |
 | TOTAL_EVENTS | Integer | 총 이벤트 수 |
 | TAGS | JSON | 통합 태그 배열 |
+| EMOTION_DISTRIBUTION | JSON | 주간 감정 비율 분포 (예: `{"안정": 35, "기쁨": 25, ...}`) |
+| PRIMARY_EMOTION | String | 주요 감정 |
+| SENTIMENT_OVERALL | String | 전체 감정 (positive/negative/neutral) |
+
+**감정 데이터**:
+- `EMOTION_DISTRIBUTION`: 해당 주간의 감정 비율을 백분율로 표시 (상위 5개 감정)
+- `PRIMARY_EMOTION`: 가장 높은 비율의 감정
+- `SENTIMENT_OVERALL`: 전체적인 감정 경향
+- 감정 데이터는 `TB_ROUTINE_RECOMMENDATIONS` 테이블의 일일 감정 데이터를 집계하여 생성됨
 
 ## API 엔드포인트
 
@@ -291,6 +300,66 @@ def weekly_summary_job():
 - 일간 이벤트를 날짜별로 요약
 - 대상별로 그룹화
 - 빈도 높은 태그 추출
+
+## 감정 데이터 집계
+
+### 데이터 소스
+- `TB_ROUTINE_RECOMMENDATIONS` 테이블의 `EMOTION_SUMMARY` 컬럼 사용
+- 일일 감정 분석 결과를 주간 단위로 집계
+
+### EMOTION_SUMMARY 구조
+```json
+{
+  "primary_emotion": {
+    "code": "joy",
+    "name_ko": "기쁨",
+    "intensity": 2,
+    "confidence": 0.95
+  },
+  "sentiment_overall": "positive",
+  "secondary_emotions": [
+    {"code": "excitement", "name_ko": "흥분", "intensity": 1},
+    {"code": "relief", "name_ko": "안심", "intensity": 1}
+  ]
+}
+```
+
+### 집계 로직
+1. **Primary Emotion**: `primary_emotion.code`와 `intensity` 추출
+2. **Secondary Emotions**: `secondary_emotions` 배열의 각 감정 `code`와 `intensity` 추출
+3. **Intensity 합산**: 모든 감정의 intensity를 합산하여 주간 점수 계산
+4. **백분율 변환**: 상위 5개 감정을 백분율로 변환
+5. **한글 매핑**: 감정 코드를 한글 이름으로 변환
+
+### 감정 코드 매핑
+
+| 코드 | 한글 | 코드 | 한글 |
+|------|------|------|------|
+| joy | 기쁨 | anger | 분노 |
+| calm | 안정 | sadness | 슬픔 |
+| love | 사랑 | fear | 두려움 |
+| excitement | 흥분 | anxiety | 불안 |
+| confidence | 자신감 | worry | 걱정 |
+| relief | 안심 | depression | 우울 |
+| interest | 흥미 | boredom | 무기력 |
+| surprise | 놀람 | confusion | 혼란 |
+| disgust | 혐오 | contempt | 경멸 |
+| - | - | discontent | 불만 |
+
+### 결과 예시
+```json
+{
+  "emotion_distribution": {
+    "기쁨": 35,
+    "안정": 25,
+    "사랑": 20,
+    "분노": 12,
+    "걱정": 8
+  },
+  "primary_emotion": "기쁨",
+  "sentiment_overall": "positive"
+}
+```
 
 ## 환경 변수
 
