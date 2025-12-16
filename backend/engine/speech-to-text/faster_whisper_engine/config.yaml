@@ -4,7 +4,7 @@
 audio:
   sample_rate: 16000
   channels: 1
-  chunk_size: 512
+  chunk_size: 4096  # 256ms @ 16kHz (was 512 = 32ms)
   
 # VAD (Voice Activity Detection) 설정
 vad:
