@@ -66,13 +66,14 @@ class WhisperSTT:
                 raise ImportError("faster-whisper 패키지가 설치되지 않았습니다")
 
             print("📥 Faster-Whisper 모델 로딩 중 (large-v3-turbo)...")
+            print("🎮 GPU 가속 활성화 (CUDA + float16)")
             self.model = WhisperModel(
                 "large-v3-turbo",
-                device="cpu",
-                compute_type="int8",
+                device="cuda",  # RTX 4060 Laptop GPU (8GB VRAM)
+                compute_type="float16",  # Higher accuracy + faster than int8 on GPU
                 num_workers=self.n_threads,
             )
-            print("✅ Faster-Whisper large-v3-turbo 로드 완료")
+            print("✅ Faster-Whisper large-v3-turbo 로드 완료 (GPU)")
 
         except ImportError as e:
             print(f"❌ faster-whisper를 찾을 수 없습니다: {e}")

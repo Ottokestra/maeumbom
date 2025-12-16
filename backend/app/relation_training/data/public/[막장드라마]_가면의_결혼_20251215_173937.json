@@ -1,0 +1,478 @@
+{
+  "scenario": {
+    "title": "[막장드라마] 가면의 결혼",
+    "target_type": "The Cheating Husband",
+    "category": "DRAMA",
+    "start_image_url": "/api/service/relation-training/images/betrayed_wife_revenge/start.png"
+  },
+  "character_design": {
+    "protagonist_visual": "Korean woman, late 30s, elegant and refined, but now with a determined and cold gaze hiding her heartbreak.",
+    "target_visual": "Korean man, late 30s, outwardly handsome and charming CEO, but with a cunning and deceitful glint in his eyes."
+  },
+  "nodes": [
+    {
+      "id": "node_1",
+      "step_level": 1,
+      "text": "남편은 서재에서 내연녀와 다정하게 웃고 있다. 당신의 발소리가 들리자, 그는 차갑게 돌아서며 말한다. \"우리 이혼해. 지긋지긋해.\"",
+      "image_url": ""
+    },
+    {
+      "id": "node_2_a",
+      "step_level": 2,
+      "text": "남편은 당신의 분노를 비웃듯, 내연녀의 허리를 감싸며 조롱한다. \"가진 것도 없는 네가 뭘 할 수 있는데?\"",
+      "image_url": ""
+    },
+    {
+      "id": "node_2_b",
+      "step_level": 2,
+      "text": "무릎 꿇은 당신을 향해 내연녀가 다가와 귓속말한다. \"언니, 이제 그만 포기해요. 오빠는 이제 제 거예요.\"",
+      "image_url": ""
+    },
+    {
+      "id": "node_3_aa",
+      "step_level": 3,
+      "text": "남편은 당신의 증거에 당황한 표정을 감추지 못한다. \"잠깐, 얘기 좀 해. 이러지 마.\"",
+      "image_url": ""
+    },
+    {
+      "id": "node_3_ab",
+      "step_level": 3,
+      "text": "남편은 당신의 불안한 눈빛을 읽고 더욱 오만해진다. \"봐, 결국 넌 아무것도 못 해. 포기해.\"",
+      "image_url": ""
+    },
+    {
+      "id": "node_3_ba",
+      "step_level": 3,
+      "text": "내연녀는 당신의 물세례에도 굴하지 않고 뻔뻔하게 말한다. \"이런다고 오빠 마음이 바뀌는 줄 알아요?\"",
+      "image_url": ""
+    },
+    {
+      "id": "node_3_bb",
+      "step_level": 3,
+      "text": "남편은 당신의 애원에도 냉정하게 돌아서며 최종 통보를 한다. \"더 이상 못 참아. 당장 나가!\"",
+      "image_url": ""
+    },
+    {
+      "id": "node_4_aaa",
+      "step_level": 4,
+      "text": "남편은 마지막 증거에 모든 것을 잃을 위기에 처하자, 무릎을 꿇고 애원한다. \"제발, 한 번만 용서해 줘!\"",
+      "image_url": ""
+    },
+    {
+      "id": "node_4_aab",
+      "step_level": 4,
+      "text": "남편은 당신의 망설임을 보고 교활하게 속삭인다. \"정말 나 없이 살 수 있을 것 같아?\"",
+      "image_url": ""
+    },
+    {
+      "id": "node_4_aba",
+      "step_level": 4,
+      "text": "남편은 당신의 반격에 당황하며 비열하게 웃는다. \"설마... 네가 뭘 할 수 있다고?\"",
+      "image_url": ""
+    },
+    {
+      "id": "node_4_abb",
+      "step_level": 4,
+      "text": "남편은 당신의 눈물을 보고 승리의 미소를 짓는다. \"결국 넌 내 손바닥 안이야.\"",
+      "image_url": ""
+    },
+    {
+      "id": "node_4_baa",
+      "step_level": 4,
+      "text": "내연녀는 당신의 복수 선언에 겁에 질려 떨고, 남편은 비로소 사태의 심각성을 깨닫는다. \"말도 안 돼!\"",
+      "image_url": ""
+    },
+    {
+      "id": "node_4_bab",
+      "step_level": 4,
+      "text": "내연녀와 남편은 당신의 씁쓸한 표정을 보고 안도하지만, 당신의 눈엔 복수심 대신 허무함이 가득하다.",
+      "image_url": ""
+    },
+    {
+      "id": "node_4_bba",
+      "step_level": 4,
+      "text": "남편은 당신의 마지막 반격에 경악하며 뒤늦게 후회한다. \"설마... 네가 이걸 알고 있었어?\"",
+      "image_url": ""
+    },
+    {
+      "id": "node_4_bbb",
+      "step_level": 4,
+      "text": "남편은 모든 것을 포기한 당신을 비웃듯, 내연녀와 함께 떠난다. 당신은 홀로 폐허가 된 집을 바라본다.",
+      "image_url": ""
+    }
+  ],
+  "options": [
+    {
+      "from_node_id": "node_1",
+      "option_code": "A",
+      "text": "\"이혼? 그래, 해! 대신 넌 가진 모든 걸 잃게 될 거야!\" (남편의 뺨을 때린다)",
+      "to_node_id": "node_2_a",
+      "result_code": null
+    },
+    {
+      "from_node_id": "node_1",
+      "option_code": "B",
+      "text": "(털썩 주저앉으며) \"어떻게... 당신이 나에게 이럴 수 있어... 내가 뭘 잘못했다고...\" (오열한다)",
+      "to_node_id": "node_2_b",
+      "result_code": null
+    },
+    {
+      "from_node_id": "node_2_a",
+      "option_code": "A",
+      "text": "\"아무것도 없다니? 네 가면을 벗겨줄 증거는 충분해.\" (증거를 들이민다)",
+      "to_node_id": "node_3_aa",
+      "result_code": null
+    },
+    {
+      "from_node_id": "node_2_a",
+      "option_code": "B",
+      "text": "(손을 떨며) \"내가... 당신에게 복수할 수 있을까...?\" (불안한 눈빛)",
+      "to_node_id": "node_3_ab",
+      "result_code": null
+    },
+    {
+      "from_node_id": "node_2_b",
+      "option_code": "A",
+      "text": "\"어디서 감히! 이 집안에서 당장 나가!\" (내연녀에게 물을 뿌린다)",
+      "to_node_id": "node_3_ba",
+      "result_code": null
+    },
+    {
+      "from_node_id": "node_2_b",
+      "option_code": "B",
+      "text": "(울면서) \"당신... 정말 나를 버릴 거야...? 제발... 돌아와 줘...\" (매달린다)",
+      "to_node_id": "node_3_bb",
+      "result_code": null
+    },
+    {
+      "from_node_id": "node_3_aa",
+      "option_code": "A",
+      "text": "\"용서? 내 인생을 망쳐놓고? 이제 네 차례야.\" (마지막 증거를 터트린다)",
+      "to_node_id": "node_4_aaa",
+      "result_code": null
+    },
+    {
+      "from_node_id": "node_3_aa",
+      "option_code": "B",
+      "text": "(잠시 흔들리며) \"정말... 달라질 수 있을까...?\" (고민한다)",
+      "to_node_id": "node_4_aab",
+      "result_code": null
+    },
+    {
+      "from_node_id": "node_3_ab",
+      "option_code": "A",
+      "text": "\"천만에! 이제부터 진짜 지옥을 보여줄게!\" (비밀리에 모아둔 재산을 공개한다)",
+      "to_node_id": "node_4_aba",
+      "result_code": null
+    },
+    {
+      "from_node_id": "node_3_ab",
+      "option_code": "B",
+      "text": "(눈물을 흘리며) \"그만... 이제 정말 지쳤어...\" (모든 걸 내려놓는다)",
+      "to_node_id": "node_4_abb",
+      "result_code": null
+    },
+    {
+      "from_node_id": "node_3_ba",
+      "option_code": "A",
+      "text": "\"사랑? 돈을 사랑하겠지. 너희 둘 다 벌 받을 거야.\" (통쾌하게 복수를 시작한다)",
+      "to_node_id": "node_4_baa",
+      "result_code": null
+    },
+    {
+      "from_node_id": "node_3_ba",
+      "option_code": "B",
+      "text": "(복수했지만 허무함을 느끼며) \"이게... 정말 내가 원했던 걸까...?\" (씁쓸하게 돌아선다)",
+      "to_node_id": "node_4_bab",
+      "result_code": null
+    },
+    {
+      "from_node_id": "node_3_bb",
+      "option_code": "A",
+      "text": "\"나가라고? 그럼 이 집에서 네 모든 걸 뺏어서 나갈게!\" (숨겨둔 비자금 증거를 꺼낸다)",
+      "to_node_id": "node_4_bba",
+      "result_code": null
+    },
+    {
+      "from_node_id": "node_3_bb",
+      "option_code": "B",
+      "text": "(체념한 듯) \"그래... 다 가져가... 난 이제 아무것도 필요 없어...\" (쓸쓸히 집을 나선다)",
+      "to_node_id": "node_4_bbb",
+      "result_code": null
+    },
+    {
+      "from_node_id": "node_4_aaa",
+      "option_code": "A",
+      "text": "\"이미 늦었어. 이제부터는 나 없이 살아가 봐.\" (냉정하게 돌아선다)",
+      "to_node_id": null,
+      "result_code": "AAAA"
+    },
+    {
+      "from_node_id": "node_4_aaa",
+      "option_code": "B",
+      "text": "(잠시 망설인 뒤) \"마지막 기회야. 다시는 날 배신하지 마.\" (손을 내민다)",
+      "to_node_id": null,
+      "result_code": "AAAB"
+    },
+    {
+      "from_node_id": "node_4_aab",
+      "option_code": "A",
+      "text": "\"당신 없이도 충분히 잘 살 수 있어!\" (결연하게 돌아선다)",
+      "to_node_id": null,
+      "result_code": "AABA"
+    },
+    {
+      "from_node_id": "node_4_aab",
+      "option_code": "B",
+      "text": "(결국 흔들리며) \"...다시 한 번 기회를 줄게.\" (눈물을 흘린다)",
+      "to_node_id": null,
+      "result_code": "AABB"
+    },
+    {
+      "from_node_id": "node_4_aba",
+      "option_code": "A",
+      "text": "\"네 비열한 웃음, 곧 후회하게 될 거야.\" (숨겨둔 비장의 카드를 꺼낸다)",
+      "to_node_id": null,
+      "result_code": "ABAA"
+    },
+    {
+      "from_node_id": "node_4_aba",
+      "option_code": "B",
+      "text": "(허탈하게 웃으며) \"이제 복수도 지쳐... 그냥 끝내자.\" (모든 걸 포기한다)",
+      "to_node_id": null,
+      "result_code": "ABAB"
+    },
+    {
+      "from_node_id": "node_4_abb",
+      "option_code": "A",
+      "text": "\"아니, 아직 끝나지 않았어!\" (마지막 힘을 쥐어짜 반격한다)",
+      "to_node_id": null,
+      "result_code": "ABBA"
+    },
+    {
+      "from_node_id": "node_4_abb",
+      "option_code": "B",
+      "text": "\"더 이상 싸울 힘이 없어...\" (모든 걸 체념한다)",
+      "to_node_id": null,
+      "result_code": "ABBB"
+    },
+    {
+      "from_node_id": "node_4_baa",
+      "option_code": "A",
+      "text": "\"이제 너희 둘이 지옥을 맛볼 차례야.\" (통쾌하게 웃는다)",
+      "to_node_id": null,
+      "result_code": "BAAA"
+    },
+    {
+      "from_node_id": "node_4_baa",
+      "option_code": "B",
+      "text": "(복수했지만 공허함을 느끼며) \"이게 정말 나를 행복하게 할까...?\" (씁쓸하게 생각한다)",
+      "to_node_id": null,
+      "result_code": "BAAB"
+    },
+    {
+      "from_node_id": "node_4_bab",
+      "option_code": "A",
+      "text": "\"아니, 이대로 끝낼 순 없어!\" (다시 복수심을 불태운다)",
+      "to_node_id": null,
+      "result_code": "BABA"
+    },
+    {
+      "from_node_id": "node_4_bab",
+      "option_code": "B",
+      "text": "\"그래, 이쯤에서 멈추는 게 나을 것 같아.\" (복수를 중단한다)",
+      "to_node_id": null,
+      "result_code": "BABB"
+    },
+    {
+      "from_node_id": "node_4_bba",
+      "option_code": "A",
+      "text": "\"내 복수는 지금부터 시작이야!\" (숨겨둔 결정적인 증거를 공개한다)",
+      "to_node_id": null,
+      "result_code": "BBAA"
+    },
+    {
+      "from_node_id": "node_4_bba",
+      "option_code": "B",
+      "text": "(복수에 성공했지만) \"이게 최선이었을까...\" (씁쓸한 미소를 짓는다)",
+      "to_node_id": null,
+      "result_code": "BBAB"
+    },
+    {
+      "from_node_id": "node_4_bbb",
+      "option_code": "A",
+      "text": "\"아니, 난 아직 끝나지 않았어!\" (마지막 발버둥으로 재기를 노린다)",
+      "to_node_id": null,
+      "result_code": "BBBA"
+    },
+    {
+      "from_node_id": "node_4_bbb",
+      "option_code": "B",
+      "text": "\"모든 걸 내려놓을게... 편히 쉬고 싶어.\" (절망하며 주저앉는다)",
+      "to_node_id": null,
+      "result_code": "BBBB"
+    }
+  ],
+  "results": [
+    {
+      "result_code": "AAAA",
+      "display_title": "완벽한 복수: 악인의 몰락",
+      "analysis_text": "사이다 백만 병! 여주인공 복수 제대로 했다! 악인은 모든 것을 잃고 비참하게 몰락. 진정한 해피엔딩!",
+      "atmosphere_image_type": "FLOWER",
+      "relation_health_level": "GOOD",
+      "boundary_style": "HEALTHY_ASSERTIVE",
+      "relationship_trend": "IMPROVING",
+      "image_url": "/api/service/relation-training/images/betrayed_wife_revenge/result_AAAA.png"
+    },
+    {
+      "result_code": "AAAB",
+      "display_title": "씁쓸한 승리: 복수의 그늘",
+      "analysis_text": "복수는 성공했지만 왠지 모를 공허함... 현실적이라 더 슬퍼요. 그래도 새로운 시작을 응원합니다!",
+      "atmosphere_image_type": "CLOUDY",
+      "relation_health_level": "MIXED",
+      "boundary_style": "OVERLY_ACCOMMODATING",
+      "relationship_trend": "STAGNANT",
+      "image_url": "/api/service/relation-training/images/betrayed_wife_revenge/result_AAAB.png"
+    },
+    {
+      "result_code": "AABA",
+      "display_title": "고난 끝 역전: 여왕의 귀환",
+      "analysis_text": "초반에 흔들렸지만 역시 여주인공! 다시 일어선 모습 멋졌다! 인생 역전 드라마 탄생!",
+      "atmosphere_image_type": "FLOWER",
+      "relation_health_level": "GOOD",
+      "boundary_style": "HEALTHY_ASSERTIVE",
+      "relationship_trend": "IMPROVING",
+      "image_url": "/api/service/relation-training/images/betrayed_wife_revenge/result_AABA.png"
+    },
+    {
+      "result_code": "AABB",
+      "display_title": "좌절된 복수: 무너진 마음",
+      "analysis_text": "아... 결국 무너졌네... 너무 현실이라 더 슬퍼요. 여주인공 힘내요 ㅠㅠ",
+      "atmosphere_image_type": "STORM",
+      "relation_health_level": "BAD",
+      "boundary_style": "OVERLY_ACCOMMODATING",
+      "relationship_trend": "DECLINING",
+      "image_url": "/api/service/relation-training/images/betrayed_wife_revenge/result_AABB.png"
+    },
+    {
+      "result_code": "ABAA",
+      "display_title": "각성한 복수자: 승리의 미소",
+      "analysis_text": "위기를 기회로! 여주의 성장 서사가 미쳤다! 고구마 한입 먹다 사이다 원샷!",
+      "atmosphere_image_type": "FLOWER",
+      "relation_health_level": "GOOD",
+      "boundary_style": "HEALTHY_ASSERTIVE",
+      "relationship_trend": "IMPROVING",
+      "image_url": "/api/service/relation-training/images/betrayed_wife_revenge/result_ABAA.png"
+    },
+    {
+      "result_code": "ABAB",
+      "display_title": "허무한 종결: 복수의 끝",
+      "analysis_text": "복수 끝에 남는 건 허무함뿐... 씁쓸한 교훈이 남는 드라마네요. 현실적인 엔딩!",
+      "atmosphere_image_type": "CLOUDY",
+      "relation_health_level": "MIXED",
+      "boundary_style": "OVERLY_ACCOMMODATING",
+      "relationship_trend": "STAGNANT",
+      "image_url": "/api/service/relation-training/images/betrayed_wife_revenge/result_ABAB.png"
+    },
+    {
+      "result_code": "ABBA",
+      "display_title": "패배를 딛고: 최후의 반격",
+      "analysis_text": "와... 포기하지 않는 자에게 복이 있나니! 막판 뒤집기 장인! 심장 쫄깃했다!",
+      "atmosphere_image_type": "FLOWER",
+      "relation_health_level": "GOOD",
+      "boundary_style": "HEALTHY_ASSERTIVE",
+      "relationship_trend": "IMPROVING",
+      "image_url": "/api/service/relation-training/images/betrayed_wife_revenge/result_ABBA.png"
+    },
+    {
+      "result_code": "ABBB",
+      "display_title": "절망의 나락: 모든 것을 잃다",
+      "analysis_text": "이게 현실인가... 너무 가혹하다 ㅠㅠ 결국 해피엔딩은 없었다... 슬픔만 남았네.",
+      "atmosphere_image_type": "STORM",
+      "relation_health_level": "BAD",
+      "boundary_style": "OVERLY_ACCOMMODATING",
+      "relationship_trend": "DECLINING",
+      "image_url": "/api/service/relation-training/images/betrayed_wife_revenge/result_ABBB.png"
+    },
+    {
+      "result_code": "BAAA",
+      "display_title": "통쾌한 복수: 정의 구현",
+      "analysis_text": "고구마 먹다 사이다 제대로! 각성한 여주인공 최고! 이 맛에 막장드라마 봅니다!",
+      "atmosphere_image_type": "FLOWER",
+      "relation_health_level": "GOOD",
+      "boundary_style": "HEALTHY_ASSERTIVE",
+      "relationship_trend": "IMPROVING",
+      "image_url": "/api/service/relation-training/images/betrayed_wife_revenge/result_BAAA.png"
+    },
+    {
+      "result_code": "BAAB",
+      "display_title": "복수의 여운: 새로운 시작",
+      "analysis_text": "완벽한 복수는 아니지만, 새로운 시작을 응원합니다! 씁쓸한 결말이 더 기억에 남네요.",
+      "atmosphere_image_type": "CLOUDY",
+      "relation_health_level": "MIXED",
+      "boundary_style": "OVERLY_ACCOMMODATING",
+      "relationship_trend": "STAGNANT",
+      "image_url": "/api/service/relation-training/images/betrayed_wife_revenge/result_BAAB.png"
+    },
+    {
+      "result_code": "BABA",
+      "display_title": "굴하지 않는 자: 승리의 깃발",
+      "analysis_text": "우여곡절 끝에 성공! 역시 포기하지 않는 게 중요해! 인생은 한 방이다!",
+      "atmosphere_image_type": "FLOWER",
+      "relation_health_level": "GOOD",
+      "boundary_style": "HEALTHY_ASSERTIVE",
+      "relationship_trend": "IMPROVING",
+      "image_url": "/api/service/relation-training/images/betrayed_wife_revenge/result_BABA.png"
+    },
+    {
+      "result_code": "BABB",
+      "display_title": "지친 복수: 멈춰버린 칼날",
+      "analysis_text": "결국 복수가 모든 걸 해결해주진 못했네요... 안타까운 선택 ㅠㅠ 마음이 아프다.",
+      "atmosphere_image_type": "STORM",
+      "relation_health_level": "BAD",
+      "boundary_style": "OVERLY_ACCOMMODATING",
+      "relationship_trend": "DECLINING",
+      "image_url": "/api/service/relation-training/images/betrayed_wife_revenge/result_BABB.png"
+    },
+    {
+      "result_code": "BBAA",
+      "display_title": "반전의 여왕: 화려한 부활",
+      "analysis_text": "이게 바로 막장 드라마의 묘미! 반전의 반전! 인생은 한 치 앞도 모른다!",
+      "atmosphere_image_type": "FLOWER",
+      "relation_health_level": "GOOD",
+      "boundary_style": "HEALTHY_ASSERTIVE",
+      "relationship_trend": "IMPROVING",
+      "image_url": "/api/service/relation-training/images/betrayed_wife_revenge/result_BBAA.png"
+    },
+    {
+      "result_code": "BBAB",
+      "display_title": "복수 후의 쓸쓸함: 공허한 승리",
+      "analysis_text": "복수는 성공했지만 마음의 상처는 깊네... 씁쓸한 여운이 남는 결말입니다.",
+      "atmosphere_image_type": "CLOUDY",
+      "relation_health_level": "MIXED",
+      "boundary_style": "OVERLY_ACCOMMODATING",
+      "relationship_trend": "STAGNANT",
+      "image_url": "/api/service/relation-training/images/betrayed_wife_revenge/result_BBAB.png"
+    },
+    {
+      "result_code": "BBBA",
+      "display_title": "절망 속 희망: 기적의 역전",
+      "analysis_text": "진정한 승자는 끝까지 포기하지 않는 자! 막장의 끝은 해피엔딩?! 대박!",
+      "atmosphere_image_type": "FLOWER",
+      "relation_health_level": "GOOD",
+      "boundary_style": "HEALTHY_ASSERTIVE",
+      "relationship_trend": "IMPROVING",
+      "image_url": "/api/service/relation-training/images/betrayed_wife_revenge/result_BBBA.png"
+    },
+    {
+      "result_code": "BBBB",
+      "display_title": "최악의 결말: 나락으로 떨어지다",
+      "analysis_text": "너무 슬퍼서 울었다... 이게 드라마인가 현실인가. 고구마 100개 먹은 기분 ㅠㅠ",
+      "atmosphere_image_type": "STORM",
+      "relation_health_level": "BAD",
+      "boundary_style": "OVERLY_ACCOMMODATING",
+      "relationship_trend": "DECLINING",
+      "image_url": "/api/service/relation-training/images/betrayed_wife_revenge/result_BBBB.png"
+    }
+  ]
+}

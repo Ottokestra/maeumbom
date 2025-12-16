@@ -87,19 +87,70 @@ class SileroVAD:
         on_speech_end_callback=None
     ) -> Tuple[bool, Optional[np.ndarray], bool]:
         """
-        오디오 청크 처리
+        오디오 청크 처리 (임의 크기 지원 - 내부에서 512로 분할)
         
         Args:
-            audio_chunk: 오디오 데이터 (numpy array, float32)
+            audio_chunk: 오디오 데이터 (numpy array, float32, any size)
+            on_speech_end_callback: 긴 침묵 감지 시 호출될 콜백 함수 (optional)
+            
+        Returns:
+            (발화 완료 여부, 발화 오디오 데이터, 짧은 침묵 감지 여부)
+        """
+        if len(audio_chunk) == 0:
+            return False, None, False
+        
+        # 🆕 Silero VAD는 16kHz에서 512 샘플만 처리 가능
+        # 큰 청크는 512 샘플씩 분할하여 순차 처리
+        VAD_CHUNK_SIZE = 512
+        
+        # 청크가 512보다 작으면 그대로 처리
+        if len(audio_chunk) <= VAD_CHUNK_SIZE:
+            return self._process_single_chunk(audio_chunk, on_speech_end_callback)
+        
+        # 청크가 512보다 크면 분할 처리
+        final_is_speech_end = False
+        final_speech_audio = None
+        final_is_short_pause = False
+        
+        num_segments = len(audio_chunk) // VAD_CHUNK_SIZE
+        
+        for i in range(num_segments):
+            start_idx = i * VAD_CHUNK_SIZE
+            end_idx = start_idx + VAD_CHUNK_SIZE
+            segment = audio_chunk[start_idx:end_idx]
+            
+            is_speech_end, speech_audio, is_short_pause = self._process_single_chunk(
+                segment, on_speech_end_callback
+            )
+            
+            # 결과 누적 (마지막 유효한 결과 사용)
+            if is_speech_end:
+                final_is_speech_end = True
+                final_speech_audio = speech_audio
+            elif is_short_pause and not final_is_short_pause:
+                # 짧은 침묵은 첫 번째 것만 사용
+                final_is_short_pause = True
+                if speech_audio is not None:
+                    final_speech_audio = speech_audio
+        
+        return final_is_speech_end, final_speech_audio, final_is_short_pause
+    
+    def _process_single_chunk(
+        self,
+        audio_chunk: np.ndarray,
+        on_speech_end_callback=None
+    ) -> Tuple[bool, Optional[np.ndarray], bool]:
+        """
+        단일 512-sample 청크 처리 (내부 메서드)
+        
+        Args:
+            audio_chunk: 오디오 데이터 (numpy array, float32, 512 samples)
             on_speech_end_callback: 긴 침묵 감지 시 호출될 콜백 함수 (optional)
             
         Returns:
             (발화 완료 여부, 발화 오디오 데이터, 짧은 침묵 감지 여부)
         """
         # Tensor로 변환
-        if len(audio_chunk) == 0:
-            return False, None, False
-            
         audio_tensor = torch.from_numpy(audio_chunk).float()
         
         # VAD 확률 계산

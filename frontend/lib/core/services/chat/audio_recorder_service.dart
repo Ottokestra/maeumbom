@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:record/record.dart';
 
 /// Audio Recorder Service (record 패키지 - Int16 직접 녹음)
-/// PCM16/Mono/16kHz - Int16 데이터를 직접 512-sample chunks로 전송
+/// PCM16/Mono/16kHz - Int16 데이터를 직접 4096-sample chunks로 전송
 class AudioRecorderService {
   final AudioRecorder _recorder = AudioRecorder();
   StreamController<Int16List>? _chunkController; // ✅ Float32 → Int16로 변경
@@ -13,7 +13,7 @@ class AudioRecorderService {
   bool _isRecording = false;
 
   /// 녹음 시작
-  /// Returns: 512-sample Int16List chunks stream
+  /// Returns: 4096-sample Int16List chunks stream
   Future<Stream<Int16List>> startRecording() async {
     if (_isRecording) {
       throw Exception('이미 녹음 중입니다');
@@ -44,7 +44,7 @@ class AudioRecorderService {
     return _chunkController!.stream;
   }
 
-  /// PCM16 데이터를 512-sample Int16 chunks로 처리
+  /// PCM16 데이터를 4096-sample Int16 chunks로 처리
   void _processInt16Chunks(Stream<Uint8List> pcm16Stream) {
     final List<int> buffer = []; // Int16 값 저장
 
@@ -59,11 +59,11 @@ class AudioRecorderService {
           final sample = byteData.getInt16(i, Endian.big); // ★ Big Endian 테스트
           buffer.add(sample);
 
-          // 512-sample 청크 생성
-          if (buffer.length >= 512) {
-            final chunk = Int16List.fromList(buffer.sublist(0, 512));
+          // 4096-sample 청크 생성 (256ms @ 16kHz)
+          if (buffer.length >= 4096) {
+            final chunk = Int16List.fromList(buffer.sublist(0, 4096));
             _chunkController?.add(chunk);
-            buffer.removeRange(0, 512);
+            buffer.removeRange(0, 4096);
           }
         }
       }
@@ -83,6 +83,25 @@ class AudioRecorderService {
     _chunkController = null;
     _recordSubscription = null;
     _isRecording = false;
+  }
+
+  /// 녹음 일시 중지
+  Future<void> pauseRecording() async {
+    if (!_isRecording) return;
+
+    debugPrint('[AudioRecorderService] 녹음 일시 중지');
+    await _recorder.pause();
+  }
+
+  /// 녹음 재개
+  Future<void> resumeRecording() async {
+    if (!_isRecording) {
+      debugPrint('[AudioRecorderService] ⚠️ 녹음이 시작되지 않았습니다');
+      return;
+    }
+
+    debugPrint('[AudioRecorderService] 녹음 재개');
+    await _recorder.resume();
   }
 
   /// 정리

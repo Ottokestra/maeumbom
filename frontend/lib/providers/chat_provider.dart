@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'dart:convert'; // 🆕 For base64 decoding
+import 'dart:typed_data'; // 🆕 For Uint8List
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart'; // ✅ Session 저장
 import '../core/services/chat/bom_chat_service.dart';
@@ -105,7 +107,7 @@ class ChatNotifier extends StateNotifier<ChatState> {
   final Ref _ref;
 
   // ✅ Session 관리
-  static const _sessionDuration = Duration(minutes: 10);
+  static const _sessionDuration = Duration(minutes: 30);
   static const _sessionIdKey = 'chat_session_id';
   static const _sessionTimeKey = 'chat_session_time';
   static const _ttsEnabledKey = 'chat_tts_enabled'; // ✅ TTS 상태 저장 키
@@ -275,29 +277,37 @@ class ChatNotifier extends StateNotifier<ChatState> {
   void _handleAgentResponse(Map<String, dynamic> response) {
     // 🆕 tts_ready 타입 처리
     if (response['type'] == 'tts_ready') {
-      final ttsAudio = response['tts_audio'] as String?;
-      print('[ChatProvider] 🎵 TTS 준비 완료: $ttsAudio');
+      final ttsAudioBase64 = response['tts_audio_base64'] as String?;
+      final ttsAudioFormat = response['tts_audio_format'] as String?;
+      print(
+          '[ChatProvider] 🎵 TTS 준비 완료 (base64, ${ttsAudioBase64?.length ?? 0} chars)');
 
-      if (state.ttsEnabled && ttsAudio != null && ttsAudio.isNotEmpty) {
-        // TTS URL을 완전한 HTTP URL로 변환
-        String ttsUrl = ttsAudio;
-        if (ttsAudio.startsWith('/')) {
-          ttsUrl = 'http://10.0.2.2:8000$ttsAudio';
-        }
+      if (state.ttsEnabled &&
+          ttsAudioBase64 != null &&
+          ttsAudioBase64.isNotEmpty) {
+        print('[ChatProvider] 🎵 TTS 재생 시작 (base64)');
 
-        print('[ChatProvider] 🎵 TTS 재생 시작: $ttsUrl');
+        // 🆕 TTS 재생 (base64 사용)
+        _playTtsAudioBase64(ttsAudioBase64, ttsAudioFormat ?? 'mp3').then((_) {
+          print('[ChatProvider] ✅ TTS 재생 완료 (base64)');
+          print('[ChatProvider] 🔍 Current voiceState: ${state.voiceState}');
+          print(
+              '[ChatProvider] 🔍 _bomChatService.isActive: ${_bomChatService.isActive}');
 
-        // 🆕 TTS 재생 (이제 play()가 완료를 기다림)
-        _ttsPlayerService.play(ttsUrl).then((_) {
-          print('[ChatProvider] ✅ TTS 재생 완료');
           if (state.voiceState == VoiceInterfaceState.replying &&
               _bomChatService.isActive) {
+            print('[ChatProvider] 🔄 Changing state to listening...');
             state = state.copyWith(voiceState: VoiceInterfaceState.listening);
+            print('[ChatProvider] 🔍 New voiceState: ${state.voiceState}');
+
             _bomChatService.resumeAudioTransmission();
-            print('[ChatProvider] TTS 재생 완료 - listening으로 전환 (오디오 재개)');
+            print('[ChatProvider] [VOICE] TTS 완료 - listening 전환 (오디오 재개)');
+          } else {
+            print(
+                '[ChatProvider] ⚠️ State NOT changed - voiceState=${state.voiceState}, isActive=${_bomChatService.isActive}');
           }
-        }).catchError((error) {
-          print('[ChatProvider] ❌ TTS 재생 실패: $error');
+        }).catchError((e) {
+          print('[ChatProvider] ❌ TTS 재생 실패: $e');
           // 실패해도 listening으로 전환 + 오디오 재개
           if (state.voiceState == VoiceInterfaceState.replying &&
               _bomChatService.isActive) {
@@ -346,10 +356,22 @@ class ChatNotifier extends StateNotifier<ChatState> {
       print(
           '[ChatProvider] ✅ ChatMessage created with meta: ${aiMessage.meta}');
 
-      state = state.copyWith(
-        messages: [...state.messages, aiMessage],
-        voiceState: VoiceInterfaceState.replying,
-      );
+      // 🆕 Voice mode: agent_response 받으면 replying 상태로 전환 (TTS 재생 준비)
+      if (_bomChatService.isActive &&
+          (state.voiceState == VoiceInterfaceState.processing ||
+              state.voiceState == VoiceInterfaceState.processingVoice)) {
+        print(
+            '[ChatProvider] 🔄 Voice mode: changing to replying (준비 for TTS)');
+        state = state.copyWith(
+          messages: [...state.messages, aiMessage],
+          voiceState: VoiceInterfaceState.replying,
+        );
+        print('[ChatProvider] 🔍 New voiceState: ${state.voiceState}');
+      } else {
+        state = state.copyWith(
+          messages: [...state.messages, aiMessage],
+        );
+      }
 
       print(
           '[ChatProvider] ✅ State updated, messages count: ${state.messages.length}');
@@ -411,29 +433,6 @@ class ChatNotifier extends StateNotifier<ChatState> {
     // 🆕 텍스트 입력 플래그 설정
     _isVoiceInput = false;
 
-    // 🆕 세션 만료 감지 (메시지 전송 전에 체크)
-    String? expiredSessionId;
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final savedTimeStr = prefs.getString(_sessionTimeKey);
-
-      if (savedTimeStr != null) {
-        final savedTime = DateTime.parse(savedTimeStr);
-        final elapsed = DateTime.now().difference(savedTime);
-
-        // 세션 시간 초과 감지 (하지만 아직 변경하지 않음)
-        if (elapsed >= _sessionDuration) {
-          expiredSessionId = state.sessionId;
-          print('⏰ [Session Expiry] Detected: $expiredSessionId');
-          print(
-              '⏰ [Session Expiry] Elapsed: ${elapsed.inMinutes}m ${elapsed.inSeconds % 60}s');
-          print('⏰ [Session Expiry] Will trigger analysis AFTER message send');
-        }
-      }
-    } catch (e) {
-      print('❌ Session expiry check failed: $e');
-    }
-
     // Add user message to UI
     final userMessage = ChatMessage(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
@@ -465,7 +464,10 @@ class ChatNotifier extends StateNotifier<ChatState> {
       final replyText = response['reply_text'] as String?;
       final emotion = response['emotion'] as String?;
       final responseType = response['response_type'] as String?;
-      final ttsAudioUrl = response['tts_audio_url'] as String?; // ✅ TTS URL
+      final ttsAudioBase64 =
+          response['tts_audio_base64'] as String?; // 🆕 TTS base64
+      final ttsAudioFormat =
+          response['tts_audio_format'] as String?; // 🆕 TTS 포맷
       final alarmInfo = response['alarm_info'] as Map<String, dynamic>?;
 
       print('[ChatProvider] 🔍 [TEXT] response_type: $responseType');
@@ -517,22 +519,28 @@ class ChatNotifier extends StateNotifier<ChatState> {
         }
       }
 
-      // TTS 플레이
-      if (state.ttsEnabled && ttsAudioUrl != null && ttsAudioUrl.isNotEmpty) {
-        await _playTtsAudio(ttsAudioUrl);
+      // 🆕 TTS 플레이 (base64 사용)
+      print(
+          '[ChatProvider] 🔍 TTS Check - state.ttsEnabled: ${state.ttsEnabled}');
+      print(
+          '[ChatProvider] 🔍 TTS Check - ttsAudioBase64 != null: ${ttsAudioBase64 != null}');
+      print(
+          '[ChatProvider] 🔍 TTS Check - ttsAudioBase64 length: ${ttsAudioBase64?.length ?? 0}');
+
+      if (state.ttsEnabled &&
+          ttsAudioBase64 != null &&
+          ttsAudioBase64.isNotEmpty) {
+        print('[ChatProvider] 🎵 Starting TTS playback...');
+        await _playTtsAudioBase64(ttsAudioBase64, ttsAudioFormat ?? 'mp3');
+      } else {
+        print(
+            '[ChatProvider] ⏭️ Skipping TTS playback - ttsEnabled=${state.ttsEnabled}, hasAudio=${ttsAudioBase64 != null}');
       }
 
       print('[ChatProvider] ✅ Text message sent successfully');
 
-      // 🆕 메시지 전송 완료 후 세션 처리
-      if (expiredSessionId != null) {
-        // 세션이 만료되었으므로 새 세션 생성 및 감정분석 trigger
-        print('⏰ [Session Expiry] Message sent. Now creating new session...');
-        await _createNewSession(expiredSessionId: expiredSessionId);
-      } else {
-        // 세션 시간만 업데이트
-        await _updateSessionTime();
-      }
+      // Update session time
+      await _updateSessionTime();
     } catch (e) {
       print('[ChatProvider] ❌ Error in sendTextMessage: $e');
       state = state.copyWith(
@@ -614,33 +622,10 @@ class ChatNotifier extends StateNotifier<ChatState> {
     await _saveSession(newSessionId);
     print('🆕 New session created: $newSessionId');
 
-    // 🆕 이전 세션이 있었다면 감정분석 trigger
+    // Note: Emotion analysis is now handled by backend scheduler (daily 3AM)
     if (expiredSessionId != null && !expiredSessionId.endsWith('_default')) {
-      _triggerSessionEmotionAnalysis(expiredSessionId);
-    }
-  }
-
-  /// 🆕 세션 만료 시 감정분석 트리거
-  Future<void> _triggerSessionEmotionAnalysis(String expiredSessionId) async {
-    try {
-      print('[Emotion] 🔄 Session expired: $expiredSessionId');
-      print('[Emotion] 📊 Triggering emotion analysis...');
-
-      final dio = _ref.read(dioWithAuthProvider);
-      await dio.post('/emotion/api/analyze-session', data: {
-        'session_id': expiredSessionId,
-      });
-
-      print('[Emotion] ✅ Session emotion analysis completed');
-    } catch (e) {
-      // 404는 메시지가 없는 정상 상황
-      if (e.toString().contains('404') ||
-          e.toString().contains('No user messages')) {
-        print('[Emotion] ⚠️ No messages in session (skipped analysis)');
-      } else {
-        print('[Emotion] ❌ Session emotion analysis failed: $e');
-      }
-      // Silent fail - 백그라운드 작업이므로 UI에 영향 없음
+      print(
+          '⏰ Session expired: $expiredSessionId (will be analyzed by scheduler)');
     }
   }
 
@@ -803,6 +788,45 @@ class ChatNotifier extends StateNotifier<ChatState> {
           state = state.copyWith(voiceState: VoiceInterfaceState.idle);
         }
       });
+    }
+  }
+
+  /// 🆕 Play TTS Audio from Base64
+  Future<void> _playTtsAudioBase64(String base64Audio, String format) async {
+    // 음성 채팅 중이면 재생하지 않음
+    if (state.voiceState == VoiceInterfaceState.listening ||
+        state.voiceState == VoiceInterfaceState.processing) {
+      return;
+    }
+
+    final isVoiceChatActive = _bomChatService.isActive;
+
+    if (!isVoiceChatActive) {
+      state = state.copyWith(voiceState: VoiceInterfaceState.replying);
+    }
+
+    try {
+      final Uint8List audioBytes = base64Decode(base64Audio);
+      print(
+          '[ChatProvider] 🎵 Playing base64 TTS audio (${audioBytes.length} bytes, $format)');
+
+      // BytesSource로 재생
+      await _ttsPlayerService.playBytes(audioBytes, format);
+      print('[ChatProvider] ✅ TTS 재생 완료 (base64)');
+    } catch (e) {
+      print('[ChatProvider] ❌ TTS 재생 실패: $e');
+    }
+
+    // 상태 복귀
+    if (isVoiceChatActive) {
+      if (state.voiceState == VoiceInterfaceState.replying) {
+        state = state.copyWith(voiceState: VoiceInterfaceState.listening);
+        _bomChatService.resumeAudioTransmission();
+        print('[ChatProvider] [VOICE] TTS 완료 - listening 전환 (오디오 재개)');
+      }
+    } else {
+      state = state.copyWith(voiceState: VoiceInterfaceState.idle);
+      print('[ChatProvider] [TEXT] TTS 완료 - idle로 복귀');
     }
   }
 }

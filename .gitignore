@@ -14,3 +14,10 @@
 frontend-test/
 
 .env
+
+# 발표 자료 (Presentation Materials)
+PRESENTATION_*.md
+DEVELOPMENT_DELIVERABLE.md
+ARCHITECTURE_FLOW_DIAGRAM.md
+GEMINI_IMAGE_PROMPTS.md
+VOICE_CHAT_TEST_GUIDE.md
