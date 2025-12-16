@@ -188,7 +188,7 @@ python backend/scripts/migrate_target_events.py --date 2024-12-13
 python backend/scripts/migrate_target_events.py --start-date 2024-12-01 --end-date 2024-12-13
 
 # 특정 사용자만 마이그레이션
-python backend/scripts/migrate_target_events.py --user-id 1 --days 30
+python backend/scripts/migrate_target_events.py --user-id 3 --days 7
 
 # Dry run (실제 저장하지 않고 분석만)
 python backend/scripts/migrate_target_events.py --days 7 --dry-run
@@ -247,11 +247,22 @@ python backend/scripts/migrate_target_events.py --start-date 2025-11-06 --end-da
 **주간 요약:**
 ```bash
 # 최근 40일치 주간 요약
-python backend/scripts/generate_weekly_summaries.py --days 40
+python scripts/generate_weekly_summaries.py --days 40
 
 # 특정 기간 주간 요약
-python backend/scripts/generate_weekly_summaries.py --start-date 2025-11-06 --end-date 2025-12-13
+python scripts/generate_weekly_summaries.py --start-date 2025-11-06 --end-date 2025-12-13
+
+# 최근 40일치 주간 요약 생성
+python scripts/generate_weekly_summaries.py --days 40
+
+# 또는 특정 사용자만
+python scripts/generate_weekly_summaries.py --user-id 3 --days 40
+
+# 또는 특정 기간
+python scripts/generate_weekly_summaries.py --user-id 3 --start-date 2025-12-08 --end-date 2025-12-14
+
 ```
+
 
 ### 향후 계획: 자동화 (스케줄러)
 
