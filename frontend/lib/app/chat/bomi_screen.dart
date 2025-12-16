@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:permission_handler/permission_handler.dart';
 import '../../ui/app_ui.dart';
 import '../../ui/layout/bottom_voice_bar.dart';
+import '../../ui/components/message_dialog.dart';
 import '../../providers/chat_provider.dart';
 import '../../providers/routine_provider.dart';
 import '../../core/services/navigation/navigation_service.dart';
@@ -220,25 +221,83 @@ class _BomiScreenState extends ConsumerState<BomiScreen> {
     navigation();
   }
 
+  /// 대화 종료 확인 다이얼로그 표시
+  /// 
+  /// BomiReactionGenerator를 사용하여 랜덤 메시지를 생성합니다.
+  /// MessageDialog 컴포넌트를 사용하여 마음봄 디자인 시스템을 준수합니다.
+  /// 
+  /// 반환: true (나가기), false (계속 대화), null (취소)
+  Future<bool?> _showExitDialog(BuildContext context) async {
+    final message = BomiReactionGenerator.generateExitConfirmation();
+    
+    bool? result;
+    
+    await showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => MessageDialog(
+        title: message['title']!,
+        message: message['content']!,
+        primaryButtonText: '응, 다음에 봐',
+        secondaryButtonText: '조금 더 있을래',
+        onPrimaryPressed: () {
+          result = true;
+          Navigator.pop(context);
+        },
+        onSecondaryPressed: () {
+          result = false;
+          Navigator.pop(context);
+        },
+        type: MessageDialogType.red,
+      ),
+    );
+    
+    return result;
+  }
+
   @override
   Widget build(BuildContext context) {
     final chatState = ref.watch(chatProvider);
     final navigationService = NavigationService(context, ref);
 
-    return AppFrame(
-      resizeToAvoidBottomInset: false, // 키보드 처리를 수동으로 제어
-      backgroundColor: AppColors.basicColor, //**배경색**
-      topBar: TopBar(
-        title: '',
-        leftIcon: Icons.arrow_back_ios,
-        rightIcon: Icons.more_horiz,
-        onTapLeft: () =>
-            _stopVoiceAndNavigate(() => navigationService.navigateToTab(0)),
-        onTapRight: () =>
-            _stopVoiceAndNavigate(() => MoreMenuSheet.show(context)),
+    return PopScope(
+      canPop: false, // 자동 뒤로가기 방지
+      onPopInvoked: (bool didPop) async {
+        if (didPop) return;
+        
+        // 대화 내용이 있는 경우에만 팝업 표시
+        if (chatState.messages.isNotEmpty) {
+          final shouldExit = await _showExitDialog(context);
+          if (shouldExit == true) {
+            // 세션 리셋 (메시지 삭제 + 새 세션 생성)
+            await ref.read(chatProvider.notifier).resetSession();
+            
+            // 음성 대화 중지 후 홈으로 이동
+            if (context.mounted) {
+              await _stopVoiceAndNavigate(() => navigationService.navigateToTab(0));
+            }
+          }
+        } else {
+          // 대화 내용이 없으면 바로 나가기 (세션 유지)
+          await _stopVoiceAndNavigate(() => navigationService.navigateToTab(0));
+        }
+      },
+      child: AppFrame(
+        resizeToAvoidBottomInset: false, // 키보드 처리를 수동으로 제어
         backgroundColor: AppColors.basicColor, //**배경색**
-        foregroundColor: AppColors.textPrimary,
-      ),
+        topBar: TopBar(
+          title: '',
+          leftIcon: Icons.arrow_back_ios,
+          rightIcon: Icons.more_horiz,
+          onTapLeft: () {
+            // PopScope가 처리하도록 Navigator.maybePop 호출
+            Navigator.maybePop(context);
+          },
+          onTapRight: () =>
+              _stopVoiceAndNavigate(() => MoreMenuSheet.show(context)),
+          backgroundColor: AppColors.basicColor, //**배경색**
+          foregroundColor: AppColors.textPrimary,
+        ),
       bottomBar: _showInputBar
           ? BottomInputBar(
               controller: _textController,
@@ -254,17 +313,18 @@ class _BomiScreenState extends ConsumerState<BomiScreen> {
               onMicTap: _handleVoiceInput,
               onTextModeTap: _handleTextModeToggle,
             ),
-      body: Column(
-        children: [
-          Expanded(
-            child: BomiContent(
-              showInputBar: _showInputBar,
-              onTextInputTap: _handleTextModeToggle,
-              onVoiceToggle: _handleVoiceInput,
-              typingReaction: _typingReaction, // 🆕 입력 반응 메시지
+        body: Column(
+          children: [
+            Expanded(
+              child: BomiContent(
+                showInputBar: _showInputBar,
+                onTextInputTap: _handleTextModeToggle,
+                onVoiceToggle: _handleVoiceInput,
+                typingReaction: _typingReaction, // 🆕 입력 반응 메시지
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
