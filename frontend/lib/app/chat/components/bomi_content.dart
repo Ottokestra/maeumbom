@@ -364,7 +364,9 @@ class _BomiContentState extends ConsumerState<BomiContent> {
                                 vertical: AppSpacing.xxs,
                               ),
                               decoration: BoxDecoration(
-                                color: AppColors.primaryColor,
+                                color: chatState.ttsEnabled
+                                    ? AppColors.secondaryColor
+                                    : AppColors.primaryColor,
                                 borderRadius: BorderRadius.circular(AppRadius.pill),
                               ),
                               child: Row(
