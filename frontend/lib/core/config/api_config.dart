@@ -83,6 +83,7 @@ class ApiConfig {
   static const String recommendationQuote = '$recommendationBase/quote';
   static const String recommendationMusic = '$recommendationBase/music';
   static const String recommendationImage = '$recommendationBase/image';
+  static const String routineLatest = '$recommendationBase/routine/latest';
 
   // Emotion Report Endpoints
   static const String emotionReportBase = '/api/v1/reports/emotion';

@@ -1,6 +1,7 @@
 """추천 API 스키마 정의."""
 
-from typing import List, Literal, Optional
+from datetime import date
+from typing import Any, Dict, List, Literal, Optional
 
 from pydantic import BaseModel, HttpUrl
 
@@ -49,3 +50,30 @@ class ImageResponse(BaseModel):
     """이미지 추천 응답."""
 
     image_url: HttpUrl
+
+
+# ============================================================================
+# 루틴 추천 스키마
+# ============================================================================
+
+
+class RoutineItem(BaseModel):
+    """루틴 아이템."""
+
+    routine_id: str
+    title: str
+    category: Optional[str] = None
+
+
+class RoutineRecommendationResponse(BaseModel):
+    """루틴 추천 응답."""
+
+    id: Optional[int] = None
+    recommendation_date: Optional[date] = None
+    routines: List[RoutineItem] = []
+    primary_emotion: Optional[str] = None
+    sentiment_overall: Optional[str] = None
+    total_emotions: Optional[int] = None
+
+    class Config:
+        from_attributes = True

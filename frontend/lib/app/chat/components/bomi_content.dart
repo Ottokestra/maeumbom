@@ -7,7 +7,6 @@ import '../../../providers/alarm_provider.dart';
 import '../../../providers/daily_mood_provider.dart';
 import '../../../core/utils/text_formatter.dart';
 import '../../../core/utils/emotion_classifier.dart';
-import '../chat_alarm_dialogs.dart';
 import '../helpers/animation_state_helper.dart';
 import '../helpers/process_state_helper.dart';
 import '../helpers/status_message_helper.dart';
@@ -24,12 +23,14 @@ class BomiContent extends ConsumerStatefulWidget {
   final bool showInputBar;
   final VoidCallback onTextInputTap;
   final VoidCallback onVoiceToggle;
+  final String? typingReaction; // 입력 시작 시 표시할 반응 메시지
 
   const BomiContent({
     super.key,
     required this.showInputBar,
     required this.onTextInputTap,
     required this.onVoiceToggle,
+    this.typingReaction,
   });
 
   @override
@@ -238,9 +239,16 @@ class _BomiContentState extends ConsumerState<BomiContent> {
     final latestBotMessage =
         chatState.messages.where((msg) => !msg.isUser).lastOrNull;
 
-    final botMessageText = latestBotMessage?.text ?? '오늘 하루 어땟어? 대화를 진행해볼래?';
+    // 🆕 입력 반응이 있으면 그걸 표시, 없으면 AI 메시지 또는 기본 메시지
+    print('[BomiContent] widget.typingReaction: ${widget.typingReaction}');
+    print('[BomiContent] latestBotMessage: ${latestBotMessage?.text}');
+    
+    final botMessageText = widget.typingReaction ?? 
+        (latestBotMessage?.text ?? '오늘 하루 어땟어? 대화를 진행해볼래?');
     final shouldAnimateBotText =
-        latestBotMessage != null || chatState.messages.isEmpty;
+        widget.typingReaction != null || latestBotMessage != null || chatState.messages.isEmpty;
+    
+    print('[BomiContent] Final botMessageText: $botMessageText');
 
     // response_type 확인
     final responseType = latestBotMessage?.responseType;
@@ -417,7 +425,7 @@ class _BomiContentState extends ConsumerState<BomiContent> {
                       EmotionBubble(
                         message: TextFormatter.formatBasicMarkdown(displayText),
                         enableTypingAnimation: shouldAnimateBotText,
-                        key: ValueKey(latestBotMessage?.id ?? 'default'),
+                        key: ValueKey(widget.typingReaction ?? latestBotMessage?.id ?? 'default'),
                         bgWhite: true,
                         showTtsToggle: false,
                       ),

@@ -1,10 +1,13 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:permission_handler/permission_handler.dart';
 import '../../ui/app_ui.dart';
 import '../../ui/layout/bottom_voice_bar.dart';
 import '../../providers/chat_provider.dart';
+import '../../providers/routine_provider.dart';
 import '../../core/services/navigation/navigation_service.dart';
+import '../../core/utils/bomi_reaction_generator.dart';
 import 'components/bomi_content.dart';
 
 /// Bomi Screen - ai 봄이 화면
@@ -21,11 +24,34 @@ class BomiScreen extends ConsumerStatefulWidget {
 class _BomiScreenState extends ConsumerState<BomiScreen> {
   bool _showInputBar = true; // true: input bar, false: voice bar
   final TextEditingController _textController = TextEditingController();
+  String? _typingReaction; // 입력 반응 메시지
+
+  @override
+  void initState() {
+    super.initState();
+    // 루틴 데이터 미리 로드 (백그라운드)
+    Future.microtask(() {
+      ref.read(routineProvider.notifier).loadLatest();
+    });
+    // 텍스트 컨트롤러 리스너 추가 (텍스트가 비워지면 반응 제거)
+    _textController.addListener(_onTextChanged);
+  }
 
   @override
   void dispose() {
+    _textController.removeListener(_onTextChanged);
     _textController.dispose();
     super.dispose();
+  }
+
+  /// 텍스트 변경 감지 (비워지면 반응 제거)
+  void _onTextChanged() {
+    if (_textController.text.isEmpty && _typingReaction != null) {
+      print('[BomiScreen] Text cleared, removing reaction');
+      setState(() {
+        _typingReaction = null;
+      });
+    }
   }
 
   Future<void> _handleTextModeToggle() async {
@@ -124,6 +150,28 @@ class _BomiScreenState extends ConsumerState<BomiScreen> {
     );
   }
 
+  /// 입력 시작 시 반응 메시지 생성
+  void _handleTypingStarted() {
+    print('[BomiScreen] 🎯 _handleTypingStarted called!');
+    
+    // 루틴 데이터 조회
+    final routineState = ref.read(routineProvider);
+    final routineData = routineState.value;
+    
+    print('[BomiScreen] Routine data: ${routineData?.routines.length ?? 0} routines');
+
+    // 반응 메시지 생성
+    final reaction = BomiReactionGenerator.generate(routineData: routineData);
+    
+    print('[BomiScreen] Generated reaction: $reaction');
+
+    setState(() {
+      _typingReaction = reaction;
+    });
+    
+    print('[BomiScreen] State updated with reaction: $_typingReaction');
+  }
+
   /// 텍스트 메시지 전송
   Future<void> _handleSendMessage() async {
     final text = _textController.text.trim();
@@ -132,6 +180,11 @@ class _BomiScreenState extends ConsumerState<BomiScreen> {
     final chatNotifier = ref.read(chatProvider.notifier);
 
     _textController.clear();
+
+    // 반응 메시지 제거 (메시지 전송 시에만)
+    setState(() {
+      _typingReaction = null;
+    });
 
     try {
       await chatNotifier.sendTextMessage(text);
@@ -186,6 +239,7 @@ class _BomiScreenState extends ConsumerState<BomiScreen> {
               backgroundColor: AppColors.bgLightPink, //**배경색**
               onSend: _handleSendMessage,
               onMicTap: _handleVoiceModeToggle,
+              onTypingStarted: _handleTypingStarted, // 🆕 입력 시작 콜백
             )
           : BottomVoiceBar(
               voiceState: chatState.voiceState,
@@ -197,6 +251,7 @@ class _BomiScreenState extends ConsumerState<BomiScreen> {
         showInputBar: _showInputBar,
         onTextInputTap: _handleTextModeToggle,
         onVoiceToggle: _handleVoiceInput,
+        typingReaction: _typingReaction, // 🆕 입력 반응 메시지
       ),
     );
   }
