@@ -404,5 +404,38 @@ class BomiReactionGenerator {
     ];
     return messages[_random.nextInt(messages.length)];
   }
+
+  /// 대화 종료 확인 메시지 생성
+  /// 
+  /// 사용자가 뒤로가기 버튼을 눌렀을 때 표시할 확인 메시지를 생성합니다.
+  /// 봄이의 친근하고 아쉬워하는 감정을 담은 다양한 메시지를 랜덤으로 제공합니다.
+  /// 
+  /// 반환: {'title': '제목', 'content': '내용'} 형태의 Map
+  static Map<String, String> generateExitConfirmation() {
+    final confirmations = [
+      {
+        'title': '벌써 가는 거야?',
+        'content': '오늘 이야기 정말 좋았어!\n다음에 또 만날 수 있지?',
+      },
+      {
+        'title': '잠깐! 벌써 가는 거야?',
+        'content': '지금까지 나눈 이야기는 잘 간직할게.\n정말 가는 거야?',
+      },
+      {
+        'title': '헉! 벌써?',
+        'content': '조금 아쉬운데...\n다음에 또 올 거지?',
+      },
+      {
+        'title': '오늘은 여기까지?',
+        'content': '오늘 이야기 고마웠어.\n다음에 또 만나자!',
+      },
+      {
+        'title': '벌써 가려고?',
+        'content': '아쉽지만... 다음에 또 놀자!\n꼭 다시 와줘!',
+      },
+    ];
+    
+    return confirmations[_random.nextInt(confirmations.length)];
+  }
 }
 
