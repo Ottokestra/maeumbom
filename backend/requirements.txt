@@ -22,15 +22,17 @@ huggingface-hub>=0.20.0
 # ⚠️ 주의: TTS(Text-to-Speech)와 Deep Agent 모두 PyTorch 필요!
 # ⚠️ 절대로 제거하지 마세요!
 #
-# Windows 환경 (권장):
+# 🎮 GPU 가속 (RTX 4060 Laptop - 권장):
+#   pip uninstall torch torchvision torchaudio -y
+#   pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu124
+#
+# CPU ONLY (GPU 없는 환경):
 #   pip install torch torchvision torchaudio
 #
 # Linux + AMD GPU (ROCm):
 #   pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/rocm6.0
-#
-# NVIDIA GPU (CUDA):
-#   pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
 ###########################################################
+# ⚠️ 아래 버전은 GPU 가속용으로 설치하려면 위 명령어 사용 필수
 torch>=2.0.0
 torchvision>=0.15.0
 torchaudio>=2.0.0

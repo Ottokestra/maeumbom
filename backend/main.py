@@ -1036,7 +1036,8 @@ async def stt_websocket(websocket: WebSocket):
                 audio_bytes = data["bytes"]
                 audio_chunk = np.frombuffer(audio_bytes, dtype=np.float32)
 
-                if len(audio_chunk) != 512:
+                if len(audio_chunk) != 4096:
+                    print(f"[WARNING] Expected 4096 samples, got {len(audio_chunk)}, skipping")
                     continue
 
                 is_speech_end, speech_audio, is_short_pause = engine.vad.process_chunk(
@@ -1423,10 +1424,10 @@ async def agent_websocket(websocket: WebSocket, user_id: int = 1):
                     audio_chunk_int16.astype(np.float32) / 32768.0
                 )  # -1.0 ~ 1.0
 
-                # ✅ CRITICAL: 512 샘플 체크 (32ms @ 16kHz)
-                if len(audio_chunk) != 512:
+                # ✅ CRITICAL: 4096 샘플 체크 (256ms @ 16kHz)
+                if len(audio_chunk) != 4096:
                     print(
-                        f"[WARNING] Unexpected chunk size: {len(audio_chunk)}, skipping"
+                        f"[WARNING] Expected 4096 samples, got {len(audio_chunk)}, skipping"
                     )
                     continue
 
