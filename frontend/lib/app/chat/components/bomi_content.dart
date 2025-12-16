@@ -316,16 +316,71 @@ class _BomiContentState extends ConsumerState<BomiContent> {
           widget.onTextInputTap();
         }
       },
-      child: Container(
-        color: AppColors.bgLightPink, // **배경색**
-        child: SafeArea(
-          child: Scrollbar(
-            thumbVisibility: isListType, // list 타입일 때만 스크롤바 표시
-            thickness: 4.0,
-            radius: const Radius.circular(8.0),
-            controller: _scrollController,
-            child: SingleChildScrollView(
-              controller: _scrollController,
+      child: Stack(
+        children: [
+          // 배경 이미지 (캐릭터 영역만)
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            height: 400, // 캐릭터 영역 높이
+            child: Image.asset(
+              'assets/characters/background/basic.png',
+              fit: BoxFit.cover,
+            ),
+          ),
+          
+          // 상단 그라데이션 (basicColor → 투명)
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            height: 80,
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    AppColors.basicColor,
+                    AppColors.basicColor.withOpacity(0.0),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          
+          // 배경 이미지 하단 그라데이션 (이미지 → basicColor)
+          Positioned(
+            top: 300,
+            left: 0,
+            right: 0,
+            height: 100,
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.transparent,
+                    AppColors.basicColor,
+                  ],
+                ),
+              ),
+            ),
+          ),
+          
+          // 기존 컨텐츠
+          Container(
+            color: Colors.transparent,
+            child: SafeArea(
+              child: Scrollbar(
+                thumbVisibility: isListType, // list 타입일 때만 스크롤바 표시
+                thickness: 4.0,
+                radius: const Radius.circular(8.0),
+                controller: _scrollController,
+                child: SingleChildScrollView(
+                  controller: _scrollController,
               child: Padding(
                 padding: const EdgeInsets.only(
                   left: AppSpacing.md,
@@ -360,7 +415,7 @@ class _BomiContentState extends ConsumerState<BomiContent> {
                             vertical: AppSpacing.xs,
                           ),
                           decoration: BoxDecoration(
-                            color: AppColors.bgLightPink,
+                            color: Colors.transparent,
                             borderRadius: BorderRadius.circular(AppRadius.pill),
                           ),
                           child: GestureDetector(
@@ -487,6 +542,8 @@ class _BomiContentState extends ConsumerState<BomiContent> {
           ),
         ),
       ),
+        ],
+      ),
     );
   }
 
@@ -596,7 +653,7 @@ class _BomiContentState extends ConsumerState<BomiContent> {
       child: Container(
         padding: const EdgeInsets.all(AppSpacing.md),
         decoration: BoxDecoration(
-          color: AppColors.bgLightPink.withOpacity(0.5),
+          color: AppColors.basicColor.withOpacity(0.5),
           borderRadius: BorderRadius.circular(AppRadius.lg),
           border: Border.all(
             color: AppColors.primaryColor.withOpacity(0.3),

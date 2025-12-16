@@ -227,7 +227,7 @@ class _BomiScreenState extends ConsumerState<BomiScreen> {
 
     return AppFrame(
       resizeToAvoidBottomInset: false, // 키보드 처리를 수동으로 제어
-      backgroundColor: AppColors.bgLightPink, //**배경색**
+      backgroundColor: AppColors.basicColor, //**배경색**
       topBar: TopBar(
         title: '',
         leftIcon: Icons.arrow_back_ios,
@@ -236,21 +236,21 @@ class _BomiScreenState extends ConsumerState<BomiScreen> {
             _stopVoiceAndNavigate(() => navigationService.navigateToTab(0)),
         onTapRight: () =>
             _stopVoiceAndNavigate(() => MoreMenuSheet.show(context)),
-        backgroundColor: AppColors.bgLightPink, //**배경색**
+        backgroundColor: AppColors.basicColor, //**배경색**
         foregroundColor: AppColors.textPrimary,
       ),
       bottomBar: _showInputBar
           ? BottomInputBar(
               controller: _textController,
               hintText: '메시지를 입력하세요',
-              backgroundColor: AppColors.bgLightPink, //**배경색**
+              backgroundColor: AppColors.basicColor, //**배경색**
               onSend: _handleSendMessage,
               onMicTap: _handleVoiceModeToggle,
               onTypingStarted: _handleTypingStarted, // 🆕 입력 시작 콜백
             )
           : BottomVoiceBar(
               voiceState: chatState.voiceState,
-              backgroundColor: AppColors.bgLightPink,
+              backgroundColor: AppColors.basicColor,
               onMicTap: _handleVoiceInput,
               onTextModeTap: _handleTextModeToggle,
             ),
