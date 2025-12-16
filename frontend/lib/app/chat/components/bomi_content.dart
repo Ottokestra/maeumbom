@@ -298,12 +298,13 @@ class _BomiContentState extends ConsumerState<BomiContent> {
     // 키보드 높이 감지
     final keyboardHeight = MediaQuery.of(context).viewInsets.bottom;
 
-    // 키보드가 나타날 때 스크롤 이동
+    // 키보드가 나타날 때 스크롤 이동 (봄이 캐릭터가 보이도록)
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (keyboardHeight > 0 && _scrollController.hasClients) {
+        // 키보드가 올라오면 최상단으로 스크롤하여 봄이 캐릭터가 보이도록
         _scrollController.animateTo(
-          _scrollController.position.maxScrollExtent,
-          duration: const Duration(milliseconds: 200),
+          0,
+          duration: const Duration(milliseconds: 300),
           curve: Curves.easeOut,
         );
       }

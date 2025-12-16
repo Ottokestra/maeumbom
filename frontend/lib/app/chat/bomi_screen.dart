@@ -226,7 +226,7 @@ class _BomiScreenState extends ConsumerState<BomiScreen> {
     final navigationService = NavigationService(context, ref);
 
     return AppFrame(
-      resizeToAvoidBottomInset: true, // 키보드 올라올 때 화면 조정
+      resizeToAvoidBottomInset: false, // 키보드 처리를 수동으로 제어
       backgroundColor: AppColors.bgLightPink, //**배경색**
       topBar: TopBar(
         title: '',
@@ -254,11 +254,17 @@ class _BomiScreenState extends ConsumerState<BomiScreen> {
               onMicTap: _handleVoiceInput,
               onTextModeTap: _handleTextModeToggle,
             ),
-      body: BomiContent(
-        showInputBar: _showInputBar,
-        onTextInputTap: _handleTextModeToggle,
-        onVoiceToggle: _handleVoiceInput,
-        typingReaction: _typingReaction, // 🆕 입력 반응 메시지
+      body: Column(
+        children: [
+          Expanded(
+            child: BomiContent(
+              showInputBar: _showInputBar,
+              onTextInputTap: _handleTextModeToggle,
+              onVoiceToggle: _handleVoiceInput,
+              typingReaction: _typingReaction, // 🆕 입력 반응 메시지
+            ),
+          ),
+        ],
       ),
     );
   }
