@@ -279,5 +279,130 @@ class BomiReactionGenerator {
     ];
     return reactions[_random.nextInt(reactions.length)];
   }
+
+  /// 대기 메시지 생성 (AI 응답 생성 중)
+  /// 
+  /// 사용자가 채팅을 입력하고 AI 응답을 기다리는 동안 표시할 메시지를 생성합니다.
+  /// 시간대에 따라 다양한 메시지를 확률적으로 선택합니다.
+  /// 
+  /// 반환: 봄이의 대기 메시지
+  static String generateWaitingMessage() {
+    final now = DateTime.now();
+    final hour = now.hour;
+
+    // 5% 확률로 레어 대기 메시지
+    if (_random.nextDouble() < 0.05) {
+      return _getRareWaitingMessage();
+    }
+
+    // 30% 확률로 시간대별 메시지, 70% 확률로 기본 메시지
+    final value = _random.nextDouble();
+    if (value < 0.30) {
+      return _getTimeBasedWaitingMessage(hour);
+    } else {
+      return _getBasicWaitingMessage();
+    }
+  }
+
+  /// 기본 대기 메시지
+  static String _getBasicWaitingMessage() {
+    final messages = [
+      // 생각하는 느낌
+      "음... 뭐라고 해야 하지?",
+      "잠깐만 생각해볼게!",
+      "어떻게 말하면 좋을까?",
+      "음... 생각 중이야!",
+      "잠시만, 고민 중!",
+      "뭐라고 답해줄까 생각 중이야!",
+      
+      // 기다림 요청
+      "조금만 기다려줘!",
+      "금방 답해줄게!",
+      "잠깐만 기다려!",
+      "곧 답해줄게!",
+      "조금만 시간을 줘!",
+      "잠시만 기다려줄래?",
+      
+      // 친근한 느낌
+      "히히 잠시만~",
+      "두근두근 답변 준비 중!",
+      "나 지금 열심히 생각하고 있어!",
+      "잠깐만! 좋은 답변 준비할게!",
+      "어떻게 말해줄까 고민 중이야!",
+      "기다려줘서 고마워!",
+      
+      // 위로하는 느낌 (대기 중에도 따뜻함 유지)
+      "너를 위해 최선의 답변 찾는 중!",
+      "좋은 답변 하려고 열심히 생각 중!",
+      "너에게 딱 맞는 답변 준비할게!",
+      "진심을 담아서 답해줄게!",
+      "너를 위한 답변, 곧 준비될 거야!",
+      
+      // 응원하는 느낌
+      "최선을 다해 답해줄게!",
+      "좋은 이야기 들려줄게!",
+      "멋진 답변 준비할게!",
+    ];
+    return messages[_random.nextInt(messages.length)];
+  }
+
+  /// 시간대별 대기 메시지
+  static String _getTimeBasedWaitingMessage(int hour) {
+    List<String> messages;
+
+    if (hour >= 6 && hour < 11) {
+      // 아침 (6-11시)
+      messages = [
+        "아침부터 생각이 많네! 잠깐만~",
+        "좋은 아침! 답변 준비 중이야!",
+        "아침에 만나서 반가워! 잠깐만!",
+        "오늘 아침엔 뭐라고 해줄까?",
+        "아침이라 머리가 잘 돌아가! 잠깐만!",
+      ];
+    } else if (hour >= 11 && hour < 14) {
+      // 점심 (11-14시)
+      messages = [
+        "점심시간이네! 잠깐만 생각해볼게!",
+        "배고프지만 답변은 해줄게! 잠깐만!",
+        "점심 먹고 왔어? 답변 준비 중!",
+        "점심시간에도 열심히 생각 중!",
+      ];
+    } else if (hour >= 14 && hour < 20) {
+      // 저녁 (14-20시)
+      messages = [
+        "오후라 좀 졸리지만 열심히 생각할게!",
+        "하루 어땠어? 잠깐만 생각해볼게!",
+        "오후에도 힘내서 답해줄게!",
+        "저녁 시간이네! 답변 준비 중!",
+      ];
+    } else {
+      // 밤 (20-6시)
+      messages = [
+        "밤이지만 열심히 생각할게!",
+        "자기 전에 좋은 답변 해줄게!",
+        "밤에도 나는 깨어있어! 잠깐만!",
+        "늦은 시간인데 고마워! 답변 준비 중!",
+        "밤이라 더 집중돼! 잠깐만!",
+      ];
+    }
+
+    return messages[_random.nextInt(messages.length)];
+  }
+
+  /// 레어 대기 메시지 (5% 확률)
+  /// 
+  /// 특수문자 이모티콘이 포함된 특별한 대기 메시지
+  static String _getRareWaitingMessage() {
+    final messages = [
+      "음... (๑•́ ₃ •̀๑) 뭐라고 하지?",
+      "잠깐만! ✧*｡٩(ˊᗜˋ*)و✧*｡",
+      "생각 중... (´・ω・｀)",
+      "두근두근... ♡(ˊ͈ ॢꇴ ˋ͈ॢ)♡ 답변 준비 중!",
+      "히히 잠시만! (ノ◕ヮ◕)ノ*:･ﾟ✧",
+      "음... 좋은 답변 생각 중! (๑˃̵ᴗ˂̵)و",
+      "잠깐! 멋진 답변 준비할게! ✧٩(ˊωˋ*)و✧",
+    ];
+    return messages[_random.nextInt(messages.length)];
+  }
 }
 

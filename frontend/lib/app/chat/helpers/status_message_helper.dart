@@ -1,4 +1,5 @@
 import '../../../providers/chat_provider.dart';
+import '../../../core/utils/bomi_reaction_generator.dart';
 
 /// 상태 메시지 헬퍼
 ///
@@ -21,9 +22,9 @@ class StatusMessageHelper {
     //   return '나 목소리를 듣고 있어!';
     // }
 
-    // 3. AI 생각 중 (Agent 처리 중)
+    // 3. AI 생각 중 (Agent 처리 중) - 랜덤 대기 메시지 생성
     if (voiceState == VoiceInterfaceState.processing || isLoading) {
-      return '음.. 생각해볼게. 잠시만 기다려줘!';
+      return BomiReactionGenerator.generateWaitingMessage();
     }
 
     // 4. 상태 메시지 없음 (일반 답변 표시)

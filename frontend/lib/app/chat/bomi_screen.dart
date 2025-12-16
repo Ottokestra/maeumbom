@@ -25,6 +25,7 @@ class _BomiScreenState extends ConsumerState<BomiScreen> {
   bool _showInputBar = true; // true: input bar, false: voice bar
   final TextEditingController _textController = TextEditingController();
   String? _typingReaction; // 입력 반응 메시지
+  String? _generatedReaction; // 생성된 반응 메시지 저장 (재사용용)
 
   @override
   void initState() {
@@ -33,25 +34,12 @@ class _BomiScreenState extends ConsumerState<BomiScreen> {
     Future.microtask(() {
       ref.read(routineProvider.notifier).loadLatest();
     });
-    // 텍스트 컨트롤러 리스너 추가 (텍스트가 비워지면 반응 제거)
-    _textController.addListener(_onTextChanged);
   }
 
   @override
   void dispose() {
-    _textController.removeListener(_onTextChanged);
     _textController.dispose();
     super.dispose();
-  }
-
-  /// 텍스트 변경 감지 (비워지면 반응 제거)
-  void _onTextChanged() {
-    if (_textController.text.isEmpty && _typingReaction != null) {
-      print('[BomiScreen] Text cleared, removing reaction');
-      setState(() {
-        _typingReaction = null;
-      });
-    }
   }
 
   Future<void> _handleTextModeToggle() async {
@@ -154,6 +142,15 @@ class _BomiScreenState extends ConsumerState<BomiScreen> {
   void _handleTypingStarted() {
     print('[BomiScreen] 🎯 _handleTypingStarted called!');
     
+    // 이미 생성된 반응이 있으면 재사용 (지우고 다시 입력해도 같은 메시지 유지)
+    if (_generatedReaction != null) {
+      print('[BomiScreen] Reusing existing reaction: $_generatedReaction');
+      setState(() {
+        _typingReaction = _generatedReaction;
+      });
+      return;
+    }
+    
     // 채팅 메시지가 이미 있으면 반응 메시지를 표시하지 않음 (첫 대화에서만 표시)
     final chatState = ref.read(chatProvider);
     if (chatState.messages.isNotEmpty) {
@@ -167,11 +164,13 @@ class _BomiScreenState extends ConsumerState<BomiScreen> {
     
     print('[BomiScreen] Routine data: ${routineData?.routines.length ?? 0} routines');
 
-    // 반응 메시지 생성
+    // 반응 메시지 생성 및 저장
     final reaction = BomiReactionGenerator.generate(routineData: routineData);
     
-    print('[BomiScreen] Generated reaction: $reaction');
+    print('[BomiScreen] Generated new reaction: $reaction');
 
+    _generatedReaction = reaction; // 저장 (재사용용)
+    
     setState(() {
       _typingReaction = reaction;
     });
@@ -188,9 +187,10 @@ class _BomiScreenState extends ConsumerState<BomiScreen> {
 
     _textController.clear();
 
-    // 반응 메시지 제거 (메시지 전송 시에만)
+    // 반응 메시지 제거 및 생성된 반응 초기화 (다음 대화를 위해)
     setState(() {
       _typingReaction = null;
+      _generatedReaction = null; // 초기화
     });
 
     try {
