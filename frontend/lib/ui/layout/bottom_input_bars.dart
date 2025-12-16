@@ -15,6 +15,7 @@ class BottomInputBar extends StatefulWidget {
     this.hintText = '메시지를 입력하세요',
     this.onSend,
     this.onMicTap,
+    this.onTypingStarted,
     this.backgroundColor = AppColors.basicColor,
   });
 
@@ -29,6 +30,9 @@ class BottomInputBar extends StatefulWidget {
 
   /// 마이크 버튼 탭 콜백
   final VoidCallback? onMicTap;
+
+  /// 입력 시작 콜백 (첫 글자 입력 시)
+  final VoidCallback? onTypingStarted;
 
   /// 배경색
   final Color backgroundColor;
@@ -119,6 +123,7 @@ class _BottomInputBarState extends State<BottomInputBar> {
                     controller: widget.controller,
                     hintText: widget.hintText,
                     onSubmitted: _hasText ? _handleSend : null,
+                    onTypingStarted: widget.onTypingStarted,
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -175,16 +180,47 @@ class _BottomInputBarState extends State<BottomInputBar> {
 }
 
 /// Chat Input - 엔터 키로 전송 가능한 입력 필드
-class _ChatInput extends StatelessWidget {
+class _ChatInput extends StatefulWidget {
   const _ChatInput({
     required this.controller,
     required this.hintText,
     this.onSubmitted,
+    this.onTypingStarted,
   });
 
   final TextEditingController controller;
   final String hintText;
   final VoidCallback? onSubmitted;
+  final VoidCallback? onTypingStarted;
+
+  @override
+  State<_ChatInput> createState() => _ChatInputState();
+}
+
+class _ChatInputState extends State<_ChatInput> {
+  bool _hasTyped = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // 컨트롤러 리스너 추가하여 텍스트가 비워지면 초기화
+    widget.controller.addListener(_onControllerChanged);
+  }
+
+  @override
+  void dispose() {
+    widget.controller.removeListener(_onControllerChanged);
+    super.dispose();
+  }
+
+  void _onControllerChanged() {
+    // 텍스트가 완전히 비워지면 _hasTyped 초기화
+    if (widget.controller.text.isEmpty && _hasTyped) {
+      setState(() {
+        _hasTyped = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -197,12 +233,12 @@ class _ChatInput extends StatelessWidget {
         border: Border.all(color: InputTokens.normalBorder, width: 1),
       ),
       child: TextField(
-        controller: controller,
+        controller: widget.controller,
         style: InputTokens.textStyle.copyWith(
           color: AppColors.textPrimary,
         ),
         decoration: InputDecoration(
-          hintText: hintText,
+          hintText: widget.hintText,
           hintStyle: InputTokens.textStyle.copyWith(
             color: AppColors.textSecondary,
           ),
@@ -211,9 +247,18 @@ class _ChatInput extends StatelessWidget {
           contentPadding: EdgeInsets.zero,
         ),
         textInputAction: TextInputAction.send,
+        onChanged: (text) {
+          print('[BottomInputBar] onChanged: text.length=${text.length}, _hasTyped=$_hasTyped');
+          // 첫 글자 입력 시 콜백 호출
+          if (!_hasTyped && text.isNotEmpty && widget.onTypingStarted != null) {
+            print('[BottomInputBar] 🎯 Calling onTypingStarted!');
+            _hasTyped = true;
+            widget.onTypingStarted!();
+          }
+        },
         onSubmitted: (_) {
-          if (onSubmitted != null) {
-            onSubmitted!();
+          if (widget.onSubmitted != null) {
+            widget.onSubmitted!();
           }
         },
       ),
