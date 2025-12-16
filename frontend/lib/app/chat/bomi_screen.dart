@@ -154,6 +154,13 @@ class _BomiScreenState extends ConsumerState<BomiScreen> {
   void _handleTypingStarted() {
     print('[BomiScreen] 🎯 _handleTypingStarted called!');
     
+    // 채팅 메시지가 이미 있으면 반응 메시지를 표시하지 않음 (첫 대화에서만 표시)
+    final chatState = ref.read(chatProvider);
+    if (chatState.messages.isNotEmpty) {
+      print('[BomiScreen] Messages exist (${chatState.messages.length}), skipping reaction');
+      return;
+    }
+    
     // 루틴 데이터 조회
     final routineState = ref.read(routineProvider);
     final routineData = routineState.value;
