@@ -154,6 +154,13 @@ class _BomiScreenState extends ConsumerState<BomiScreen> {
   void _handleTypingStarted() {
     print('[BomiScreen] 🎯 _handleTypingStarted called!');
     
+    // 채팅 메시지가 이미 있으면 반응 메시지를 표시하지 않음 (첫 대화에서만 표시)
+    final chatState = ref.read(chatProvider);
+    if (chatState.messages.isNotEmpty) {
+      print('[BomiScreen] Messages exist (${chatState.messages.length}), skipping reaction');
+      return;
+    }
+    
     // 루틴 데이터 조회
     final routineState = ref.read(routineProvider);
     final routineData = routineState.value;
@@ -219,7 +226,7 @@ class _BomiScreenState extends ConsumerState<BomiScreen> {
     final navigationService = NavigationService(context, ref);
 
     return AppFrame(
-      resizeToAvoidBottomInset: true, // 키보드 올라올 때 화면 조정
+      resizeToAvoidBottomInset: false, // 키보드 처리를 수동으로 제어
       backgroundColor: AppColors.bgLightPink, //**배경색**
       topBar: TopBar(
         title: '',
@@ -247,11 +254,17 @@ class _BomiScreenState extends ConsumerState<BomiScreen> {
               onMicTap: _handleVoiceInput,
               onTextModeTap: _handleTextModeToggle,
             ),
-      body: BomiContent(
-        showInputBar: _showInputBar,
-        onTextInputTap: _handleTextModeToggle,
-        onVoiceToggle: _handleVoiceInput,
-        typingReaction: _typingReaction, // 🆕 입력 반응 메시지
+      body: Column(
+        children: [
+          Expanded(
+            child: BomiContent(
+              showInputBar: _showInputBar,
+              onTextInputTap: _handleTextModeToggle,
+              onVoiceToggle: _handleVoiceInput,
+              typingReaction: _typingReaction, // 🆕 입력 반응 메시지
+            ),
+          ),
+        ],
       ),
     );
   }
