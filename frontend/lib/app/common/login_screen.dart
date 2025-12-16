@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../ui/app_ui.dart';
@@ -18,6 +19,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   final PageController _pageController = PageController();
   int _currentPage = 0;
   bool _hasCheckedAuth = false;
+  Timer? _autoSlideTimer;
 
   @override
   void initState() {
@@ -25,7 +27,45 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     // 인증 상태 확인을 다음 프레임으로 지연하여 위젯 트리가 완전히 빌드된 후 실행
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _checkAuthStatus();
+      _startAutoSlide();
     });
+  }
+
+  @override
+  void dispose() {
+    _autoSlideTimer?.cancel();
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  /// 자동 슬라이드 시작
+  void _startAutoSlide() {
+    _autoSlideTimer = Timer.periodic(const Duration(seconds: 3), (timer) {
+      if (_currentPage < 4) {
+        _pageController.animateToPage(
+          _currentPage + 1,
+          duration: const Duration(milliseconds: 400),
+          curve: Curves.easeInOut,
+        );
+      } else {
+        _pageController.animateToPage(
+          0,
+          duration: const Duration(milliseconds: 400),
+          curve: Curves.easeInOut,
+        );
+      }
+    });
+  }
+
+  /// 자동 슬라이드 중지
+  void _stopAutoSlide() {
+    _autoSlideTimer?.cancel();
+  }
+
+  /// 자동 슬라이드 재시작
+  void _restartAutoSlide() {
+    _stopAutoSlide();
+    _startAutoSlide();
   }
 
   /// 이미 로그인된 상태인지 확인하고 적절한 화면으로 이동
@@ -128,19 +168,20 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             left: 0,
             right: 0,
             child: Container(
-              padding: const EdgeInsets.only(top: AppSpacing.sm, bottom: AppSpacing.sm),
+              padding: const EdgeInsets.only(top: AppSpacing.lg, bottom: AppSpacing.sm),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: List.generate(5, (index) {
+                  final isActive = _currentPage == index;
                   return AnimatedContainer(
                     duration: const Duration(milliseconds: 300),
                     margin: const EdgeInsets.symmetric(horizontal: 4),
-                    width: 40,
+                    width: isActive ? 40 : 24,
                     height: 4,
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(2),
-                      color: _currentPage == index
-                          ? AppColors.primaryColor
+                      color: isActive
+                          ? AppColors.accentRed
                           : AppColors.borderLightGray,
                     ),
                   );
@@ -157,6 +198,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 setState(() {
                   _currentPage = index;
                 });
+                _restartAutoSlide(); // 수동 스와이프 시 타이머 재시작
               },
               children: const [
                 _FeatureSlide(imagePath: 'assets/images/button/ai_chating.png'),
@@ -168,7 +210,85 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             ),
           ),
 
-          // 하단 로그인 버튼 (이미지 위에 오버레이)
+          // 왼쪽 화살표
+          if (_currentPage > 0)
+            Positioned(
+              left: 16,
+              top: 0,
+              bottom: 200,
+              child: Center(
+                child: GestureDetector(
+                  onTap: () {
+                    _pageController.previousPage(
+                      duration: const Duration(milliseconds: 300),
+                      curve: Curves.easeInOut,
+                    );
+                    _restartAutoSlide();
+                  },
+                  child: Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.9),
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.1),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: const Icon(
+                      Icons.chevron_left,
+                      color: AppColors.accentRed,
+                      size: 28,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+
+          // 오른쪽 화살표
+          if (_currentPage < 4)
+            Positioned(
+              right: 16,
+              top: 0,
+              bottom: 200,
+              child: Center(
+                child: GestureDetector(
+                  onTap: () {
+                    _pageController.nextPage(
+                      duration: const Duration(milliseconds: 300),
+                      curve: Curves.easeInOut,
+                    );
+                    _restartAutoSlide();
+                  },
+                  child: Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.9),
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.1),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: const Icon(
+                      Icons.chevron_right,
+                      color: AppColors.accentRed,
+                      size: 28,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+
+          // 하단 영역 (설명 + 로그인 버튼)
           Positioned(
             bottom: 0,
             left: 0,
@@ -177,14 +297,22 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               padding: EdgeInsets.only(
                 left: AppSpacing.md,
                 right: AppSpacing.md,
-                bottom: MediaQuery.of(context).padding.bottom,
+                top: AppSpacing.lg,
+                bottom: 10,
               ),
               decoration: const BoxDecoration(
                 color: AppColors.basicColor,
               ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
+                  // 기능 설명 영역
+                  _FeatureDescription(currentPage: _currentPage),
+                  
+                  const SizedBox(height: AppSpacing.xl),
+                  
+                  // 로그인 버튼들
                   // 카카오
                   SizedBox(
                     width: double.infinity,
@@ -214,13 +342,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Container(
+                          Image.asset(
+                            'assets/images/button/kakao.png',
                             width: 20,
                             height: 20,
-                            decoration: const BoxDecoration(
-                              color: Color(0xFF3C1E1E),
-                              shape: BoxShape.circle,
-                            ),
                           ),
                           const SizedBox(width: 8),
                           Text(
@@ -264,13 +389,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Container(
+                          Image.asset(
+                            'assets/images/button/naver.png',
                             width: 20,
                             height: 20,
-                            decoration: const BoxDecoration(
-                              color: Colors.white,
-                              shape: BoxShape.circle,
-                            ),
                           ),
                           const SizedBox(width: 8),
                           Text(
@@ -305,9 +427,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         );
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.white,
+                        backgroundColor: const Color(0xFFE8E8E8), // 회색
                         elevation: 0,
-                        side: const BorderSide(color: AppColors.borderLight),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(AppRadius.md),
                         ),
@@ -315,13 +436,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Container(
+                          Image.asset(
+                            'assets/images/button/google.png',
                             width: 20,
                             height: 20,
-                            decoration: BoxDecoration(
-                              color: Colors.blue[700],
-                              shape: BoxShape.circle,
-                            ),
                           ),
                           const SizedBox(width: 8),
                           Text(
@@ -358,7 +476,7 @@ class _FeatureSlide extends StatelessWidget {
     return Align(
       alignment: Alignment.topCenter,
       child: FractionalTranslation(
-        translation: const Offset(0, -0.10),
+        translation: const Offset(0, -0.16),
         child: Transform.scale(
           scale: 0.8,
           child: SizedBox(
@@ -371,6 +489,64 @@ class _FeatureSlide extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// 기능 설명 위젯
+class _FeatureDescription extends StatelessWidget {
+  final int currentPage;
+
+  const _FeatureDescription({
+    required this.currentPage,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final features = [
+      {
+        'title': '봄이 채팅',
+        'description': '감정을 이해하고 공감해줘요',
+      },
+      {
+        'title': '기억서랍',
+        'description': '중요한 약속과 일정을 기억해요',
+      },
+      {
+        'title': '마음리포트',
+        'description': '일주일간의 감정 변화를 한눈에 확인해요',
+      },
+      {
+        'title': '마음연습실',
+        'description': '다양한 상황의 대화 방법을 연습해요',
+      },
+      {
+        'title': '신조어 퀴즈',
+        'description': '자녀의 신조어를 퀴즈로 배워보세요',
+      },
+    ];
+
+    final feature = features[currentPage];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Text(
+          feature['title']!,
+          style: AppTypography.h3.copyWith(
+            color: AppColors.textPrimary,
+          ),
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: AppSpacing.xxs),
+        Text(
+          feature['description']!,
+          style: AppTypography.body.copyWith(
+            color: AppColors.textSecondary,
+          ),
+          textAlign: TextAlign.center,
+        ),
+      ],
     );
   }
 }
