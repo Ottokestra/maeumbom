@@ -33,7 +33,7 @@ class TtsPlayerService {
           isSpeakerphoneOn: true, // 🆕 스피커폰 강제 사용
           stayAwake: false,
           contentType: AndroidContentType.speech,
-          usageType: AndroidUsageType.assistanceSonification,
+          usageType: AndroidUsageType.media, // 🔧 미디어 볼륨으로 조절 가능하도록 변경
           audioFocus: AndroidAudioFocus.gain, // 🔑 GAIN으로 변경 (가장 강력한 포커스)
         ),
       ),
