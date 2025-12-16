@@ -195,7 +195,7 @@ class _EmotionBubbleState extends State<EmotionBubble> {
           width: bubbleWidth, // 명확한 너비 지정 (화면 전체 - 좌우 여백)
           constraints: const BoxConstraints(
             minHeight: 60.0, // 최소 높이 (1줄 정도)
-            maxHeight: 144.0, // 최대 높이 (4줄 크기)
+            maxHeight: 300.0, // 최대 높이 (증가: 더 많은 텍스트 표시)
           ),
           decoration: BoxDecoration(
             color: bgColor,
@@ -250,7 +250,7 @@ class _EmotionBubbleState extends State<EmotionBubble> {
                       child: Text(
                         _displayedText,
                         textAlign: TextAlign.left, // 왼쪽 정렬
-                        maxLines: 4, // 최대 4줄
+                        maxLines: null, // 무제한 (모든 텍스트 표시)
                         overflow: TextOverflow.visible,
                         style: AppTypography.bodyBold.copyWith(
                           color: BubbleTokens.emotionText, // #233446

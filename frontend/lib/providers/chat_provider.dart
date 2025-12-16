@@ -11,6 +11,9 @@ import '../data/api/chat/chat_api_client.dart';
 import 'auth_provider.dart';
 import 'alarm_provider.dart';
 import '../core/services/audio/tts_player_service.dart'; // ✅ TTS Service
+import 'target_events_provider.dart'; // 🆕 Target Events API
+import '../data/api/target_events/target_events_api_client.dart'; // 🆕 Target Events API Client
+import '../data/api/routine_recommendations/routine_recommendations_api_client.dart'; // 🆕 Routine Recommendations API
 
 // ----- Infrastructure Providers -----
 
@@ -105,6 +108,8 @@ class ChatNotifier extends StateNotifier<ChatState> {
   final int _userId;
   final PermissionService _permissionService;
   final Ref _ref;
+  final TargetEventsApiClient _targetEventsApiClient; // 🆕 Target Events API
+  final RoutineRecommendationsApiClient _routineApiClient; // 🆕 Routine API
 
   // ✅ Session 관리
   static const _sessionDuration = Duration(minutes: 30);
@@ -126,6 +131,8 @@ class ChatNotifier extends StateNotifier<ChatState> {
     this._userId,
     this._permissionService,
     this._ref,
+    this._targetEventsApiClient, // 🆕 Target Events API 주입
+    this._routineApiClient, // 🆕 Routine API 주입
   ) : super(ChatState(
           messages: [],
           isLoading: false,
@@ -427,6 +434,103 @@ class ChatNotifier extends StateNotifier<ChatState> {
 
   /// Send text message (기존 유지 - HTTP API 사용)
   /// Send text message via HTTP API
+  /// 🆕 최근 컨텍스트 조회 (일일 이벤트 + 주간 요약)
+  Future<String> _fetchRecentContext() async {
+    try {
+      final now = DateTime.now();
+      final sevenDaysAgo = now.subtract(const Duration(days: 7));
+      
+      print('[ChatProvider] 🔍 컨텍스트 조회 시작...');
+      
+      // 1. 최근 7일 일일 이벤트 조회
+      final dailyResponse = await _targetEventsApiClient.getDailyEvents(
+        startDate: sevenDaysAgo,
+        endDate: now,
+      );
+      
+      // 2. 이번 주 주간 이벤트 조회
+      final weekStart = now.subtract(Duration(days: now.weekday - 1));
+      final weeklyEvents = await _targetEventsApiClient.getWeeklyEvents(
+        startDate: weekStart,
+        endDate: now,
+      );
+      
+      print('[ChatProvider] ✅ 일일 이벤트: ${dailyResponse.dailyEvents.length}개');
+      print('[ChatProvider] ✅ 주간 이벤트: ${weeklyEvents.length}개');
+      
+      // 3. 자연어 요약 생성
+      return _formatContextForLLM(dailyResponse.dailyEvents, weeklyEvents);
+    } catch (e) {
+      print('[ChatProvider] ⚠️ 컨텍스트 조회 실패: $e');
+      return ''; // 실패해도 정상 동작
+    }
+  }
+
+  /// 🆕 컨텍스트를 자연어로 포맷팅
+  String _formatContextForLLM(
+    List<dynamic> dailyEvents,
+    List<dynamic> weeklyEvents,
+  ) {
+    if (dailyEvents.isEmpty && weeklyEvents.isEmpty) return '';
+    
+    final buffer = StringBuffer();
+    buffer.writeln('[최근 대화 기억]');
+    buffer.writeln();
+    
+    // 일일 이벤트 요약 (최근 5개만)
+    if (dailyEvents.isNotEmpty) {
+      buffer.writeln('최근 일주일 주요 사건:');
+      final recentEvents = dailyEvents.take(5);
+      for (var event in recentEvents) {
+        final dateStr = _formatDateKorean(event.eventDate);
+        final targetKo = _translateTargetType(event.targetType);
+        buffer.writeln('- $dateStr: $targetKo 관련 - ${event.eventSummary}');
+      }
+      buffer.writeln();
+    }
+    
+    // 주간 요약
+    if (weeklyEvents.isNotEmpty) {
+      buffer.writeln('이번 주 전체 상황:');
+      for (var weekly in weeklyEvents) {
+        final targetKo = _translateTargetType(weekly.targetType);
+        final emotion = weekly.primaryEmotion ?? '감정 정보 없음';
+        buffer.writeln('- $targetKo: $emotion');
+      }
+      buffer.writeln();
+    }
+    
+    buffer.writeln('---');
+    buffer.writeln();
+    
+    return buffer.toString();
+  }
+
+  /// 날짜를 한글로 포맷팅 (예: "어제", "그저께", "3일 전")
+  String _formatDateKorean(DateTime date) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final targetDate = DateTime(date.year, date.month, date.day);
+    final diff = today.difference(targetDate).inDays;
+    
+    if (diff == 0) return '오늘';
+    if (diff == 1) return '어제';
+    if (diff == 2) return '그저께';
+    return '$diff일 전';
+  }
+
+  /// 대상 타입을 한글로 변환
+  String _translateTargetType(String targetType) {
+    const map = {
+      'HUSBAND': '남편',
+      'CHILD': '자녀',
+      'FRIEND': '친구',
+      'COLLEAGUE': '직장동료',
+      'SELF': '본인',
+    };
+    return map[targetType] ?? targetType;
+  }
+
   Future<void> sendTextMessage(String text) async {
     if (text.trim().isEmpty) return;
 
@@ -450,9 +554,17 @@ class ChatNotifier extends StateNotifier<ChatState> {
     try {
       print('[ChatProvider] 📤 Sending text message...');
 
+      // 🆕 컨텍스트 조회 및 메시지와 결합
+      final context = await _fetchRecentContext();
+      final enrichedText = context.isNotEmpty ? '$context$text' : text;
+      
+      if (context.isNotEmpty) {
+        print('[ChatProvider] 📋 컨텍스트 추가됨 (${context.length} chars)');
+      }
+
       // ✅ Call ChatRepository to send text message (기존 세션으로 전송)
       final response = await _chatRepository.sendTextMessageRaw(
-        text: text,
+        text: enrichedText, // 🆕 컨텍스트가 포함된 메시지 전송
         userId: _userId,
         sessionId: state.sessionId, // 만료된 세션 ID로 전송
         ttsEnabled: state.ttsEnabled, // ✅ TTS 활성화 여부 전달
@@ -838,6 +950,8 @@ final chatProvider = StateNotifierProvider<ChatNotifier, ChatState>((ref) {
       ref.watch(chatRepositoryProvider); // ✅ ChatRepository 추가
   final permissionService = ref.watch(permissionServiceProvider);
   final ttsPlayerService = ref.watch(ttsPlayerServiceProvider); // ✅ TTS Service
+  final targetEventsApiClient = ref.watch(targetEventsApiClientProvider); // 🆕 Target Events API
+  final routineApiClient = RoutineRecommendationsApiClient(ref.watch(dioWithAuthProvider)); // 🆕 Routine API
   final currentUser = ref.watch(currentUserProvider);
 
   if (currentUser == null) {
@@ -851,5 +965,7 @@ final chatProvider = StateNotifierProvider<ChatNotifier, ChatState>((ref) {
     currentUser.id,
     permissionService,
     ref, // 🆕 Ref 주입
+    targetEventsApiClient, // 🆕 Target Events API 주입
+    routineApiClient, // 🆕 Routine API 주입
   );
 });

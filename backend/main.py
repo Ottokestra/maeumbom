@@ -561,6 +561,24 @@ except Exception as e:
     traceback.print_exc()
 
 # =========================
+# Routine Recommendations
+# =========================
+
+try:
+    from app.routine_recommendations.routes import router as routine_recommendations_router
+
+    app.include_router(
+        routine_recommendations_router,
+        tags=["routine-recommendations"],
+    )
+    print("[INFO] Routine recommendations router loaded successfully.")
+except Exception as e:
+    import traceback
+
+    print(f"[WARN] Routine recommendations module load failed: {e}")
+    traceback.print_exc()
+
+# =========================
 # LangChain Agent V2 API
 # =========================
 
