@@ -128,6 +128,7 @@ flutter:
   assets:
     - assets/characters/normal/
     - assets/characters/normal_2d/
+    - assets/characters/background/
     - assets/characters/animation/
     - assets/characters/animation/happiness/
     - assets/characters/animation/sadness/
