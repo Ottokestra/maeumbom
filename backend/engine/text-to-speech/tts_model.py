@@ -41,8 +41,8 @@ async def synthesize_to_wav(
     speed: Optional[float] = None,
     tone: Optional[str] = None,
     engine: Optional[str] = None,
-) -> Path:
-    """한국어 텍스트를 wav 파일로 저장하고 파일 경로를 반환한다.
+) -> str:
+    """한국어 텍스트를 TTS로 변환하여 base64 인코딩된 오디오를 반환한다.
 
     Parameters
     ----------
@@ -57,8 +57,8 @@ async def synthesize_to_wav(
 
     Returns
     -------
-    Path
-        생성된 wav 파일 경로
+    str
+        base64로 인코딩된 오디오 데이터 (MP3 형식)
     """
     if not ELEVENLABS_API_KEY:
         raise ValueError(
@@ -84,27 +84,19 @@ async def synthesize_to_wav(
     }
 
     try:
+        import base64
+        
         # ✅ Async API 요청 (블로킹 제거!)
         async with httpx.AsyncClient(timeout=30.0) as client:
             response = await client.post(url, json=data, headers=headers)
             response.raise_for_status()
 
-        # 출력 폴더 (backend/engine/text-to-speech/outputs/ 로 고정)
-        current_dir = Path(__file__).resolve().parent
-        out_dir = current_dir / "outputs"
-        out_dir.mkdir(parents=True, exist_ok=True)
-
-        # MP3로 받았지만 WAV로 저장하기 위해 변환 필요
-        # 일단 MP3로 저장하고 나중에 필요시 변환할 수 있음
-        # 또는 soundfile을 사용해 변환
-        out_path = out_dir / f"{uuid4().hex}.mp3"
-
-        # 오디오 데이터 저장
-        with open(out_path, "wb") as f:
-            f.write(response.content)
-
-        print(f"[Eleven Labs TTS] 오디오 생성 완료: {out_path}")
-        return out_path
+        # 🆕 파일로 저장하지 않고 base64로 인코딩하여 반환
+        audio_bytes = response.content
+        audio_base64 = base64.b64encode(audio_bytes).decode('utf-8')
+        
+        print(f"[Eleven Labs TTS] 오디오 생성 완료 (base64, {len(audio_bytes)} bytes)")
+        return audio_base64
 
     except httpx.HTTPStatusError as e:
         error_msg = (

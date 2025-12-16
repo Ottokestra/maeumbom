@@ -300,7 +300,10 @@ class MemoryLayer:
     def get_memories_for_prompt(self, session_id: str, user_id: int) -> str:
         """
         프롬프트 주입용 메모리 문자열 생성 (DB 조회)
+        시간 정보 포함: 언제 저장된 기억인지 표시
         """
+        from datetime import datetime
+        
         db = self._get_db()
         try:
             memories = []
@@ -317,11 +320,53 @@ class MemoryLayer:
                 memories.append("=== 사용자 장기 기억 (중요 정보) ===")
                 for mem in global_mems:
                     importance_marker = "⭐" * min(mem.IMPORTANCE // 2, 5)  # 중요도 시각화
-                    memories.append(f"{importance_marker} [{mem.CATEGORY}] {mem.MEMORY_TEXT}")
+                    
+                    # 🆕 시간 정보 추가
+                    time_context = self._format_time_context(mem.CREATED_AT)
+                    
+                    memories.append(
+                        f"{importance_marker} [{mem.CATEGORY}] {mem.MEMORY_TEXT} {time_context}"
+                    )
             
             return "\n".join(memories)
         finally:
             db.close()
+    
+    def _format_time_context(self, created_at) -> str:
+        """
+        생성 시간을 사람이 읽기 쉬운 형식으로 변환
+        
+        Returns:
+            "(오늘)", "(어제)", "(3일 전)", "(2주 전)", "(3개월 전)" 형식
+        """
+        from datetime import datetime
+        
+        now = datetime.now()
+        delta = now - created_at
+        days_ago = delta.days
+        
+        if days_ago == 0:
+            # 오늘
+            hours_ago = delta.seconds // 3600
+            if hours_ago == 0:
+                return "(방금)"
+            elif hours_ago < 3:
+                return f"({hours_ago}시간 전)"
+            else:
+                return "(오늘)"
+        elif days_ago == 1:
+            return "(어제)"
+        elif days_ago < 7:
+            return f"({days_ago}일 전)"
+        elif days_ago < 30:
+            weeks = days_ago // 7
+            return f"({weeks}주 전)"
+        elif days_ago < 365:
+            months = days_ago // 30
+            return f"({months}개월 전)"
+        else:
+            years = days_ago // 365
+            return f"({years}년 전)"
     
     def _classify_category(self, content: str, emotion_result: Dict) -> str:
         """내용 기반 카테고리 분류"""

@@ -193,13 +193,16 @@ class BomChatService {
           break;
 
         case 'tts_ready':
-          // 🆕 TTS 오디오 준비 완료 - URL 전달
-          final audioUrl = response['audio_url'] as String?;
-          if (audioUrl != null) {
-            debugPrint('[BomChatService] TTS 오디오 준비: $audioUrl');
-            // TTS URL을 onResponse 콜백으로 전달
+          // 🆕 TTS 오디오 준비 완료 - base64 전달
+          final audioBase64 = response['audio_base64'] as String?;
+          final audioFormat = response['audio_format'] as String? ?? 'mp3';
+          if (audioBase64 != null) {
+            debugPrint(
+                '[BomChatService] TTS 오디오 준비 (base64, ${audioBase64.length} chars)');
+            // TTS base64를 onResponse 콜백으로 전달
             onResponse?.call({
-              'tts_audio': audioUrl,
+              'tts_audio_base64': audioBase64,
+              'tts_audio_format': audioFormat,
               'type': 'tts_ready',
             });
           }
@@ -329,9 +332,21 @@ class BomChatService {
   }
 
   /// 🆕 오디오 전송 재개
-  void resumeAudioTransmission() {
+  Future<void> resumeAudioTransmission() async {
     _isPaused = false;
     debugPrint('[BomChatService] ▶️  오디오 전송 재개');
+
+    // 🆕 TTS 완료 후 녹음 재개 (Audio Focus 복구)
+    if (_isActive && _audioService.isRecording) {
+      debugPrint('[BomChatService] 🎤 녹음 재개 시도');
+      try {
+        await _audioService.resumeRecording();
+        debugPrint('[BomChatService] ✅ 녹음 재개 완료');
+      } catch (e) {
+        debugPrint('[BomChatService] ❌ 녹음 재개 실패: $e');
+        onError?.call('녹음 재개 실패: $e');
+      }
+    }
   }
 
   /// 정리

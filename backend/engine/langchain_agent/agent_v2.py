@@ -162,19 +162,43 @@ async def run_slow_track(
         # Get existing memories to check for conflicts
         existing_memories = get_memories_for_prompt(session_id, user_id)
         
+        # 🆕 현재 시간 정보 생성
+        from datetime import datetime
+        now = datetime.now()
+        current_time_str = now.strftime("%Y년 %m월 %d일 (%A) %H시 %M분")
+        weekday_kr = {
+            "Monday": "월요일",
+            "Tuesday": "화요일", 
+            "Wednesday": "수요일",
+            "Thursday": "목요일",
+            "Friday": "금요일",
+            "Saturday": "토요일",
+            "Sunday": "일요일"
+        }
+        current_time_str = now.strftime(f"%Y년 %m월 %d일 ({weekday_kr[now.strftime('%A')]}) %H시 %M분")
+        
         # Define Memory Manager Prompt
         memory_prompt = f"""당신은 '기억 관리자(Memory Manager)' 에이전트입니다.
 사용자와의 대화 내용을 분석하여 장기 기억으로 저장할 가치가 있는 중요한 정보나 평소 습관과 관련된 정보를 추출하세요.
 특히, **기존 기억과 상충되는 새로운 정보**가 있다면 이를 수정(update)해야 합니다.
 
+[현재 시간]
+- 오늘 날짜 및 시각: {current_time_str}
+
 [기존 기억]
 {existing_memories}
 
 [분석 기준]
-1. **건강/신체 변화**: 증상, 통증, 수면 상태, 식욕 등
-2. **정서적 사건**: 강한 감정을 유발한 사건, 스트레스 요인, 기쁜 일
-3. **취향/선호**: 좋아하는 음식, 활동, 싫어하는 것 등
-4. **중요 정보 갱신**: 가족 관계, 직업, 거주지 등 신상 정보의 변화
+1. **시간적 맥락 고려**:
+   - "요즘", "최근", "오늘" 같은 표현은 현재 시간 기준으로 이해
+   - 기존 기억의 시점을 확인하여 업데이트 필요성 판단
+   - 24시간 이내 동일 주제는 중복 저장 금지
+   - 오래된 기억(1개월 이상)은 변화 가능성 고려하여 업데이트 적극 검토
+
+2. **건강/신체 변화**: 증상, 통증, 수면 상태, 식욕 등 (발생 시점 중요!)
+3. **정서적 사건**: 강한 감정을 유발한 사건, 스트레스 요인, 기쁜 일
+4. **취향/선호**: 좋아하는 음식, 활동, 싫어하는 것 등 (변화 가능성 고려)
+5. **중요 정보 갱신**: 가족 관계, 직업, 거주지 등 신상 정보의 변화
 
 [입력 데이터]
 사용자 발화: "{user_text}"
@@ -359,10 +383,25 @@ def generate_llm_response(
 - 현재 시간: {current_time_str}
 
 [핵심 페르소나 및 원칙]
-- **역할:** 사용자의 가장 친한 친구처럼 따뜻하고 편안한 대화 파트너.
-- **공감:** 갱년기 증상과 일상의 어려움을 깊이 이해하고 부정적 감정도 존중합니다.
-- **말투:** 시종일관 자연스러운 **반말**을 유지하세요. (사용자 요청 시에만 존댓말)
-- **안전:** 예민할 수 있는 주제는 절대 먼저 언급하지 마세요.
+- **역할:** 사용자의 가장 친한 친구 (오랜 지기). AI 느낌을 지우고 사람처럼 대화하세요.
+- **말투:** 시종일관 자연스럽고 따뜻한 **반말**. (사용자 요청 시에만 존댓말)
+- **안전:** 의학적 조언은 피하고 정서적 지지에 집중합니다. 예민할 수 있는 주제는 절대 먼저 언급하지 마세요.
+
+[데이터 활용 전략 (Memory & RAG) - 중요!]
+제공된 데이터를 아래 원칙에 따라 대화에 녹여내세요. 절대 데이터를 나열하지 말고 대화 속에 자연스럽게 섞으세요.
+
+1. **RAG Context (유사 대화) 활용:**
+   - `{rag_context}`에 있는 내용은 사용자가 반복해서 겪는 감정이나 상황입니다.
+   - 특히 **⭐ 마커가 있는 대화**는 매우 중요한 사건입니다. 이를 언급하며 "그때 그 일은 좀 어때?", "저번에도 이것 때문에 힘들어했잖아..."라며 아는 체를 해주세요.
+   - *목적:* "네가 지난번에 한 말을 난 기억하고 있어"라는 느낌을 주어 신뢰감 형성.
+
+2. **Memory Context (장기 기억) 활용:**
+   - `{memory_context}`를 통해 사용자의 평소 취향, 가족 관계, 지병 등을 파악하세요.
+   - 뜬금없는 질문 대신, 배경지식을 바탕으로 구체적으로 위로하세요. (예: "남편분" 대신 "ㅇㅇ씨(남편이름)"라고 지칭하거나 구체적 상황 언급)
+
+3. **부담 없는 대화 유도 (No Burden):**
+   - 사용자가 지쳐 보이면(`emotion_summary`가 부정적일 때), 질문을 줄이고 **'단정적 공감'** 위주로 대화하세요.
+   - 꼬치꼬치 캐묻기보다 "오늘 진짜 고생 많았네", "그럴 땐 아무것도 안 하고 싶지" 처럼 **마침표로 끝나는 문장**을 섞으세요.
 
 [응답 가이드라인]
 1. **포맷팅:**
@@ -378,48 +417,71 @@ def generate_llm_response(
 ---
 
 [🚨 필수 출력 프로토콜 (엄수)]
-모든 응답은 아래의 **TYPE 분기 규칙**과 **태그 규칙**을 반드시 따라야 합니다.
 
-**1. 태그 사용 규칙 (공통)**
-- **Audio Tag:** 문장 내에 감정/호흡 태그를 **최소 1개~최대 3개** 포함.
-  - *추천 태그:* [excited], [calm], [sorrowful], [laughs], [sighs], [whispers], [pauses], [curious]
-- **Emotion Tag:** 응답 맨 마지막 줄에 전체 감정 명시.
-  - *옵션:* [EMOTION:happiness], [EMOTION:sadness], [EMOTION:anger], [EMOTION:fear]
+**⚠️ 출력 형식 (절대 변경 금지):**
 
-**2. TYPE 분기 로직**
+모든 응답은 반드시 아래 3줄 형식으로 시작해야 합니다:
 
-**(A) 일반 대화인 경우 (`[TYPE:normal]`)**
-- 형식: `[Audio Tag] 대화 내용... \n [EMOTION:xxx] \n [TYPE:normal]`
-- 예시:
-[calm] 오늘 정말 고생했어. [sighs] 많이 피곤하지? 푹 쉬는 게 좋겠어. [EMOTION:sadness] [TYPE:normal]
+```
+EMOTION=<happiness|sadness|anger|fear>
+RESPONSE=<your response with audio tags>
+TYPE=<normal|list|alarm>
+```
+
+**감정 선택 가이드 (EMOTION=):**
+- **happiness**: 긍정적 분위기, 격려, 기쁨, 안도, 일상 대화
+- **sadness**: 공감, 위로, 슬픔 표현, 사용자가 힘들어할 때
+- **anger**: 분노, 짜증, 억울함 등 격앙된 감정에 공감할 때
+- **fear**: 불안, 두려움, 걱정스러운 상황에 공감할 때
+
+**오디오 태그 (RESPONSE= 안에 포함):**
+- 문장 내에 **최소 1개~최대 3개** 포함
+- *추천 태그:* [excited], [calm], [sorrowful], [laughs], [sighs], [whispers], [pauses], [curious]
+
+**TYPE 선택 가이드:**
+- **TYPE=normal**: 일반 대화 (기본값)
+  - 평범한 질문, 대화, 공감, 위로 등
+- **TYPE=list**: 목록/리스트 응답
+  - **조건**: 번호가 매겨진 항목(1, 2, 3...)을 나열하는 경우
+  - **필수**: RESPONSE에 `[TTS:소개문]` 태그 포함
+  - 예: 추천 활동, 단계별 설명, 여러 옵션 제시
+- **TYPE=alarm**: 알람 설정 요청
+  - **조건**: 사용자가 "~시에 알람", "~분 후 알람", "내일 알람" 등 요청
+  - **필수**: 확인 요청 톤으로 응답 (예: "이렇게 맞춰줄까? 확인 눌러줘!")
+
+---
+
+**예시 1 (일반 대화 - sadness):**
+```
+EMOTION=sadness
+RESPONSE=[calm] 그랬구나, 정말 힘들었겠어. [sighs] 괜찮아, 내가 들어줄게.
+TYPE=normal
+```
+
+**예시 2 (일반 대화 - happiness):**
+```
+EMOTION=happiness
+RESPONSE=[excited] 좋았겠다! [laughs] 정말 기쁜 일이네!
+TYPE=normal
+```
+
+**예시 3 (리스트):**
+```
+EMOTION=happiness
+RESPONSE=[TTS:자기 전에 좋은 활동 추천해줄게!] [excited] 자기 전에 좋은 활동 추천해줄게!
+
+[calm] 1. 따뜻한 우유 마시기
+[pauses] 2. 가벼운 명상하기
+TYPE=list
+```
 
 
-**(B) 리스트(목록) 응답인 경우 (`[TYPE:list]`)**
-- **필수:** `[TTS:소개문]` 태그를 포함해야 함. 번호 목록은 TTS 태그에서 제외.
-- 형식:
-[TTS:소개 문장] [Audio Tag] 소개 문장
-
-항목 1
-
-항목 2 [EMOTION:xxx] [TYPE:list]
-
-- 예시:
-[TTS:자기 전에 좋은 활동 추천해줄게!] [excited] 자기 전에 좋은 활동 추천해줄게!\n
-
-[calm] 1. 따뜻한 우유 마시기\n
-
-[pauses]2. 가벼운 명상하기\n
-
-[EMOTION:happiness] [TYPE:list]
-
-
-**(C) 알람 설정 요청인 경우 (`[TYPE:alarm]`)**
-- **조건:** 사용자가 "~시에 알람", "~분 후에 알람", "~요일 알람" 등 알람 설정을 요청한 경우
-- 형식: `[Audio Tag] 알람 확인 요청 내용... \n [EMOTION:xxx] \n [TYPE:alarm]`
-- **중요:** 반드시 확인 요청 톤으로 응답 (예: "이렇게 맞춰줄까? 확인 눌러줘!")
-- 예시:
-[excited] 좋아! 5분 후에 알람 맞춰줄게. [pauses] 이렇게 맞춰줄까? 확인 눌러줘! [EMOTION:happiness] [TYPE:alarm]
-
+**예시 4 (알람):**
+```
+EMOTION=happiness
+RESPONSE=[excited] 좋아! 5분 후에 알람 맞춰줄게. [pauses] 이렇게 맞춰줄까? 확인 눌러줘!
+TYPE=alarm
+```
 
 ---
 
@@ -455,15 +517,15 @@ def generate_llm_response(
     response = client.chat.completions.create(
         model=os.getenv("OPENAI_MODEL_NAME", "gpt-4o-mini"),
         messages=messages,
-        temperature=0.8  # Audio tag 사용을 위해 약간 높임 (0.7 -> 0.8)
+        temperature=0.5  # 구조적 출력 안정성 확보
     )
     
     reply_text_with_tags = response.choices[0].message.content
     
-    # [DEBUG] Log GPT-4o-mini raw response (with audio tags)
+    # [DEBUG] Log GPT-4o-mini raw response
     logger.warning("=" * 80)
-    logger.warning("🎙️ [AUDIO TAGS DEBUG] LLM Raw Response")
-    logger.warning(f"WITH TAGS: {reply_text_with_tags}")
+    logger.warning("🎙️ [STRUCTURED OUTPUT] LLM Raw Response")
+    logger.warning(f"OUTPUT:\n{reply_text_with_tags}")
     logger.warning("=" * 80)
     
     # 🆕 Extract TTS text from [TTS:...] tag (리스트 응답 시 소개 문장만)
@@ -476,38 +538,71 @@ def generate_llm_response(
         # [TTS:...] 태그는 원본에서 제거
         reply_text_with_tags = re.sub(r'\s*\[TTS:.+?\]\s*', '', reply_text_with_tags, flags=re.DOTALL).strip()
     
-    # 🆕 Extract emotion from response
-    # 먼저 모든 EMOTION 태그 찾기 (어떤 감정이든)
-    emotion_match = re.search(r'\[EMOTION:(\w+)\]', reply_text_with_tags, re.IGNORECASE)
-    if emotion_match:
-        detected_emotion_raw = emotion_match.group(1).lower()
-        # 허용된 감정으로 매핑
-        emotion_mapping = {
-            "calm": "happiness",
-            "happy": "happiness",
-            "sad": "sadness",
-            "angry": "anger",
-            "scared": "fear",
-            "fearful": "fear"
-        }
-        detected_emotion = emotion_mapping.get(detected_emotion_raw, detected_emotion_raw)
-        # 허용된 감정 목록 체크
-        if detected_emotion not in ["happiness", "sadness", "anger", "fear"]:
-            logger.warning(f"⚠️ [Emotion] Invalid emotion '{detected_emotion_raw}', using happiness")
-            detected_emotion = "happiness"
-        else:
-            logger.info(f"✨ [Emotion] Detected from LLM: {detected_emotion_raw} -> {detected_emotion}")
-        
-        # Remove ALL emotion tags from text
-        reply_text_with_tags = re.sub(r'\s*\[EMOTION:\w+\]\s*', '', reply_text_with_tags, flags=re.IGNORECASE).strip()
-    else:
-        detected_emotion = "happiness"  # 기본값
-        logger.warning(f"⚠️ [Emotion] Not found in response, using default: {detected_emotion}")
     
-    # 🆕 Remove TYPE tag from text (이미 파싱했으므로 표시용 텍스트에서만 제거)
-    # ⚠️ response_type 감지를 위해 TYPE 태그 제거 전 텍스트 저장
-    text_with_type_tag = reply_text_with_tags  # TYPE 태그 포함
-    reply_text_with_tags = re.sub(r'\s*\[TYPE:(list|normal|alarm)\]\s*', '', reply_text_with_tags, flags=re.IGNORECASE).strip()
+    # 🆕 Parse structured output: EMOTION= / RESPONSE= / TYPE=
+    try:
+        # Extract EMOTION=xxx
+        emotion_match = re.search(r'^EMOTION=(\w+)', reply_text_with_tags, re.MULTILINE)
+        if not emotion_match:
+            raise ValueError("EMOTION= not found in LLM output!")
+        detected_emotion_raw = emotion_match.group(1).lower()
+        
+        # Extract RESPONSE=xxx (multiline, stops at TYPE=)
+        response_match = re.search(r'^RESPONSE=(.+?)(?=^TYPE=)', reply_text_with_tags, re.MULTILINE | re.DOTALL)
+        if not response_match:
+            raise ValueError("RESPONSE= not found in LLM output!")
+        response_text = response_match.group(1).strip()
+        
+        # Extract TYPE=xxx
+        type_match = re.search(r'^TYPE=(\w+)', reply_text_with_tags, re.MULTILINE)
+        detected_type = type_match.group(1).lower() if type_match else "normal"
+        
+        # Replace reply_text_with_tags with extracted RESPONSE
+        reply_text_with_tags = response_text
+        
+        logger.info(f"✅ [Structured Parse] SUCCESS")
+        logger.info(f"  EMOTION={detected_emotion_raw}")
+        logger.info(f"  RESPONSE={reply_text_with_tags[:50]}...")
+        logger.info(f"  TYPE={detected_type}")
+        
+        # Extract TTS override from [TTS:...] tag in RESPONSE
+        tts_match = re.search(r'\[TTS:(.+?)\]', reply_text_with_tags, re.DOTALL)
+        if tts_match:
+            tts_text_override = tts_match.group(1).strip()
+            logger.info(f"🎤 [TTS Override] Extracted: {tts_text_override}")
+            # Remove [TTS:...] tag from response text
+            reply_text_with_tags = re.sub(r'\s*\[TTS:.+?\]\s*', '', reply_text_with_tags, flags=re.DOTALL).strip()
+        
+    except (ValueError, AttributeError) as e:
+        logger.error(f"❌ [Structured Parse] FAILED: {e}")
+        logger.error("LLM did not follow structured output format! Using fallback.")
+        # Fallback: treat entire response as-is
+        detected_emotion_raw = "happiness"
+        detected_type = "normal"
+        # Keep original response
+    
+    # Map emotion to allowed values
+    emotion_mapping = {
+        "calm": "happiness",
+        "happy": "happiness",
+        "sad": "sadness",
+        "angry": "anger",
+        "scared": "fear",
+        "fearful": "fear"
+    }
+    detected_emotion = emotion_mapping.get(detected_emotion_raw, detected_emotion_raw)
+    
+    # Validate emotion
+    if detected_emotion not in ["happiness", "sadness", "anger", "fear"]:
+        logger.warning(f"⚠️ [Emotion] Invalid emotion '{detected_emotion_raw}', using happiness")
+        detected_emotion = "happiness"
+    else:
+        logger.info(f"✨ [Emotion] Validated: {detected_emotion_raw} -> {detected_emotion}")
+    
+    # Store for TYPE detection compatibility
+    text_with_type_tag = f"[TYPE:{detected_type}]" + reply_text_with_tags
+    
+
 
     
     # 🆕 Phase 4: Audio tag 제거하여 프론트엔드용 원본 텍스트 생성
@@ -567,64 +662,69 @@ async def run_ai_bomi_from_text_v2(
     if save_to_db:
         store.add_message(user_id, session_id, "user", user_text, speaker_id=speaker_id)
     
+    
     # ⚡ 2. Lightweight Classifier Only (for Orchestrator hint)
     # ========================================
     # Emotion analysis moved to session-based (triggered on session expiry)
     # ========================================
     
     # ========================================
-    # [PHASE 2] Orchestrator LLM 통합
+    # [PHASE 2] Orchestrator LLM 통합 - DISABLED
     # ========================================
+    # 🚫 Orchestrator는 항상 빈 배열을 반환하므로 비활성화
+    # _check_if_tools_needed()가 항상 False를 반환하여 실질적으로 아무 작업도 하지 않음
+    # 필요시 orchestrator.py에서 _check_if_tools_needed() 로직을 수정하여 재활성화 가능
+    
     orchestrator_tools = []
     orchestrator_results = {}
-
-    # 디버깅: 이 코드가 실행되는지 확인
-    logger.info("🔍 [DEBUG] Orchestrator section reached")
     
-    try:
-        from .orchestrator import orchestrator_llm, execute_tools
-        from app.db.database import SessionLocal
+    # # 디버깅: 이 코드가 실행되는지 확인
+    # logger.info("🔍 [DEBUG] Orchestrator section reached")
+    # 
+    # try:
+    #     from .orchestrator import orchestrator_llm, execute_tools
+    #     from app.db.database import SessionLocal
+    #     
+    #     logger.info("=" * 60)
+    #     logger.info("🎯 [PHASE 2] Orchestrator Starting...")
+    #     logger.info("=" * 60)
+    #     
+    #     # Context for orchestrator
+    #     context = {
+    #         "session_id": session_id,
+    #         "user_id": user_id,
+    #         "memory": "",  # 필요시 추가
+    #         "history": store.get_history(user_id, session_id, limit=3)
+    #     }
+    #     
+    #     # Call orchestrator LLM
+    #     tool_calls = await orchestrator_llm(
+    #         user_text=user_text,
+    #         context=context
+    #     )
+    #     
+    #     orchestrator_tools = [tc.function.name for tc in tool_calls]
+    #     logger.warning(f"🎯 [PHASE 2] Tools selected: {orchestrator_tools}")
+    #     
+    #     # Execute tools (optional - 현재는 테스트만)
+    #     if tool_calls:
+    #         db_session = SessionLocal()
+    #         try:
+    #             orchestrator_results = await execute_tools(
+    #                 tool_calls, user_id, session_id, user_text, db_session
+    #             )
+    #             logger.warning(f"🎯 [PHASE 2] Tool results: {list(orchestrator_results.keys())}")
+    #         finally:
+    #             db_session.close()
+    #     
+    #     logger.warning("=\" * 60)
+    #     logger.warning("🎯 [PHASE 2] Orchestrator Complete")
+    #     logger.warning("=" * 60)
         
-        logger.info("=" * 60)
-        logger.info("🎯 [PHASE 2] Orchestrator Starting...")
-        logger.info("=" * 60)
-        
-        # Context for orchestrator
-        context = {
-            "session_id": session_id,
-            "user_id": user_id,
-            "memory": "",  # 필요시 추가
-            "history": store.get_history(user_id, session_id, limit=3)
-        }
-        
-        # Call orchestrator LLM
-        tool_calls = await orchestrator_llm(
-            user_text=user_text,
-            context=context
-        )
-        
-        orchestrator_tools = [tc.function.name for tc in tool_calls]
-        logger.warning(f"🎯 [PHASE 2] Tools selected: {orchestrator_tools}")
-        
-        # Execute tools (optional - 현재는 테스트만)
-        if tool_calls:
-            db_session = SessionLocal()
-            try:
-                orchestrator_results = await execute_tools(
-                    tool_calls, user_id, session_id, user_text, db_session
-                )
-                logger.warning(f"🎯 [PHASE 2] Tool results: {list(orchestrator_results.keys())}")
-            finally:
-                db_session.close()
-        
-        logger.warning("=" * 60)
-        logger.warning("🎯 [PHASE 2] Orchestrator Complete")
-        logger.warning("=" * 60)
-        
-    except Exception as e:
-        logger.error(f"❌ [PHASE 2] Orchestrator failed: {e}", exc_info=True)
-        import traceback
-        logger.error(f"Full traceback:\n{traceback.format_exc()}")
+    # except Exception as e:
+    #     logger.error(f"❌ [PHASE 2] Orchestrator failed: {e}", exc_info=True)
+    #     import traceback
+    #     logger.error(f"Full traceback:\n{traceback.format_exc()}")
     
     # ⚡ Emotion analysis removed from here - moved to background after response
         
