@@ -248,10 +248,10 @@ class _ChatInputState extends State<_ChatInput> {
         ),
         textInputAction: TextInputAction.send,
         onChanged: (text) {
-          print('[BottomInputBar] onChanged: text.length=${text.length}, _hasTyped=$_hasTyped');
+          // print('[BottomInputBar] onChanged: text.length=${text.length}, _hasTyped=$_hasTyped');
           // 첫 글자 입력 시 콜백 호출
           if (!_hasTyped && text.isNotEmpty && widget.onTypingStarted != null) {
-            print('[BottomInputBar] 🎯 Calling onTypingStarted!');
+            // print('[BottomInputBar] 🎯 Calling onTypingStarted!');
             _hasTyped = true;
             widget.onTypingStarted!();
           }
