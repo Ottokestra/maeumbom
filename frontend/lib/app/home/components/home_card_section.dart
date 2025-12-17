@@ -236,7 +236,7 @@ class _HomeCardSectionState extends ConsumerState<HomeCardSection> {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 330, // 카드 높이 증가 (스크롤 여유 공간 확보)
+      height: 320, // 카드 높이 증가 (스크롤 여유 공간 확보)
       child: Stack(
         children: [
           // PageView 영역

@@ -31,94 +31,125 @@ class HomeHeaderSection extends ConsumerWidget {
         const SizedBox(height: AppSpacing.sm),
         
         // 2x3 그리드 레이아웃
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        Column(
           children: [
-            // 왼쪽 열 (닉네임, 메시지, 버튼)
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // 1행: 닉네임
-                  Text(
-                    '$nickname,',
-                    style: AppTypography.h1.copyWith(
+            // 1행: 닉네임 + 설정 버튼
+            Row(
+              children: [
+                // 닉네임
+                Text(
+                  '$nickname,',
+                  style: AppTypography.h1.copyWith(
+                    color: AppColors.textWhite,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                
+                const Spacer(),
+                
+                // 마이페이지 버튼
+                GestureDetector(
+                  onTap: () {
+                    Navigator.pushNamed(context, '/mypage');
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.all(AppSpacing.xs),
+                    decoration: BoxDecoration(
+                      color: AppColors.textWhite.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(AppRadius.sm),
+                    ),
+                    child: const Icon(
+                      Icons.settings_outlined,
+                      size: 24,
                       color: AppColors.textWhite,
-                      fontWeight: FontWeight.w700,
                     ),
                   ),
-                  
-                  const SizedBox(height: AppSpacing.xxs),
-                  
-                  // 2행: 인사말 메시지
-                  Text(
-                    '오늘 하루 어떠셨나요?',
-                    style: AppTypography.h3.copyWith(
-                      color: AppColors.textWhite,
-                    ),
-                  ),
-                  
-                  const SizedBox(height: AppSpacing.sm),
-                  
-                  // 3행: 봄이와 대화하기 버튼
-                  GestureDetector(
-                    onTap: () {
-                      Navigator.pushNamed(context, '/bomi');
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: AppSpacing.sm,
-                        vertical: AppSpacing.xs,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppColors.textWhite.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(AppRadius.md),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            '봄이와 대화하기',
-                            style: AppTypography.body.copyWith(
-                              color: AppColors.textWhite,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          const SizedBox(width: 4),
-                          const Icon(
-                            Icons.chevron_right,
-                            size: 18,
-                            color: AppColors.textWhite,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
             
-            const SizedBox(width: AppSpacing.sm),
-
-            // 오른쪽 열 (캐릭터)
-            Consumer(
-              builder: (context, ref, child) {
-                final dailyState = ref.watch(dailyMoodProvider);
-                final currentEmotion = dailyState.selectedEmotion ?? EmotionId.joy;
-
-                return SizedBox(
-                  width: 100,
-                  height: 100,
-                  child: Transform(
-                    alignment: Alignment.center,
-                    transform: Matrix4.rotationY(3.14159), // 180도 좌우 반전 (π 라디안)
-                    child: EmotionCharacter(
-                      id: currentEmotion,
-                      size: 100,
-                    ),
+            const SizedBox(height: AppSpacing.xxs),
+            
+            // 2~3행: 인사말 + 버튼 (왼쪽) + 캐릭터 (오른쪽)
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // 왼쪽: 인사말 + 대화 버튼
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // 2행: 인사말 메시지
+                      Text(
+                        '오늘 하루 어떠셨나요?',
+                        style: AppTypography.h3.copyWith(
+                          color: AppColors.textWhite,
+                        ),
+                      ),
+                      
+                      const SizedBox(height: AppSpacing.sm),
+                      
+                      // 3행: 봄이와 대화하기 버튼
+                      GestureDetector(
+                        onTap: () {
+                          Navigator.pushNamed(context, '/bomi');
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AppSpacing.sm,
+                            vertical: AppSpacing.xs,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.textWhite.withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(AppRadius.md),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                '봄이와 대화하기',
+                                style: AppTypography.body.copyWith(
+                                  color: AppColors.textWhite,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              const SizedBox(width: 4),
+                              const Icon(
+                                Icons.chevron_right,
+                                size: 18,
+                                color: AppColors.textWhite,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                );
-              },
+                ),
+                
+                const SizedBox(width: AppSpacing.sm),
+                
+                // 오른쪽: 캐릭터 (2~3행 영역)
+                Consumer(
+                  builder: (context, ref, child) {
+                    final dailyState = ref.watch(dailyMoodProvider);
+                    final currentEmotion = dailyState.selectedEmotion ?? EmotionId.joy;
+
+                    return SizedBox(
+                      width: 100,
+                      height: 100,
+                      child: Transform(
+                        alignment: Alignment.center,
+                        transform: Matrix4.rotationY(3.14159), // 180도 좌우 반전
+                        child: EmotionCharacter(
+                          id: currentEmotion,
+                          size: 100,
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ],
             ),
           ],
         ),
