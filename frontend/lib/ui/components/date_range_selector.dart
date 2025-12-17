@@ -93,7 +93,7 @@ class DateRangeSelector extends StatelessWidget {
                       style: AppTypography.body.copyWith(
                         color: AppColors.textPrimary,
                         fontWeight: FontWeight.w600,
-                        fontSize: 16,
+                        fontSize: 24,
                       ),
                       textAlign: TextAlign.center,
                     ),
