@@ -228,15 +228,15 @@ class _HomeCardSectionState extends ConsumerState<HomeCardSection> {
   // 감정 요약 문구 생성
   String _generateEmotionSummary(List<EmotionSegment> segments) {
     if (segments.isEmpty) return '아직 기록된 감정이 없어요';
-
-    final topEmotion = segments.first;
-    return '이번 주는 ${topEmotion.label}이(가) 많이 나오셨네요';
+    
+    // 감정 요약 문구 제거, 빈 문자열 반환
+    return '';
   }
 
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 320, // 카드 높이 증가 (스크롤 여유 공간 확보)
+      height: 290, // 카드 높이 증가 (스크롤 여유 공간 확보)
       child: Stack(
         children: [
           // PageView 영역
@@ -287,19 +287,20 @@ class _HomeCardSectionState extends ConsumerState<HomeCardSection> {
       },
       child: Column(
         children: [
-          // 요약 텍스트
-          Padding(
-            padding: const EdgeInsets.symmetric(
-                horizontal: AppSpacing.md, vertical: AppSpacing.xs),
-            child: Text(
-              _emotionSummary,
-              style: AppTypography.body.copyWith(
-                color: AppColors.textPrimary,
-                fontWeight: FontWeight.w500,
+          // 요약 텍스트 (데이터가 없을 때만 표시)
+          if (_emotionSummary.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.md, vertical: AppSpacing.xs),
+              child: Text(
+                _emotionSummary,
+                style: AppTypography.body.copyWith(
+                  color: AppColors.textPrimary,
+                  fontWeight: FontWeight.w500,
+                ),
+                textAlign: TextAlign.center,
               ),
-              textAlign: TextAlign.center,
             ),
-          ),
 
           if (_emotionSegments.isNotEmpty) ...[
             // 차트 영역
