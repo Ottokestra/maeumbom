@@ -178,7 +178,6 @@ class ReportPage3 extends ConsumerWidget {
                             // 감정 캐릭터
                             EmotionCharacter(
                               id: emotion.emotion,
-                              use2d: true,
                               size: 32,
                             ),
 
@@ -365,7 +364,6 @@ class ReportPage3 extends ConsumerWidget {
             child: EmotionCharacter(
               id: emotion.emotion,
               size: 120,
-              use2d: true,
             ),
           ),
 

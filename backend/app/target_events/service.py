@@ -257,13 +257,9 @@ def aggregate_weekly_emotions(
         if percentage > 0:  # 0%는 제외
             emotion_distribution[emotion_name] = percentage
     
-    # 상위 5개만 유지하고 나머지는 "기타"로 묶기
+    # 상위 5개만 유지
     if len(emotion_distribution) > 5:
-        top_5 = dict(list(emotion_distribution.items())[:5])
-        others_sum = sum(list(emotion_distribution.values())[5:])
-        if others_sum > 0:
-            top_5["기타"] = others_sum
-        emotion_distribution = top_5
+        emotion_distribution = dict(list(emotion_distribution.items())[:5])
     
     # 4. 주요 감정 추출
     primary_emotion_code = emotion_counter.most_common(1)[0][0] if emotion_counter else None
