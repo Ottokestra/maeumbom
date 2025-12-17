@@ -25,8 +25,9 @@ final emotionHistoryRangeProvider = StateProvider<EmotionHistoryRange>((ref) {
   return EmotionHistoryRange.week;
 });
 
-final dashboardRepositoryProvider = Provider<DashboardRepository>((ref) {
-  final apiClient = DashboardApiClient(ref.watch(apiClientProvider));
+final reportDashboardRepositoryProvider = Provider<DashboardRepository>((ref) {
+  final dio = ref.watch(baseDioProvider);
+  final apiClient = DashboardApiClient(dio);
   return DashboardRepository(apiClient);
 });
 
@@ -42,9 +43,20 @@ final recommendationRepositoryProvider = Provider<RecommendationRepository>((ref
 
 final emotionHistoryProvider =
     FutureProvider.autoDispose.family<List<EmotionHistoryEntry>, EmotionHistoryRange>(
-  (ref, range) {
-    final repository = ref.watch(dashboardRepositoryProvider);
-    return repository.fetchEmotionHistory(range.days);
+  (ref, range) async {
+    final repository = ref.watch(reportDashboardRepositoryProvider);
+    final emotions = await repository.getEmotionHistory(limit: range.days);
+    
+    // EmotionHistoryModel을 EmotionHistoryEntry로 변환
+    return emotions.map((emotion) {
+      return EmotionHistoryEntry(
+        createdAt: emotion.createdAt,
+        sentimentOverall: emotion.sentimentOverall ?? 'neutral',
+        primaryEmotionCode: emotion.primaryEmotion?.code ?? '',
+        primaryEmotionLabel: emotion.primaryEmotion?.nameKo ?? '',
+        primaryEmotionGroup: emotion.primaryEmotion?.group ?? '',
+      );
+    }).toList();
   },
 );
 
