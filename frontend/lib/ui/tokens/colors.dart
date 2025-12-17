@@ -110,4 +110,36 @@ class AppColors {
   // 혼란 (Confusion)
   static const emotionConfusionPrimary = Color(0xFFB28CFF);
   static const emotionConfusionSecondary = Color(0xFFC7A4FF);
+
+
+  // ================================
+  // Weekly Report Emotion Colors (17)
+  // No Main Red
+  // ================================
+
+  // Positive
+  static const weeklyJoy            = Color(0xFFFFC83D); // joy
+  static const weeklyHappiness      = Color(0xFFFFD96B); // happiness (joy보다 살짝 밝게)
+  static const weeklyExcitement     = Color(0xFFB49CFF); // excitement (보라/하이라이트)
+  static const weeklyConfidence     = Color(0xFF25C6B8); // confidence (선명한 teal)
+  static const weeklyLove           = Color(0xFFFF7FB2); // love (코랄 핑크)
+  static const weeklyRelief         = Color(0xFF5ED6FF); // relief (sky)
+  static const weeklyEnlightenment  = Color(0xFF42E3D6); // enlightenment (aqua mint)
+  static const weeklyInterest       = Color(0xFF6EE7A8); // interest (lime mint)
+
+  // Negative / Tension
+  static const weeklyDiscontent     = Color(0xFFFF9F45); // discontent (orange coral)
+  static const weeklyAnger          = Color(0xFFFFB23D); // anger (discontent보다 노랑쪽)
+  static const weeklyContempt       = Color(0xFFB08A60); // contempt (브라운/냉소 톤)
+
+  // Blue family (sad/fear)
+  static const weeklySadness        = Color(0xFF6F7FDB); // sadness (periwinkle)
+  static const weeklyDepression     = Color(0xFF5167C8); // depression (더 딥하게)
+  static const weeklyGuilt          = Color(0xFF7A86B8); // guilt (회청/무게감)
+  static const weeklyFear           = Color(0xFF3FB6FF); // fear (전기블루)
+  static const weeklyShame          = Color(0xFF8B6BBF); // shame (퍼플그레이)
+
+  // Purple family (confusion/bored)
+  static const weeklyConfusion      = Color(0xFF9B8CFF); // confusion
+  static const weeklyBoredom        = Color(0xFFA9A4B2); // boredom (쿨그레이/무채)
 }

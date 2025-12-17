@@ -150,7 +150,7 @@ class _RelationTrainingScreenState
         return false;
       },
       child: AppFrame(
-        backgroundColor: AppColors.bgLightPink,
+        backgroundColor: AppColors.bgBasic,
         useSafeArea: false,
         topBar: TopBar(
           title: '',
@@ -158,7 +158,7 @@ class _RelationTrainingScreenState
           onTapLeft: _handleBack,
           rightIcon: Icons.close,
           onTapRight: _handleExit,
-          backgroundColor: AppColors.bgLightPink,
+          backgroundColor: AppColors.bgBasic,
         ),
         body: stateAsync.when(
           data: (state) {
