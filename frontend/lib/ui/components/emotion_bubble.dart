@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../tokens/app_tokens.dart';
 import '../tokens/bubbles.dart';
+import '../tokens/colors.dart';
+import '../../core/utils/text_formatter.dart';
 
 /// 봄이의 대화 말풍선 위젯
 ///
@@ -195,7 +197,7 @@ class _EmotionBubbleState extends State<EmotionBubble> {
           width: bubbleWidth, // 명확한 너비 지정 (화면 전체 - 좌우 여백)
           constraints: const BoxConstraints(
             minHeight: 60.0, // 최소 높이 (1줄 정도)
-            maxHeight: 300.0, // 최대 높이 (증가: 더 많은 텍스트 표시)
+            maxHeight: 144.0, // 최대 높이 (약 5줄: 24px * 5 + 패딩 24px)
           ),
           decoration: BoxDecoration(
             color: bgColor,
@@ -247,13 +249,16 @@ class _EmotionBubbleState extends State<EmotionBubble> {
                   builder: (context, constraints) {
                     return SingleChildScrollView(
                       controller: _scrollController,
-                      child: Text(
-                        _displayedText,
+                      child: RichText(
                         textAlign: TextAlign.left, // 왼쪽 정렬
-                        maxLines: null, // 무제한 (모든 텍스트 표시)
-                        overflow: TextOverflow.visible,
-                        style: AppTypography.bodyBold.copyWith(
-                          color: BubbleTokens.emotionText, // #233446
+                        text: TextSpan(
+                          children: TextFormatter.parseMarkdownToSpans(
+                            _displayedText,
+                            AppTypography.bodyBold.copyWith(
+                              color: BubbleTokens.emotionText, // #233446
+                            ),
+                            AppColors.primaryColor, // 볼드 강조 색상
+                          ),
                         ),
                       ),
                     );
