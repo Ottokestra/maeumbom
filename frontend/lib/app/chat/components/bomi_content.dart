@@ -479,7 +479,7 @@ class _BomiContentState extends ConsumerState<BomiContent> {
                             statusMessage == null)) ...[
                       // 일반 답변 메시지 버블 (🆕 마크다운 정제 적용)
                       EmotionBubble(
-                        message: TextFormatter.formatBasicMarkdown(displayText),
+                        message: TextFormatter.beautifyBomiMarkdown(displayText),
                         enableTypingAnimation: shouldAnimateBotText,
                         key: ValueKey(widget.typingReaction ?? latestBotMessage?.id ?? 'default'),
                         bgWhite: true,
@@ -494,7 +494,7 @@ class _BomiContentState extends ConsumerState<BomiContent> {
                             statusMessage == null)) ...[
                       // 안내 메시지 버블 (요약만 표시, 🆕 마크다운 정제 적용)
                       EmotionBubble(
-                        message: TextFormatter.formatBasicMarkdown(displayText),
+                        message: TextFormatter.beautifyBomiMarkdown(displayText),
                         enableTypingAnimation: shouldAnimateBotText,
                         key: ValueKey(
                             '${latestBotMessage?.id ?? 'default'}_intro'),

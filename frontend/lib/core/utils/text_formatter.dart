@@ -1,3 +1,5 @@
+import 'package:flutter/material.dart';
+
 /// 텍스트 포맷팅 유틸리티
 ///
 /// 마크다운 정제 및 텍스트 정규화 기능을 제공합니다.
@@ -57,8 +59,17 @@ class TextFormatter {
   static String beautifyBomiMarkdown(String raw) {
     if (raw.trim().isEmpty) return raw;
 
-    // 1. 문장 단위로 자르기 (., ?, !, …, ... 기준)
-    final sentences = raw
+    // 1. 이탤릭만 제거 (볼드는 TextSpan에서 색상 처리)
+    String cleaned = raw;
+    
+    // 이탤릭 제거 (*text* → text) - 볼드가 아닌 단일 * 처리
+    cleaned = cleaned.replaceAllMapped(
+      RegExp(r'(?<!\*)\*(?!\*)([^\*]+?)(?<!\*)\*(?!\*)'),
+      (match) => match.group(1) ?? '',
+    );
+
+    // 2. 문장 단위로 자르기 (., ?, !, …, ... 기준)
+    final sentences = cleaned
         .replaceAll('...', '…') // ... → … 통합
         .split(RegExp(r'(?<=[\.!\?…])\s+')) // 구두점 + 공백 기준 split
         .map((s) => s.trim())
@@ -67,7 +78,7 @@ class TextFormatter {
 
     final buffer = StringBuffer();
 
-    // 2. 2문장씩 묶어서 한 단락으로
+    // 3. 2문장씩 묶어서 한 단락으로
     for (int i = 0; i < sentences.length; i += 2) {
       final first = sentences[i];
       final second = (i + 1 < sentences.length) ? sentences[i + 1] : null;
@@ -87,7 +98,7 @@ class TextFormatter {
       }
     }
 
-    return buffer.toString();
+    return buffer.toString().trimRight();
   }
 
   /// 트레이닝 전용 마크다운 포맷팅
@@ -131,5 +142,58 @@ class TextFormatter {
     formatted = formatted.trim();
 
     return formatted;
+  }
+
+  /// 마크다운 볼드를 TextSpan으로 변환 (색상 강조)
+  /// 
+  /// **텍스트** 형식의 볼드 마크다운을 파싱하여
+  /// 해당 부분에 지정된 색상과 볼드 스타일을 적용한 TextSpan 리스트를 반환합니다.
+  /// 
+  /// Args:
+  ///   text: 파싱할 원본 텍스트
+  ///   baseStyle: 기본 텍스트 스타일
+  ///   boldColor: 볼드 텍스트에 적용할 색상
+  /// 
+  /// Returns:
+  ///   TextSpan 리스트
+  static List<TextSpan> parseMarkdownToSpans(
+    String text,
+    TextStyle baseStyle,
+    Color boldColor,
+  ) {
+    final spans = <TextSpan>[];
+    final regex = RegExp(r'\*\*([^\*]+?)\*\*');
+    int lastIndex = 0;
+    
+    for (final match in regex.allMatches(text)) {
+      // 볼드 이전 일반 텍스트
+      if (match.start > lastIndex) {
+        spans.add(TextSpan(
+          text: text.substring(lastIndex, match.start),
+          style: baseStyle,
+        ));
+      }
+      
+      // 볼드 텍스트 (색상 강조)
+      spans.add(TextSpan(
+        text: match.group(1),
+        style: baseStyle.copyWith(
+          color: boldColor,
+          fontWeight: FontWeight.bold,
+        ),
+      ));
+      
+      lastIndex = match.end;
+    }
+    
+    // 남은 일반 텍스트
+    if (lastIndex < text.length) {
+      spans.add(TextSpan(
+        text: text.substring(lastIndex),
+        style: baseStyle,
+      ));
+    }
+    
+    return spans;
   }
 }
