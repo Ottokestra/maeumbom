@@ -7,10 +7,31 @@ from sqlalchemy import and_, or_, func
 from datetime import date, timedelta, datetime
 from typing import List, Optional, Dict, Any
 from collections import Counter
+from pathlib import Path
+import sys
+import importlib.util
+import logging
 
 from app.db.models import DailyTargetEvent, WeeklyTargetEvent, Conversation, RoutineRecommendation
 from .analyzer import TargetEventAnalyzer
 from .constants import TARGET_TAGS
+
+# 로거 설정
+logger = logging.getLogger(__name__)
+
+# 감정 분석 엔진 import
+backend_path = Path(__file__).parent.parent.parent
+rag_pipeline_path = backend_path / "engine" / "emotion-analysis" / "src" / "rag_pipeline.py"
+try:
+    spec = importlib.util.spec_from_file_location("rag_pipeline", rag_pipeline_path)
+    rag_pipeline_module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(rag_pipeline_module)
+    get_rag_pipeline = rag_pipeline_module.get_rag_pipeline
+    EMOTION_ANALYSIS_AVAILABLE = True
+except Exception as e:
+    logger.warning(f"감정 분석 엔진 로드 실패: {e}")
+    EMOTION_ANALYSIS_AVAILABLE = False
+    get_rag_pipeline = None
 
 
 def analyze_daily_events(
@@ -570,4 +591,52 @@ def get_popular_tags(
         "other": other_tags[:limit],
         "all": [tag for tag, _ in sorted_tags[:limit]],
     }
+
+
+async def analyze_event_emotion(event_summary: str) -> Optional[Dict[str, Any]]:
+    """
+    EVENT_SUMMARY를 감정 분석하여 PRIMARY_EMOTION 반환
+    
+    Args:
+        event_summary: 일일 이벤트 요약문
+        
+    Returns:
+        {
+            "code": "joy",
+            "name_ko": "기쁨", 
+            "group": "positive",
+            "intensity": 5,
+            "confidence": 0.92
+        }
+        또는 None (분석 실패 시)
+    """
+    if not EMOTION_ANALYSIS_AVAILABLE or not get_rag_pipeline:
+        logger.warning("감정 분석 엔진을 사용할 수 없습니다")
+        return None
+    
+    try:
+        # 감정 분석 엔진 호출
+        pipeline = get_rag_pipeline()
+        result = pipeline.analyze_emotion(event_summary)
+        
+        # primary_emotion 추출
+        primary = result.get('primary_emotion', {})
+        if not primary:
+            logger.warning("primary_emotion이 결과에 없습니다")
+            return None
+        
+        emotion_data = {
+            "code": primary.get('code'),
+            "name_ko": primary.get('name_ko'),
+            "group": primary.get('group'),
+            "intensity": primary.get('intensity'),
+            "confidence": primary.get('confidence')
+        }
+        
+        logger.info(f"감정 분석 성공: {emotion_data['name_ko']} (confidence: {emotion_data['confidence']})")
+        return emotion_data
+        
+    except Exception as e:
+        logger.error(f"감정 분석 실패: {e}", exc_info=True)
+        return None
 

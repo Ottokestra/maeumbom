@@ -1434,6 +1434,7 @@ class DailyTargetEvent(Base):
         IS_FUTURE_EVENT: Whether this is a future event
         TAGS: Tags for filtering (JSON array)
         RAW_CONVERSATION_IDS: Original conversation IDs (JSON array)
+        PRIMARY_EMOTION: Primary emotion from EVENT_SUMMARY analysis (JSON)
         IS_DELETED: Deletion flag
         CREATED_AT: Creation timestamp
         CREATED_BY: Creator user ID
@@ -1454,6 +1455,9 @@ class DailyTargetEvent(Base):
     IS_FUTURE_EVENT = Column(Boolean, nullable=False, default=False)
     TAGS = Column(JSON, nullable=True)  # ["#아들", "#픽업", "#오늘", "#중요"]
     RAW_CONVERSATION_IDS = Column(JSON, nullable=True)  # [123, 124, 125]
+    
+    # 감정 데이터
+    PRIMARY_EMOTION = Column(JSON, nullable=True)  # {"code": "joy", "name_ko": "기쁨", "group": "positive", "intensity": 5, "confidence": 0.92}
     
     # 표준 필드
     IS_DELETED = Column(Boolean, default=False, nullable=False, index=True)

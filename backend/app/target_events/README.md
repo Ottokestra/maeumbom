@@ -79,6 +79,7 @@ backend/scripts/
 | IS_FUTURE_EVENT | Boolean | 미래 이벤트 여부 |
 | TAGS | JSON | 태그 배열 |
 | RAW_CONVERSATION_IDS | JSON | 원본 대화 ID 배열 |
+| PRIMARY_EMOTION | JSON | 일일 대표 감정 (EVENT_SUMMARY 분석 결과) |
 
 **특징**:
 - 하루에 사용자당 **1개의 이벤트만** 저장됨
@@ -171,9 +172,14 @@ alembic revision --autogenerate -m "Add target events tables"
 alembic upgrade head
 
 # 또는 init_db() 호출 시 자동 생성
+
+# 또는 MySQL 직접 실행
+ALTER TABLE TB_DAILY_TARGET_EVENTS ADD COLUMN PRIMARY_EMOTION JSON NULL;
 ```
 
 ### 2. 기존 데이터 마이그레이션
+
+#### 2-1. 대화 → 이벤트 생성
 
 기존 대화 데이터를 분석하여 이벤트를 추출합니다:
 
@@ -229,6 +235,38 @@ curl -X GET "http://localhost:8000/api/target-events/tags/popular?limit=20" \
   -H "Authorization: Bearer YOUR_TOKEN"
 ```
 
+#### 일간 감정 데이터 조회
+```bash
+curl -X GET "http://localhost:8000/api/dashboard/daily-emotions?start_date=2024-12-01&end_date=2024-12-07" \
+  -H "Authorization: Bearer YOUR_TOKEN"
+```
+
+**응답 예시**:
+```json
+[
+  {
+    "date": "2024-12-01",
+    "primary_emotion": {
+      "code": "joy",
+      "name_ko": "기쁨",
+      "group": "positive",
+      "intensity": 5,
+      "confidence": 0.92
+    }
+  },
+  {
+    "date": "2024-12-02",
+    "primary_emotion": {
+      "code": "sadness",
+      "name_ko": "슬픔",
+      "group": "negative",
+      "intensity": 3,
+      "confidence": 0.85
+    }
+  }
+]
+```
+
 ## 실행 방식 및 향후 계획
 
 ### 현재: 수동 스크립트 실행
@@ -238,10 +276,10 @@ curl -X GET "http://localhost:8000/api/target-events/tags/popular?limit=20" \
 **일간 분석:**
 ```bash
 # 최근 40일치 분석
-python backend/scripts/migrate_target_events.py --days 40
+python scripts/migrate_target_events.py --days 40
 
 # 특정 기간 분석
-python backend/scripts/migrate_target_events.py --start-date 2025-11-06 --end-date 2025-12-13
+python scripts/migrate_target_events.py --start-date 2025-11-06 --end-date 2025-12-13
 ```
 
 **주간 요약:**
