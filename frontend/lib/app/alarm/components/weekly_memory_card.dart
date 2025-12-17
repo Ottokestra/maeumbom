@@ -68,13 +68,20 @@ class _WeeklyMemoryCardState extends State<WeeklyMemoryCard> {
   /// 주간 범위 포맷팅
   String _formatWeekRange() {
     final dateFormat = DateFormat('M월 dd일', 'ko_KR');
-    return '${dateFormat.format(widget.event.weekStart)} ~ ${dateFormat.format(widget.event.weekEnd)}';
+    final weekStart = widget.event.weekStart;
+    final weekEnd = widget.event.weekEnd;
+    
+    if (weekStart == null || weekEnd == null) {
+      return '날짜 정보 없음';
+    }
+    
+    return '${dateFormat.format(weekStart)} ~ ${dateFormat.format(weekEnd)}';
   }
 
   @override
   Widget build(BuildContext context) {
-    final targetColor = _getTargetColor(widget.event.targetType);
-    final targetLabel = _getTargetLabel(widget.event.targetType);
+    final targetColor = _getTargetColor(widget.event.targetType ?? '');
+    final targetLabel = _getTargetLabel(widget.event.targetType ?? '');
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
