@@ -140,12 +140,9 @@ class _BomiScreenState extends ConsumerState<BomiScreen> {
   }
 
   /// 입력 시작 시 반응 메시지 생성
-  void _handleTypingStarted() {
-    print('[BomiScreen] 🎯 _handleTypingStarted called!');
-    
+  void _handleTypingStarted() {  
     // 이미 생성된 반응이 있으면 재사용 (지우고 다시 입력해도 같은 메시지 유지)
     if (_generatedReaction != null) {
-      print('[BomiScreen] Reusing existing reaction: $_generatedReaction');
       setState(() {
         _typingReaction = _generatedReaction;
       });
@@ -155,7 +152,6 @@ class _BomiScreenState extends ConsumerState<BomiScreen> {
     // 채팅 메시지가 이미 있으면 반응 메시지를 표시하지 않음 (첫 대화에서만 표시)
     final chatState = ref.read(chatProvider);
     if (chatState.messages.isNotEmpty) {
-      print('[BomiScreen] Messages exist (${chatState.messages.length}), skipping reaction');
       return;
     }
     

@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart'; // ✅ Session 저장
 import '../core/services/chat/bom_chat_service.dart';
 import '../core/services/chat/permission_service.dart';
+import '../core/services/chat/quick_reply_engine.dart'; // 🆕 Quick Reply Engine
 import '../data/models/chat/chat_message.dart';
 import '../data/repository/chat/chat_repository.dart';
 import '../data/api/chat/chat_api_client.dart';
@@ -542,6 +543,46 @@ class ChatNotifier extends StateNotifier<ChatState> {
 
     // 🆕 텍스트 입력 플래그 설정
     _isVoiceInput = false;
+
+    // 🆕 Quick Reply 시도
+    final quickReply = QuickReplyEngine.tryMatch(text);
+    
+    if (quickReply != null) {
+      // ✅ Quick Reply 매칭 성공
+      print('[ChatProvider] 🚀 Quick Reply matched!');
+      
+      // 1. 사용자 메시지 추가
+      final userMessage = ChatMessage(
+        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        text: text,
+        isUser: true,
+        timestamp: DateTime.now(),
+      );
+      
+      // 2. 봄이 Quick Reply 추가
+      final aiMessage = ChatMessage(
+        id: (DateTime.now().millisecondsSinceEpoch + 1).toString(),
+        text: quickReply.text,
+        isUser: false,
+        timestamp: DateTime.now(),
+        meta: {
+          'emotion': quickReply.emotion,
+          'response_type': 'quick',
+        },
+      );
+      
+      state = state.copyWith(
+        messages: [...state.messages, userMessage, aiMessage],
+      );
+      
+      // 3. 세션 시간 업데이트
+      await _updateSessionTime();
+      
+      return; // 서버 호출 없이 종료
+    }
+
+    // ❌ Quick Reply 매칭 실패 → 기존 서버 플로우
+    print('[ChatProvider] 📡 Passing to server...');
 
     // Add user message to UI
     final userMessage = ChatMessage(
