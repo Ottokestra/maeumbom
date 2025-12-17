@@ -209,6 +209,64 @@ const Map<String, AnimationMeta> animationMetaMap = {
     assetPath: 'assets/characters/animation/error/char_sadness.json',
   ),
 
+  // bg_love 배경 캐릭터 - 4가지 감정
+  'bg_love_happiness': AnimationMeta(
+    id: 'bg_love_happiness',
+    nameKo: '사랑 배경(기쁨)',
+    category: EmotionCategory.happiness,
+    assetPath: 'assets/characters/animation/happiness/bg_char_love.json',
+  ),
+  'bg_love_sadness': AnimationMeta(
+    id: 'bg_love_sadness',
+    nameKo: '사랑 배경(슬픔)',
+    category: EmotionCategory.sadness,
+    assetPath: 'assets/characters/animation/sadness/bg_char_love.json',
+  ),
+  'bg_love_anger': AnimationMeta(
+    id: 'bg_love_anger',
+    nameKo: '사랑 배경(분노)',
+    category: EmotionCategory.anger,
+    assetPath: 'assets/characters/animation/anger/bg_char_love.json',
+  ),
+  'bg_love_fear': AnimationMeta(
+    id: 'bg_love_fear',
+    nameKo: '사랑 배경(공포)',
+    category: EmotionCategory.fear,
+    assetPath: 'assets/characters/animation/fear/bg_char_love.json',
+  ),
+
+  // bg_love 배경 캐릭터 - 5가지 상태
+  'bg_love_basic': AnimationMeta(
+    id: 'bg_love_basic',
+    nameKo: '사랑 배경(기본)',
+    category: EmotionCategory.basic,
+    assetPath: 'assets/characters/animation/basic/bg_char_love.json',
+  ),
+  'bg_love_listening': AnimationMeta(
+    id: 'bg_love_listening',
+    nameKo: '사랑 배경(듣는중)',
+    category: EmotionCategory.listening,
+    assetPath: 'assets/characters/animation/listening/bg_char_love.json',
+  ),
+  'bg_love_thinking': AnimationMeta(
+    id: 'bg_love_thinking',
+    nameKo: '사랑 배경(생각중)',
+    category: EmotionCategory.thinking,
+    assetPath: 'assets/characters/animation/thinking/bg_char_love.json',
+  ),
+  'bg_love_realization': AnimationMeta(
+    id: 'bg_love_realization',
+    nameKo: '사랑 배경(깨달음)',
+    category: EmotionCategory.realization,
+    assetPath: 'assets/characters/animation/realization/bg_char_love.json',
+  ),
+  'bg_love_error': AnimationMeta(
+    id: 'bg_love_error',
+    nameKo: '사랑 배경(오류)',
+    category: EmotionCategory.error,
+    assetPath: 'assets/characters/animation/error/bg_char_love.json',
+  ),
+
   // TODO: 향후 추가될 캐릭터들
   // 예시:
   // 'joy_happiness': AnimationMeta(

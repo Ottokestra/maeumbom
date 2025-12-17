@@ -4,10 +4,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../ui/app_ui.dart';
 import '../../providers/daily_mood_provider.dart';
 import '../../core/utils/emotion_classifier.dart';
+import '../../core/utils/mood_color_helper.dart';
 import '../../core/services/navigation/navigation_service.dart';
 import 'components/home_header_section.dart';
-import 'components/conversation_temperature_bar.dart';
+import 'components/home_card_section.dart';
+import 'components/home_main_buttons.dart';
+import 'components/home_banner_slider.dart';
 import 'daily_mood_check_screen.dart';
+import 'components/home_recommendation_cards.dart';
 
 /// Home Screen - 메인 홈 화면
 class HomeScreen extends ConsumerWidget {
@@ -22,7 +26,6 @@ class HomeScreen extends ConsumerWidget {
       useSafeArea: false,
       statusBarStyle: statusBarStyle,
       body: const HomeContent(),
-      bottomBar: const HomeBottomBar(),
     );
   }
 }
@@ -63,11 +66,11 @@ class _HomeContentState extends ConsumerState<HomeContent> {
   void _showMoodCheckDialog() {
     MessageDialogHelper.showRedConfirm(
       context,
-      icon: Icons.favorite_rounded,
-      title: '오늘의 기분은 어떠신가요?',
-      message: '아직 오늘의 감정 캐릭터를 선택하지 않으셨어요.\n지금 기록하러 가볼까요?',
-      primaryButtonText: '기록하기',
-      secondaryButtonText: '나중에',
+      icon: Icons.sentiment_satisfied_rounded,
+      title: '오늘의 기분은 어때?',
+      message: '아직 오늘의 감정 캐릭터를 \n선택하지 않았어.\n지금 가볼까?',
+      primaryButtonText: '선택하기',
+      secondaryButtonText: '나중에 할게',
       onPrimaryPressed: () {
         Navigator.pop(context);
         Navigator.push(
@@ -77,13 +80,16 @@ class _HomeContentState extends ConsumerState<HomeContent> {
           ),
         );
       },
-      onSecondaryPressed: () => Navigator.pop(context),
+      onSecondaryPressed: () {
+        Navigator.pop(context);
+      },
     );
   }
 
   @override
   Widget build(BuildContext context) {
     final dailyState = ref.watch(dailyMoodProvider);
+    final navigationService = NavigationService(context, ref);
 
     // 현재 감정 가져오기 (기본값: 기쁨)
     final currentEmotion = dailyState.selectedEmotion ?? EmotionId.joy;
@@ -91,46 +97,71 @@ class _HomeContentState extends ConsumerState<HomeContent> {
     // 배경색을 위한 기분 카테고리 가져오기
     final moodCategory = EmotionClassifier.classify(currentEmotion);
 
-    // 배경색 결정
-    final backgroundColor = _getBackgroundColor(moodCategory);
+    // MoodColorHelper를 사용하여 일관된 색상 적용
+    final contentColor = MoodColorHelper.getContentColor(moodCategory);
+    final emotionColor = MoodColorHelper.getEmotionColor(currentEmotion);
 
     return Container(
-      color: backgroundColor,
+      color: AppColors.primaryColor,
       child: SafeArea(
+        bottom: false,
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // 상단 콘텐츠 영역 (스크롤 가능)
-            Expanded(
-              child: SingleChildScrollView(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.md,
-                    vertical: AppSpacing.lg,
+            // 헤더 영역 (primaryColor 배경)
+            Container(
+              color: AppColors.primaryColor,
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.md,
+                vertical: AppSpacing.lg,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // 1. 헤더 섹션
+                  HomeHeaderSection(
+                    contentColor: contentColor,
                   ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      // 1. 헤더 영역
-                      const HomeHeaderSection(),
+                ],
+              ),
+            ),
 
-                      const SizedBox(height: AppSpacing.xxl),
+            // 컨텐츠 영역 (basicGray 배경, 입체감 효과)
+            Expanded(
+              child: ClipRRect(
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(24),
+                  topRight: Radius.circular(24),
+                ),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: AppColors.basicGray,
+                  ),
+                  child: SingleChildScrollView(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.md,
+                      ).copyWith(top: AppSpacing.md),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          // 2. 통합 카드 섹션 (감정 차트 + 기억 알림)
+                          const HomeCardSection(),
 
-                      // 2. 캐릭터 (240x240, 중앙)
-                      Center(
-                        child: EmotionCharacter(
-                          id: currentEmotion,
-                          size: 240,
-                        ),
+                          const SizedBox(height: AppSpacing.xs),
+
+                          // 4. 메인 버튼 그리드
+                          const HomeMainButtons(),
+
+                          // 5. 오늘의 추천 카드
+                          //const HomeRecommendationCards(),
+
+                          SizedBox(
+                            height: MediaQuery.of(context).padding.bottom +
+                                AppSpacing.sm,
+                          ),
+                        ],
                       ),
-
-                      const SizedBox(height: AppSpacing.xl),
-
-                      // 3. 대화 온도 막대
-                      ConversationTemperatureBar(
-                        currentMood: moodCategory,
-                      ),
-                    ],
+                    ),
                   ),
                 ),
               ),
@@ -138,35 +169,6 @@ class _HomeContentState extends ConsumerState<HomeContent> {
           ],
         ),
       ),
-    );
-  }
-
-  /// 기분 카테고리에 따른 배경색 반환
-  Color _getBackgroundColor(MoodCategory category) {
-    switch (category) {
-      case MoodCategory.good:
-        return AppColors.moodGoodColor;
-      case MoodCategory.neutral:
-        return AppColors.moodNormalColor;
-      case MoodCategory.bad:
-        return AppColors.moodNormalColor; // 디자인 가이드/사용자 요청에 따라 변경
-    }
-  }
-}
-
-/// 홈 화면 하단 네비게이션 바
-class HomeBottomBar extends ConsumerWidget {
-  const HomeBottomBar({super.key});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final navigationService = NavigationService(context, ref);
-
-    return BottomMenuBar(
-      currentIndex: 0,
-      onTap: (index) {
-        navigationService.navigateToTab(index);
-      },
     );
   }
 }
