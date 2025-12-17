@@ -7,6 +7,7 @@ part 'text_chat_request.g.dart';
 class TextChatRequest with _$TextChatRequest {
   const factory TextChatRequest({
     @JsonKey(name: 'user_text') required String userText,
+    @JsonKey(name: 'context') String? context, // 🆕 LLM 컨텍스트 (DB 저장 안 함)
     @JsonKey(name: 'session_id') String? sessionId,
     @JsonKey(name: 'stt_quality') String? sttQuality,
     @JsonKey(name: 'tts_enabled') bool? ttsEnabled, // ✅ TTS 활성화 여부

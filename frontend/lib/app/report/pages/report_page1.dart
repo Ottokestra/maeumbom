@@ -7,72 +7,19 @@ import '../../../providers/target_events_provider.dart';
 import '../../../core/utils/logger.dart';
 
 /// 페이지 1: 이번주 감정 온도
-class ReportPage1 extends ConsumerStatefulWidget {
-  final DateTime? startDate;
-  final DateTime? endDate;
+class ReportPage1 extends ConsumerWidget {
+  final DateTime startDate;
+  final DateTime endDate;
 
   const ReportPage1({
     super.key,
-    this.startDate,
-    this.endDate,
+    required this.startDate,
+    required this.endDate,
   });
 
-  @override
-  ConsumerState<ReportPage1> createState() => _ReportPage1State();
-}
-
-class _ReportPage1State extends ConsumerState<ReportPage1> {
-  List<EmotionSegment> _emotionSegments = [];
-  bool _isLoading = true;
-
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _loadData();
-    });
-  }
-
-  Future<void> _loadData() async {
-    try {
-      // 날짜 설정: 파라미터가 있으면 사용, 없으면 기본값 (12/14일 기준 과거 60일)
-      final endDate = widget.endDate ?? DateTime(2025, 12, 14);
-      final startDate = widget.startDate ?? endDate.subtract(const Duration(days: 60));
-
-      appLogger.d('📊 [ReportPage1] Loading weekly events from $startDate to $endDate');
-
-      final apiClient = ref.read(targetEventsApiClientProvider);
-      final weeklyEvents = await apiClient.getWeeklyEvents(
-        startDate: startDate,
-        endDate: endDate,
-      );
-
-      if (mounted) {
-        setState(() {
-          if (weeklyEvents.isNotEmpty) {
-            final firstEvent = weeklyEvents.first;
-            _emotionSegments = _convertToSegments(firstEvent.emotionDistribution);
-            appLogger.d('📊 [ReportPage1] Loaded ${_emotionSegments.length} emotion segments');
-          } else {
-            _emotionSegments = [];
-            appLogger.w('⚠️ [ReportPage1] No weekly events data');
-          }
-          _isLoading = false;
-        });
-      }
-    } catch (e) {
-      appLogger.e('❌ [ReportPage1] Failed to load data', error: e);
-      if (mounted) {
-        setState(() {
-          _emotionSegments = [];
-          _isLoading = false;
-        });
-      }
-    }
-  }
-
   /// API 데이터를 EmotionSegment 리스트로 변환
-  List<EmotionSegment> _convertToSegments(Map<String, dynamic> emotionDistribution) {
+  List<EmotionSegment> _convertToSegments(
+      Map<String, dynamic> emotionDistribution) {
     if (emotionDistribution.isEmpty) {
       return [];
     }
@@ -98,9 +45,31 @@ class _ReportPage1State extends ConsumerState<ReportPage1> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    final emotionSegments = _emotionSegments;
+  Widget build(BuildContext context, WidgetRef ref) {
+    // 날짜 범위를 기반으로 주간 이벤트 provider 사용
+    final weeklyEventsAsync = ref.watch(
+      weeklyEventsProviderFamily((startDate, endDate)),
+    );
 
+    return weeklyEventsAsync.when(
+      data: (weeklyEvents) {
+        // 감정 데이터 변환
+        final emotionSegments = weeklyEvents.isNotEmpty
+            ? _convertToSegments(weeklyEvents.first.emotionDistribution)
+            : <EmotionSegment>[];
+
+        return _buildContent(emotionSegments, isLoading: false);
+      },
+      loading: () => _buildContent([], isLoading: true),
+      error: (error, stack) {
+        appLogger.e('❌ [ReportPage1] Failed to load data', error: error);
+        return _buildContent([], isLoading: false);
+      },
+    );
+  }
+
+  Widget _buildContent(List<EmotionSegment> emotionSegments,
+      {required bool isLoading}) {
     return Padding(
       padding: const EdgeInsets.all(AppSpacing.lg),
       child: Column(
@@ -180,7 +149,7 @@ class _ReportPage1State extends ConsumerState<ReportPage1> {
                 const SizedBox(height: AppSpacing.lg),
 
                 // 로딩 상태 또는 차트 표시
-                if (_isLoading)
+                if (isLoading)
                   const SizedBox(
                     height: 180,
                     child: Center(
@@ -205,11 +174,11 @@ class _ReportPage1State extends ConsumerState<ReportPage1> {
                   // 반원형 도넛 차트
                   SizedBox(
                     width: double.infinity,
-                    height: 180,
+                    height: 200,
                     child: CustomPaint(
                       painter: CircularDonutChartPainter(
                         segments: emotionSegments,
-                        strokeWidth: 50,
+                        strokeWidth: 45,
                       ),
                     ),
                   ),
@@ -237,7 +206,7 @@ class _ReportPage1State extends ConsumerState<ReportPage1> {
           const SizedBox(height: AppSpacing.xl),
 
           // 요약 코멘트
-          if (!_isLoading && emotionSegments.isNotEmpty)
+          if (!isLoading && emotionSegments.isNotEmpty)
             Container(
               padding: const EdgeInsets.all(AppSpacing.lg),
               decoration: BoxDecoration(
@@ -312,7 +281,7 @@ class _ReportPage1State extends ConsumerState<ReportPage1> {
             ),
           ),
           const SizedBox(width: 6),
-          
+
           // 감정 이름
           Text(
             label,
@@ -323,7 +292,7 @@ class _ReportPage1State extends ConsumerState<ReportPage1> {
             ),
           ),
           const SizedBox(width: 4),
-          
+
           // 퍼센트
           Text(
             '${percentage.toInt()}%',
@@ -339,7 +308,7 @@ class _ReportPage1State extends ConsumerState<ReportPage1> {
   }
 
   /// 감정 영문명을 한글명으로 변환
-  static String _getEmotionKoreanName(String emotion) {
+  String _getEmotionKoreanName(String emotion) {
     final emotionLower = emotion.toLowerCase();
 
     // 긍정 감정
@@ -368,7 +337,7 @@ class _ReportPage1State extends ConsumerState<ReportPage1> {
   }
 
   /// 감정 이름에 따른 색상 매핑 (HomeGaugeSection과 동일한 로직)
-  static Color _getWeeklyReportEmotionColor(String emotion) {
+  Color _getWeeklyReportEmotionColor(String emotion) {
     final emotionLower = emotion.toLowerCase();
 
     // joy/happiness
@@ -395,18 +364,21 @@ class _ReportPage1State extends ConsumerState<ReportPage1> {
     }
 
     // relief / stability
-    if (emotionLower.contains('relief') || emotionLower.contains('안심') ||
+    if (emotionLower.contains('relief') ||
+        emotionLower.contains('안심') ||
         emotionLower.contains('안정')) {
       return AppColors.weeklyRelief;
     }
 
     // enlightenment
-    if (emotionLower.contains('enlightenment') || emotionLower.contains('깨달음')) {
+    if (emotionLower.contains('enlightenment') ||
+        emotionLower.contains('깨달음')) {
       return AppColors.weeklyEnlightenment;
     }
 
     // interest / motivation
-    if (emotionLower.contains('interest') || emotionLower.contains('흥미') ||
+    if (emotionLower.contains('interest') ||
+        emotionLower.contains('흥미') ||
         emotionLower.contains('의욕')) {
       return AppColors.weeklyInterest;
     }
@@ -417,7 +389,8 @@ class _ReportPage1State extends ConsumerState<ReportPage1> {
     }
 
     // anger
-    if (emotionLower.contains('anger') || emotionLower.contains('화') ||
+    if (emotionLower.contains('anger') ||
+        emotionLower.contains('화') ||
         emotionLower.contains('분노')) {
       return AppColors.weeklyAnger;
     }
@@ -443,8 +416,10 @@ class _ReportPage1State extends ConsumerState<ReportPage1> {
     }
 
     // fear/anxiety/worry
-    if (emotionLower.contains('fear') || emotionLower.contains('공포') ||
-        emotionLower.contains('불안') || emotionLower.contains('걱정')) {
+    if (emotionLower.contains('fear') ||
+        emotionLower.contains('공포') ||
+        emotionLower.contains('불안') ||
+        emotionLower.contains('걱정')) {
       return AppColors.weeklyFear;
     }
 
@@ -459,7 +434,8 @@ class _ReportPage1State extends ConsumerState<ReportPage1> {
     }
 
     // boredom
-    if (emotionLower.contains('boredom') || emotionLower.contains('무료') ||
+    if (emotionLower.contains('boredom') ||
+        emotionLower.contains('무료') ||
         emotionLower.contains('지루')) {
       return AppColors.weeklyBoredom;
     }
