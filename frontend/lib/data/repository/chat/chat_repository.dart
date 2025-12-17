@@ -47,6 +47,7 @@ class ChatRepository {
   /// Send text message and return raw response (for alarm processing)
   Future<Map<String, dynamic>> sendTextMessageRaw({
     required String text,
+    String? context, // 🆕 LLM 컨텍스트 (DB 저장 안 함)
     required int userId,
     String? sessionId,
     String? sttQuality,
@@ -54,6 +55,7 @@ class ChatRepository {
   }) async {
     final request = TextChatRequest(
       userText: text,
+      context: context, // 🆕 컨텍스트 전달
       sessionId: sessionId ?? 'user_${userId}_default',
       sttQuality: sttQuality,
       ttsEnabled: ttsEnabled, // ✅ TTS 활성화 여부 전달

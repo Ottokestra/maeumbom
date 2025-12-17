@@ -585,6 +585,7 @@ except Exception as e:
 
 class AgentTextRequest(BaseModel):
     user_text: str
+    context: Optional[str] = None  # 🆕 LLM 컨텍스트 (DB 저장 안 함)
     session_id: Optional[str] = None
     stt_quality: Optional[str] = (
         None  # "success" | "medium" | "low_quality" | "no_speech" | None
@@ -672,9 +673,15 @@ async def agent_text_v2_endpoint(
                 },
             }
 
+        # LLM 입력 생성 (컨텍스트 + 사용자 텍스트)
+        llm_input = request.user_text
+        if request.context:
+            llm_input = f"{request.context}\n\n---\n\n{request.user_text}"
+        
         # V2 함수 호출 - DB에 저장됨
         result = await run_ai_bomi_from_text_v2(
-            user_text=request.user_text,
+            user_text=request.user_text,  # DB 저장용 (원본)
+            llm_input=llm_input,  # LLM 전달용 (컨텍스트 포함)
             user_id=user_id,
             session_id=session_id,
             stt_quality=request.stt_quality,

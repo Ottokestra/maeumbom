@@ -653,17 +653,23 @@ async def run_ai_bomi_from_text_v2(
     session_id: str = "default",
     stt_quality: str = "success",
     speaker_id: Optional[str] = None,
-    save_to_db: bool = True  # 🆕 Phase 3: DB 저장 여부 제어
+    save_to_db: bool = True,  # 🆕 Phase 3: DB 저장 여부 제어
+    llm_input: Optional[str] = None  # 🆕 LLM 전달용 텍스트 (컨텍스트 포함, DB 저장 안 함)
 ) -> dict[str, Any]:
     """
     텍스트 입력 기반 AI 봄이 실행 (DeepAgents Prototype Implementation)
     
     Args:
+        user_text: 원본 사용자 입력 (DB 저장용)
+        llm_input: LLM에 전달할 텍스트 (컨텍스트 포함, 미제공 시 user_text 사용)
         save_to_db: DB에 메시지 저장 여부 (기본값: True)
                    WebSocket에서 호출 시 False로 설정하여 중복 저장 방지
     """
     logger.warning("🔥🔥🔥 run_ai_bomi_from_text_v2 CALLED - Phase 2 VERSION")
     logger.info(f"🚀 [DeepAgents] Started processing for user_id: {user_id}")
+    
+    # LLM 입력 결정 (컨텍스트 포함 여부)
+    text_for_llm = llm_input if llm_input is not None else user_text
     
     # DB Store
     try:
@@ -672,7 +678,7 @@ async def run_ai_bomi_from_text_v2(
         from db_conversation_store import get_conversation_store
     store = get_conversation_store()
     
-    # 1. Save User Message (조건부)
+    # 1. Save User Message (조건부) - 원본만 저장
     if save_to_db:
         store.add_message(user_id, session_id, "user", user_text, speaker_id=speaker_id)
     
@@ -745,7 +751,7 @@ async def run_ai_bomi_from_text_v2(
     # 3. Slow Track: Trigger Background Tasks (Routine, Memory Promotion)
     # We create a task and wait with a timeout (Hybrid Approach)
     slow_track_task = asyncio.create_task(
-        run_slow_track(user_text, None, user_id, session_id)  # ⚡ No emotion_result yet
+        run_slow_track(text_for_llm, None, user_id, session_id)  # ⚡ No emotion_result yet, LLM 입력 사용
     )
     
     routine_result = []
@@ -799,7 +805,7 @@ async def run_ai_bomi_from_text_v2(
     
     # 🆕 Phase 4: LLM 응답 생성 (clean text + audio tags + emotion)
     ai_response_dict = generate_llm_response(
-        user_text=user_text,
+        user_text=text_for_llm,  # 🆕 LLM 입력 사용 (컨텍스트 포함)
         emotion_result=None,  # ⚡ No emotion result - LLM uses its own understanding
         conversation_history=conversation_history,
         memory_context=memory_context,

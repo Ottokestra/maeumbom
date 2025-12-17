@@ -438,13 +438,13 @@ class ChatNotifier extends StateNotifier<ChatState> {
   Future<String> _fetchRecentContext() async {
     try {
       final now = DateTime.now();
-      final sevenDaysAgo = now.subtract(const Duration(days: 7));
+      final sixtyDaysAgo = now.subtract(const Duration(days: 60)); // 🆕 2달(60일)로 확장
       
-      print('[ChatProvider] 🔍 컨텍스트 조회 시작...');
+      print('[ChatProvider] 🔍 컨텍스트 조회 시작 (최근 60일)...');
       
-      // 1. 최근 7일 일일 이벤트 조회
+      // 1. 최근 60일 일일 이벤트 조회
       final dailyResponse = await _targetEventsApiClient.getDailyEvents(
-        startDate: sevenDaysAgo,
+        startDate: sixtyDaysAgo,
         endDate: now,
       );
       
@@ -554,19 +554,19 @@ class ChatNotifier extends StateNotifier<ChatState> {
     try {
       print('[ChatProvider] 📤 Sending text message...');
 
-      // 🆕 컨텍스트 조회 및 메시지와 결합
+      // 🆕 컨텍스트 조회 (DB 저장 안 함, LLM에게만 전달)
       final context = await _fetchRecentContext();
-      final enrichedText = context.isNotEmpty ? '$context$text' : text;
       
       if (context.isNotEmpty) {
         print('[ChatProvider] 📋 컨텍스트 추가됨 (${context.length} chars)');
       }
 
-      // ✅ Call ChatRepository to send text message (기존 세션으로 전송)
+      // ✅ Call ChatRepository to send text message (컨텍스트 분리 전송)
       final response = await _chatRepository.sendTextMessageRaw(
-        text: enrichedText, // 🆕 컨텍스트가 포함된 메시지 전송
+        text: text, // 🆕 원본 사용자 입력만 (DB 저장용)
+        context: context.isNotEmpty ? context : null, // 🆕 컨텍스트 (LLM 전달용, DB 저장 안 함)
         userId: _userId,
-        sessionId: state.sessionId, // 만료된 세션 ID로 전송
+        sessionId: state.sessionId,
         ttsEnabled: state.ttsEnabled, // ✅ TTS 활성화 여부 전달
       );
 
