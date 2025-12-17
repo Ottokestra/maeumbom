@@ -96,44 +96,47 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
       ),
       topBar: null,
       useSafeArea: false,
-      body: SafeArea(
-        bottom: false,
-        child: Column(
-          children: [
-            // 상단 영역 (primaryColor 배경)
-            Container(
-              color: AppColors.primaryColor,
-              child: Column(
-                children: [
-                  // 상단 바
-                  TopBar(
-                    title: '마음리포트',
-                    leftIcon: Icons.arrow_back_ios,
-                    rightIcon: Icons.more_horiz,
-                    onTapLeft: () => navigationService.navigateToTab(0),
-                    onTapRight: () => MoreMenuSheet.show(context),
-                    backgroundColor: Colors.transparent,
-                    foregroundColor: AppColors.basicColor,
-                  ),
-                  // 주간 캘린더 선택기
-                  WeeklyCalendarSelector(
-                    startDate: _startDate,
-                    endDate: _endDate,
-                    onPreviousWeek: _goToPreviousWeek,
-                    onNextWeek: _goToNextWeek,
-                    onDateTap: _showDateRangePicker,
-                  ),
-                ],
+      body: Container(
+        color: AppColors.primaryColor,
+        child: SafeArea(
+          bottom: false,
+          child: Column(
+            children: [
+              // 상단 영역 (primaryColor 배경)
+              Container(
+                color: AppColors.primaryColor,
+                child: Column(
+                  children: [
+                    // 상단 바
+                    TopBar(
+                      title: '마음리포트',
+                      leftIcon: Icons.arrow_back_ios,
+                      rightIcon: Icons.more_horiz,
+                      onTapLeft: () => navigationService.navigateToTab(0),
+                      onTapRight: () => MoreMenuSheet.show(context),
+                      backgroundColor: Colors.transparent,
+                      foregroundColor: AppColors.basicColor,
+                    ),
+                    // 주간 캘린더 선택기
+                    WeeklyCalendarSelector(
+                      startDate: _startDate,
+                      endDate: _endDate,
+                      onPreviousWeek: _goToPreviousWeek,
+                      onNextWeek: _goToNextWeek,
+                      onDateTap: _showDateRangePicker,
+                    ),
+                  ],
+                ),
               ),
-            ),
-            // 리포트 컨텐츠 (bgBasic 배경)
-            Expanded(
-              child: ReportContentBody(
-                startDate: _startDate,
-                endDate: _endDate,
+              // 리포트 컨텐츠 (bgBasic 배경)
+              Expanded(
+                child: ReportContentBody(
+                  startDate: _startDate,
+                  endDate: _endDate,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
