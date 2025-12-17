@@ -24,14 +24,11 @@ class ReportPage1 extends ConsumerWidget {
       return [];
     }
 
-    // Map을 List로 변환하고 퍼센트 기준 내림차순 정렬
+    // 퍼센트 기준 내림차순 정렬
     final entries = emotionDistribution.entries.toList()
       ..sort((a, b) => (b.value as num).compareTo(a.value as num));
 
-    // 상위 5개만 선택
-    final top5 = entries.take(5);
-
-    return top5.map((entry) {
+    return entries.map((entry) {
       final emotion = entry.key;
       final percentage = (entry.value as num).toDouble();
       final color = _getWeeklyReportEmotionColor(emotion);

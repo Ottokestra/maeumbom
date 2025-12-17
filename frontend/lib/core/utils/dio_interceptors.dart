@@ -77,6 +77,7 @@ class AuthInterceptor extends Interceptor {
     return path.contains('/auth/google') ||
         path.contains('/auth/kakao') ||
         path.contains('/auth/naver') ||
-        path.contains('/auth/refresh');
+        path.contains('/auth/refresh') ||
+        path.contains('/auth/logout');
   }
 }
