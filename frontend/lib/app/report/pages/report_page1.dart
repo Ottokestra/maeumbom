@@ -143,7 +143,7 @@ class ReportPage1 extends ConsumerWidget {
                     fontWeight: FontWeight.w700,
                   ),
                 ),
-                const SizedBox(height: AppSpacing.lg),
+                const SizedBox(height: 4),
 
                 // 로딩 상태 또는 차트 표시
                 if (isLoading)
@@ -168,25 +168,23 @@ class ReportPage1 extends ConsumerWidget {
                     ),
                   )
                 else ...[
-                  // 반원형 도넛 차트
+                  // 원형 도넛 차트
                   SizedBox(
                     width: double.infinity,
-                    height: 200,
+                    height: 210,
                     child: CustomPaint(
                       painter: CircularDonutChartPainter(
                         segments: emotionSegments,
-                        strokeWidth: 45,
+                        strokeWidth: 50,
                       ),
                     ),
                   ),
 
-                  const SizedBox(height: AppSpacing.lg),
+                  const SizedBox(height: AppSpacing.sm),
 
-                  // 범례 (Legend)
-                  Wrap(
-                    spacing: AppSpacing.xs,
-                    runSpacing: AppSpacing.xs,
-                    alignment: WrapAlignment.center,
+                  // 범례 (Legend) - 세로 레이아웃
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: emotionSegments.map((segment) {
                       return _buildLegendItem(
                         label: segment.label,
@@ -200,7 +198,7 @@ class ReportPage1 extends ConsumerWidget {
             ),
           ),
 
-          const SizedBox(height: AppSpacing.xl),
+          const SizedBox(height: AppSpacing.md),
 
           // 요약 코멘트
           if (!isLoading && emotionSegments.isNotEmpty)
@@ -246,61 +244,47 @@ class ReportPage1 extends ConsumerWidget {
     );
   }
 
-  /// 범례 아이템 빌더 (Chip 스타일 개선)
+  /// 범례 아이템 빌더 (세로 레이아웃)
   Widget _buildLegendItem({
     required String label,
     required Color color,
     required double percentage,
   }) {
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 10,
-        vertical: 6,
-      ),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1), // 연한 배경
-        borderRadius: BorderRadius.circular(20), // 둥근 모서리
-        border: Border.all(
-          color: color.withValues(alpha: 0.2), // 연한 테두리
-          width: 1,
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // 색상 원형
+        Container(
+          width: 12,
+          height: 12,
+          decoration: BoxDecoration(
+            color: color,
+            shape: BoxShape.circle,
+          ),
         ),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // 색상 인디케이터
-          Container(
-            width: 8,
-            height: 8,
-            decoration: BoxDecoration(
-              color: color,
-              shape: BoxShape.circle,
-            ),
-          ),
-          const SizedBox(width: 6),
+        const SizedBox(height: 4),
 
-          // 감정 이름
-          Text(
-            label,
-            style: AppTypography.caption.copyWith(
-              color: AppColors.textPrimary,
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-            ),
+        // 감정 이름
+        Text(
+          label,
+          style: AppTypography.caption.copyWith(
+            color: AppColors.textPrimary,
+            fontSize: 11,
+            fontWeight: FontWeight.w600,
           ),
-          const SizedBox(width: 4),
+        ),
+        const SizedBox(height: 2),
 
-          // 퍼센트
-          Text(
-            '${percentage.toInt()}%',
-            style: AppTypography.caption.copyWith(
-              color: AppColors.textSecondary,
-              fontSize: 12,
-              fontWeight: FontWeight.w400,
-            ),
+        // 퍼센트
+        Text(
+          '${percentage.toInt()}%',
+          style: AppTypography.caption.copyWith(
+            color: AppColors.textSecondary,
+            fontSize: 10,
+            fontWeight: FontWeight.w400,
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 

@@ -112,7 +112,7 @@ class _HomeContentState extends ConsumerState<HomeContent> {
               color: AppColors.primaryColor,
               padding: const EdgeInsets.symmetric(
                 horizontal: AppSpacing.md,
-                vertical: AppSpacing.lg,
+                vertical: AppSpacing.md,
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,

@@ -63,39 +63,37 @@ class _HomeHeaderSectionState extends ConsumerState<HomeHeaderSection> {
         // 2x3 그리드 레이아웃
         Column(
           children: [
-            // 1행: 닉네임 + 설정 버튼
-            Row(
-              children: [
-                // 닉네임
-                Text(
-                  '$nickname님',
-                  style: AppTypography.h1.copyWith(
-                    color: AppColors.textWhite,
-                    fontWeight: FontWeight.w700,
+            // 1행: 닉네임 (클릭 가능, 밑줄 포함)
+            Align(
+              alignment: Alignment.centerLeft,
+              child: GestureDetector(
+                onTap: () {
+                  Navigator.pushNamed(context, '/mypage');
+                },
+                child: RichText(
+                  text: TextSpan(
+                    children: [
+                      TextSpan(
+                        text: nickname,
+                        style: AppTypography.h1.copyWith(
+                          color: AppColors.textWhite,
+                          fontWeight: FontWeight.w700,
+                          decoration: TextDecoration.underline,
+                          decorationColor: AppColors.textWhite,
+                          decorationThickness: 1.0,
+                        ),
+                      ),
+                      TextSpan(
+                        text: '님',
+                        style: AppTypography.h1.copyWith(
+                          color: AppColors.textWhite,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                
-                const Spacer(),
-                
-                // 마이페이지 버튼
-                GestureDetector(
-                  onTap: () {
-                    Navigator.pushNamed(context, '/mypage');
-                  },
-                  child: Container(
-                    padding: const EdgeInsets.all(AppSpacing.xs),
-                    decoration: BoxDecoration(
-                      color: AppColors.textWhite.withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(AppRadius.sm),
-                    ),
-                    child: const Icon(
-                      Icons.settings_outlined,
-                      size: 24,
-                      color: AppColors.textWhite,
-                    ),
-                  ),
-                ),
-              ],
+              ),
             ),
             
             const SizedBox(height: AppSpacing.xxs),

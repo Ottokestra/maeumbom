@@ -1,47 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../ui/app_ui.dart';
+import '../../ui/components/weekly_calendar_selector.dart';
 import '../../core/services/navigation/navigation_service.dart';
 import 'pages/report_page1.dart';
 import 'pages/report_page2.dart';
 import 'pages/report_page3.dart';
 
 /// Report Screen - 마음리포트 화면
-class ReportScreen extends ConsumerWidget {
+class ReportScreen extends ConsumerStatefulWidget {
   const ReportScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final navigationService = NavigationService(context, ref);
-
-    return AppFrame(
-      topBar: TopBar(
-        title: '마음리포트',
-        leftIcon: Icons.arrow_back_ios,
-        rightIcon: Icons.more_horiz,
-        onTapLeft: () => navigationService.navigateToTab(0),
-        onTapRight: () => MoreMenuSheet.show(context),
-      ),
-      bottomBar: BottomMenuBar(
-        currentIndex: 3,
-        onTap: (index) {
-          navigationService.navigateToTab(index);
-        },
-      ),
-      body: const ReportContent(),
-    );
-  }
+  ConsumerState<ReportScreen> createState() => _ReportScreenState();
 }
 
-/// Report Content with Vertical Scroll
-class ReportContent extends StatefulWidget {
-  const ReportContent({super.key});
-
-  @override
-  State<ReportContent> createState() => _ReportContentState();
-}
-
-class _ReportContentState extends State<ReportContent> {
+class _ReportScreenState extends ConsumerState<ReportScreen> {
   late DateTime _startDate;
   late DateTime _endDate;
 
@@ -71,78 +46,145 @@ class _ReportContentState extends State<ReportContent> {
     });
   }
 
-  /// 주차 라벨 포맷팅 (예: "2025년 1월 1주차")
-  String _formatWeekLabel() {
-    final year = _startDate.year;
-    final month = _startDate.month;
-    final weekOfMonth = ((_startDate.day - 1) ~/ 7) + 1;
-    return '$year년 $month월 ${weekOfMonth}주차';
+  /// 날짜 범위 선택기 표시
+  Future<void> _showDateRangePicker() async {
+    final picked = await showDateRangePicker(
+      context: context,
+      firstDate: DateTime(2020),
+      lastDate: DateTime(2030),
+      initialDateRange: DateTimeRange(start: _startDate, end: _endDate),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.light(
+              primary: AppColors.primaryColor,
+              onPrimary: AppColors.pureWhite,
+              onSurface: AppColors.textPrimary,
+              surface: AppColors.pureWhite,
+            ),
+            datePickerTheme: DatePickerThemeData(
+              rangeSelectionBackgroundColor: AppColors.accentCoral.withOpacity(0.3),
+            ),
+            textButtonTheme: TextButtonThemeData(
+              style: TextButton.styleFrom(
+                foregroundColor: AppColors.textPrimary,
+              ),
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+
+    if (picked != null) {
+      setState(() {
+        _startDate = picked.start;
+        _endDate = picked.end;
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      child: Column(
-        children: [
-          // 날짜 표시 헤더 (화살표 네비게이션)
-          Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppSpacing.md,
-              vertical: AppSpacing.md,
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                // 왼쪽 화살표
-                IconButton(
-                  icon: const Icon(Icons.chevron_left),
-                  color: AppColors.textSecondary,
-                  onPressed: _goToPreviousWeek,
-                ),
+    final navigationService = NavigationService(context, ref);
 
-                // 중앙 날짜 표시
-                Text(
-                  _formatWeekLabel(),
-                  style: AppTypography.h3.copyWith(
-                    color: AppColors.textPrimary,
-                    fontWeight: FontWeight.w600,
+    return AppFrame(
+      statusBarStyle: const SystemUiOverlayStyle(
+        statusBarColor: AppColors.primaryColor,
+        statusBarIconBrightness: Brightness.light,
+        statusBarBrightness: Brightness.dark,
+      ),
+      topBar: null,
+      useSafeArea: false,
+      body: SafeArea(
+        bottom: false,
+        child: Column(
+          children: [
+            // 상단 영역 (primaryColor 배경)
+            Container(
+              color: AppColors.primaryColor,
+              child: Column(
+                children: [
+                  // 상단 바
+                  TopBar(
+                    title: '마음리포트',
+                    leftIcon: Icons.arrow_back_ios,
+                    rightIcon: Icons.more_horiz,
+                    onTapLeft: () => navigationService.navigateToTab(0),
+                    onTapRight: () => MoreMenuSheet.show(context),
+                    backgroundColor: Colors.transparent,
+                    foregroundColor: AppColors.basicColor,
                   ),
-                ),
-
-                // 오른쪽 화살표
-                IconButton(
-                  icon: const Icon(Icons.chevron_right),
-                  color: AppColors.textSecondary,
-                  onPressed: _goToNextWeek,
-                ),
-              ],
+                  // 주간 캘린더 선택기
+                  WeeklyCalendarSelector(
+                    startDate: _startDate,
+                    endDate: _endDate,
+                    onPreviousWeek: _goToPreviousWeek,
+                    onNextWeek: _goToNextWeek,
+                    onDateTap: _showDateRangePicker,
+                  ),
+                ],
+              ),
             ),
-          ),
+            // 리포트 컨텐츠 (bgBasic 배경)
+            Expanded(
+              child: ReportContentBody(
+                startDate: _startDate,
+                endDate: _endDate,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
 
-          // 페이지 1: 이번주 감정 온도
-          ReportPage1(
-            startDate: _startDate,
-            endDate: _endDate,
-          ),
+/// Report Content Body (리포트 본문)
+class ReportContentBody extends StatelessWidget {
+  final DateTime startDate;
+  final DateTime endDate;
 
-          const SizedBox(height: AppSpacing.xl),
+  const ReportContentBody({
+    super.key,
+    required this.startDate,
+    required this.endDate,
+  });
 
-          // 페이지 2: 요일별 감정 캐릭터
-          ReportPage2(
-            startDate: _startDate,
-            endDate: _endDate,
-          ),
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      color: AppColors.bgBasic,
+      child: SingleChildScrollView(
+        child: Column(
+          children: [
+            const SizedBox(height: AppSpacing.md),
 
-          const SizedBox(height: AppSpacing.xl),
+            // 페이지 1: 이번주 감정 온도
+            ReportPage1(
+              startDate: startDate,
+              endDate: endDate,
+            ),
 
-          // 페이지 3: 이번주 감정 분석 상세
-          ReportPage3(
-            startDate: _startDate,
-            endDate: _endDate,
-          ),
+            const SizedBox(height: AppSpacing.xl),
 
-          const SizedBox(height: AppSpacing.xl),
-        ],
+            // 페이지 2: 요일별 감정 캐릭터
+            ReportPage2(
+              startDate: startDate,
+              endDate: endDate,
+            ),
+
+            const SizedBox(height: AppSpacing.xl),
+
+            // 페이지 3: 이번주 감정 분석 상세
+            ReportPage3(
+              startDate: startDate,
+              endDate: endDate,
+            ),
+
+            const SizedBox(height: AppSpacing.xl),
+          ],
+        ),
       ),
     );
   }
