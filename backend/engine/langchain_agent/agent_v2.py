@@ -307,6 +307,68 @@ async def run_slow_track(
         "routine_result": routine_result
     }
 
+def execute_get_past_events(user_id: int, start_date: str, end_date: str, keyword: Optional[str] = None) -> str:
+    """
+    DB에서 과거 이벤트를 조회하여 자연어로 반환
+    """
+    try:
+        from datetime import datetime as dt
+        from app.db.database import SessionLocal
+        from app.db.models import DailyTargetEvent
+        
+        db = SessionLocal()
+        
+        try:
+            # 날짜 파싱
+            start = dt.strptime(start_date, "%Y-%m-%d").date()
+            end = dt.strptime(end_date, "%Y-%m-%d").date()
+            
+            logger.info(f"🔍 [Function Call] get_past_events: {start_date} ~ {end_date}, keyword={keyword}")
+            
+            # DB 조회
+            query = db.query(DailyTargetEvent).filter(
+                DailyTargetEvent.USER_ID == user_id,
+                DailyTargetEvent.EVENT_DATE >= start,
+                DailyTargetEvent.EVENT_DATE <= end
+            )
+            
+            # 키워드 필터링 (선택)
+            if keyword:
+                query = query.filter(
+                    DailyTargetEvent.EVENT_SUMMARY.ilike(f"%{keyword}%")
+                )
+            
+            events = query.order_by(DailyTargetEvent.EVENT_DATE.desc()).limit(10).all()
+            
+            # 자연어 포맷팅
+            if not events:
+                return f"{start_date}부터 {end_date}까지 특별한 기록이 없습니다."
+            
+            result = []
+            for event in events:
+                date_str = event.EVENT_DATE.strftime("%Y년 %m월 %d일")
+                target_map = {
+                    "HUSBAND": "남편",
+                    "CHILD": "자녀",
+                    "SELF": "본인",
+                    "PARENT": "부모",
+                    "FRIEND": "친구",
+                    "OTHER": "기타"
+                }
+                target_ko = target_map.get(event.TARGET_TYPE, "기타")
+                result.append(f"- {date_str}: {target_ko} 관련 - {event.EVENT_SUMMARY}")
+            
+            logger.info(f"✅ [Function Call] Found {len(events)} events")
+            return "\n".join(result)
+            
+        finally:
+            db.close()
+            
+    except Exception as e:
+        logger.error(f"❌ [Function Call] Error: {e}")
+        return f"과거 기록을 조회하는 중 오류가 발생했습니다: {str(e)}"
+
+
 def generate_llm_response(
     user_text: str,
     emotion_result: Dict[str, Any],
@@ -319,6 +381,7 @@ def generate_llm_response(
     Generate response using GPT-4o-mini with Emotion & Context (No Routine)
     **Phase 3**: Uses casual tone (반말) and includes TB_USER_PROFILE data
     **Phase 4**: Returns both clean text and audio-tagged text for Eleven Labs TTS
+    **Phase 5**: Function Calling for past events retrieval
     
     Returns:
         {
@@ -327,6 +390,35 @@ def generate_llm_response(
         }
     """
     client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+    
+    # 🆕 Function Calling: 과거 이벤트 조회 도구 정의
+    tools = [
+        {
+            "type": "function",
+            "function": {
+                "name": "get_past_events",
+                "description": "과거 특정 기간의 주요 사건과 대화 내용을 조회합니다. 사용자가 '지난주', '2주 전', '12월 3일' 같은 과거를 물어볼 때 사용하세요.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "start_date": {
+                            "type": "string",
+                            "description": "시작 날짜 (YYYY-MM-DD 형식)"
+                        },
+                        "end_date": {
+                            "type": "string",
+                            "description": "종료 날짜 (YYYY-MM-DD 형식)"
+                        },
+                        "keyword": {
+                            "type": "string",
+                            "description": "검색 키워드 (선택사항, 예: '남편', '루틴', '조언')"
+                        }
+                    },
+                    "required": ["start_date", "end_date"]
+                }
+            }
+        }
+    ]
     
     # Construct System Prompt
     # Handle None emotion_result (when analysis is skipped)
@@ -381,6 +473,25 @@ def generate_llm_response(
 
 [현재 시간 정보]
 - 현재 시간: {current_time_str}
+
+[🔧 도구 사용 가이드 - Function Calling]
+**사용자가 과거를 물어보면 `get_past_events` 함수를 사용하여 DB를 조회하세요.**
+
+1. **과거 질문 감지:**
+   - 키워드: "기억나?", "전에", "지난번", "그때", "예전에", "추천해준", "N일 전", "N주 전", "했던 거", "말했던 거", "얘기했던 거"
+   - 예: "2주 전에 뭐라고 했지?", "지난주 조언 기억나?", "12월 3일에 무슨 얘기했어?"
+
+2. **날짜 계산:**
+   - 현재 날짜({current_time_str})를 기준으로 start_date와 end_date를 계산하세요.
+   - 예: "2주 전" → start_date="2025-12-03", end_date="2025-12-03"
+   - 예: "지난주" → start_date="2025-12-10", end_date="2025-12-16"
+
+3. **키워드 활용:**
+   - 사용자가 특정 주제를 언급하면 keyword 파라미터 사용
+   - 예: "남편 얘기 했잖아" → keyword="남편"
+
+4. **단순 인사는 Function 호출 금지:**
+   - "안녕", "하이", "잘 지내?" 등은 과거 조회 없이 현재 대화에 집중
 
 [핵심 페르소나 및 원칙]
 - **역할:** 사용자의 가장 친한 친구 (오랜 지기). AI 느낌을 지우고 사람처럼 대화하세요.
@@ -502,6 +613,23 @@ TYPE=alarm
 [데이터 컨텍스트]
 **아래 정보를 바탕으로 대화를 이어가되, 개인정보 보호를 위해 민감한 내용은 주의하세요.**
 
+**⚠️ 중요: 컨텍스트 활용 규칙**
+
+1. **사용자가 과거를 물어보면, 반드시 아래 "대화 기억"을 참고하여 구체적으로 답변하세요**
+   - 과거 질문 키워드: "기억나?", "전에", "지난번", "그때", "예전에", "추천해준", "N일 전", "N주 전", "했던 거", "말했던 거", "얘기했던 거" 등
+   - 컨텍스트에서 관련 정보를 찾아 구체적으로 언급하세요
+
+2. **단순 인사나 일상 질문에는 과거를 언급하지 마세요**
+   - 예: "안녕", "하이", "잘 지내?", "오늘 뭐해?" 등
+
+3. **예시로 배우기:**
+   - ❌ 사용자: "안녕 봄아" → 과거 언급 금지, 현재 대화에 집중
+   - ✅ 사용자: "14일 전에 얘기했던 거 기억나?" → 컨텍스트에서 14일 전 내용을 찾아 구체적으로 답변
+   - ✅ 사용자: "전에 추천해준 루틴 뭐였지?" → 컨텍스트에서 추천 루틴을 찾아 구체적으로 답변
+   - ✅ 사용자: "지난번에 남편 얘기 했잖아" → 컨텍스트에서 남편 관련 대화를 찾아 구체적으로 답변
+
+4. **자연스러운 대화 흐름을 유지하세요**
+
 1. 사용자 프로필:
 {user_profile_context}
 
@@ -523,18 +651,58 @@ TYPE=alarm
         
     # Add current user message
     messages.append({"role": "user", "content": user_text})
-    
-    # [DEBUG] Log the final system prompt and messages
-    logger.info(f"📝 [Main Agent System Prompt]\n{system_prompt}")
-    logger.info(f"📝 [Main Agent Messages]\n{json.dumps(messages, ensure_ascii=False, indent=2)}")
 
+    # 🆕 Function Calling: LLM 호출 시 tools 추가
     response = client.chat.completions.create(
         model=os.getenv("OPENAI_MODEL_NAME", "gpt-4o-mini"),
         messages=messages,
+        tools=tools,  # Function Calling 활성화
+        tool_choice="auto",  # LLM이 필요할 때만 호출
         temperature=0.5  # 구조적 출력 안정성 확보
     )
     
-    reply_text_with_tags = response.choices[0].message.content
+    # 🆕 Tool 호출 처리
+    if response.choices[0].message.tool_calls:
+        logger.warning(f"🔧 [Function Calling] LLM requested tool calls: {len(response.choices[0].message.tool_calls)}")
+        
+        # 원본 assistant 메시지 추가 (tool_calls 포함)
+        messages.append(response.choices[0].message)
+        
+        for tool_call in response.choices[0].message.tool_calls:
+            function_name = tool_call.function.name
+            function_args = json.loads(tool_call.function.arguments)
+            
+            logger.warning(f"🔧 [Function Calling] Executing {function_name} with args: {function_args}")
+            
+            if function_name == "get_past_events":
+                function_response = execute_get_past_events(
+                    user_id=user_id,
+                    start_date=function_args.get("start_date"),
+                    end_date=function_args.get("end_date"),
+                    keyword=function_args.get("keyword")
+                )
+                
+                # Function 결과를 LLM에게 다시 전달
+                messages.append({
+                    "role": "tool",
+                    "tool_call_id": tool_call.id,
+                    "content": function_response
+                })
+                
+                logger.warning(f"✅ [Function Calling] Function response: {function_response[:200]}...")
+        
+        # 최종 답변 생성 (Function 결과 포함)
+        final_response = client.chat.completions.create(
+            model=os.getenv("OPENAI_MODEL_NAME", "gpt-4o-mini"),
+            messages=messages,
+            temperature=0.5
+        )
+        reply_text_with_tags = final_response.choices[0].message.content
+        logger.warning(f"✅ [Function Calling] Final response generated with function results")
+    else:
+        # Function 호출 없이 일반 답변
+        reply_text_with_tags = response.choices[0].message.content
+        logger.warning(f"ℹ️ [Function Calling] No tool calls, using direct response")
     
     # [DEBUG] Log GPT-4o-mini raw response
     logger.warning("=" * 80)

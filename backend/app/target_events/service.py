@@ -249,21 +249,27 @@ def aggregate_weekly_emotions(
         "interest": "흥미",
     }
     
-    # 비율 계산 (백분율)
+    # 상위 5개 감정 선택 (비율 계산 전)
+    top_5_emotions = emotion_counter.most_common(5)
+    
+    # 상위 5개의 점수 합계 계산
+    top_5_total = sum(score for _, score in top_5_emotions)
+    
+    # 상위 5개를 기준으로 100%가 되도록 비율 계산
     emotion_distribution = {}
-    for emotion_code, score in emotion_counter.most_common():
+    for emotion_code, score in top_5_emotions:
         emotion_name = emotion_name_map.get(emotion_code, emotion_code)
-        percentage = round((score / total_emotion_score) * 100)
+        percentage = round((score / top_5_total) * 100)
         if percentage > 0:  # 0%는 제외
             emotion_distribution[emotion_name] = percentage
     
-    # 상위 5개만 유지하고 나머지는 "기타"로 묶기
-    if len(emotion_distribution) > 5:
-        top_5 = dict(list(emotion_distribution.items())[:5])
-        others_sum = sum(list(emotion_distribution.values())[5:])
-        if others_sum > 0:
-            top_5["기타"] = others_sum
-        emotion_distribution = top_5
+    # 합계를 100%로 보정 (반올림 오차 수정)
+    if emotion_distribution:
+        current_sum = sum(emotion_distribution.values())
+        if current_sum != 100:
+            # 가장 큰 값에 차이를 더해서 100% 맞추기
+            max_emotion = max(emotion_distribution.items(), key=lambda x: x[1])
+            emotion_distribution[max_emotion[0]] += (100 - current_sum)
     
     # 4. 주요 감정 추출
     primary_emotion_code = emotion_counter.most_common(1)[0][0] if emotion_counter else None

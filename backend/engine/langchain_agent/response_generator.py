@@ -358,7 +358,8 @@ def parse_alarm_request(
         print(f"[ALARM PARSER] Step 3: Current time formatted: {current_str}")
         
         # 🆕 Pre-filter: 알람 관련 키워드가 없으면 조기 반환
-        alarm_keywords = ["알람", "알림", "기상", "깨워", "시간", "시", "분", "am", "pm", "오전", "오후"]
+        # "시", "분" 제거 - 일반 단어("기분", "시작")와 충돌하여 오탐 발생
+        alarm_keywords = ["알람", "알림", "기상", "깨워", "시간", "am", "pm", "오전", "오후"]
         user_and_response = (user_text + " " + llm_response).lower()
         
         has_alarm_keyword = any(keyword in user_and_response for keyword in alarm_keywords)

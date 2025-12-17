@@ -3,13 +3,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../ui/app_ui.dart';
 import '../../../providers/auth_provider.dart';
 import '../../../providers/daily_mood_provider.dart';
-import '../daily_mood_check_screen.dart';
+import '../../../providers/onboarding_provider.dart';
+import '../../../data/dtos/onboarding/onboarding_survey_response.dart';
+import '../../../core/utils/logger.dart';
 import 'home_notice_banner.dart';
 
 /// 홈 화면 헤더 섹션
 ///
 /// 사용자 닉네임, 인사말, 설정 아이콘을 표시합니다.
-class HomeHeaderSection extends ConsumerWidget {
+class HomeHeaderSection extends ConsumerStatefulWidget {
   final Color contentColor;
 
   const HomeHeaderSection({
@@ -18,9 +20,37 @@ class HomeHeaderSection extends ConsumerWidget {
   });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<HomeHeaderSection> createState() => _HomeHeaderSectionState();
+}
+
+class _HomeHeaderSectionState extends ConsumerState<HomeHeaderSection> {
+  OnboardingSurveyResponse? _profile;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadProfile();
+  }
+
+  Future<void> _loadProfile() async {
+    try {
+      final onboardingRepository = ref.read(onboardingSurveyRepositoryProvider);
+      final profile = await onboardingRepository.getMySurvey();
+
+      if (!mounted) return;
+      setState(() {
+        _profile = profile;
+      });
+    } catch (e) {
+      appLogger.e('Failed to load profile', error: e);
+      // 프로필 로드 실패 시에도 계속 진행 (fallback 닉네임 사용)
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final user = ref.watch(currentUserProvider);
-    final nickname = user?.nickname ?? '봄이';
+    final nickname = _profile?.nickname ?? user?.nickname ?? '봄이';
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -38,7 +68,7 @@ class HomeHeaderSection extends ConsumerWidget {
               children: [
                 // 닉네임
                 Text(
-                  '$nickname,',
+                  '$nickname님',
                   style: AppTypography.h1.copyWith(
                     color: AppColors.textWhite,
                     fontWeight: FontWeight.w700,

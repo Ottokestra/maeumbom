@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../ui/app_ui.dart';
 import '../../../providers/target_events_provider.dart';
 import '../../../providers/routine_recommendations_provider.dart';
-import '../services/emotion_analysis_service.dart';
+import '../../../core/utils/emotion_mapper.dart';
 import '../services/emotion_insight_generator.dart';
 import '../services/routine_extractor.dart';
 
@@ -33,9 +33,13 @@ class ReportPage3 extends ConsumerWidget {
 
     return weeklyEventsAsync.when(
       data: (weeklyEvents) {
-        // 감정 데이터 분석
-        final analysisResult =
-            EmotionAnalysisService.analyzeWeeklyEmotions(weeklyEvents);
+        // 백엔드에서 이미 계산된 emotion_distribution 사용 (Page 1과 동일)
+        final emotionDistribution = weeklyEvents.isNotEmpty
+            ? weeklyEvents.first.emotionDistribution
+            : <String, dynamic>{};
+        
+        // emotionDistribution을 EmotionRank 리스트로 변환
+        final analysisResult = _convertToEmotionRanks(emotionDistribution);
 
         // 데이터가 없는 경우
         if (analysisResult.topEmotion == null ||
@@ -178,7 +182,6 @@ class ReportPage3 extends ConsumerWidget {
                             // 감정 캐릭터
                             EmotionCharacter(
                               id: emotion.emotion,
-                              use2d: true,
                               size: 32,
                             ),
 
@@ -258,6 +261,54 @@ class ReportPage3 extends ConsumerWidget {
       },
       loading: () => _buildLoadingState(),
       error: (error, stack) => _buildErrorState(error.toString()),
+    );
+  }
+
+  /// emotionDistribution을 EmotionRank 리스트로 변환
+  EmotionAnalysisResult _convertToEmotionRanks(
+      Map<String, dynamic> emotionDistribution) {
+    if (emotionDistribution.isEmpty) {
+      return EmotionAnalysisResult(
+        topEmotion: null,
+        allEmotions: [],
+        totalCount: 0,
+      );
+    }
+
+    // 퍼센트 기준 내림차순 정렬
+    final entries = emotionDistribution.entries.toList()
+      ..sort((a, b) => (b.value as num).compareTo(a.value as num));
+
+    // EmotionRank 리스트 생성
+    final List<EmotionRank> emotionRanks = [];
+    int totalPercentage = 0;
+
+    for (int i = 0; i < entries.length; i++) {
+      final entry = entries[i];
+      final emotionName = entry.key;
+      final percentage = (entry.value as num).toInt();
+
+      // 한글 감정명을 EmotionId로 변환
+      final emotionId = EmotionMapper.fromKoreanName(emotionName);
+
+      // 변환 실패 시 건너뛰기
+      if (emotionId == null) continue;
+
+      totalPercentage += percentage;
+
+      emotionRanks.add(EmotionRank(
+        rank: emotionRanks.length + 1,
+        emotion: emotionId,
+        emotionName: emotionName,
+        percentage: percentage,
+        count: percentage, // 백엔드 데이터는 이미 퍼센트이므로 동일하게 사용
+      ));
+    }
+
+    return EmotionAnalysisResult(
+      topEmotion: emotionRanks.isNotEmpty ? emotionRanks.first : null,
+      allEmotions: emotionRanks,
+      totalCount: totalPercentage,
     );
   }
 
@@ -365,7 +416,6 @@ class ReportPage3 extends ConsumerWidget {
             child: EmotionCharacter(
               id: emotion.emotion,
               size: 120,
-              use2d: true,
             ),
           ),
 
@@ -446,5 +496,23 @@ class EmotionRank {
     required this.emotionName,
     required this.percentage,
     required this.count,
+  });
+}
+
+/// 감정 분석 결과
+class EmotionAnalysisResult {
+  /// 최상위 감정 (1위)
+  final EmotionRank? topEmotion;
+
+  /// 전체 감정 리스트 (상위 5개)
+  final List<EmotionRank> allEmotions;
+
+  /// 전체 감정 카운트 합계
+  final int totalCount;
+
+  EmotionAnalysisResult({
+    required this.topEmotion,
+    required this.allEmotions,
+    required this.totalCount,
   });
 }

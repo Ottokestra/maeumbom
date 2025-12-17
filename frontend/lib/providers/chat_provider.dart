@@ -11,9 +11,10 @@ import '../data/api/chat/chat_api_client.dart';
 import 'auth_provider.dart';
 import 'alarm_provider.dart';
 import '../core/services/audio/tts_player_service.dart'; // ✅ TTS Service
-import 'target_events_provider.dart'; // 🆕 Target Events API
-import '../data/api/target_events/target_events_api_client.dart'; // 🆕 Target Events API Client
-import '../data/api/routine_recommendations/routine_recommendations_api_client.dart'; // 🆕 Routine Recommendations API
+// ❌ 더 이상 사용하지 않음 (백엔드 Function Calling으로 대체)
+// import 'target_events_provider.dart'; // 🆕 Target Events API
+// import '../data/api/target_events/target_events_api_client.dart'; // 🆕 Target Events API Client
+// import '../data/api/routine_recommendations/routine_recommendations_api_client.dart'; // 🆕 Routine Recommendations API
 
 // ----- Infrastructure Providers -----
 
@@ -108,8 +109,9 @@ class ChatNotifier extends StateNotifier<ChatState> {
   final int _userId;
   final PermissionService _permissionService;
   final Ref _ref;
-  final TargetEventsApiClient _targetEventsApiClient; // 🆕 Target Events API
-  final RoutineRecommendationsApiClient _routineApiClient; // 🆕 Routine API
+  // ❌ 더 이상 사용하지 않음 (백엔드 Function Calling으로 대체)
+  // final TargetEventsApiClient _targetEventsApiClient; // 🆕 Target Events API
+  // final RoutineRecommendationsApiClient _routineApiClient; // 🆕 Routine API
 
   // ✅ Session 관리
   static const _sessionDuration = Duration(minutes: 30);
@@ -131,8 +133,9 @@ class ChatNotifier extends StateNotifier<ChatState> {
     this._userId,
     this._permissionService,
     this._ref,
-    this._targetEventsApiClient, // 🆕 Target Events API 주입
-    this._routineApiClient, // 🆕 Routine API 주입
+    // ❌ 더 이상 사용하지 않음 (백엔드 Function Calling으로 대체)
+    // this._targetEventsApiClient, // 🆕 Target Events API 주입
+    // this._routineApiClient, // 🆕 Routine API 주입
   ) : super(ChatState(
           messages: [],
           isLoading: false,
@@ -434,7 +437,9 @@ class ChatNotifier extends StateNotifier<ChatState> {
 
   /// Send text message (기존 유지 - HTTP API 사용)
   /// Send text message via HTTP API
+  /// ❌ 더 이상 사용하지 않음 (백엔드 Function Calling으로 대체)
   /// 🆕 최근 컨텍스트 조회 (일일 이벤트 + 주간 요약)
+  /*
   Future<String> _fetchRecentContext() async {
     try {
       final now = DateTime.now();
@@ -530,6 +535,7 @@ class ChatNotifier extends StateNotifier<ChatState> {
     };
     return map[targetType] ?? targetType;
   }
+  */
 
   Future<void> sendTextMessage(String text) async {
     if (text.trim().isEmpty) return;
@@ -554,17 +560,13 @@ class ChatNotifier extends StateNotifier<ChatState> {
     try {
       print('[ChatProvider] 📤 Sending text message...');
 
-      // 🆕 컨텍스트 조회 (DB 저장 안 함, LLM에게만 전달)
-      final context = await _fetchRecentContext();
+      // ❌ 제거: 더 이상 프론트엔드에서 컨텍스트 조회 안 함 (백엔드 Function Calling으로 대체)
+      // final context = await _fetchRecentContext();
       
-      if (context.isNotEmpty) {
-        print('[ChatProvider] 📋 컨텍스트 추가됨 (${context.length} chars)');
-      }
-
-      // ✅ Call ChatRepository to send text message (컨텍스트 분리 전송)
+      // ✅ Call ChatRepository to send text message (컨텍스트 없이 전송)
       final response = await _chatRepository.sendTextMessageRaw(
-        text: text, // 🆕 원본 사용자 입력만 (DB 저장용)
-        context: context.isNotEmpty ? context : null, // 🆕 컨텍스트 (LLM 전달용, DB 저장 안 함)
+        text: text, // 원본 사용자 입력
+        context: null, // 🆕 null로 변경 (백엔드가 필요시 직접 조회)
         userId: _userId,
         sessionId: state.sessionId,
         ttsEnabled: state.ttsEnabled, // ✅ TTS 활성화 여부 전달
@@ -950,8 +952,9 @@ final chatProvider = StateNotifierProvider<ChatNotifier, ChatState>((ref) {
       ref.watch(chatRepositoryProvider); // ✅ ChatRepository 추가
   final permissionService = ref.watch(permissionServiceProvider);
   final ttsPlayerService = ref.watch(ttsPlayerServiceProvider); // ✅ TTS Service
-  final targetEventsApiClient = ref.watch(targetEventsApiClientProvider); // 🆕 Target Events API
-  final routineApiClient = RoutineRecommendationsApiClient(ref.watch(dioWithAuthProvider)); // 🆕 Routine API
+  // ❌ 더 이상 사용하지 않음 (백엔드 Function Calling으로 대체)
+  // final targetEventsApiClient = ref.watch(targetEventsApiClientProvider); // 🆕 Target Events API
+  // final routineApiClient = RoutineRecommendationsApiClient(ref.watch(dioWithAuthProvider)); // 🆕 Routine API
   final currentUser = ref.watch(currentUserProvider);
 
   if (currentUser == null) {
@@ -965,7 +968,8 @@ final chatProvider = StateNotifierProvider<ChatNotifier, ChatState>((ref) {
     currentUser.id,
     permissionService,
     ref, // 🆕 Ref 주입
-    targetEventsApiClient, // 🆕 Target Events API 주입
-    routineApiClient, // 🆕 Routine API 주입
+    // ❌ 더 이상 사용하지 않음 (백엔드 Function Calling으로 대체)
+    // targetEventsApiClient, // 🆕 Target Events API 주입
+    // routineApiClient, // 🆕 Routine API 주입
   );
 });
