@@ -26,7 +26,8 @@ class CircularDonutChartPainter extends CustomPainter {
 
     // 반원형이므로 중심을 하단에 배치
     final center = Offset(size.width / 2, size.height);
-    final radius = size.width / 2 - 40; // 좌우 여백 증가
+    final strokeHalfWidth = strokeWidth / 2;
+    final radius = (size.width / 2) - strokeHalfWidth - 10; // stroke 절반 + 여백 10
     final innerRadius = radius * 0.65; // 도넛 내부 구멍 크기 (65%)
 
     // 반원 도넛 차트 그리기 (9시 방향부터 3시 방향까지)
@@ -86,7 +87,8 @@ class CircularDonutChartPainter extends CustomPainter {
   /// 데이터가 없을 때 빈 상태 표시
   void _drawEmptyState(Canvas canvas, Size size) {
     final center = Offset(size.width / 2, size.height);
-    final radius = size.width / 2 - 40; // 좌우 여백 증가
+    final strokeHalfWidth = strokeWidth / 2;
+    final radius = (size.width / 2) - strokeHalfWidth - 10; // stroke 절반 + 여백 10
     final innerRadius = radius * 0.65;
 
     final emptyPaint = Paint()

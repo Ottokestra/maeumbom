@@ -136,7 +136,10 @@ class _ReportContentState extends State<ReportContent> {
           const SizedBox(height: AppSpacing.xl),
 
           // 페이지 3: 이번주 감정 분석 상세
-          const ReportPage3(),
+          ReportPage3(
+            startDate: _startDate,
+            endDate: _endDate,
+          ),
 
           const SizedBox(height: AppSpacing.xl),
         ],

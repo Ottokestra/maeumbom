@@ -20,8 +20,7 @@ class TargetEventsNotifier
     extends StateNotifier<AsyncValue<List<DailyEventModel>>> {
   final TargetEventsApiClient _apiClient;
 
-  TargetEventsNotifier(this._apiClient)
-      : super(const AsyncValue.data([]));
+  TargetEventsNotifier(this._apiClient) : super(const AsyncValue.data([]));
 
   /// 날짜 범위로 일일 이벤트 조회
   Future<void> loadDailyEvents({
@@ -43,7 +42,8 @@ class TargetEventsNotifier
         targetType: targetType,
       );
 
-      appLogger.d('🟢 API Success - Events count: ${response.dailyEvents.length}');
+      appLogger
+          .d('🟢 API Success - Events count: ${response.dailyEvents.length}');
       state = AsyncValue.data(response.dailyEvents);
     } catch (e, stack) {
       appLogger.e('🔴 API Error', error: e, stackTrace: stack);
@@ -92,13 +92,13 @@ final dailyEventsCountProvider = Provider<int>((ref) {
     orElse: () => 0,
   );
 });
+
 /// Weekly Events State Notifier
 class WeeklyEventsNotifier
     extends StateNotifier<AsyncValue<List<WeeklyEventModel>>> {
   final TargetEventsApiClient _apiClient;
 
-  WeeklyEventsNotifier(this._apiClient)
-      : super(const AsyncValue.data([]));
+  WeeklyEventsNotifier(this._apiClient) : super(const AsyncValue.data([]));
 
   /// 날짜 범위로 주간 이벤트 조회
   Future<void> loadWeeklyEvents({
@@ -127,4 +127,17 @@ final weeklyEventsProvider = StateNotifierProvider<WeeklyEventsNotifier,
     AsyncValue<List<WeeklyEventModel>>>((ref) {
   final apiClient = ref.watch(targetEventsApiClientProvider);
   return WeeklyEventsNotifier(apiClient);
+});
+
+/// Weekly Events Provider with Date Range (Family)
+/// 날짜 범위를 파라미터로 받아 해당 기간의 주간 이벤트를 자동으로 로드합니다.
+final weeklyEventsProviderFamily = FutureProvider.family<List<WeeklyEventModel>,
+    (DateTime startDate, DateTime endDate)>((ref, dates) async {
+  final apiClient = ref.watch(targetEventsApiClientProvider);
+  final (startDate, endDate) = dates;
+
+  return await apiClient.getWeeklyEvents(
+    startDate: startDate,
+    endDate: endDate,
+  );
 });
