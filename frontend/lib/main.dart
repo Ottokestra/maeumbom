@@ -77,6 +77,7 @@ class MaeumBomApp extends ConsumerWidget {
     return MaterialApp(
       navigatorKey: navigatorKey,
       title: 'Maeumbom',
+      debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
       darkTheme: AppTheme.dark,
       localizationsDelegates: const [

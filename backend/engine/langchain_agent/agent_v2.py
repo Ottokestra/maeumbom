@@ -469,7 +469,7 @@ def generate_llm_response(
     current_time = datetime.now()
     current_time_str = current_time.strftime("%Y년 %m월 %d일 %H시 %M분")
     
-    system_prompt = f"""당신은 갱년기 중년 여성을 돕는 AI 친구 '봄이'입니다.
+    system_prompt = f"""당신은 갱년기 중년층을 돕는 AI 친구 '봄이'입니다.
 
 [현재 시간 정보]
 - 현재 시간: {current_time_str}
